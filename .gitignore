@@ -1,0 +1,10 @@
+*.pro.user*
+*.txt.user*
+moc_*.cpp
+qrc_*.cpp
+Makefile*
+*build*
+*.autosave
+release
+bin
+*DS_Store*
