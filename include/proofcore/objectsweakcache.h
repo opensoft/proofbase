@@ -16,14 +16,14 @@ public:
     }
 
 
-    void add(Key key, QSharedPointer<T> object)
+    void add(const Key &key, QSharedPointer<T> object)
     {
         if (!object)
             return;
         m_cache[key] = object.toWeakRef();
     }
 
-    QSharedPointer<T> value(Key key)
+    QSharedPointer<T> value(const Key &key)
     {
         if (!m_cache.contains(key))
             return QSharedPointer<T>();
