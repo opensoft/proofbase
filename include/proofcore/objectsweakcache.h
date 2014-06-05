@@ -5,6 +5,8 @@
 #include <QSharedPointer>
 #include <QWeakPointer>
 
+namespace Proof {
+
 template <class Key, class T>
 class ObjectsWeakCache
 {
@@ -39,5 +41,7 @@ private:
 
     QHash<Key, QWeakPointer<T>> m_cache;
 };
+
+}
 
 #endif // OBJECTSWEAKCACHE_H
