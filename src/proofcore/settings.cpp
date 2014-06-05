@@ -6,10 +6,8 @@
 #include <QCoreApplication>
 
 namespace Proof {
-class SettingsPrivate : public QObject
+class SettingsPrivate
 {
-    Q_OBJECT
-
     explicit SettingsPrivate(Settings *settings);
 
     QSharedPointer<QSettings> openSettings();
@@ -71,7 +69,7 @@ void Settings::load()
 }
 
 SettingsPrivate::SettingsPrivate(Settings *settings)
-    : QObject(0), m_isNativeFormatEnabled(false), m_isAutoSaveEnabled(true)
+    : m_isNativeFormatEnabled(false), m_isAutoSaveEnabled(true)
 {
     q_ptr = settings;
     openSettings();
@@ -94,5 +92,3 @@ QSharedPointer<QSettings> SettingsPrivate::openSettings()
 
     return QSharedPointer<QSettings>(settingsPtr);
 }
-
-#include "settings.moc"
