@@ -15,8 +15,8 @@ class SettingsPrivate
     Q_DECLARE_PUBLIC(Settings)
     Settings *q_ptr;
 
-    bool m_isNativeFormatEnabled;
-    bool m_isAutoSaveEnabled;
+    bool m_isNativeFormatEnabled = false;
+    bool m_isAutoSaveEnabled = true;
 };
 
 }
@@ -69,7 +69,6 @@ void Settings::load()
 }
 
 SettingsPrivate::SettingsPrivate(Settings *settings)
-    : m_isNativeFormatEnabled(false), m_isAutoSaveEnabled(true)
 {
     q_ptr = settings;
     openSettings();
