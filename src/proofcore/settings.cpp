@@ -4,19 +4,24 @@
 #include <QSharedPointer>
 #include <QStandardPaths>
 #include <QCoreApplication>
+#include <QDebug>
+
+#include "settingsgroup.h"
 
 namespace Proof {
 class SettingsPrivate
 {
-    explicit SettingsPrivate(Settings *settings);
-
     QSharedPointer<QSettings> openSettings();
+    void groupValueChanged(const QStringList &key, const QVariant &value);
 
     Q_DECLARE_PUBLIC(Settings)
     Settings *q_ptr;
 
     bool m_isNativeFormatEnabled = false;
-    bool m_isAutoSaveEnabled = true;
+
+    SettingsGroup *m_mainGroup;
+
+    QSharedPointer<QSettings> m_settings;
 };
 
 }
@@ -24,8 +29,13 @@ class SettingsPrivate
 using namespace Proof;
 
 Settings::Settings(QObject *parent)
-    : QObject(parent), d_ptr(new SettingsPrivate(this))
+    : QObject(parent), d_ptr(new SettingsPrivate())
 {
+    d_ptr->q_ptr = this;
+    d_ptr->m_mainGroup = new SettingsGroup("", this);
+    connect(d_ptr->m_mainGroup, &SettingsGroup::valueChanged, this,
+            [this](const QStringList &key, const QVariant &value){d_ptr->groupValueChanged(key, value);});
+    d_ptr->m_settings = d_ptr->openSettings();
 }
 
 Settings::~Settings()
@@ -45,33 +55,14 @@ void Settings::setNativeFormatEnabled(bool arg)
     }
 }
 
-bool Settings::isAutoSaveEnabled() const
+void Settings::sync()
 {
-    return d_ptr->m_isAutoSaveEnabled;
+    d_ptr->m_settings->sync();
 }
 
-void Settings::setAutoSaveEnabled(bool arg)
+SettingsGroup *Settings::mainGroup()
 {
-    if (d_ptr->m_isAutoSaveEnabled != arg) {
-        d_ptr->m_isAutoSaveEnabled = arg;
-        emit autoSaveEnabledChanged(arg);
-    }
-}
-
-void Settings::save()
-{
-
-}
-
-void Settings::load()
-{
-
-}
-
-SettingsPrivate::SettingsPrivate(Settings *settings)
-{
-    q_ptr = settings;
-    openSettings();
+    return d_ptr->m_mainGroup;
 }
 
 QSharedPointer<QSettings> SettingsPrivate::openSettings()
@@ -91,3 +82,19 @@ QSharedPointer<QSettings> SettingsPrivate::openSettings()
 
     return QSharedPointer<QSettings>(settingsPtr);
 }
+
+void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &value)
+{
+    qDebug() << Q_FUNC_INFO << key << value;
+    Q_ASSERT_X(key.count(), Q_FUNC_INFO, "key list can't be empty");
+    for (int i = 0; i < key.count()-1; ++i)
+        m_settings->beginGroup(key[i]);
+    if (value.isNull())
+        m_settings->remove(key.last());
+    else
+        m_settings->setValue(key.last(), value);
+    for (int i = 0; i < key.count()-1; ++i)
+        m_settings->endGroup();
+}
+
+#include "moc_settings.cpp"

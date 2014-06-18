@@ -8,6 +8,7 @@
 
 namespace Proof {
 
+class SettingsGroup;
 class SettingsPrivate;
 
 class PROOF_CORE_EXPORT Settings : public QObject
@@ -20,15 +21,12 @@ public:
     bool isNativeFormatEnabled() const;
     void setNativeFormatEnabled(bool arg);
 
-    bool isAutoSaveEnabled() const;
-    void setAutoSaveEnabled(bool arg);
+    void sync();
 
-    void save();
-    void load();
+    SettingsGroup *mainGroup();
 
 signals:
     void nativeFormatEnabledChanged(bool arg);
-    void autoSaveEnabledChanged(bool arg);
 
 private:
     Q_DECLARE_PRIVATE(Settings)
