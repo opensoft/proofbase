@@ -18,12 +18,9 @@ class SettingsPrivate
     Settings *q_ptr;
 
     bool m_isNativeFormatEnabled = false;
-
     SettingsGroup *m_mainGroup;
-
     QSharedPointer<QSettings> m_settings;
 };
-
 }
 
 using namespace Proof;
@@ -87,13 +84,16 @@ void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &
 {
     qDebug() << Q_FUNC_INFO << key << value;
     Q_ASSERT_X(key.count(), Q_FUNC_INFO, "key list can't be empty");
-    for (int i = 0; i < key.count()-1; ++i)
+
+    for (int i = 0; i < key.count() - 1; ++i)
         m_settings->beginGroup(key[i]);
+
     if (value.isNull())
         m_settings->remove(key.last());
     else
         m_settings->setValue(key.last(), value);
-    for (int i = 0; i < key.count()-1; ++i)
+
+    for (int i = 0; i < key.count() - 1; ++i)
         m_settings->endGroup();
 }
 

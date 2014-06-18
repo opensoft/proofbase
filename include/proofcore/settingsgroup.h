@@ -22,9 +22,9 @@ public:
     QStringList values() const;
 
     SettingsGroup *group(const QString &groupName);
-    QVariant value(const QString &key, const QVariant &defaultValue = QVariant());
+    QVariant value(const QString &key, const QVariant &defaultValue = QVariant()) const;
 
-    SettingsGroup *createGroup(const QString &groupName);
+    SettingsGroup *addGroup(const QString &groupName);
     void setValue(const QString &key, const QVariant &value);
 
     void deleteGroup(const QString &groupName);

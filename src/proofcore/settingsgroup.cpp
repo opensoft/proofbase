@@ -46,23 +46,25 @@ SettingsGroup *SettingsGroup::group(const QString &groupName)
     return d_ptr->m_groups.value(groupName, 0);
 }
 
-QVariant SettingsGroup::value(const QString &key, const QVariant &defaultValue)
+QVariant SettingsGroup::value(const QString &key, const QVariant &defaultValue) const
 {
     return d_ptr->m_values.value(key, defaultValue);
 }
 
-SettingsGroup *SettingsGroup::createGroup(const QString &groupName)
+SettingsGroup *SettingsGroup::addGroup(const QString &groupName)
 {
-    deleteGroup(groupName);
-    SettingsGroup *newGroup = new SettingsGroup(groupName, this);
-    d_ptr->m_groups[groupName] = newGroup;
-    connect(newGroup, &SettingsGroup::valueChanged,
-            this, [this, groupName](const QStringList &key, const QVariant &value) {
-        QStringList newKey {groupName};
-        newKey.append(key);
-        emit valueChanged(newKey, value);
-    });
-    emit groupAdded(groupName);
+    SettingsGroup *newGroup = d_ptr->m_groups.value(groupName, 0);
+    if (!newGroup) {
+        newGroup = new SettingsGroup(groupName, this);
+        d_ptr->m_groups[groupName] = newGroup;
+        connect(newGroup, &SettingsGroup::valueChanged,
+                this, [this, groupName](const QStringList &key, const QVariant &value) {
+            QStringList newKey {groupName};
+            newKey.append(key);
+            emit valueChanged(newKey, value);
+        });
+        emit groupAdded(groupName);
+    }
     return newGroup;
 }
 
