@@ -4,8 +4,8 @@
 
 using namespace Proof;
 
-Humanizer::Humanizer(QObject *parent) :
-    QObject(parent)
+Humanizer::Humanizer(QObject *parent)
+    : QObject(parent)
 {
 }
 
@@ -15,18 +15,19 @@ Humanizer::~Humanizer()
 
 QString Humanizer::humanizeTime(qlonglong seconds, Humanizer::TimeCategory stopAt)
 {
-    //hour = 3600
-    //day = 86400
-    //week = 604800
+    static const qlonglong secondsInMinute = 60;
+    static const qlonglong secondsInHour = secondsInMinute * 60;
+    static const qlonglong secondsInDay = secondsInHour * 24;
+    static const qlonglong secondsInWeek = secondsInDay * 7;
 
-    qlonglong weeks = seconds / 604800;
-    seconds = seconds % 604800;
-    qlonglong days = seconds / 86400;
-    seconds = seconds % 86400;
-    qlonglong hours = seconds / 3600;
-    seconds = seconds % 3600;
-    qlonglong minutes = seconds / 60;
-    seconds = seconds % 60;
+    qlonglong weeks = seconds / secondsInWeek;
+    seconds = seconds % secondsInWeek;
+    qlonglong days = seconds / secondsInDay;
+    seconds = seconds % secondsInDay;
+    qlonglong hours = seconds / secondsInHour;
+    seconds = seconds % secondsInHour;
+    qlonglong minutes = seconds / secondsInMinute;
+    seconds = seconds % secondsInMinute;
 
     //Let's prettify it a bit.
     //We don't need 1w 1d here, 8d will work better.
@@ -81,15 +82,15 @@ QString Humanizer::humanizeTime(qlonglong seconds, Humanizer::TimeCategory stopA
 
 QString Humanizer::humanizeBytesSize(qlonglong bytes)
 {
-    //1kb = 1024
-    //1mb = 1048576
-    //1gb = 1073741824
+    static const qlonglong bytesInKilobyte = 1ll << 10;
+    static const qlonglong bytesInMegabyte = bytesInKilobyte << 10;
+    static const qlonglong bytesInGigabyte = bytesInMegabyte << 10;
 
-    if (bytes >= 1073741824)
-        return QString("%1 GB").arg((double)bytes/1073741824.0, 0, 'f', 2);
-    if (bytes >= 1048576)
-        return QString("%1 MB").arg((double)bytes/1048576.0, 0, 'f', 2);
-    if (bytes >= 1024)
-        return QString("%1 KB").arg((double)bytes/1024.0, 0, 'f', 2);
+    if (bytes >= bytesInGigabyte)
+        return QString("%1G").arg((double)bytes / (double)bytesInGigabyte, 0, 'f', 2);
+    if (bytes >= bytesInMegabyte)
+        return QString("%1M").arg((double)bytes / (double)bytesInMegabyte, 0, 'f', 2);
+    if (bytes >= bytesInKilobyte)
+        return QString("%1K").arg((double)bytes / (double)bytesInKilobyte, 0, 'f', 2);
     return QString("%1 bytes").arg(bytes);
 }
