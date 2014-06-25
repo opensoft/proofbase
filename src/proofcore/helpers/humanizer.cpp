@@ -1,11 +1,11 @@
-#include "helpers.h"
+#include "humanizer.h"
 
 #include <QStringList>
 
 using namespace Proof;
 
-Humanizer::Humanizer(QObject *parent)
-    : QObject(parent)
+Humanizer::Humanizer(QObject *parent) :
+    QObject(parent)
 {
 }
 
@@ -13,7 +13,17 @@ Humanizer::~Humanizer()
 {
 }
 
-QString Humanizer::humanizeTime(qlonglong seconds, Humanizer::TimeCategory stopAt)
+QString Proof::Humanizer::humanizeTime(qlonglong seconds, Proof::Humanizer::TimeCategory stopAt)
+{
+    return Proof::humanizeTime(seconds, stopAt);
+}
+
+QString Humanizer::humanizeBytesSize(qlonglong bytes)
+{
+    return Proof::humanizeBytesSize(bytes);
+}
+
+QString Proof::humanizeTime(qlonglong seconds, Humanizer::TimeCategory stopAt)
 {
     static const qlonglong secondsInMinute = 60;
     static const qlonglong secondsInHour = secondsInMinute * 60;
@@ -51,28 +61,28 @@ QString Humanizer::humanizeTime(qlonglong seconds, Humanizer::TimeCategory stopA
     }
 
     QStringList result;
-    if (weeks > 0 && stopAt <= TimeCategory::StopAtWeeks)
+    if (weeks > 0 && stopAt <= Humanizer::TimeCategory::StopAtWeeks)
         result << QString("%1w").arg(weeks);
-    if (days > 0 && stopAt <= TimeCategory::StopAtDays)
+    if (days > 0 && stopAt <= Humanizer::TimeCategory::StopAtDays)
         result << QString("%1d").arg(days);
-    if (hours > 0 && stopAt <= TimeCategory::StopAtHours)
+    if (hours > 0 && stopAt <= Humanizer::TimeCategory::StopAtHours)
         result << QString("%1h").arg(hours);
-    if (minutes > 0 && stopAt <= TimeCategory::StopAtMinutes)
+    if (minutes > 0 && stopAt <= Humanizer::TimeCategory::StopAtMinutes)
         result << QString("%1m").arg(minutes);
-    if (seconds > 0 && stopAt == TimeCategory::StopAtSeconds)
+    if (seconds > 0 && stopAt == Humanizer::TimeCategory::StopAtSeconds)
         result << QString("%1s").arg(seconds);
 
     if (result.isEmpty()) {
         switch (stopAt) {
-        case TimeCategory::StopAtWeeks:
+        case Humanizer::TimeCategory::StopAtWeeks:
             return "<1w";
-        case TimeCategory::StopAtDays:
+        case Humanizer::TimeCategory::StopAtDays:
             return "<1d";
-        case TimeCategory::StopAtHours:
+        case Humanizer::TimeCategory::StopAtHours:
             return "<1h";
-        case TimeCategory::StopAtMinutes:
+        case Humanizer::TimeCategory::StopAtMinutes:
             return "<1m";
-        case TimeCategory::StopAtSeconds:
+        case Humanizer::TimeCategory::StopAtSeconds:
             return "0s";
         }
     }
@@ -80,7 +90,7 @@ QString Humanizer::humanizeTime(qlonglong seconds, Humanizer::TimeCategory stopA
     return result.join(" ");
 }
 
-QString Humanizer::humanizeBytesSize(qlonglong bytes)
+QString Proof::humanizeBytesSize(qlonglong bytes)
 {
     static const qlonglong bytesInKilobyte = 1ll << 10;
     static const qlonglong bytesInMegabyte = bytesInKilobyte << 10;
