@@ -22,6 +22,10 @@ typedef QSharedPointer<TaskChain> TaskChainSP;
 class TaskChain : public QThread
 {
 public:
+    ~TaskChain()
+    {
+    }
+
     static TaskChainSP startChain()
     {
         TaskChainSP result(new TaskChain());
@@ -57,28 +61,26 @@ public:
                          SignalType &&signal,
                          const std::function<void(Args...)> &callback)
     {
-        qDebug() << Q_FUNC_INFO << 1;
         if (!m_signalWaitersEventLoop)
             m_signalWaitersEventLoop.reset(new QEventLoop);
         QWeakPointer<QEventLoop> eventLoopWeak = m_signalWaitersEventLoop.toWeakRef();
-        std::function<void(Args...)> slot = [&callback, &eventLoopWeak] (Args... args) {
-            qDebug() << "signalWaiter slot";
-            callback(args...);
+        auto connection = QSharedPointer<QMetaObject::Connection>::create();
+        std::function<void(Args...)> slot = [&callback, eventLoopWeak, connection] (Args... args) {
             QSharedPointer<QEventLoop> eventLoop = eventLoopWeak.toStrongRef();
-            if (eventLoop)
-                eventLoop->quit();
+            if (!eventLoop)
+                return;
+            callback(args...);
+            QObject::disconnect(*connection);
+            eventLoop->quit();
         };
-        QObject::connect(sender, signal, eventLoopWeak.data(), slot, Qt::QueuedConnection);
-        qDebug() << Q_FUNC_INFO << 2;
+        *connection = QObject::connect(sender, signal, eventLoopWeak.data(), slot, Qt::QueuedConnection);
     }
 
-    void startSignalWaiters()
+    void fireSignalWaiters()
     {
         if (!m_signalWaitersEventLoop)
             return;
-        qDebug() << Q_FUNC_INFO << 1;
         m_signalWaitersEventLoop->exec();
-        qDebug() << Q_FUNC_INFO << 2;
         m_signalWaitersEventLoop.clear();
     }
 
@@ -91,7 +93,7 @@ protected:
         bool deleteSelf = false;
         while (!deleteSelf) {
             while (m_futuresLock.test_and_set(std::memory_order_acquire))
-                QThread::msleep(100);
+                QThread::msleep(5);
             for (unsigned i = 0; i < m_futures.size(); ++i) {
                 const std::future<void> &currentFuture = m_futures.at(i);
                 bool removeIt = !currentFuture.valid();
@@ -102,8 +104,10 @@ protected:
                     --i;
                 }
             }
-            deleteSelf = m_futures.size();
+            deleteSelf = !m_futures.size();
             m_futuresLock.clear(std::memory_order_release);
+            if (!deleteSelf)
+                QThread::msleep(1000);
         }
     }
 
