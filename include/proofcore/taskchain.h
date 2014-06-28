@@ -62,6 +62,7 @@ public:
             start();
     }
 
+    //TODO: make it thread local to allow proper tree chain
     template<class SignalSender, class SignalType, class ...Args>
     void addSignalWaiter(SignalSender *sender,
                          SignalType &&signal,
