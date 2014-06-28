@@ -26,7 +26,13 @@ public:
     {
     }
 
-    static TaskChainSP startChain()
+    template<class ...Args>
+    static QSharedPointer<std::function<void(Args...)>> createTask()
+    {
+        return QSharedPointer<std::function<void(Args...)>>::create();
+    }
+
+    static TaskChainSP createChain()
     {
         TaskChainSP result(new TaskChain());
         result->m_selfPointer = result;
