@@ -22,9 +22,7 @@ typedef QSharedPointer<TaskChain> TaskChainSP;
 class TaskChain : public QThread
 {
 public:
-    template<class ChainLink, class ...Args>
-    static TaskChainSP forge(ChainLink &&firstChainLink,
-                             Args &&... args)
+    static TaskChainSP startChain()
     {
         TaskChainSP result(new TaskChain());
         result->m_selfPointer = result;
@@ -36,40 +34,52 @@ public:
         };
         *connection = connect(result.data(), &QThread::finished, result.data(), checker);
 
-        result->addChainLink(firstChainLink, args...);
-        result->start();
         return result;
     }
 
-    template<class ChainLink, class ...Args>
-    void addChainLink(ChainLink &&chainLink,
-                      Args &&... args)
+    template<class Task, class ...Args>
+    void addTask(Task &&task,
+                 Args &&... args)
     {
-        while (m_futureLock.test_and_set(std::memory_order_acquire)) {
+        while (m_futuresLock.test_and_set(std::memory_order_acquire)) {
             QCoreApplication::processEvents();
             QThread::msleep(1);
         }
-        m_future = std::async(std::launch::async, chainLink, args...);
-        m_futureLock.clear(std::memory_order_release);
+        m_futures.push_back(std::async(std::launch::async, task, args...));
+        m_futuresLock.clear(std::memory_order_release);
+
+        if (!isRunning() && !m_wasStarted)
+            start();
     }
 
-    template<class SignalSender, class SignalType, class CallbackType, class ...Args>
-    typename std::result_of<CallbackType(Args...)>::type
-    waitForSignal(SignalSender *sender,
-                  SignalType &&signal,
-                  CallbackType &&callback)
+    template<class SignalSender, class SignalType, class ...Args>
+    void addSignalWaiter(SignalSender *sender,
+                         SignalType &&signal,
+                         const std::function<void(Args...)> &callback)
     {
-        QEventLoop eventLoop;
-        typename std::result_of<CallbackType(Args...)>::type result;
-        QObject *context = new QObject;
-        auto slot = [&result, &callback, &eventLoop] (Args ... args) {
-            result = callback(args...);
-            eventLoop.quit();
+        qDebug() << Q_FUNC_INFO << 1;
+        if (!m_signalWaitersEventLoop)
+            m_signalWaitersEventLoop.reset(new QEventLoop);
+        QWeakPointer<QEventLoop> eventLoopWeak = m_signalWaitersEventLoop.toWeakRef();
+        std::function<void(Args...)> slot = [&callback, &eventLoopWeak] (Args... args) {
+            qDebug() << "signalWaiter slot";
+            callback(args...);
+            QSharedPointer<QEventLoop> eventLoop = eventLoopWeak.toStrongRef();
+            if (eventLoop)
+                eventLoop->quit();
         };
-        QObject::connect(sender, signal, context, slot, Qt::QueuedConnection);
-        eventLoop.exec();
-        delete context;
-        return result;
+        QObject::connect(sender, signal, eventLoopWeak.data(), slot, Qt::QueuedConnection);
+        qDebug() << Q_FUNC_INFO << 2;
+    }
+
+    void startSignalWaiters()
+    {
+        if (!m_signalWaitersEventLoop)
+            return;
+        qDebug() << Q_FUNC_INFO << 1;
+        m_signalWaitersEventLoop->exec();
+        qDebug() << Q_FUNC_INFO << 2;
+        m_signalWaitersEventLoop.clear();
     }
 
 protected:
@@ -80,15 +90,20 @@ protected:
 
         bool deleteSelf = false;
         while (!deleteSelf) {
-            while (m_futureLock.test_and_set(std::memory_order_acquire)) {
-                QCoreApplication::processEvents();
+            while (m_futuresLock.test_and_set(std::memory_order_acquire))
                 QThread::msleep(100);
+            for (unsigned i = 0; i < m_futures.size(); ++i) {
+                const std::future<void> &currentFuture = m_futures.at(i);
+                bool removeIt = !currentFuture.valid();
+                if (!removeIt)
+                    removeIt = currentFuture.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready;
+                if (removeIt) {
+                    m_futures.erase(m_futures.begin()+i);
+                    --i;
+                }
             }
-            if (m_future.valid())
-                deleteSelf = m_future.wait_for(std::chrono::milliseconds(1)) ==std::future_status::ready;
-            else
-                deleteSelf = true;
-            m_futureLock.clear(std::memory_order_release);
+            deleteSelf = m_futures.size();
+            m_futuresLock.clear(std::memory_order_release);
         }
     }
 
@@ -96,18 +111,19 @@ private:
     TaskChain()
         : QThread(0)
     {
-        m_futureLock.clear(std::memory_order_release);
+        m_futuresLock.clear(std::memory_order_release);
     }
     TaskChain(const TaskChain &other) = delete;
     TaskChain(TaskChain &&other) = delete;
     TaskChain &operator=(const TaskChain &other) = delete;
     TaskChain &operator=(TaskChain &&other) = delete;
 
-    std::future<void> m_future;
-    std::future<void> m_checkFuture;
-    std::atomic_flag m_futureLock;
+    std::vector<std::future<void>> m_futures;
+    std::atomic_flag m_futuresLock;
     TaskChainSP m_selfPointer;
     bool m_wasStarted = false;
+
+    QSharedPointer<QEventLoop> m_signalWaitersEventLoop;
 };
 
 }
