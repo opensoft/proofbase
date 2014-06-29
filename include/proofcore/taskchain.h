@@ -66,7 +66,7 @@ public:
     template<class SignalSender, class SignalType, class ...Args>
     void addSignalWaiter(SignalSender *sender,
                          SignalType &&signal,
-                         const std::function<void(Args...)> &callback)
+                         const std::function<bool(Args...)> &callback)
     {
         if (!m_signalWaitersEventLoop)
             m_signalWaitersEventLoop.reset(new QEventLoop);
@@ -76,11 +76,12 @@ public:
             QSharedPointer<QEventLoop> eventLoop = eventLoopWeak.toStrongRef();
             if (!eventLoop)
                 return;
-            callback(args...);
+            if (!callback(args...))
+                return;
             QObject::disconnect(*connection);
             eventLoop->quit();
         };
-        *connection = QObject::connect(sender, signal, eventLoopWeak.data(), slot, Qt::QueuedConnection);
+        *connection = QObject::connect(sender, signal, m_signalWaitersEventLoop.data(), slot, Qt::QueuedConnection);
     }
 
     void fireSignalWaiters()
