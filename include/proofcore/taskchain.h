@@ -7,24 +7,23 @@
 #include <QCoreApplication>
 #include <QSharedPointer>
 #include <QDebug>
-#include <QThread>
 
 #include <functional>
 #include <future>
 #include <type_traits>
 #include <atomic>
 
+#include "proofcore_global.h"
+
 namespace Proof {
 
 class TaskChain;
 typedef QSharedPointer<TaskChain> TaskChainSP;
 
-class TaskChain : public QThread
+class PROOF_CORE_EXPORT TaskChain : public QThread
 {
 public:
-    ~TaskChain()
-    {
-    }
+    ~TaskChain();
 
     template<class ...Args>
     static QSharedPointer<std::function<void(Args...)>> createTask()
@@ -32,34 +31,16 @@ public:
         return QSharedPointer<std::function<void(Args...)>>::create();
     }
 
-    static TaskChainSP createChain()
-    {
-        TaskChainSP result(new TaskChain());
-        result->m_selfPointer = result;
-
-        auto connection = QSharedPointer<QMetaObject::Connection>::create();
-        auto checker = [result, connection](){
-            QObject::disconnect(*connection);
-            result->m_selfPointer.clear();
-        };
-        *connection = connect(result.data(), &QThread::finished, result.data(), checker);
-
-        return result;
-    }
+    static TaskChainSP createChain();
 
     template<class Task, class ...Args>
     void addTask(Task &&task,
                  Args &&... args)
     {
-        while (m_futuresLock.test_and_set(std::memory_order_acquire)) {
-            QCoreApplication::processEvents();
-            QThread::msleep(1);
-        }
+        acquireFutures(taskAddingSpinSleepTimeInMSecs);
         m_futures.push_back(std::async(std::launch::async, task, args...));
-        m_futuresLock.clear(std::memory_order_release);
-
-        if (!isRunning() && !m_wasStarted)
-            start();
+        releaseFutures();
+        startSelfManagementThreadIfNeeded();
     }
 
     //TODO: make it thread local to allow proper tree chain
@@ -84,51 +65,21 @@ public:
         *connection = QObject::connect(sender, signal, m_signalWaitersEventLoop.data(), slot, Qt::QueuedConnection);
     }
 
-    void fireSignalWaiters()
-    {
-        if (!m_signalWaitersEventLoop)
-            return;
-        m_signalWaitersEventLoop->exec();
-        m_signalWaitersEventLoop.clear();
-    }
+    void fireSignalWaiters();
 
 protected:
-    void run() override
-    {
-        Q_ASSERT(!m_wasStarted);
-        m_wasStarted = true;
-
-        bool deleteSelf = false;
-        while (!deleteSelf) {
-            while (m_futuresLock.test_and_set(std::memory_order_acquire))
-                QThread::msleep(5);
-            for (unsigned i = 0; i < m_futures.size(); ++i) {
-                const std::future<void> &currentFuture = m_futures.at(i);
-                bool removeIt = !currentFuture.valid();
-                if (!removeIt)
-                    removeIt = currentFuture.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready;
-                if (removeIt) {
-                    m_futures.erase(m_futures.begin()+i);
-                    --i;
-                }
-            }
-            deleteSelf = !m_futures.size();
-            m_futuresLock.clear(std::memory_order_release);
-            if (!deleteSelf)
-                QThread::msleep(1000);
-        }
-    }
+    void run() override;
 
 private:
-    TaskChain()
-        : QThread(0)
-    {
-        m_futuresLock.clear(std::memory_order_release);
-    }
+    TaskChain();
     TaskChain(const TaskChain &other) = delete;
     TaskChain(TaskChain &&other) = delete;
     TaskChain &operator=(const TaskChain &other) = delete;
     TaskChain &operator=(TaskChain &&other) = delete;
+
+    void acquireFutures(qlonglong spinSleepTimeInMsecs);
+    void releaseFutures();
+    void startSelfManagementThreadIfNeeded();
 
     std::vector<std::future<void>> m_futures;
     std::atomic_flag m_futuresLock;
@@ -136,6 +87,10 @@ private:
     bool m_wasStarted = false;
 
     QSharedPointer<QEventLoop> m_signalWaitersEventLoop;
+
+    static const qlonglong taskAddingSpinSleepTimeInMSecs = 1;
+    static const qlonglong selfManagementSpinSleepTimeInMSecs = 5;
+    static const qlonglong selfManagementPauseSleepTimeInMSecs = 1000;
 };
 
 }
