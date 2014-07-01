@@ -7,7 +7,7 @@
 
 namespace Proof {
 
-template <class Key, class T>
+template<class Key, class T>
 class ObjectsWeakCache
 {
 public:
@@ -16,7 +16,6 @@ public:
         static ObjectsWeakCache<Key, T> inst;
         return inst;
     }
-
 
     void add(const Key &key, QSharedPointer<T> object)
     {
