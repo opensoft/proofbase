@@ -4,8 +4,8 @@
 
 using namespace Proof;
 
-Humanizer::Humanizer(QObject *parent) :
-    QObject(parent)
+Humanizer::Humanizer(QObject *parent)
+    : QObject(parent)
 {
 }
 
