@@ -2,61 +2,61 @@
 
 #include <QHash>
 
+#include "proofobject_p.h"
 #include "settings.h"
 
 namespace Proof {
-class SettingsGroupPrivate
+class SettingsGroupPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(SettingsGroup)
-    SettingsGroup *q_ptr;
 
-    QHash<QString, QVariant> m_values;
-    QHash<QString, SettingsGroup *> m_groups;
+    QHash<QString, QVariant> values;
+    QHash<QString, SettingsGroup *> groups;
 
-    QString m_name;
+    QString name;
 };
 }
 
 using namespace Proof;
 
 SettingsGroup::SettingsGroup(const QString &name, QObject *parent)
-    : QObject(parent), d_ptr(new SettingsGroupPrivate())
+    : ProofObject(*new SettingsGroupPrivate, parent)
 {
-    d_ptr->q_ptr = this;
-    d_ptr->m_name = name;
-}
-
-SettingsGroup::~SettingsGroup()
-{
-
+    Q_D(SettingsGroup);
+    d->name = name;
 }
 
 QStringList SettingsGroup::groups() const
 {
-    return d_ptr->m_groups.keys();
+    Q_D(const SettingsGroup);
+    return d->groups.keys();
 }
 
 QStringList SettingsGroup::values() const
 {
-    return d_ptr->m_values.keys();
+    Q_D(const SettingsGroup);
+    return d->values.keys();
 }
 
 SettingsGroup *SettingsGroup::group(const QString &groupName)
 {
-    return d_ptr->m_groups.value(groupName, 0);
+    Q_D(SettingsGroup);
+    return d->groups.value(groupName, 0);
 }
 
 QVariant SettingsGroup::value(const QString &key, const QVariant &defaultValue) const
 {
-    return d_ptr->m_values.value(key, defaultValue);
+    Q_D(const SettingsGroup);
+    return d->values.value(key, defaultValue);
 }
 
 SettingsGroup *SettingsGroup::addGroup(const QString &groupName)
 {
-    SettingsGroup *newGroup = d_ptr->m_groups.value(groupName, 0);
+    Q_D(SettingsGroup);
+    SettingsGroup *newGroup = d->groups.value(groupName, 0);
     if (!newGroup) {
         newGroup = new SettingsGroup(groupName, this);
-        d_ptr->m_groups[groupName] = newGroup;
+        d->groups[groupName] = newGroup;
         connect(newGroup, &SettingsGroup::valueChanged,
                 this, [this, groupName](const QStringList &key, const QVariant &value) {
             QStringList newKey {groupName};
@@ -70,23 +70,25 @@ SettingsGroup *SettingsGroup::addGroup(const QString &groupName)
 
 void SettingsGroup::setValue(const QString &key, const QVariant &value)
 {
+    Q_D(SettingsGroup);
     QVariant oldValue;
-    if (d_ptr->m_values.contains(key))
-        oldValue = d_ptr->m_values[key];
+    if (d->values.contains(key))
+        oldValue = d->values[key];
 
     if (oldValue != value) {
         if (value.isNull())
-            d_ptr->m_values.remove(key);
+            d->values.remove(key);
         else
-            d_ptr->m_values[key] = value;
+            d->values[key] = value;
         emit valueChanged({key}, value);
     }
 }
 
 void SettingsGroup::deleteGroup(const QString &groupName)
 {
-    if (d_ptr->m_groups.contains(groupName))
-        d_ptr->m_groups.take(groupName)->deleteLater();
+    Q_D(SettingsGroup);
+    if (d->groups.contains(groupName))
+        d->groups.take(groupName)->deleteLater();
 }
 
 void SettingsGroup::deleteValue(const QString &key)
@@ -96,5 +98,6 @@ void SettingsGroup::deleteValue(const QString &key)
 
 QString SettingsGroup::name() const
 {
-    return d_ptr->m_name;
+    Q_D(const SettingsGroup);
+    return d->name;
 }

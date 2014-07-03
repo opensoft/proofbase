@@ -5,11 +5,7 @@
 using namespace Proof;
 
 Humanizer::Humanizer(QObject *parent)
-    : QObject(parent)
-{
-}
-
-Humanizer::~Humanizer()
+    : ProofObject(parent)
 {
 }
 

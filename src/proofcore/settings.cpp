@@ -6,67 +6,67 @@
 #include <QCoreApplication>
 #include <QDebug>
 
+#include "proofobject_p.h"
 #include "settingsgroup.h"
 
 namespace Proof {
-class SettingsPrivate
+class SettingsPrivate : public ProofObjectPrivate
 {
+    Q_DECLARE_PUBLIC(Settings)
+
     QSharedPointer<QSettings> openSettings();
     void groupValueChanged(const QStringList &key, const QVariant &value);
 
-    Q_DECLARE_PUBLIC(Settings)
-    Settings *q_ptr;
-
-    bool m_isNativeFormatEnabled = false;
-    SettingsGroup *m_mainGroup;
-    QSharedPointer<QSettings> m_settings;
+    bool isNativeFormatEnabled = false;
+    SettingsGroup *mainGroup;
+    QSharedPointer<QSettings> settings;
 };
 }
 
 using namespace Proof;
 
 Settings::Settings(QObject *parent)
-    : QObject(parent), d_ptr(new SettingsPrivate())
+    : ProofObject(*new SettingsPrivate, parent)
 {
-    d_ptr->q_ptr = this;
-    d_ptr->m_mainGroup = new SettingsGroup("", this);
-    connect(d_ptr->m_mainGroup, &SettingsGroup::valueChanged, this,
-            [this](const QStringList &key, const QVariant &value){d_ptr->groupValueChanged(key, value);});
-    d_ptr->m_settings = d_ptr->openSettings();
-}
-
-Settings::~Settings()
-{
+    Q_D(Settings);
+    d->mainGroup = new SettingsGroup("", this);
+    connect(d->mainGroup, &SettingsGroup::valueChanged, this,
+            [this, d](const QStringList &key, const QVariant &value){d->groupValueChanged(key, value);});
+    d->settings = d->openSettings();
 }
 
 bool Settings::isNativeFormatEnabled() const
 {
-    return d_ptr->m_isNativeFormatEnabled;
+    Q_D(const Settings);
+    return d->isNativeFormatEnabled;
 }
 
 void Settings::setNativeFormatEnabled(bool arg)
 {
-    if (d_ptr->m_isNativeFormatEnabled != arg) {
-        d_ptr->m_isNativeFormatEnabled = arg;
+    Q_D(Settings);
+    if (d->isNativeFormatEnabled != arg) {
+        d->isNativeFormatEnabled = arg;
         emit nativeFormatEnabledChanged(arg);
     }
 }
 
 void Settings::sync()
 {
-    d_ptr->m_settings->sync();
+    Q_D(Settings);
+    d->settings->sync();
 }
 
 SettingsGroup *Settings::mainGroup()
 {
-    return d_ptr->m_mainGroup;
+    Q_D(Settings);
+    return d->mainGroup;
 }
 
 QSharedPointer<QSettings> SettingsPrivate::openSettings()
 {
     QSettings *settingsPtr;
 
-    if (m_isNativeFormatEnabled) {
+    if (isNativeFormatEnabled) {
         settingsPtr = new QSettings();
     } else {
         //TODO: check at all platforms
@@ -86,15 +86,15 @@ void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &
     Q_ASSERT_X(key.count(), Q_FUNC_INFO, "key list can't be empty");
 
     for (int i = 0; i < key.count() - 1; ++i)
-        m_settings->beginGroup(key[i]);
+        settings->beginGroup(key[i]);
 
     if (value.isNull())
-        m_settings->remove(key.last());
+        settings->remove(key.last());
     else
-        m_settings->setValue(key.last(), value);
+        settings->setValue(key.last(), value);
 
     for (int i = 0; i < key.count() - 1; ++i)
-        m_settings->endGroup();
+        settings->endGroup();
 }
 
 #include "moc_settings.cpp"

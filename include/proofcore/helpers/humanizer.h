@@ -1,13 +1,13 @@
 #ifndef HUMANIZER_H
 #define HUMANIZER_H
 
-#include <QObject>
 
+#include "../proofobject.h"
 #include "../proofcore_global.h"
 
 namespace Proof {
 
-class PROOF_CORE_EXPORT Humanizer : public QObject
+class PROOF_CORE_EXPORT Humanizer : public ProofObject
 {
     Q_OBJECT
     Q_ENUMS(TimeCategory)
@@ -21,7 +21,6 @@ public:
     };
 
     Humanizer(QObject *parent = 0);
-    ~Humanizer();
 
     Q_INVOKABLE QString humanizeTime(qlonglong seconds, Humanizer::TimeCategory stopAt = Humanizer::TimeCategory::StopAtSeconds);
     Q_INVOKABLE QString humanizeBytesSize(qlonglong bytes);

@@ -1,9 +1,9 @@
 #ifndef SETTINGSGROUP_H
 #define SETTINGSGROUP_H
 
-#include <QObject>
 #include <QVariant>
 
+#include "proofobject.h"
 #include "proofcore_global.h"
 
 namespace Proof {
@@ -11,12 +11,12 @@ namespace Proof {
 class Settings;
 class SettingsGroupPrivate;
 
-class PROOF_CORE_EXPORT SettingsGroup : public QObject
+class PROOF_CORE_EXPORT SettingsGroup : public ProofObject
 {
     Q_OBJECT
+    Q_DECLARE_PRIVATE(SettingsGroup)
 public:
     explicit SettingsGroup(const QString &name, QObject *parent = 0);
-    ~SettingsGroup();
 
     QStringList groups() const;
     QStringList values() const;
@@ -35,10 +35,6 @@ public:
 signals:
     void groupAdded(const QString &groupName);
     void valueChanged(const QStringList &key, const QVariant &value);
-
-private:
-    Q_DECLARE_PRIVATE(SettingsGroup)
-    QScopedPointer<SettingsGroupPrivate> d_ptr;
 };
 
 }
