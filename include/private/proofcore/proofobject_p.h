@@ -1,8 +1,8 @@
 #ifndef PROOFOBJECT_P_H
 #define PROOFOBJECT_P_H
 
+#include <QtGlobal>
 #include "proofcore_global.h"
-#include "QObject"
 
 namespace Proof {
 class ProofObject;

@@ -31,7 +31,7 @@ Settings::Settings(QObject *parent)
     Q_D(Settings);
     d->mainGroup = new SettingsGroup("", this);
     connect(d->mainGroup, &SettingsGroup::valueChanged, this,
-            [this, d](const QStringList &key, const QVariant &value){d->groupValueChanged(key, value);});
+            [d](const QStringList &key, const QVariant &value){d->groupValueChanged(key, value);});
     d->settings = d->openSettings();
 }
 

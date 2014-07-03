@@ -1,8 +1,6 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#include <QScopedPointer>
-
 #include "proofobject.h"
 #include "proofcore_global.h"
 
