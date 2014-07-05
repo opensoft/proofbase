@@ -1,7 +1,7 @@
 #ifndef PROOFOBJECT_P_H
 #define PROOFOBJECT_P_H
 
-#include "proofcore_global.h"
+#include "proofcore/proofcore_global.h"
 
 #include <QtGlobal>
 

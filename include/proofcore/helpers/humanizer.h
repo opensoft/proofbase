@@ -1,8 +1,8 @@
 #ifndef HUMANIZER_H
 #define HUMANIZER_H
 
-#include "../proofobject.h"
-#include "../proofcore_global.h"
+#include "proofcore/proofobject.h"
+#include "proofcore/proofcore_global.h"
 
 namespace Proof {
 

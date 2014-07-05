@@ -1,7 +1,7 @@
 #ifndef TASKCHAIN_H
 #define TASKCHAIN_H
 
-#include "proofcore_global.h"
+#include "proofcore/proofcore_global.h"
 
 #include <QObject>
 #include <QEventLoop>
