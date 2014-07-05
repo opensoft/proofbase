@@ -1,1 +1,1 @@
-#include "network/networkdataentity.h"
+#include "proofnetwork/network/networkdataentity.h"
