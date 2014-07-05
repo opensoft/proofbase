@@ -1,10 +1,10 @@
 #ifndef PROOFOBJECT_H
 #define PROOFOBJECT_H
 
+#include "proofcore_global.h"
+
 #include <QObject>
 #include <QScopedPointer>
-
-#include "proofcore_global.h"
 
 namespace Proof {
 

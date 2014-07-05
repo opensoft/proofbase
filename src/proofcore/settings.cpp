@@ -1,13 +1,13 @@
 #include "settings.h"
 
+#include "proofobject_p.h"
+#include "settingsgroup.h"
+
 #include <QSettings>
 #include <QSharedPointer>
 #include <QStandardPaths>
 #include <QCoreApplication>
 #include <QDebug>
-
-#include "proofobject_p.h"
-#include "settingsgroup.h"
 
 namespace Proof {
 class SettingsPrivate : public ProofObjectPrivate

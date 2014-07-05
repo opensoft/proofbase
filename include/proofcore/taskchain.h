@@ -1,6 +1,8 @@
 #ifndef TASKCHAIN_H
 #define TASKCHAIN_H
 
+#include "proofcore_global.h"
+
 #include <QObject>
 #include <QEventLoop>
 #include <QThread>
@@ -12,8 +14,6 @@
 #include <future>
 #include <type_traits>
 #include <atomic>
-
-#include "proofcore_global.h"
 
 namespace Proof {
 

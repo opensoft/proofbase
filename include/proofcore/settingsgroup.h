@@ -1,10 +1,10 @@
 #ifndef SETTINGSGROUP_H
 #define SETTINGSGROUP_H
 
-#include <QVariant>
-
 #include "proofobject.h"
 #include "proofcore_global.h"
+
+#include <QVariant>
 
 namespace Proof {
 

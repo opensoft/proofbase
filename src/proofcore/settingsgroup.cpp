@@ -1,9 +1,9 @@
 #include "settingsgroup.h"
 
-#include <QHash>
-
 #include "proofobject_p.h"
 #include "settings.h"
+
+#include <QHash>
 
 namespace Proof {
 class SettingsGroupPrivate : public ProofObjectPrivate
