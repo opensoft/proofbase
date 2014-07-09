@@ -63,10 +63,7 @@ TEST_F(HumanizerTest, humanizeTimeTest)
     EXPECT_EQ("1d 1h", HumanizerUT.humanizeTime(60 * 60 * 25, Proof::Humanizer::StopAtHours));
     EXPECT_EQ("1d", HumanizerUT.humanizeTime(60 * 60 * 24, Proof::Humanizer::StopAtDays));
     EXPECT_EQ("<1w", HumanizerUT.humanizeTime(60 * 60 * 24, Proof::Humanizer::StopAtWeeks));
-
     EXPECT_EQ("2w 1d", HumanizerUT.humanizeTime(60 * 60 * 24 * 15));
-
-    //FIXME: Fix humanizer
     EXPECT_EQ("1w", HumanizerUT.humanizeTime(60 * 60 * 24 * 10, Proof::Humanizer::StopAtWeeks));
 }
 
