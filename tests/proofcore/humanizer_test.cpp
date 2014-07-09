@@ -2,10 +2,10 @@
 
 #include "proofcore/helpers/humanizer.h"
 
-using ::testing::TestWithParam;
-using ::testing::Values;
+using namespace testing;
+using namespace std;
 
-class HumanizerTest: public TestWithParam< ::std::tr1::tuple<QString, qlonglong>>
+class HumanizerTest: public TestWithParam<tuple<QString, qlonglong>>
 {
 public:
    HumanizerTest()
@@ -73,25 +73,25 @@ TEST_F(HumanizerTest, humanizeTimeTest)
 //Parametrized test example
 TEST_P(HumanizerTest, humanizeBytesSizeTest)
 {
-    QString expected = ::std::tr1::get<0>(GetParam());
-    qlonglong value = ::std::tr1::get<1>(GetParam());
+    QString expected = get<0>(GetParam());
+    qlonglong value = get<1>(GetParam());
     EXPECT_EQ(expected, HumanizerUT.humanizeBytesSize(value));
 }
 
 INSTANTIATE_TEST_CASE_P(HumanizeBytesSizeTestParameters,
                         HumanizerTest,
-                        ::testing::Values(::std::tr1::tuple<QString, qlonglong>("0 bytes", 0ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("1 bytes", 1ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("512 bytes", 512ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("1000 bytes", 1000ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("1.00K", 1024ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("1.00K", 1025ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("2.00K", 2048ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("976.56K", 1000000ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("1.00M", 1048576ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("1.00M", 1048577ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("2.00M", 2097152ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("953.67M", 1000000000ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("1.00G", 1073741824ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("1.00G", 1073741825ll),
-                                          ::std::tr1::tuple<QString, qlonglong>("2.00G", 2147483648ll)));
+                        Values(tuple<QString, qlonglong>("0 bytes", 0ll),
+                               tuple<QString, qlonglong>("1 bytes", 1ll),
+                               tuple<QString, qlonglong>("512 bytes", 512ll),
+                               tuple<QString, qlonglong>("1000 bytes", 1000ll),
+                               tuple<QString, qlonglong>("1.00K", 1024ll),
+                               tuple<QString, qlonglong>("1.00K", 1025ll),
+                               tuple<QString, qlonglong>("2.00K", 2048ll),
+                               tuple<QString, qlonglong>("976.56K", 1000000ll),
+                               tuple<QString, qlonglong>("1.00M", 1048576ll),
+                               tuple<QString, qlonglong>("1.00M", 1048577ll),
+                               tuple<QString, qlonglong>("2.00M", 2097152ll),
+                               tuple<QString, qlonglong>("953.67M", 1000000000ll),
+                               tuple<QString, qlonglong>("1.00G", 1073741824ll),
+                               tuple<QString, qlonglong>("1.00G", 1073741825ll),
+                               tuple<QString, qlonglong>("2.00G", 2147483648ll)));
