@@ -38,7 +38,7 @@ QString Proof::humanizeTime(qlonglong seconds, Humanizer::TimeCategory stopAt)
     //Let's prettify it a bit.
     //We don't need 1w 1d here, 8d will work better.
     //But for days, hours and minutes it should work as usual.
-    if (weeks < 2) {
+    if (weeks < 2 && stopAt < Humanizer::TimeCategory::StopAtWeeks) {
         days += weeks * 7;
         weeks = 0;
     }
