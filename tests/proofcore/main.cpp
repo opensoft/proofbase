@@ -1,6 +1,8 @@
-#include "gtest/gtest.h"
+#include "gtest/test_global.h"
 
 #include <QGuiApplication>
+
+#include <iostream>
 
 GTEST_API_ int main(int argc, char **argv) {
     QGuiApplication app(argc, argv);

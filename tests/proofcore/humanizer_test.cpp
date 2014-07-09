@@ -1,4 +1,4 @@
-#include "gtest/gtest.h"
+#include "gtest/test_global.h"
 
 #include "proofcore/helpers/humanizer.h"
 #include <QtDebug>
@@ -63,7 +63,7 @@ TEST_F(HumanizerTest, humanizeTimeTest)
 
     EXPECT_EQ("2w 1d", HumanizerUT.humanizeTime(60 * 60 * 24 * 15));
     //FIXME: Fix humanizer and uncomment this test
-//    EXPECT_EQ("1w", HumanizerUT.humanizeTime(60 * 60 * 24 * 10, Proof::Humanizer::StopAtWeeks));
+    EXPECT_EQ("1w", HumanizerUT.humanizeTime(60 * 60 * 24 * 10, Proof::Humanizer::StopAtWeeks));
 }
 
 TEST_F(HumanizerTest, humanizeBytesSizeTest)
