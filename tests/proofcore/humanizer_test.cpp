@@ -2,8 +2,8 @@
 
 #include "proofcore/helpers/humanizer.h"
 
-using namespace testing;
-using namespace std;
+using testing::TestWithParam;
+using std::tuple;
 
 class HumanizerTest: public TestWithParam<tuple<QString, qlonglong>>
 {
@@ -73,14 +73,14 @@ TEST_F(HumanizerTest, humanizeTimeTest)
 //Parametrized test example
 TEST_P(HumanizerTest, humanizeBytesSizeTest)
 {
-    QString expected = get<0>(GetParam());
-    qlonglong value = get<1>(GetParam());
+    QString expected = std::get<0>(GetParam());
+    qlonglong value = std::get<1>(GetParam());
     EXPECT_EQ(expected, HumanizerUT.humanizeBytesSize(value));
 }
 
 INSTANTIATE_TEST_CASE_P(HumanizeBytesSizeTestParameters,
                         HumanizerTest,
-                        Values(tuple<QString, qlonglong>("0 bytes", 0ll),
+                        testing::Values(tuple<QString, qlonglong>("0 bytes", 0ll),
                                tuple<QString, qlonglong>("1 bytes", 1ll),
                                tuple<QString, qlonglong>("512 bytes", 512ll),
                                tuple<QString, qlonglong>("1000 bytes", 1000ll),
