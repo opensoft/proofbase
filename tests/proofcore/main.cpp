@@ -2,8 +2,6 @@
 
 #include <QGuiApplication>
 
-#include <iostream>
-
 GTEST_API_ int main(int argc, char **argv) {
     QGuiApplication app(argc, argv);
     testing::InitGoogleTest(&argc, argv);
