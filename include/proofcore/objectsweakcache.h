@@ -36,7 +36,10 @@ public:
 
 private:
     ObjectsWeakCache() {}
-    Q_DISABLE_COPY(ObjectsWeakCache)
+    ObjectsWeakCache(const ObjectsWeakCache &other) = delete;
+    ObjectsWeakCache &operator=(const ObjectsWeakCache &other) = delete;
+    ObjectsWeakCache(const ObjectsWeakCache &&other) = delete;
+    ObjectsWeakCache &operator=(const ObjectsWeakCache &&other) = delete;
 
     QHash<Key, QWeakPointer<T>> m_cache;
 };
