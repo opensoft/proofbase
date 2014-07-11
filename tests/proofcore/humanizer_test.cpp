@@ -8,17 +8,17 @@ using std::tuple;
 class HumanizerTest: public TestWithParam<tuple<QString, qlonglong>>
 {
 public:
-   HumanizerTest()
-   {
-   }
+    HumanizerTest()
+    {
+    }
 
 protected:
-   virtual void SetUp()
-   {
-   }
+    virtual void SetUp()
+    {
+    }
 
 protected:
-   Proof::Humanizer HumanizerUT;
+    Proof::Humanizer HumanizerUT;
 };
 
 //Simple test example
@@ -78,17 +78,17 @@ TEST_P(HumanizerTest, humanizeBytesSizeTest)
 INSTANTIATE_TEST_CASE_P(HumanizeBytesSizeTestParameters,
                         HumanizerTest,
                         testing::Values(tuple<QString, qlonglong>("0 bytes", 0ll),
-                               tuple<QString, qlonglong>("1 bytes", 1ll),
-                               tuple<QString, qlonglong>("512 bytes", 512ll),
-                               tuple<QString, qlonglong>("1000 bytes", 1000ll),
-                               tuple<QString, qlonglong>("1.00K", 1024ll),
-                               tuple<QString, qlonglong>("1.00K", 1025ll),
-                               tuple<QString, qlonglong>("2.00K", 2048ll),
-                               tuple<QString, qlonglong>("976.56K", 1000000ll),
-                               tuple<QString, qlonglong>("1.00M", 1048576ll),
-                               tuple<QString, qlonglong>("1.00M", 1048577ll),
-                               tuple<QString, qlonglong>("2.00M", 2097152ll),
-                               tuple<QString, qlonglong>("953.67M", 1000000000ll),
-                               tuple<QString, qlonglong>("1.00G", 1073741824ll),
-                               tuple<QString, qlonglong>("1.00G", 1073741825ll),
-                               tuple<QString, qlonglong>("2.00G", 2147483648ll)));
+                                        tuple<QString, qlonglong>("1 bytes", 1ll),
+                                        tuple<QString, qlonglong>("512 bytes", 512ll),
+                                        tuple<QString, qlonglong>("1000 bytes", 1000ll),
+                                        tuple<QString, qlonglong>("1.00K", 1024ll),
+                                        tuple<QString, qlonglong>("1.00K", 1025ll),
+                                        tuple<QString, qlonglong>("2.00K", 2048ll),
+                                        tuple<QString, qlonglong>("976.56K", 1000000ll),
+                                        tuple<QString, qlonglong>("1.00M", 1048576ll),
+                                        tuple<QString, qlonglong>("1.00M", 1048577ll),
+                                        tuple<QString, qlonglong>("2.00M", 2097152ll),
+                                        tuple<QString, qlonglong>("953.67M", 1000000000ll),
+                                        tuple<QString, qlonglong>("1.00G", 1073741824ll),
+                                        tuple<QString, qlonglong>("1.00G", 1073741825ll),
+                                        tuple<QString, qlonglong>("2.00G", 2147483648ll)));
