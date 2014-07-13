@@ -5,7 +5,6 @@ using namespace Proof;
 TaskChain::TaskChain()
     : QThread(0)
 {
-    m_futuresLock.clear(std::memory_order_release);
 }
 
 TaskChain::~TaskChain()

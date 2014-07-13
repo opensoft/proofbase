@@ -82,7 +82,7 @@ private:
     void startSelfManagementThreadIfNeeded();
 
     std::vector<std::future<void>> m_futures;
-    std::atomic_flag m_futuresLock;
+    std::atomic_flag m_futuresLock = ATOMIC_FLAG_INIT;
     TaskChainSP m_selfPointer;
     bool m_wasStarted = false;
 
