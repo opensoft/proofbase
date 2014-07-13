@@ -12,18 +12,17 @@ class WeakObjectsCache;
 template<class Key, class T>
 class StrongObjectsCache;
 
+enum class CacheType {
+    Weak,
+    Strong
+};
+
 //TODO: make caches thread-safe
-//TODO: make caches use each other
+//TODO: add time-based cache
 template<class Key, class T>
 class ObjectsCache
 {
 public:
-    //TODO: add time-based cache
-    enum class CacheType {
-        Weak,
-        Strong
-    };
-
     static ObjectsCache<Key, T> &instance(CacheType type = CacheType::Weak)
     {
         static WeakObjectsCache<Key, T> weakInst;
@@ -40,7 +39,7 @@ public:
     virtual void remove(const Key &key) = 0;
     virtual void clear() = 0;
     virtual bool contains(const Key &key) const = 0;
-    virtual QSharedPointer<T> value(const Key &key) = 0;
+    virtual QSharedPointer<T> value(const Key &key, bool useOtherCaches = true) = 0;
 
 protected:
     ObjectsCache() {}
@@ -78,14 +77,18 @@ public:
         return m_cache.contains(key);
     }
 
-    QSharedPointer<T> value(const Key &key) override
+    QSharedPointer<T> value(const Key &key, bool useOtherCaches = true) override
     {
-        if (!contains(key))
-            return QSharedPointer<T>();
-        QSharedPointer<T> shared = m_cache[key].toStrongRef();
-        if (!shared)
-            m_cache.remove(key);
-        return shared;
+        QSharedPointer<T> foundValue;
+        if (!contains(key)) {
+            if (useOtherCaches)
+                foundValue = ObjectsCache<Key, T>::instance(CacheType::Strong).value(key, false);
+        } else {
+            foundValue = m_cache[key].toStrongRef();
+            if (!foundValue)
+                m_cache.remove(key);
+        }
+        return foundValue;
     }
 
 private:
@@ -128,9 +131,12 @@ public:
         return m_cache.contains(key);
     }
 
-    QSharedPointer<T> value(const Key &key) override
+    QSharedPointer<T> value(const Key &key, bool useOtherCaches = true) override
     {
-        return m_cache.value(key, QSharedPointer<T>());
+        QSharedPointer<T> foundValue = m_cache.value(key, QSharedPointer<T>());
+        if (!foundValue && useOtherCaches)
+            foundValue = ObjectsCache<Key, T>::instance(CacheType::Weak).value(key, false);
+        return foundValue;
     }
 
 private:
