@@ -65,13 +65,12 @@ public:
 
     void remove(const Key &key) override
     {
-        Q_UNUSED(key);
-        //TODO: implement
+        m_cache.remove(key);
     }
 
     void clear() override
     {
-        //TODO: implement
+        m_cache.clear();
     }
 
     bool contains(const Key &key) const override
@@ -81,7 +80,7 @@ public:
 
     QSharedPointer<T> value(const Key &key) override
     {
-        if (!m_cache.contains(key))
+        if (!contains(key))
             return QSharedPointer<T>();
         QSharedPointer<T> shared = m_cache[key].toStrongRef();
         if (!shared)
@@ -109,20 +108,19 @@ class StrongObjectsCache : public ObjectsCache<Key, T>
 public:
     void add(const Key &key, const QSharedPointer<T> &object) override
     {
-        Q_UNUSED(key);
-        Q_UNUSED(object);
-        //TODO: implement
+        if (!object)
+            return;
+        m_cache[key] = object;
     }
 
     void remove(const Key &key) override
     {
-        Q_UNUSED(key);
-        //TODO: implement
+        m_cache.remove(key);
     }
 
     void clear() override
     {
-        //TODO: implement
+        m_cache.clear();
     }
 
     bool contains(const Key &key) const override
@@ -132,9 +130,7 @@ public:
 
     QSharedPointer<T> value(const Key &key) override
     {
-        Q_UNUSED(key);
-        //TODO: implement
-        return QSharedPointer<T>();
+        return m_cache.value(key, QSharedPointer<T>());
     }
 
 private:
