@@ -12,29 +12,12 @@ class WeakObjectsCache;
 template<class Key, class T>
 class StrongObjectsCache;
 
-enum class CacheType {
-    Weak,
-    Strong
-};
-
 //TODO: make caches thread-safe
 //TODO: add time-based cache
 template<class Key, class T>
 class ObjectsCache
 {
 public:
-    static ObjectsCache<Key, T> &instance(CacheType type = CacheType::Weak)
-    {
-        static WeakObjectsCache<Key, T> weakInst;
-        static StrongObjectsCache<Key, T> strongInst;
-        switch (type) {
-        case CacheType::Weak:
-            return weakInst;
-        case CacheType::Strong:
-            return strongInst;
-        }
-    }
-
     virtual void add(const Key &key, const QSharedPointer<T> &object) = 0;
     virtual void remove(const Key &key) = 0;
     virtual void clear() = 0;
@@ -55,6 +38,12 @@ template<class Key, class T>
 class WeakObjectsCache : public ObjectsCache<Key, T>
 {
 public:
+    static ObjectsCache<Key, T> &instance()
+    {
+        static WeakObjectsCache<Key, T> inst;
+        return inst;
+    }
+
     void add(const Key &key, const QSharedPointer<T> &object) override
     {
         if (!object)
@@ -82,7 +71,7 @@ public:
         QSharedPointer<T> foundValue;
         if (!contains(key)) {
             if (useOtherCaches)
-                foundValue = ObjectsCache<Key, T>::instance(CacheType::Strong).value(key, false);
+                foundValue = StrongObjectsCache<Key, T>::instance().value(key, false);
         } else {
             foundValue = m_cache[key].toStrongRef();
             if (!foundValue)
@@ -109,6 +98,12 @@ template<class Key, class T>
 class StrongObjectsCache : public ObjectsCache<Key, T>
 {
 public:
+    static ObjectsCache<Key, T> &instance()
+    {
+        static StrongObjectsCache<Key, T> inst;
+        return inst;
+    }
+
     void add(const Key &key, const QSharedPointer<T> &object) override
     {
         if (!object)
@@ -135,7 +130,7 @@ public:
     {
         QSharedPointer<T> foundValue = m_cache.value(key, QSharedPointer<T>());
         if (!foundValue && useOtherCaches)
-            foundValue = ObjectsCache<Key, T>::instance(CacheType::Weak).value(key, false);
+            foundValue = WeakObjectsCache<Key, T>::instance().value(key, false);
         return foundValue;
     }
 
