@@ -38,16 +38,24 @@ QStringList SettingsGroup::values() const
     return d->values.keys();
 }
 
-SettingsGroup *SettingsGroup::group(const QString &groupName)
+SettingsGroup *SettingsGroup::group(const QString &groupName, bool createIfNotExists)
 {
     Q_D(SettingsGroup);
-    return d->groups.value(groupName, 0);
+    SettingsGroup *result = d->groups.value(groupName, 0);
+    if (!result && createIfNotExists)
+        result = addGroup(groupName);
+    return result;
 }
 
-QVariant SettingsGroup::value(const QString &key, const QVariant &defaultValue) const
+QVariant SettingsGroup::value(const QString &key, const QVariant &defaultValue, bool createIfNotExists)
 {
-    Q_D(const SettingsGroup);
-    return d->values.value(key, defaultValue);
+    Q_D(SettingsGroup);
+    if (!d->values.contains(key)) {
+        if (createIfNotExists)
+            setValue(key, defaultValue);
+        return defaultValue;
+    }
+    return d->values[key];
 }
 
 SettingsGroup *SettingsGroup::addGroup(const QString &groupName)

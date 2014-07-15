@@ -21,8 +21,8 @@ public:
     QStringList groups() const;
     QStringList values() const;
 
-    SettingsGroup *group(const QString &groupName);
-    QVariant value(const QString &key, const QVariant &defaultValue = QVariant()) const;
+    SettingsGroup *group(const QString &groupName, bool createIfNotExists = false);
+    QVariant value(const QString &key, const QVariant &defaultValue = QVariant(), bool createIfNotExists = false);
 
     SettingsGroup *addGroup(const QString &groupName);
     void setValue(const QString &key, const QVariant &value);

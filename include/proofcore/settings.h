@@ -20,6 +20,7 @@ public:
     void setNativeFormatEnabled(bool arg);
     void sync();
     SettingsGroup *mainGroup();
+    SettingsGroup *group(const QString &groupName, bool createIfNotExists = false);
 
 signals:
     void nativeFormatEnabledChanged(bool arg);

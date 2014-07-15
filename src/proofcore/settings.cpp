@@ -14,7 +14,9 @@ class SettingsPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(Settings)
 
-    QSharedPointer<QSettings> openSettings();
+    void openSettings();
+    void readSettings();
+    void fillGroupFromSettings(SettingsGroup *groupToFill);
     void groupValueChanged(const QStringList &key, const QVariant &value);
 
     bool isNativeFormatEnabled = false;
@@ -32,7 +34,7 @@ Settings::Settings(QObject *parent)
     d->mainGroup = new SettingsGroup("", this);
     connect(d->mainGroup, &SettingsGroup::valueChanged, this,
             [d](const QStringList &key, const QVariant &value){d->groupValueChanged(key, value);});
-    d->settings = d->openSettings();
+    d->readSettings();
 }
 
 bool Settings::isNativeFormatEnabled() const
@@ -62,28 +64,65 @@ SettingsGroup *Settings::mainGroup()
     return d->mainGroup;
 }
 
-QSharedPointer<QSettings> SettingsPrivate::openSettings()
+SettingsGroup *Settings::group(const QString &groupName, bool createIfNotExists)
 {
-    QSettings *settingsPtr;
+    Q_D(Settings);
+    return d->mainGroup->group(groupName, createIfNotExists);
+}
 
+void SettingsPrivate::openSettings()
+{
     if (isNativeFormatEnabled) {
-        settingsPtr = new QSettings();
+        settings = QSharedPointer<QSettings>::create();
     } else {
         //TODO: check at all platforms
         QString configPath = QString("%1/%2/%3.conf")
                 .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
                 .arg(QCoreApplication::organizationName())
                 .arg(QCoreApplication::applicationName());
-        settingsPtr = new QSettings(configPath, QSettings::IniFormat);
+        settings = QSharedPointer<QSettings>::create(configPath, QSettings::IniFormat);
+        qDebug() << Q_FUNC_INFO << "Settings at:" << configPath;
     }
+}
 
-    return QSharedPointer<QSettings>(settingsPtr);
+void SettingsPrivate::readSettings()
+{
+    if (!settings)
+        openSettings();
+    fillGroupFromSettings(mainGroup);
+}
+
+void SettingsPrivate::fillGroupFromSettings(SettingsGroup *groupToFill)
+{
+    QSet<QString> toRemove = groupToFill->values().toSet();
+    for (const QString &key : settings->childKeys()) {
+        toRemove.remove(key);
+        groupToFill->setValue(key, settings->value(key));
+    }
+    for (const QString &key : toRemove)
+        groupToFill->deleteValue(key);
+
+    toRemove = groupToFill->groups().toSet();
+    for (const QString &key : settings->childGroups()) {
+        toRemove.remove(key);
+        SettingsGroup *group = groupToFill->addGroup(key);
+        settings->beginGroup(key);
+        fillGroupFromSettings(group);
+        settings->endGroup();
+    }
+    for (const QString &key : toRemove)
+        groupToFill->deleteGroup(key);
 }
 
 void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &value)
 {
-    qDebug() << Q_FUNC_INFO << key << value;
     Q_ASSERT_X(key.count(), Q_FUNC_INFO, "key list can't be empty");
+
+    QStringList groupsToRestore;
+    while (!settings->group().isEmpty()) {
+        groupsToRestore.prepend(settings->group());
+        settings->endGroup();
+    }
 
     for (int i = 0; i < key.count() - 1; ++i)
         settings->beginGroup(key[i]);
@@ -95,6 +134,9 @@ void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &
 
     for (int i = 0; i < key.count() - 1; ++i)
         settings->endGroup();
+
+    for (const QString &group : groupsToRestore)
+        settings->beginGroup(group);
 }
 
 #include "moc_settings.cpp"
