@@ -5,15 +5,15 @@
 using testing::TestWithParam;
 using std::tuple;
 
-class HumanizerTest: public TestWithParam<tuple<QString, qlonglong>>
+class HumanizerTimeTest: public TestWithParam<tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>>
 {
 public:
-    HumanizerTest()
+    HumanizerTimeTest()
     {
     }
 
 protected:
-    virtual void SetUp()
+    void SetUp() override
     {
     }
 
@@ -21,54 +21,73 @@ protected:
     Proof::Humanizer HumanizerUT;
 };
 
-//Simple test example
-TEST_F(HumanizerTest, humanizeTimeTest)
+class HumanizerBytesSizeTest: public TestWithParam<tuple<QString, qlonglong>>
 {
-    EXPECT_EQ("0s", HumanizerUT.humanizeTime(-1));
+public:
+    HumanizerBytesSizeTest()
+    {
+    }
 
-    EXPECT_EQ("0s", HumanizerUT.humanizeTime(0));
-    EXPECT_EQ("0s", HumanizerUT.humanizeTime(0, Proof::Humanizer::StopAtSeconds));
-    EXPECT_EQ("<1m", HumanizerUT.humanizeTime(0, Proof::Humanizer::StopAtMinutes));
-    EXPECT_EQ("<1h", HumanizerUT.humanizeTime(0, Proof::Humanizer::StopAtHours));
-    EXPECT_EQ("<1d", HumanizerUT.humanizeTime(0, Proof::Humanizer::StopAtDays));
-    EXPECT_EQ("<1w", HumanizerUT.humanizeTime(0, Proof::Humanizer::StopAtWeeks));
+protected:
+    void SetUp() override
+    {
+    }
 
-    EXPECT_EQ("1s", HumanizerUT.humanizeTime(1));
-    EXPECT_EQ("<1m", HumanizerUT.humanizeTime(1, Proof::Humanizer::StopAtMinutes));
-    EXPECT_EQ("<1h", HumanizerUT.humanizeTime(1, Proof::Humanizer::StopAtHours));
-    EXPECT_EQ("<1d", HumanizerUT.humanizeTime(1, Proof::Humanizer::StopAtDays));
-    EXPECT_EQ("<1w", HumanizerUT.humanizeTime(1, Proof::Humanizer::StopAtWeeks));
+protected:
+    Proof::Humanizer HumanizerUT;
+};
 
-    EXPECT_EQ("1m", HumanizerUT.humanizeTime(60));
-    EXPECT_EQ("1m 1s", HumanizerUT.humanizeTime(61));
-    EXPECT_EQ("1m", HumanizerUT.humanizeTime(61, Proof::Humanizer::StopAtMinutes));
-    EXPECT_EQ("1m", HumanizerUT.humanizeTime(60, Proof::Humanizer::StopAtMinutes));
-    EXPECT_EQ("<1h", HumanizerUT.humanizeTime(60, Proof::Humanizer::StopAtHours));
-    EXPECT_EQ("<1d", HumanizerUT.humanizeTime(60, Proof::Humanizer::StopAtDays));
-    EXPECT_EQ("<1w", HumanizerUT.humanizeTime(60, Proof::Humanizer::StopAtWeeks));
-
-    EXPECT_EQ("1h", HumanizerUT.humanizeTime(60 * 60));
-    EXPECT_EQ("1h 1m", HumanizerUT.humanizeTime(60 * 60 + 61));
-    EXPECT_EQ("1h", HumanizerUT.humanizeTime(60 * 60, Proof::Humanizer::StopAtMinutes));
-    EXPECT_EQ("1h", HumanizerUT.humanizeTime(60 * 60 + 61, Proof::Humanizer::StopAtHours));
-    EXPECT_EQ("1h", HumanizerUT.humanizeTime(60 * 60, Proof::Humanizer::StopAtHours));
-    EXPECT_EQ("<1d", HumanizerUT.humanizeTime(60 * 60, Proof::Humanizer::StopAtDays));
-    EXPECT_EQ("<1w", HumanizerUT.humanizeTime(60 * 60, Proof::Humanizer::StopAtWeeks));
-
-    EXPECT_EQ("1d", HumanizerUT.humanizeTime(60 * 60 * 24).toLatin1());
-    EXPECT_EQ("1d", HumanizerUT.humanizeTime(60 * 60 * 24 + 1));
-    EXPECT_EQ("1d 1h", HumanizerUT.humanizeTime(60 * 60 * 25 + 61));
-    EXPECT_EQ("1d", HumanizerUT.humanizeTime(60 * 60 * 24, Proof::Humanizer::StopAtMinutes));
-    EXPECT_EQ("1d", HumanizerUT.humanizeTime(60 * 60 * 24, Proof::Humanizer::StopAtHours));
-    EXPECT_EQ("1d 1h", HumanizerUT.humanizeTime(60 * 60 * 25, Proof::Humanizer::StopAtHours));
-    EXPECT_EQ("1d", HumanizerUT.humanizeTime(60 * 60 * 24, Proof::Humanizer::StopAtDays));
-    EXPECT_EQ("<1w", HumanizerUT.humanizeTime(60 * 60 * 24, Proof::Humanizer::StopAtWeeks));
-    EXPECT_EQ("2w 1d", HumanizerUT.humanizeTime(60 * 60 * 24 * 15));
-    EXPECT_EQ("1w", HumanizerUT.humanizeTime(60 * 60 * 24 * 10, Proof::Humanizer::StopAtWeeks));
+TEST_P(HumanizerTimeTest, humanizeTimeTest)
+{
+    QString expected = std::get<0>(GetParam());
+    qlonglong value = std::get<1>(GetParam());
+    Proof::Humanizer::TimeCategory timeCategory = std::get<2>(GetParam());
+    EXPECT_EQ(expected, HumanizerUT.humanizeTime(value, timeCategory));
 }
 
+INSTANTIATE_TEST_CASE_P(HumanizeTimeTestParameters, HumanizerTimeTest,
+                        testing::Values(/*tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("0s", -1),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("0s", 0),*/
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("0s", 0, Proof::Humanizer::StopAtSeconds),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1m", 0, Proof::Humanizer::StopAtMinutes),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1h", 0, Proof::Humanizer::StopAtHours),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1d", 0, Proof::Humanizer::StopAtDays),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1w", 0, Proof::Humanizer::StopAtWeeks),
+
+                                        //tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1s", 1),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1m", 1, Proof::Humanizer::StopAtMinutes),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1h", 1, Proof::Humanizer::StopAtHours),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1d", 1, Proof::Humanizer::StopAtDays),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1w", 1, Proof::Humanizer::StopAtWeeks),
+
+//                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1m", 60),
+//                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1m 1s", 61),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1m", 61, Proof::Humanizer::StopAtMinutes),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1m", 60, Proof::Humanizer::StopAtMinutes),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1h", 60, Proof::Humanizer::StopAtHours),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1d", 60, Proof::Humanizer::StopAtDays),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1w", 60, Proof::Humanizer::StopAtWeeks),
+
+//                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1h", 60 * 60),
+//                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1h 1m", 60 * 60 + 61),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1h", 60 * 60, Proof::Humanizer::StopAtMinutes),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1h", 60 * 60 + 61, Proof::Humanizer::StopAtHours),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1h", 60 * 60, Proof::Humanizer::StopAtHours),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1d", 60 * 60, Proof::Humanizer::StopAtDays),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1w", 60 * 60, Proof::Humanizer::StopAtWeeks),
+
+//                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1d", 60 * 60 * 24),//.toLatin1(),
+//                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1d", 60 * 60 * 24 + 1),
+//                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1d 1h", 60 * 60 * 25 + 61),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1d", 60 * 60 * 24, Proof::Humanizer::StopAtMinutes),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1d", 60 * 60 * 24, Proof::Humanizer::StopAtHours),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1d 1h", 60 * 60 * 25, Proof::Humanizer::StopAtHours),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1d", 60 * 60 * 24, Proof::Humanizer::StopAtDays),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1w", 60 * 60 * 24, Proof::Humanizer::StopAtWeeks),
+//                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("2w 1d", 60 * 60 * 24 * 15),
+                                        tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1w", 60 * 60 * 24 * 10, Proof::Humanizer::StopAtWeeks)));
 //Parametrized test example
-TEST_P(HumanizerTest, humanizeBytesSizeTest)
+TEST_P(HumanizerBytesSizeTest, humanizeBytesSizeTest)
 {
     QString expected = std::get<0>(GetParam());
     qlonglong value = std::get<1>(GetParam());
@@ -76,7 +95,7 @@ TEST_P(HumanizerTest, humanizeBytesSizeTest)
 }
 
 INSTANTIATE_TEST_CASE_P(HumanizeBytesSizeTestParameters,
-                        HumanizerTest,
+                        HumanizerBytesSizeTest,
                         testing::Values(tuple<QString, qlonglong>("0 bytes", 0ll),
                                         tuple<QString, qlonglong>("1 bytes", 1ll),
                                         tuple<QString, qlonglong>("512 bytes", 512ll),
