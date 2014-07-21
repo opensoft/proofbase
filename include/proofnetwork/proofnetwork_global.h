@@ -1,1 +1,10 @@
-#include "proofnetwork/network/proofnetwork_global.h"
+#ifndef PROOFNETWORK_GLOBAL_H
+#define PROOFNETWORK_GLOBAL_H
+
+#ifdef PROOF_NETWORK_LIB
+#  define PROOF_NETWORK_EXPORT Q_DECL_EXPORT
+#else
+#  define PROOF_NETWORK_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // PROOFNETWORK_GLOBAL_H
