@@ -4,6 +4,8 @@
 #include "restclient.h"
 
 #include <QNetworkReply>
+#include <QThread>
+#include <QDebug>
 
 static const qlonglong NETWORK_SSL_ERROR_OFFSET = 1500;
 static const qlonglong NETWORK_ERROR_OFFSET = 1000;
@@ -50,6 +52,13 @@ void AbstractRestApi::onRestClientChanging(const RestClientSP &client)
 QNetworkReply *AbstractRestApiPrivate::get(const QString &method, const QUrlQuery &query)
 {
     Q_Q(AbstractRestApi);
+    if (QThread::currentThread() != restClient->thread()) {
+        qWarning() << "AbstractRestApi::get(): RestApi and RestClient should live in same thread."
+                   << "\nRestClient object is in thread =" << restClient->thread()
+                   << "\nRestApi is in thread =" << q->thread()
+                   << "\nRunning in thread =" << QThread::currentThread();
+        return 0;
+    }
     QNetworkReply *reply = restClient->get(method, query);
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [this, reply](QNetworkReply::NetworkError) {replyErrorOccurred(reply);});
@@ -59,6 +68,13 @@ QNetworkReply *AbstractRestApiPrivate::get(const QString &method, const QUrlQuer
 QNetworkReply *AbstractRestApiPrivate::post(const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
     Q_Q(AbstractRestApi);
+    if (QThread::currentThread() != restClient->thread()) {
+        qWarning() << "AbstractRestApi::post(): RestApi and RestClient should live in same thread."
+                   << "\nRestClient object is in thread =" << restClient->thread()
+                   << "\nRestApi is in thread =" << q->thread()
+                   << "\nrunning in thread =" << QThread::currentThread();
+        return 0;
+    }
     QNetworkReply *reply = restClient->post(method, query, body);
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [this, reply](QNetworkReply::NetworkError) {replyErrorOccurred(reply);});
