@@ -10,6 +10,8 @@
 static const qlonglong NETWORK_SSL_ERROR_OFFSET = 1500;
 static const qlonglong NETWORK_ERROR_OFFSET = 1000;
 
+std::atomic<qulonglong> Proof::AbstractRestApiPrivate::lastUsedOperationId {0};
+
 using namespace Proof;
 
 AbstractRestApi::AbstractRestApi(const RestClientSP &restClient, AbstractRestApiPrivate &dd, QObject *parent)
@@ -43,13 +45,23 @@ void AbstractRestApi::onRestClientChanging(const RestClientSP &client)
         QObject::disconnect(d->sslErrorsConnection);
     if (!client)
         return;
-    d->replyFinishedConnection = QObject::connect(client.data(), &RestClient::finished,
-                                      this, [d](QNetworkReply *reply){d->replyFinished(reply);});
-    d->sslErrorsConnection = QObject::connect(client.data(), &RestClient::sslErrors,
-                                      this, [d](QNetworkReply *reply, const QList<QSslError> &errors){d->sslErrorsOccurred(reply, errors);});
+
+    auto replyFinishedCaller = [d](QNetworkReply *reply) {
+        if (!d->repliesIds.contains(reply))
+            return;
+        d->replyFinished(d->repliesIds[reply], reply);
+    };
+    auto sslErrorsOccurredCaller = [d](QNetworkReply *reply, const QList<QSslError> &errors) {
+        if (!d->repliesIds.contains(reply))
+            return;
+        d->sslErrorsOccurred(d->repliesIds[reply], reply, errors);
+    };
+
+    d->replyFinishedConnection = QObject::connect(client.data(), &RestClient::finished, this, replyFinishedCaller);
+    d->sslErrorsConnection = QObject::connect(client.data(), &RestClient::sslErrors, this, sslErrorsOccurredCaller);
 }
 
-QNetworkReply *AbstractRestApiPrivate::get(const QString &method, const QUrlQuery &query)
+QNetworkReply *AbstractRestApiPrivate::get(qulonglong &operationId, const QString &method, const QUrlQuery &query)
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
@@ -60,12 +72,11 @@ QNetworkReply *AbstractRestApiPrivate::get(const QString &method, const QUrlQuer
         return 0;
     }
     QNetworkReply *reply = restClient->get(method, query);
-    QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-                     q, [this, reply](QNetworkReply::NetworkError) {replyErrorOccurred(reply);});
+    setupReply(operationId, reply);
     return reply;
 }
 
-QNetworkReply *AbstractRestApiPrivate::post(const QString &method, const QUrlQuery &query, const QByteArray &body)
+QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
@@ -76,48 +87,61 @@ QNetworkReply *AbstractRestApiPrivate::post(const QString &method, const QUrlQue
         return 0;
     }
     QNetworkReply *reply = restClient->post(method, query, body);
-    QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-                     q, [this, reply](QNetworkReply::NetworkError) {replyErrorOccurred(reply);});
+    setupReply(operationId, reply);
     return reply;
 }
 
-void AbstractRestApiPrivate::replyFinished(QNetworkReply *reply)
+void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply *reply)
 {
     Q_Q(AbstractRestApi);
     if (reply->error() == QNetworkReply::NetworkError::NoError
             || (reply->error() >= 100 && (reply->error() % 100) != 99)) {
         int errorNumber = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if (errorNumber != 200 && errorNumber != 201) {
-            emit q->errorOccurred(AbstractRestApi::ErrorLevel::ServerError,
+            emit q->errorOccurred(operationId, AbstractRestApi::ErrorLevel::ServerError,
                                   errorNumber, reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString());
-            cleanupReply(reply);
+            cleanupReply(operationId, reply);
         }
     }
 }
 
-void AbstractRestApiPrivate::replyErrorOccurred(QNetworkReply *reply)
+void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetworkReply *reply)
 {
     Q_Q(AbstractRestApi);
     if (reply->error() != QNetworkReply::NetworkError::NoError
             && (reply->error() < 100 || (reply->error() % 100) == 99)) {
         int errorNumber = NETWORK_ERROR_OFFSET
                 + static_cast<int>(reply->error());
-        emit q->errorOccurred(AbstractRestApi::ErrorLevel::ClientError,
+        emit q->errorOccurred(operationId, AbstractRestApi::ErrorLevel::ClientError,
                               errorNumber, reply->errorString());
-        cleanupReply(reply);
+        cleanupReply(operationId, reply);
     }
 }
 
 
-void AbstractRestApiPrivate::sslErrorsOccurred(QNetworkReply *reply, const QList<QSslError> &errors)
+void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkReply *reply, const QList<QSslError> &errors)
 {
-    Q_UNUSED(reply);
     Q_Q(AbstractRestApi);
     for (const QSslError &error : errors) {
         if (error.error() != QSslError::SslError::NoError) {
             int errorNumber = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
-            emit q->errorOccurred(AbstractRestApi::ErrorLevel::ClientError, errorNumber, error.errorString());
-            cleanupReply(reply);
+            emit q->errorOccurred(operationId, AbstractRestApi::ErrorLevel::ClientError, errorNumber, error.errorString());
+            cleanupReply(operationId, reply);
         }
     }
+}
+
+void AbstractRestApiPrivate::cleanupReply(qulonglong operationId, QNetworkReply *reply)
+{
+    Q_UNUSED(operationId);
+    repliesIds.remove(reply);
+}
+
+void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *reply)
+{
+    Q_Q(AbstractRestApi);
+    operationId = ++lastUsedOperationId;
+    repliesIds[reply] = operationId;
+    QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
+                     q, [this, reply, operationId](QNetworkReply::NetworkError) {replyErrorOccurred(operationId, reply);});
 }

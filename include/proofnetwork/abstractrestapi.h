@@ -28,7 +28,7 @@ public:
     void setRestClient(const RestClientSP &client);
 
 signals:
-    void errorOccurred(Proof::AbstractRestApi::ErrorLevel errorLevel, qlonglong errorNumber, const QString &errorString);
+    void errorOccurred(qulonglong operationId, Proof::AbstractRestApi::ErrorLevel errorLevel, qlonglong errorNumber, const QString &errorString);
 
 protected:
     AbstractRestApi(const RestClientSP &restClient, AbstractRestApiPrivate &dd, QObject *parent = 0);

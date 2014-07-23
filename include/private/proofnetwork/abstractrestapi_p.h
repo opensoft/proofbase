@@ -5,9 +5,13 @@
 #include "proofnetwork/restclient.h"
 #include "proofnetwork/proofnetwork_global.h"
 
-#include <QNetworkReply>
+#include <QSslError>
+#include <QHash>
+
+#include <atomic>
 
 class QTimer;
+class QNetworkReply;
 
 namespace Proof {
 class AbstractRestApi;
@@ -17,17 +21,24 @@ class PROOF_NETWORK_EXPORT AbstractRestApiPrivate : public ProofObjectPrivate
 public:
     AbstractRestApiPrivate() : ProofObjectPrivate() {}
 
-    QNetworkReply *get(const QString &method, const QUrlQuery &query = QUrlQuery());
-    QNetworkReply *post(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");
+    QNetworkReply *get(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery());
+    QNetworkReply *post(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery(),
+                        const QByteArray &body = "");
 
-    virtual void replyFinished(QNetworkReply *reply);
-    virtual void replyErrorOccurred(QNetworkReply *reply);
-    virtual void sslErrorsOccurred(QNetworkReply *reply, const QList<QSslError> &errors);
-    virtual void cleanupReply(QNetworkReply *reply) = 0;
+    virtual void replyFinished(qulonglong operationId, QNetworkReply *reply);
+    virtual void replyErrorOccurred(qulonglong operationId, QNetworkReply *reply);
+    virtual void sslErrorsOccurred(qulonglong operationId, QNetworkReply *reply, const QList<QSslError> &errors);
+    virtual void cleanupReply(qulonglong operationId, QNetworkReply *reply);
 
     QMetaObject::Connection replyFinishedConnection;
     QMetaObject::Connection sslErrorsConnection;
     RestClientSP restClient;
+
+private:
+    void setupReply(qulonglong &operationId, QNetworkReply *reply);
+
+    static std::atomic<qulonglong> lastUsedOperationId;
+    QHash<QNetworkReply *, qulonglong> repliesIds;
 };
 }
 #endif // ABSTRACTRESTAPI_P_H
