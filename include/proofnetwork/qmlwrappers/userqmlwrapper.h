@@ -16,6 +16,7 @@ class PROOF_NETWORK_EXPORT UserQmlWrapper : public NetworkDataEntityQmlWrapper
     Q_DECLARE_PRIVATE(UserQmlWrapper)
 public:
     explicit UserQmlWrapper(const UserSP &user, QObject *parent = 0);
+    PROOF_NDE_WRAPPER_TOOLS
 
     QString userName() const;
     QString fullName() const;

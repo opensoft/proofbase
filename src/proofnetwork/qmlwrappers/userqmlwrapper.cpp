@@ -21,6 +21,8 @@ UserQmlWrapper::UserQmlWrapper(const UserSP &user, UserQmlWrapperPrivate &dd, QO
     }
 }
 
-PROOF_NDE_WRAPPED_PROPERTY_IMPL_R(User, QString, userName)
-PROOF_NDE_WRAPPED_PROPERTY_IMPL_R(User, QString, fullName)
-PROOF_NDE_WRAPPED_PROPERTY_IMPL_R(User, QString, email)
+PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(User, QString, userName)
+PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(User, QString, fullName)
+PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(User, QString, email)
+
+PROOF_NDE_WRAPPER_TOOLS_IMPL(User)
