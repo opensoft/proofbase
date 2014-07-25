@@ -11,6 +11,20 @@ UserQmlWrapper::UserQmlWrapper(const UserSP &user, QObject *parent)
 UserQmlWrapper::UserQmlWrapper(const UserSP &user, UserQmlWrapperPrivate &dd, QObject *parent)
     : NetworkDataEntityQmlWrapper(user, dd, parent)
 {
+}
+
+PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(User, QString, userName)
+PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(User, QString, fullName)
+PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(User, QString, email)
+
+PROOF_NDE_WRAPPER_TOOLS_IMPL(User)
+
+void UserQmlWrapper::setupEntity()
+{
+    Q_D(UserQmlWrapper);
+    UserSP user = d->entity<User>();
+    Q_ASSERT(user);
+
     if (user) {
         connect(user.data(), &User::userNameChanged,
                 this, &UserQmlWrapper::userNameChanged);
@@ -20,9 +34,3 @@ UserQmlWrapper::UserQmlWrapper(const UserSP &user, UserQmlWrapperPrivate &dd, QO
                 this, &UserQmlWrapper::emailChanged);
     }
 }
-
-PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(User, QString, userName)
-PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(User, QString, fullName)
-PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(User, QString, email)
-
-PROOF_NDE_WRAPPER_TOOLS_IMPL(User)

@@ -52,6 +52,8 @@ public:
     Q_INVOKABLE virtual Proof::NetworkDataEntityQmlWrapper *clone() const = 0;
     bool isFetched() const;
 
+    void setEntity(const QSharedPointer<NetworkDataEntity> &networkDataEntity);
+
 signals:
     void isFetchedChanged(bool arg);
 
@@ -59,6 +61,8 @@ protected:
     NetworkDataEntityQmlWrapper() = delete;
     explicit NetworkDataEntityQmlWrapper(const QSharedPointer<NetworkDataEntity> &networkDataEntity,
                                          NetworkDataEntityQmlWrapperPrivate &dd, QObject *parent = 0);
+
+    virtual void setupEntity() = 0;
 };
 }
 

@@ -10,10 +10,8 @@ NetworkDataEntityQmlWrapper::NetworkDataEntityQmlWrapper(const QSharedPointer<Ne
                                                          NetworkDataEntityQmlWrapperPrivate &dd, QObject *parent)
     : ProofObject(dd, parent)
 {
-    Q_D(NetworkDataEntityQmlWrapper);
-    d->dataEntity = networkDataEntity;
+    setEntity(networkDataEntity);
 }
-
 bool NetworkDataEntityQmlWrapper::isFetched() const
 {
     Q_D(const NetworkDataEntityQmlWrapper);
@@ -21,3 +19,9 @@ bool NetworkDataEntityQmlWrapper::isFetched() const
     return d->dataEntity->isFetched();
 }
 
+void NetworkDataEntityQmlWrapper::setEntity(const QSharedPointer<NetworkDataEntity> &networkDataEntity)
+{
+    Q_D(NetworkDataEntityQmlWrapper);
+    d->dataEntity = networkDataEntity;
+    setupEntity();
+}
