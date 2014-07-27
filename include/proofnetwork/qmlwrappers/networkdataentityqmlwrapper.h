@@ -28,7 +28,7 @@
         } \
     }
 
-#define PROOF_NDE_WRAPPER_TOOLS \
+#define PROOF_NDE_WRAPPER_TOOLS(Nde) \
     Proof::NetworkDataEntityQmlWrapper *clone() const override;
 
 #define PROOF_NDE_WRAPPER_TOOLS_IMPL(Nde) \
