@@ -11,6 +11,7 @@ UserQmlWrapper::UserQmlWrapper(const UserSP &user, QObject *parent)
 UserQmlWrapper::UserQmlWrapper(const UserSP &user, UserQmlWrapperPrivate &dd, QObject *parent)
     : NetworkDataEntityQmlWrapper(user, dd, parent)
 {
+    setupEntity();
 }
 
 PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(User, QString, userName)
