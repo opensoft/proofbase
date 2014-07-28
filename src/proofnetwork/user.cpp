@@ -59,6 +59,12 @@ UserSP User::create(const QString &userName)
     return result;
 }
 
+UserSP User::defaultEntity()
+{
+    static auto entity = create("");
+    return entity;
+}
+
 void UserPrivate::setUserName(const QString &arg)
 {
     Q_Q(User);

@@ -22,6 +22,7 @@ public:
     UserQmlWrapper *toQmlWrapper(QObject *parent = 0) const override;
 
     static UserSP create(const QString &userName);
+    static UserSP defaultEntity();
 
 signals:
     void userNameChanged(const QString &arg);
