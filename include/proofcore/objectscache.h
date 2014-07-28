@@ -46,7 +46,7 @@ public:
 
     void add(const Key &key, const QSharedPointer<T> &object) override
     {
-        if (!object)
+        if (!object || key == Key())
             return;
         m_cache[key] = object.toWeakRef();
     }
@@ -77,6 +77,8 @@ public:
             if (!foundValue)
                 m_cache.remove(key);
         }
+        if (!foundValue && key == Key())
+            foundValue = T::defaultEntity();
         return foundValue;
     }
 
@@ -106,7 +108,7 @@ public:
 
     void add(const Key &key, const QSharedPointer<T> &object) override
     {
-        if (!object)
+        if (!object || key == Key())
             return;
         m_cache[key] = object;
     }
@@ -131,6 +133,8 @@ public:
         QSharedPointer<T> foundValue = m_cache.value(key, QSharedPointer<T>());
         if (!foundValue && useOtherCaches)
             foundValue = WeakObjectsCache<Key, T>::instance().value(key, false);
+        if (!foundValue && key == Key())
+            foundValue = T::defaultEntity();
         return foundValue;
     }
 
