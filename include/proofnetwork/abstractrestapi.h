@@ -10,25 +10,18 @@ namespace Proof {
 
 class AbstractRestApiPrivate;
 
+struct RestApiError;
+
 class PROOF_NETWORK_EXPORT AbstractRestApi : public ProofObject
 {
     Q_OBJECT
-    Q_ENUMS(ErrorLevel)
     Q_DECLARE_PRIVATE(AbstractRestApi)
 public:
-    enum ErrorLevel {
-        ClientError,
-        ServerError,
-        JsonParseError,
-        JsonServerError,
-        JsonDataError
-    };
-
     RestClientSP restClient();
     void setRestClient(const RestClientSP &client);
 
 signals:
-    void errorOccurred(qulonglong operationId, Proof::AbstractRestApi::ErrorLevel errorLevel, qlonglong errorNumber, const QString &errorString);
+    void errorOccurred(qulonglong operationId, const Proof::RestApiError &error);
 
 protected:
     AbstractRestApi(const RestClientSP &restClient, AbstractRestApiPrivate &dd, QObject *parent = 0);
@@ -36,6 +29,21 @@ protected:
     virtual void onRestClientChanging(const RestClientSP &client);
 };
 
+struct RestApiError
+{
+    enum ErrorLevel {
+        ClientError,
+        ServerError,
+        JsonParseError,
+        JsonServerError,
+        JsonDataError
+    };
+    ErrorLevel level;
+    qlonglong code;
+    QString message;
+};
 }
+
+Q_DECLARE_METATYPE(Proof::RestApiError)
 
 #endif // ABSTRACTRESTAPI_H

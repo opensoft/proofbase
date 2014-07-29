@@ -17,7 +17,6 @@ using namespace Proof;
 AbstractRestApi::AbstractRestApi(const RestClientSP &restClient, AbstractRestApiPrivate &dd, QObject *parent)
     : ProofObject(dd, parent)
 {
-    qRegisterMetaType<Proof::AbstractRestApi::ErrorLevel>("Proof::AbstractRestApi::ErrorLevel");
     setRestClient(restClient);
 }
 
@@ -96,10 +95,12 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
     Q_Q(AbstractRestApi);
     if (reply->error() == QNetworkReply::NetworkError::NoError
             || (reply->error() >= 100 && (reply->error() % 100) != 99)) {
-        int errorNumber = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if (errorNumber != 200 && errorNumber != 201) {
-            emit q->errorOccurred(operationId, AbstractRestApi::ErrorLevel::ServerError,
-                                  errorNumber, reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString());
+        int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (errorCode != 200 && errorCode != 201) {
+            emit q->errorOccurred(operationId,
+                                  RestApiError{RestApiError::ErrorLevel::ServerError,
+                                               errorCode,
+                                               reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString()});
             cleanupReply(operationId, reply);
         }
     }
@@ -110,10 +111,12 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
     Q_Q(AbstractRestApi);
     if (reply->error() != QNetworkReply::NetworkError::NoError
             && (reply->error() < 100 || (reply->error() % 100) == 99)) {
-        int errorNumber = NETWORK_ERROR_OFFSET
+        int errorCode = NETWORK_ERROR_OFFSET
                 + static_cast<int>(reply->error());
-        emit q->errorOccurred(operationId, AbstractRestApi::ErrorLevel::ClientError,
-                              errorNumber, reply->errorString());
+        emit q->errorOccurred(operationId,
+                              RestApiError{RestApiError::ErrorLevel::ClientError,
+                                           errorCode,
+                                           reply->errorString()});
         cleanupReply(operationId, reply);
     }
 }
@@ -124,8 +127,11 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
     Q_Q(AbstractRestApi);
     for (const QSslError &error : errors) {
         if (error.error() != QSslError::SslError::NoError) {
-            int errorNumber = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
-            emit q->errorOccurred(operationId, AbstractRestApi::ErrorLevel::ClientError, errorNumber, error.errorString());
+            int errorCode = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
+            emit q->errorOccurred(operationId,
+                                  RestApiError{RestApiError::ErrorLevel::ClientError,
+                                               errorCode,
+                                               error.errorString()});
             cleanupReply(operationId, reply);
         }
     }
