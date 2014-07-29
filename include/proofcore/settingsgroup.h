@@ -1,6 +1,7 @@
 #ifndef SETTINGSGROUP_H
 #define SETTINGSGROUP_H
 
+#include "proofcore/settings.h"
 #include "proofcore/proofobject.h"
 #include "proofcore/proofcore_global.h"
 
@@ -8,7 +9,6 @@
 
 namespace Proof {
 
-class Settings;
 class SettingsGroupPrivate;
 
 class PROOF_CORE_EXPORT SettingsGroup : public ProofObject
@@ -21,8 +21,10 @@ public:
     QStringList groups() const;
     QStringList values() const;
 
-    SettingsGroup *group(const QString &groupName, bool createIfNotExists = false);
-    QVariant value(const QString &key, const QVariant &defaultValue = QVariant(), bool createIfNotExists = false);
+    SettingsGroup *group(const QString &groupName,
+                         Settings::NotFoundPolicy notFoundPolicy = Settings::NotFoundPolicy::DoNothing);
+    QVariant value(const QString &key, const QVariant &defaultValue = QVariant(),
+                   Settings::NotFoundPolicy notFoundPolicy = Settings::NotFoundPolicy::DoNothing);
 
     SettingsGroup *addGroup(const QString &groupName);
     void setValue(const QString &key, const QVariant &value);

@@ -38,20 +38,20 @@ QStringList SettingsGroup::values() const
     return d->values.keys();
 }
 
-SettingsGroup *SettingsGroup::group(const QString &groupName, bool createIfNotExists)
+SettingsGroup *SettingsGroup::group(const QString &groupName, Settings::NotFoundPolicy notFoundPolicy)
 {
     Q_D(SettingsGroup);
     SettingsGroup *result = d->groups.value(groupName, 0);
-    if (!result && createIfNotExists)
+    if (!result && notFoundPolicy == Settings::NotFoundPolicy::Add)
         result = addGroup(groupName);
     return result;
 }
 
-QVariant SettingsGroup::value(const QString &key, const QVariant &defaultValue, bool createIfNotExists)
+QVariant SettingsGroup::value(const QString &key, const QVariant &defaultValue, Settings::NotFoundPolicy notFoundPolicy)
 {
     Q_D(SettingsGroup);
     if (!d->values.contains(key)) {
-        if (createIfNotExists)
+        if (notFoundPolicy == Settings::NotFoundPolicy::Add)
             setValue(key, defaultValue);
         return defaultValue;
     }

@@ -64,10 +64,10 @@ SettingsGroup *Settings::mainGroup()
     return d->mainGroup;
 }
 
-SettingsGroup *Settings::group(const QString &groupName, bool createIfNotExists)
+SettingsGroup *Settings::group(const QString &groupName, NotFoundPolicy notFoundPolicy)
 {
     Q_D(Settings);
-    return d->mainGroup->group(groupName, createIfNotExists);
+    return d->mainGroup->group(groupName, notFoundPolicy);
 }
 
 void SettingsPrivate::openSettings()
