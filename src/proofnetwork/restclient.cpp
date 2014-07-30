@@ -206,7 +206,7 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         QJsonParseError error;
         QJsonDocument::fromJson(body, &error);
 
-        //TODO: parse xml
+        //NOTE: We assume that if it is not json then it is xml
         if (error.error == QJsonParseError::NoError)
             result.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
         else

@@ -8,7 +8,7 @@
 namespace Proof {
 class NetworkDataEntityQmlWrapper;
 class NetworkDataEntityPrivate;
-//TODO: make NDEs thread-safe
+//TODO: make NDEs thread-safe if will be needed
 class PROOF_NETWORK_EXPORT NetworkDataEntity : public ProofObject
 {
     Q_OBJECT
