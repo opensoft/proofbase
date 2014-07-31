@@ -1,7 +1,7 @@
 #include "abstractrestapi.h"
 
 __attribute__((constructor))
-void libraryInit()
+static void libraryInit()
 {
     qRegisterMetaType<Proof::RestApiError>("Proof::RestApiError");
 }
