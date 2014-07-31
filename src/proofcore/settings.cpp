@@ -76,10 +76,17 @@ void SettingsPrivate::openSettings()
         settings = QSharedPointer<QSettings>::create();
     } else {
         //TODO: check at all platforms
+#ifdef Q_OS_WIN
+        //Windows already gives us org/app as part of conf location
+        QString configPath = QString("%1/%2.conf")
+                .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
+                .arg(QCoreApplication::applicationName());
+#else
         QString configPath = QString("%1/%2/%3.conf")
                 .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
                 .arg(QCoreApplication::organizationName())
                 .arg(QCoreApplication::applicationName());
+#endif
         settings = QSharedPointer<QSettings>::create(configPath, QSettings::IniFormat);
         qDebug() << Q_FUNC_INFO << "Settings at:" << configPath;
     }
@@ -138,5 +145,3 @@ void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &
     for (const QString &group : groupsToRestore)
         settings->beginGroup(group);
 }
-
-#include "moc_settings.cpp"
