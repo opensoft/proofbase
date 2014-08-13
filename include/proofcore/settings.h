@@ -20,15 +20,14 @@ public:
     };
 
     explicit Settings(QObject *parent = 0);
+    ~Settings();
 
-    bool isNativeFormatEnabled() const;
-    void setNativeFormatEnabled(bool arg);
     void sync();
     SettingsGroup *mainGroup();
+    QStringList groups() const;
     SettingsGroup *group(const QString &groupName, NotFoundPolicy notFoundPolicy = NotFoundPolicy::DoNothing);
-
-signals:
-    void nativeFormatEnabledChanged(bool arg);
+    SettingsGroup *addGroup(const QString &groupName);
+    static QString filePath();
 
 };
 

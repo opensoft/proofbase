@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>data/settings_read_test.conf</file>
+    </qresource>
+</RCC>

@@ -14,12 +14,12 @@ class SettingsPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(Settings)
 
+    static QString filePath();
     void openSettings();
     void readSettings();
     void fillGroupFromSettings(SettingsGroup *groupToFill);
     void groupValueChanged(const QStringList &key, const QVariant &value);
 
-    bool isNativeFormatEnabled = false;
     SettingsGroup *mainGroup;
     QSharedPointer<QSettings> settings;
 };
@@ -37,25 +37,17 @@ Settings::Settings(QObject *parent)
     d->readSettings();
 }
 
-bool Settings::isNativeFormatEnabled() const
-{
-    Q_D(const Settings);
-    return d->isNativeFormatEnabled;
-}
-
-void Settings::setNativeFormatEnabled(bool arg)
+Settings::~Settings()
 {
     Q_D(Settings);
-    if (d->isNativeFormatEnabled != arg) {
-        d->isNativeFormatEnabled = arg;
-        emit nativeFormatEnabledChanged(arg);
-    }
+    d->settings.clear();
 }
 
 void Settings::sync()
 {
     Q_D(Settings);
     d->settings->sync();
+    d->readSettings();
 }
 
 SettingsGroup *Settings::mainGroup()
@@ -64,32 +56,51 @@ SettingsGroup *Settings::mainGroup()
     return d->mainGroup;
 }
 
+QStringList Settings::groups() const
+{
+    Q_D(const Settings);
+    return d->mainGroup->groups();
+}
+
 SettingsGroup *Settings::group(const QString &groupName, NotFoundPolicy notFoundPolicy)
 {
     Q_D(Settings);
     return d->mainGroup->group(groupName, notFoundPolicy);
 }
 
+SettingsGroup *Settings::addGroup(const QString &groupName)
+{
+    Q_D(Settings);
+    return d->mainGroup->addGroup(groupName);
+}
+
+QString Settings::filePath()
+{
+    return SettingsPrivate::filePath();
+}
+
+QString SettingsPrivate::filePath()
+{
+    //TODO: check at all platforms
+#ifdef Q_OS_WIN
+    //Windows already gives us org/app as part of conf location
+    QString configPath = QString("%1/%2.conf")
+            .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
+            .arg(QCoreApplication::applicationName());
+#else
+    QString configPath = QString("%1/%2/%3.conf")
+            .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
+            .arg(QCoreApplication::organizationName())
+            .arg(QCoreApplication::applicationName());
+#endif
+    return configPath;
+}
+
 void SettingsPrivate::openSettings()
 {
-    if (isNativeFormatEnabled) {
-        settings = QSharedPointer<QSettings>::create();
-    } else {
-        //TODO: check at all platforms
-#ifdef Q_OS_WIN
-        //Windows already gives us org/app as part of conf location
-        QString configPath = QString("%1/%2.conf")
-                .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
-                .arg(QCoreApplication::applicationName());
-#else
-        QString configPath = QString("%1/%2/%3.conf")
-                .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
-                .arg(QCoreApplication::organizationName())
-                .arg(QCoreApplication::applicationName());
-#endif
-        settings = QSharedPointer<QSettings>::create(configPath, QSettings::IniFormat);
-        qDebug() << Q_FUNC_INFO << "Settings at:" << configPath;
-    }
+    QString configPath = filePath();
+    settings = QSharedPointer<QSettings>::create(configPath, QSettings::IniFormat);
+    qDebug() << Q_FUNC_INFO << "Settings at:" << configPath;
 }
 
 void SettingsPrivate::readSettings()
