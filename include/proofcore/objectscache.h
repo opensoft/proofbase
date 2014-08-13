@@ -22,6 +22,7 @@ public:
     virtual void remove(const Key &key) = 0;
     virtual void clear() = 0;
     virtual bool contains(const Key &key) const = 0;
+    virtual bool isEmpty() const = 0;
     virtual QSharedPointer<T> value(const Key &key, bool useOtherCaches = true) = 0;
 
 protected:
@@ -71,6 +72,14 @@ public:
     {
         m_cacheLock.lockForRead();
         bool result = m_cache.contains(key);
+        m_cacheLock.unlock();
+        return result;
+    }
+
+    bool isEmpty() const override
+    {
+        m_cacheLock.lockForRead();
+        bool result = m_cache.isEmpty();
         m_cacheLock.unlock();
         return result;
     }
@@ -152,6 +161,14 @@ public:
     {
         m_cacheLock.lockForRead();
         bool result = m_cache.contains(key);
+        m_cacheLock.unlock();
+        return result;
+    }
+
+    bool isEmpty() const override
+    {
+        m_cacheLock.lockForRead();
+        bool result = m_cache.isEmpty();
         m_cacheLock.unlock();
         return result;
     }
