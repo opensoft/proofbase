@@ -37,7 +37,7 @@ protected:
     Proof::Humanizer HumanizerUT;
 };
 
-TEST_P(HumanizerTimeTest, humanizeTimeTest)
+TEST_P(HumanizerTimeTest, humanizeTime)
 {
     QString expected = std::get<0>(GetParam());
     qlonglong value = std::get<1>(GetParam());
@@ -76,7 +76,7 @@ INSTANTIATE_TEST_CASE_P(HumanizeTimeTestParameters, HumanizerTimeTest,
                                         tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("<1w", 60 * 60 * 24, Proof::Humanizer::StopAtWeeks),
                                         tuple<QString, qlonglong, Proof::Humanizer::TimeCategory>("1w", 60 * 60 * 24 * 10, Proof::Humanizer::StopAtWeeks)));
 //Parametrized test example
-TEST_P(HumanizerBytesSizeTest, humanizeBytesSizeTest)
+TEST_P(HumanizerBytesSizeTest, humanizeBytesSize)
 {
     QString expected = std::get<0>(GetParam());
     qlonglong value = std::get<1>(GetParam());
