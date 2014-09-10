@@ -1,0 +1,7 @@
+include(proofcore.prf)
+
+win32 {
+    LIBS *= -lProofNetwork$${PROOF_VERSION_MAJOR}
+} else {
+    LIBS *= -lProofNetwork
+}

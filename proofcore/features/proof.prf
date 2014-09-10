@@ -1,4 +1,0 @@
-include(proof_common.prf)
-
-LIBS += -L$$(PROOF_PATH)/lib -lProofCore
-INCLUDEPATH += $$(PROOF_PATH)/include
