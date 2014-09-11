@@ -31,6 +31,18 @@ protected:
     }
 
 protected:
+    void prepareSettingsFile()
+    {
+        QFile input(":/data/settings_read_test.conf");
+        if (!input.open(QIODevice::ReadOnly))
+            return;
+        QFile output(Settings::filePath());
+        if (!output.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Text))
+            return;
+        QByteArray data = input.readAll();
+        output.write(data);
+    }
+
     QString appName;
     static int counter;
 };
@@ -39,7 +51,7 @@ int SettingsTest::counter = 0;
 
 TEST_F(SettingsTest, read)
 {
-    QFile::copy(":/data/settings_read_test.conf", Settings::filePath());
+    prepareSettingsFile();
 
     Settings settings;
     SettingsGroup *mainGroup = settings.mainGroup();
@@ -70,7 +82,7 @@ TEST_F(SettingsTest, read)
 
 TEST_F(SettingsTest, valueNotFoundPolicy)
 {
-    QFile::copy(":/data/settings_read_test.conf", Settings::filePath());
+    prepareSettingsFile();
 
     Settings settings;
     SettingsGroup *mainGroup = settings.mainGroup();
@@ -124,7 +136,7 @@ TEST_F(SettingsTest, write)
     };
 
     QFile settingsFile(Settings::filePath());
-    settingsFile.open(QIODevice::ReadOnly);
+    settingsFile.open(QIODevice::ReadOnly|QIODevice::Text);
 
     QString fromFile = QString(settingsFile.readAll()).toLower();
     fromFile.remove(" ");

@@ -1,3 +1,5 @@
+include(proof_common.prf)
+
 win32 {
     LIBS *= -lProofCore$${PROOF_VERSION_MAJOR}
 } else {
