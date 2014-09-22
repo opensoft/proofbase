@@ -4,6 +4,8 @@
 #include "proofcore/settingsgroup.h"
 
 #include <QFile>
+#include <QDir>
+#include <QFileInfo>
 #include <QCoreApplication>
 #include <QSignalSpy>
 
@@ -36,6 +38,8 @@ protected:
         QFile input(":/data/settings_read_test.conf");
         if (!input.open(QIODevice::ReadOnly))
             return;
+        QFileInfo settingsFile(Settings::filePath());
+        settingsFile.absoluteDir().mkpath(".");
         QFile output(Settings::filePath());
         if (!output.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Text))
             return;
