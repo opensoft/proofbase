@@ -20,6 +20,18 @@ bool NetworkDataEntityQmlWrapper::isFetched() const
     return d->dataEntity->isFetched();
 }
 
+QSharedPointer<NetworkDataEntity> NetworkDataEntityQmlWrapper::entity()
+{
+    Q_D(const NetworkDataEntityQmlWrapper);
+    return d->dataEntity;
+}
+
+const QSharedPointer<NetworkDataEntity> NetworkDataEntityQmlWrapper::entity() const
+{
+    Q_D(const NetworkDataEntityQmlWrapper);
+    return d->dataEntity;
+}
+
 void NetworkDataEntityQmlWrapper::setEntity(const QSharedPointer<NetworkDataEntity> &networkDataEntity)
 {
     Q_D(NetworkDataEntityQmlWrapper);

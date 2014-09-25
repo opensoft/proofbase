@@ -52,6 +52,21 @@ public:
     Q_INVOKABLE virtual Proof::NetworkDataEntityQmlWrapper *clone() const = 0;
     bool isFetched() const;
 
+    template<class T>
+    QSharedPointer<T> entity()
+    {
+        return qSharedPointerCast<T>(entity());
+    }
+
+    template<class T>
+    const QSharedPointer<T> entity() const
+    {
+        return qSharedPointerCast<T>(entity());
+    }
+
+    QSharedPointer<NetworkDataEntity> entity();
+    const QSharedPointer<NetworkDataEntity> entity() const;
+
     void setEntity(const QSharedPointer<NetworkDataEntity> &networkDataEntity);
 
 signals:
