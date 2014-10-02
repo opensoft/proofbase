@@ -1,12 +1,15 @@
 #ifndef OBJECTSCACHE_H
 #define OBJECTSCACHE_H
 
-#include "proofobject.h"
+#include "proofcore/proofobject.h"
+#include "proofcore/expirator.h"
 
 #include <QHash>
 #include <QSharedPointer>
 #include <QWeakPointer>
 #include <QReadWriteLock>
+
+#include <type_traits>
 
 namespace Proof {
 
@@ -14,6 +17,8 @@ template<class Key, class T>
 class WeakObjectsCache;
 template<class Key, class T>
 class StrongObjectsCache;
+template<class Key, class T, class Enable = void>
+class GuaranteedLifeTimeObjectsCache;
 
 template<class Key, class T>
 class ObjectsCache
@@ -62,8 +67,20 @@ public:
         m_cacheLock.unlock();
     }
 
-    void clear() override;
-    bool isEmpty() const override;
+    void clear()
+    {
+        m_cacheLock.lockForWrite();
+        m_cache.clear();
+        m_cacheLock.unlock();
+    }
+
+    bool isEmpty() const
+    {
+        m_cacheLock.lockForRead();
+        bool result = m_cache.isEmpty();
+        m_cacheLock.unlock();
+        return result;
+    }
 
     bool contains(const Key &key) const override
     {
@@ -81,7 +98,7 @@ public:
         if (!m_cache.contains(key)) {
             m_cacheLock.unlock();
             if (useOtherCaches)
-                foundValue = StrongObjectsCache<Key, T>::instance().value(key, false);
+                foundValue = valueFromOtherCaches(key);
         } else {
             QWeakPointer<T> cachedValue = m_cache[key];
             m_cacheLock.unlock();
@@ -99,9 +116,19 @@ public:
         return foundValue;
     }
 
-private:
+protected:
+    virtual QSharedPointer<T> valueFromOtherCaches(const Key &key)
+    {
+        QSharedPointer<T> foundValue = StrongObjectsCache<Key, T>::instance().value(key, false);
+        if (!foundValue)
+            foundValue = GuaranteedLifeTimeObjectsCache<Key, T>::instance().value(key, false);
+        return foundValue;
+    }
+
     WeakObjectsCache() : ObjectsCache<Key, T>() {}
     ~WeakObjectsCache() {}
+
+private:
     WeakObjectsCache(const WeakObjectsCache &other) = delete;
     WeakObjectsCache &operator=(const WeakObjectsCache &other) = delete;
     WeakObjectsCache(const WeakObjectsCache &&other) = delete;
@@ -109,6 +136,94 @@ private:
 
     QHash<Key, QWeakPointer<T>> m_cache;
     mutable QReadWriteLock m_cacheLock;
+};
+
+//Dummy class for objects that are not based on ProofObject but need to be put in weak or strong cache
+//Such objects of course can not be placed in this cache (due to nature of Expirator) but can be placed in other caches
+template<class Key, class T>
+class GuaranteedLifeTimeObjectsCache
+        <Key, T, typename std::enable_if<!std::is_base_of<ProofObject, T>::value>::type>
+        : public ObjectsCache<Key, T>
+{
+public:
+    static ObjectsCache<Key, T> &instance()
+    {
+        static GuaranteedLifeTimeObjectsCache<Key, T> inst;
+        return inst;
+    }
+    void add(const Key &, const QSharedPointer<T> &) override
+    {
+        Q_ASSERT_X(false, "GuaranteedLifeTimeObjectsCache", "Should not be called for non-ProofObject values");
+    }
+    void remove(const Key &) override
+    {
+        Q_ASSERT_X(false, "GuaranteedLifeTimeObjectsCache", "Should not be called for non-ProofObject values");
+    }
+    void clear() override
+    {
+        Q_ASSERT_X(false, "GuaranteedLifeTimeObjectsCache", "Should not be called for non-ProofObject values");
+    }
+    bool isEmpty() const override {return true;}
+    bool contains(const Key &) const override {return false;}
+    QSharedPointer<T> value(const Key &, bool = true) override {return QSharedPointer<T>();}
+private:
+    GuaranteedLifeTimeObjectsCache() : ObjectsCache<Key, T>() {}
+    ~GuaranteedLifeTimeObjectsCache() {}
+    GuaranteedLifeTimeObjectsCache(const GuaranteedLifeTimeObjectsCache &other) = delete;
+    GuaranteedLifeTimeObjectsCache &operator=(const GuaranteedLifeTimeObjectsCache &other) = delete;
+    GuaranteedLifeTimeObjectsCache(const GuaranteedLifeTimeObjectsCache &&other) = delete;
+    GuaranteedLifeTimeObjectsCache &operator=(const GuaranteedLifeTimeObjectsCache &&other) = delete;
+};
+
+template<class Key, class T>
+class GuaranteedLifeTimeObjectsCache
+        <Key, T, typename std::enable_if<std::is_base_of<ProofObject, T>::value>::type>
+        : public WeakObjectsCache<Key, T>
+{
+public:
+    static ObjectsCache<Key, T> &instance()
+    {
+        static GuaranteedLifeTimeObjectsCache<Key, T> inst;
+        return inst;
+    }
+
+    void setObjectsMinLifeTime(qulonglong secs)
+    {
+        m_objectsMinLifeTimeInSeconds = secs;
+    }
+
+    void add(const Key &key, const QSharedPointer<T> &object) override
+    {
+        if (!object || key == Key())
+            return;
+        addObjectToExpirator(qSharedPointerCast<ProofObject>(object));
+        WeakObjectsCache<Key, T>::add(key, object);
+    }
+
+protected:
+    QSharedPointer<T> valueFromOtherCaches(const Key &key) override
+    {
+        QSharedPointer<T> foundValue = StrongObjectsCache<Key, T>::instance().value(key, false);
+        if (!foundValue)
+            foundValue = WeakObjectsCache<Key, T>::instance().value(key, false);
+        return foundValue;
+    }
+
+private:
+    GuaranteedLifeTimeObjectsCache() : WeakObjectsCache<Key, T>() {}
+    ~GuaranteedLifeTimeObjectsCache() {}
+    GuaranteedLifeTimeObjectsCache(const GuaranteedLifeTimeObjectsCache &other) = delete;
+    GuaranteedLifeTimeObjectsCache &operator=(const GuaranteedLifeTimeObjectsCache &other) = delete;
+    GuaranteedLifeTimeObjectsCache(const GuaranteedLifeTimeObjectsCache &&other) = delete;
+    GuaranteedLifeTimeObjectsCache &operator=(const GuaranteedLifeTimeObjectsCache &&other) = delete;
+
+    void addObjectToExpirator(const QSharedPointer<ProofObject> &object)
+    {
+        if (m_objectsMinLifeTimeInSeconds)
+            Expirator::instance()->addObject(object, QDateTime::currentDateTime().addSecs(m_objectsMinLifeTimeInSeconds));
+    }
+
+    qulonglong m_objectsMinLifeTimeInSeconds = 8 * 60 * 1000; //Default value is 8 hours
 };
 
 template<class Key, class T>
@@ -137,8 +252,20 @@ public:
         m_cacheLock.unlock();
     }
 
-    void clear() override;
-    bool isEmpty() const override;
+    void clear()
+    {
+        m_cacheLock.lockForWrite();
+        m_cache.clear();
+        m_cacheLock.unlock();
+    }
+
+    bool isEmpty() const
+    {
+        m_cacheLock.lockForRead();
+        bool result = m_cache.isEmpty();
+        m_cacheLock.unlock();
+        return result;
+    }
 
     bool contains(const Key &key) const override
     {
@@ -153,8 +280,11 @@ public:
         m_cacheLock.lockForRead();
         QSharedPointer<T> foundValue = m_cache.value(key, QSharedPointer<T>());
         m_cacheLock.unlock();
-        if (!foundValue && useOtherCaches)
+        if (!foundValue && useOtherCaches) {
             foundValue = WeakObjectsCache<Key, T>::instance().value(key, false);
+            if (!foundValue)
+                foundValue = GuaranteedLifeTimeObjectsCache<Key, T>::instance().value(key, false);
+        }
         if (!foundValue && key == Key())
             foundValue = T::defaultObject();
         return foundValue;
