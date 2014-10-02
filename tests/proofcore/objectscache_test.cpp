@@ -6,12 +6,13 @@ using namespace Proof;
 
 using testing::Test;
 
-struct DummyData;
+class DummyData;
 typedef QSharedPointer<DummyData> DummyDataSP;
 typedef QWeakPointer<DummyData> DummyDataWP;
-struct DummyData
+class DummyData : public ProofObject
 {
-    explicit DummyData(int _value) : value(_value) {}
+public:
+    explicit DummyData(int _value) : ProofObject(0), value(_value) {}
     static DummyDataSP defaultObject()
     {
         static DummyDataSP result = DummyDataSP::create(0);
@@ -32,6 +33,7 @@ protected:
     {
         StrongObjectsCache<int, DummyData>::instance().clear();
         WeakObjectsCache<int, DummyData>::instance().clear();
+        GuaranteedLifeTimeObjectsCache<int, DummyData>::instance().clear();
     }
 };
 
@@ -70,28 +72,61 @@ TEST_F(ObjectsCacheTest, weakCache)
     EXPECT_FALSE(cache.contains(42));
 }
 
+TEST_F(ObjectsCacheTest, guaranteedLifeTimeCache)
+{
+    GuaranteedLifeTimeObjectsCache<int, DummyData> &cache = GuaranteedLifeTimeObjectsCache<int, DummyData>::instance();
+    ASSERT_TRUE(cache.isEmpty());
+
+    {
+        DummyDataSP data = DummyDataSP::create(42);
+        cache.add(42, data);
+        EXPECT_FALSE(cache.isEmpty());
+        EXPECT_TRUE(cache.contains(42));
+        EXPECT_EQ(data, cache.value(42));
+    }
+    EXPECT_TRUE(cache.contains(42));
+    ASSERT_FALSE(cache.value(42).isNull());
+    EXPECT_EQ(42, cache.value(42)->value);
+}
 
 TEST_F(ObjectsCacheTest, interCache)
 {
     ObjectsCache<int, DummyData> &weakCache = WeakObjectsCache<int, DummyData>::instance();
     ObjectsCache<int, DummyData> &strongCache = StrongObjectsCache<int, DummyData>::instance();
+    ObjectsCache<int, DummyData> &guaranteedLifeTimeCache = GuaranteedLifeTimeObjectsCache<int, DummyData>::instance();
     ASSERT_TRUE(weakCache.isEmpty());
     ASSERT_TRUE(strongCache.isEmpty());
+    ASSERT_TRUE(guaranteedLifeTimeCache.isEmpty());
 
     DummyDataSP weakData = DummyDataSP::create(42);
     DummyDataSP strongData = DummyDataSP::create(142);
-    DummyDataSP commonKeyStrongData = DummyDataSP::create(242);
-    DummyDataSP commonKeyWeakData = DummyDataSP::create(242);
+    DummyDataSP guaranteedLifeTimeData = DummyDataSP::create(22);
+    DummyDataSP commonKeyStrongData = DummyDataSP::create(1042);
+    DummyDataSP commonKeyWeakData = DummyDataSP::create(1042);
+    DummyDataSP commonKeyGuaranteedLifeTimeData = DummyDataSP::create(1042);
 
     weakCache.add(42, weakData);
     strongCache.add(142, strongData);
-    weakCache.add(242, commonKeyWeakData);
-    strongCache.add(242, commonKeyStrongData);
+    guaranteedLifeTimeCache.add(242, guaranteedLifeTimeData);
+    weakCache.add(1042, commonKeyWeakData);
+    strongCache.add(1042, commonKeyStrongData);
+    guaranteedLifeTimeCache.add(1042, commonKeyGuaranteedLifeTimeData);
 
     EXPECT_EQ(strongData, weakCache.value(142, true));
+    EXPECT_EQ(guaranteedLifeTimeData, weakCache.value(242, true));
     EXPECT_EQ(weakData, strongCache.value(42, true));
+    EXPECT_EQ(guaranteedLifeTimeData, strongCache.value(242, true));
+    EXPECT_EQ(strongData, guaranteedLifeTimeCache.value(142, true));
+    EXPECT_EQ(weakData, guaranteedLifeTimeCache.value(42, true));
+
     EXPECT_TRUE(weakCache.value(142, false).isNull());
+    EXPECT_TRUE(weakCache.value(242, false).isNull());
     EXPECT_TRUE(strongCache.value(42, false).isNull());
-    EXPECT_EQ(commonKeyWeakData, weakCache.value(242, true));
-    EXPECT_EQ(commonKeyStrongData, strongCache.value(242, true));
+    EXPECT_TRUE(strongCache.value(242, false).isNull());
+    EXPECT_TRUE(guaranteedLifeTimeCache.value(142, false).isNull());
+    EXPECT_TRUE(guaranteedLifeTimeCache.value(42, false).isNull());
+
+    EXPECT_EQ(commonKeyWeakData, weakCache.value(1042, true));
+    EXPECT_EQ(commonKeyStrongData, strongCache.value(1042, true));
+    EXPECT_EQ(commonKeyGuaranteedLifeTimeData, guaranteedLifeTimeCache.value(1042, true));
 }

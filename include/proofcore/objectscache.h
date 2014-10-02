@@ -181,7 +181,7 @@ class GuaranteedLifeTimeObjectsCache
         : public WeakObjectsCache<Key, T>
 {
 public:
-    static ObjectsCache<Key, T> &instance()
+    static GuaranteedLifeTimeObjectsCache<Key, T> &instance()
     {
         static GuaranteedLifeTimeObjectsCache<Key, T> inst;
         return inst;
