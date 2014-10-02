@@ -59,7 +59,7 @@ UserSP User::create(const QString &userName)
     return result;
 }
 
-UserSP User::defaultEntity()
+UserSP User::defaultObject()
 {
     static UserSP entity = create("");
     return entity;

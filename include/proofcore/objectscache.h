@@ -1,6 +1,8 @@
 #ifndef OBJECTSCACHE_H
 #define OBJECTSCACHE_H
 
+#include "proofobject.h"
+
 #include <QHash>
 #include <QSharedPointer>
 #include <QWeakPointer>
@@ -13,7 +15,6 @@ class WeakObjectsCache;
 template<class Key, class T>
 class StrongObjectsCache;
 
-//TODO: add time-based cache
 template<class Key, class T>
 class ObjectsCache
 {
@@ -21,8 +22,8 @@ public:
     virtual void add(const Key &key, const QSharedPointer<T> &object) = 0;
     virtual void remove(const Key &key) = 0;
     virtual void clear() = 0;
-    virtual bool contains(const Key &key) const = 0;
     virtual bool isEmpty() const = 0;
+    virtual bool contains(const Key &key) const = 0;
     virtual QSharedPointer<T> value(const Key &key, bool useOtherCaches = true) = 0;
 
 protected:
@@ -61,25 +62,13 @@ public:
         m_cacheLock.unlock();
     }
 
-    void clear() override
-    {
-        m_cacheLock.lockForWrite();
-        m_cache.clear();
-        m_cacheLock.unlock();
-    }
+    void clear() override;
+    bool isEmpty() const override;
 
     bool contains(const Key &key) const override
     {
         m_cacheLock.lockForRead();
         bool result = m_cache.contains(key);
-        m_cacheLock.unlock();
-        return result;
-    }
-
-    bool isEmpty() const override
-    {
-        m_cacheLock.lockForRead();
-        bool result = m_cache.isEmpty();
         m_cacheLock.unlock();
         return result;
     }
@@ -100,7 +89,7 @@ public:
             removeFromCache = !foundValue;
         }
         if (!foundValue && key == Key())
-            foundValue = T::defaultEntity();
+            foundValue = T::defaultObject();
         if (removeFromCache) {
             m_cacheLock.lockForWrite();
             if (m_cache.contains(key) && !m_cache[key])
@@ -117,8 +106,6 @@ private:
     WeakObjectsCache &operator=(const WeakObjectsCache &other) = delete;
     WeakObjectsCache(const WeakObjectsCache &&other) = delete;
     WeakObjectsCache &operator=(const WeakObjectsCache &&other) = delete;
-
-    friend class ObjectsCache<Key, T>;
 
     QHash<Key, QWeakPointer<T>> m_cache;
     mutable QReadWriteLock m_cacheLock;
@@ -150,25 +137,13 @@ public:
         m_cacheLock.unlock();
     }
 
-    void clear() override
-    {
-        m_cacheLock.lockForWrite();
-        m_cache.clear();
-        m_cacheLock.unlock();
-    }
+    void clear() override;
+    bool isEmpty() const override;
 
     bool contains(const Key &key) const override
     {
         m_cacheLock.lockForRead();
         bool result = m_cache.contains(key);
-        m_cacheLock.unlock();
-        return result;
-    }
-
-    bool isEmpty() const override
-    {
-        m_cacheLock.lockForRead();
-        bool result = m_cache.isEmpty();
         m_cacheLock.unlock();
         return result;
     }
@@ -181,7 +156,7 @@ public:
         if (!foundValue && useOtherCaches)
             foundValue = WeakObjectsCache<Key, T>::instance().value(key, false);
         if (!foundValue && key == Key())
-            foundValue = T::defaultEntity();
+            foundValue = T::defaultObject();
         return foundValue;
     }
 
@@ -192,8 +167,6 @@ private:
     StrongObjectsCache &operator=(const StrongObjectsCache &other) = delete;
     StrongObjectsCache(const StrongObjectsCache &&other) = delete;
     StrongObjectsCache &operator=(const StrongObjectsCache &&other) = delete;
-
-    friend class ObjectsCache<Key, T>;
 
     QHash<Key, QSharedPointer<T>> m_cache;
     mutable QReadWriteLock m_cacheLock;

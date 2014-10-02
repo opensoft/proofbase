@@ -12,7 +12,7 @@ typedef QWeakPointer<DummyData> DummyDataWP;
 struct DummyData
 {
     explicit DummyData(int _value) : value(_value) {}
-    static DummyDataSP defaultEntity()
+    static DummyDataSP defaultObject()
     {
         static DummyDataSP result = DummyDataSP::create(0);
         return result;
