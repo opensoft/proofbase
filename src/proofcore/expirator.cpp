@@ -7,6 +7,7 @@
 #include <QTimer>
 #include <QTimerEvent>
 #include <QSet>
+#include <QMultiMap>
 
 namespace Proof {
 class ExpiratorPrivate : public ProofObjectPrivate

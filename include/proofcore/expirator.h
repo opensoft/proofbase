@@ -1,13 +1,9 @@
-#ifndef EXPIRATOR_P_H
-#define EXPIRATOR_P_H
+#ifndef EXPIRATOR_H
+#define EXPIRATOR_H
 
 #include "proofobject.h"
 
-#include <QMultiMap>
 #include <QDateTime>
-
-class QThread;
-class QMutex;
 
 namespace Proof {
 
@@ -34,4 +30,4 @@ private:
 };
 }
 
-#endif // EXPIRATOR_P_H
+#endif // EXPIRATOR_H
