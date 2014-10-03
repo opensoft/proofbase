@@ -230,7 +230,7 @@ private:
             Expirator::instance()->addObject(object, QDateTime::currentDateTime().addSecs(m_objectsMinLifeTimeInSeconds));
     }
 
-    qulonglong m_objectsMinLifeTimeInSeconds = 8 * 60 * 1000; //Default value is 8 hours
+    qulonglong m_objectsMinLifeTimeInSeconds = 8 * 60 * 60; //Default value is 8 hours
 };
 
 template<class Key, class T>
