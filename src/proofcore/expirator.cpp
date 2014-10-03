@@ -37,7 +37,8 @@ Expirator::Expirator()
         d->m_timerId = startTimer(1000 * 60 * 10, Qt::VeryCoarseTimer);
         timer->deleteLater();
     }, Qt::QueuedConnection);
-    timer->start(1);
+    timer->setSingleShot(true);
+    timer->start();
 }
 
 Expirator::~Expirator()
