@@ -10,8 +10,10 @@
 #include <QTimer>
 #include <QUuid>
 #include <QJsonParseError>
+#include <QJsonObject>
 
 static const qlonglong DEFAULT_REPLY_TIMEOUT = 30000;
+static const QString QUASI_OAUTH2_TOKEN_URI = QString("/oauth2/token");
 
 namespace Proof {
 class RestClientPrivate : public ProofObjectPrivate
@@ -23,6 +25,7 @@ public:
     QString password;
     QString clientName;
     QString host;
+    QString quasiOAuth2Token;
     int port = 443;
     QString scheme = QString("https");
     RestClient::AuthType authType = RestClient::AuthType::WithoutAuth;
@@ -31,6 +34,8 @@ public:
 
     QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body) const;
     QByteArray generateWsseToken() const;
+    void requestQuasiOAuth2token();
+
     void handleReply(QNetworkReply *reply);
     void cleanupReplyHandler(QNetworkReply *reply);
 };
@@ -188,6 +193,13 @@ QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, c
     return reply;
 }
 
+void RestClient::requestQuasiOAuth2Token()
+{
+    Q_D(RestClient);
+    if (authType() == RestClient::AuthType::QuasiOAuth2Auth)
+        d->requestQuasiOAuth2token();
+}
+
 
 QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body) const
 {
@@ -228,6 +240,9 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
                                  .toLatin1().toBase64()))
                             .toLatin1());
         break;
+    case RestClient::AuthType::QuasiOAuth2Auth:
+        result.setRawHeader("Authorization", QString("Bearer %1").arg(quasiOAuth2Token).toLatin1());
+        break;
     case RestClient::AuthType::WithoutAuth:
         break;
     }
@@ -254,6 +269,43 @@ QByteArray RestClientPrivate::generateWsseToken() const
             .arg(QString(nonce.toLatin1().toBase64()))
             .arg(createdAt)
             .toLatin1();
+}
+
+void RestClientPrivate::requestQuasiOAuth2token()
+{
+    Q_Q(RestClient);
+    QUrl url;
+    url.setScheme(scheme);
+    url.setHost(host);
+    url.setPort(port);
+    url.setPath(QUASI_OAUTH2_TOKEN_URI);
+    QString quasiOAuth2TokenRequestData = QString("grant_type=password&username=%1&password=%2")
+            .arg(userName)
+            .arg(password);
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    auto reply = qnam->post(request, QUrlQuery(quasiOAuth2TokenRequestData).toString().toLatin1());
+    handleReply(reply);
+    QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
+                     q, [q, reply](QNetworkReply::NetworkError) {
+        emit q->quasiOAuthTokenRequestError("Can't connect to Scissorhands service, check your internet connection.");
+    });
+    QObject::connect(reply, &QNetworkReply::finished,
+                     q, [this, q, reply]() {
+        QJsonParseError error;
+        QJsonObject response = QJsonDocument::fromJson(reply->readAll(), &error).object();
+
+        if (error.error == QJsonParseError::NoError) {
+            quasiOAuth2Token = response.value("access_token").toString();
+            if (quasiOAuth2Token.isEmpty())
+                emit q->quasiOAuthTokenRequestError("Wrong Scissorhands service authorization.\nPlease check your authorization settings.");
+            else
+                emit q->quasiOAuthTokenRequestSuccess();
+
+        } else {
+            emit q->quasiOAuthTokenRequestError("Wrong Scissorhands service answer.\nPlease check your host settings.");
+        }
+    });
 }
 
 void RestClientPrivate::handleReply(QNetworkReply *reply)

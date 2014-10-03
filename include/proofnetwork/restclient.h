@@ -23,7 +23,8 @@ public:
     {
         WithoutAuth,
         BasicAuth,
-        WsseAuth
+        WsseAuth,
+        QuasiOAuth2Auth
     };
 
     explicit RestClient();
@@ -55,6 +56,9 @@ public:
     QNetworkReply *get(const QString &method, const QUrlQuery &query = QUrlQuery());
     QNetworkReply *post(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");
 
+public slots:
+    void requestQuasiOAuth2Token();
+
 signals:
     void userNameChanged(const QString &arg);
     void passwordChanged(const QString &arg);
@@ -71,6 +75,8 @@ signals:
     void networkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
     void proxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator);
     void sslErrors(QNetworkReply *reply, const QList<QSslError> &errors);
+    void quasiOAuthTokenRequestSuccess();
+    void quasiOAuthTokenRequestError(const QString &errorMessage);
 };
 
 }
