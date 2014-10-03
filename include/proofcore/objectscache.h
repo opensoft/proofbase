@@ -30,6 +30,7 @@ public:
     virtual bool isEmpty() const = 0;
     virtual bool contains(const Key &key) const = 0;
     virtual QSharedPointer<T> value(const Key &key, bool useOtherCaches = true) = 0;
+    virtual QList<Key> keys() const = 0;
 
 protected:
     ObjectsCache() {}
@@ -116,6 +117,11 @@ public:
         return foundValue;
     }
 
+    QList<Key> keys() const override
+    {
+        return m_cache.keys();
+    }
+
 protected:
     virtual QSharedPointer<T> valueFromOtherCaches(const Key &key)
     {
@@ -166,6 +172,7 @@ public:
     bool isEmpty() const override {return true;}
     bool contains(const Key &) const override {return false;}
     QSharedPointer<T> value(const Key &, bool = true) override {return QSharedPointer<T>();}
+    QList<Key> keys() const override {return QList<Key>();}
 private:
     GuaranteedLifeTimeObjectsCache() : ObjectsCache<Key, T>() {}
     ~GuaranteedLifeTimeObjectsCache() {}
@@ -288,6 +295,11 @@ public:
         if (!foundValue && key == Key())
             foundValue = T::defaultObject();
         return foundValue;
+    }
+
+    QList<Key> keys() const override
+    {
+        return m_cache.keys();
     }
 
 private:
