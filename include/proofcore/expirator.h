@@ -1,14 +1,15 @@
 #ifndef EXPIRATOR_H
 #define EXPIRATOR_H
 
-#include "proofobject.h"
+#include "proofcore/proofobject.h"
+#include "proofcore/proofcore_global.h"
 
 #include <QDateTime>
 
 namespace Proof {
 
 class ExpiratorPrivate;
-class Expirator : public ProofObject
+class PROOF_CORE_EXPORT Expirator : public ProofObject
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(Expirator)
