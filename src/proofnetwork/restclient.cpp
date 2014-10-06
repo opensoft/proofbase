@@ -13,7 +13,6 @@
 #include <QJsonObject>
 
 static const qlonglong DEFAULT_REPLY_TIMEOUT = 30000;
-static const QString QUASI_OAUTH2_TOKEN_URI = QString("/oauth2/token");
 
 namespace Proof {
 class RestClientPrivate : public ProofObjectPrivate
@@ -34,7 +33,7 @@ public:
 
     QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body) const;
     QByteArray generateWsseToken() const;
-    void requestQuasiOAuth2token();
+    void requestQuasiOAuth2token(const QString &method = QString("/oauth2/token"));
 
     void handleReply(QNetworkReply *reply);
     void cleanupReplyHandler(QNetworkReply *reply);
@@ -193,7 +192,7 @@ QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, c
     return reply;
 }
 
-void RestClient::requestQuasiOAuth2Token()
+void RestClient::authenticate()
 {
     Q_D(RestClient);
     if (authType() == RestClient::AuthType::QuasiOAuth2Auth)
@@ -271,14 +270,14 @@ QByteArray RestClientPrivate::generateWsseToken() const
             .toLatin1();
 }
 
-void RestClientPrivate::requestQuasiOAuth2token()
+void RestClientPrivate::requestQuasiOAuth2token(const QString &method)
 {
     Q_Q(RestClient);
     QUrl url;
     url.setScheme(scheme);
     url.setHost(host);
     url.setPort(port);
-    url.setPath(QUASI_OAUTH2_TOKEN_URI);
+    url.setPath(method);
     QString quasiOAuth2TokenRequestData = QString("grant_type=password&username=%1&password=%2")
             .arg(userName)
             .arg(password);
@@ -288,7 +287,7 @@ void RestClientPrivate::requestQuasiOAuth2token()
     handleReply(reply);
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [q, reply](QNetworkReply::NetworkError) {
-        emit q->quasiOAuthTokenRequestError("Can't connect to Scissorhands service, check your internet connection.");
+        emit q->authenticationError("Can't connect to Scissorhands service.\nPlease check your internet connection.");
     });
     QObject::connect(reply, &QNetworkReply::finished,
                      q, [this, q, reply]() {
@@ -298,12 +297,12 @@ void RestClientPrivate::requestQuasiOAuth2token()
         if (error.error == QJsonParseError::NoError) {
             quasiOAuth2Token = response.value("access_token").toString();
             if (quasiOAuth2Token.isEmpty())
-                emit q->quasiOAuthTokenRequestError("Wrong Scissorhands service authorization.\nPlease check your authorization settings.");
+                emit q->authenticationError("Wrong Scissorhands service authentication.\nPlease check your authentication settings.");
             else
-                emit q->quasiOAuthTokenRequestSuccess();
+                emit q->authenticationSuccess();
 
         } else {
-            emit q->quasiOAuthTokenRequestError("Wrong Scissorhands service answer.\nPlease check your host settings.");
+            emit q->authenticationError("Wrong Scissorhands service answer.\nPlease check your host settings.");
         }
     });
 }
