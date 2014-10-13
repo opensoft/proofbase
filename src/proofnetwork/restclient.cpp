@@ -11,6 +11,7 @@
 #include <QUuid>
 #include <QJsonParseError>
 #include <QJsonObject>
+#include <QThread>
 
 static const qlonglong DEFAULT_REPLY_TIMEOUT = 30000;
 
@@ -195,8 +196,12 @@ QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, c
 void RestClient::authenticate()
 {
     Q_D(RestClient);
-    if (authType() == RestClient::AuthType::QuasiOAuth2Auth)
-        d->requestQuasiOAuth2token();
+    if (QThread::currentThread() != thread()) {
+        QMetaObject::invokeMethod(this, "authenticate", Qt::BlockingQueuedConnection);
+    } else    {
+        if (authType() == RestClient::AuthType::QuasiOAuth2Auth)
+            d->requestQuasiOAuth2token();
+    }
 }
 
 
@@ -287,7 +292,7 @@ void RestClientPrivate::requestQuasiOAuth2token(const QString &method)
     handleReply(reply);
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [q, reply](QNetworkReply::NetworkError) {
-        emit q->authenticationError("Can't connect to Scissorhands service.\nPlease check your internet connection.");
+        emit q->authenticationErrorOccurred("Can't connect to Scissorhands service.\nPlease check your internet connection.");
     });
     QObject::connect(reply, &QNetworkReply::finished,
                      q, [this, q, reply]() {
@@ -297,12 +302,12 @@ void RestClientPrivate::requestQuasiOAuth2token(const QString &method)
         if (error.error == QJsonParseError::NoError) {
             quasiOAuth2Token = response.value("access_token").toString();
             if (quasiOAuth2Token.isEmpty())
-                emit q->authenticationError("Wrong Scissorhands service authentication.\nPlease check your authentication settings.");
+                emit q->authenticationErrorOccurred("Wrong Scissorhands service authentication.\nPlease check your authentication settings.");
             else
-                emit q->authenticationSuccess();
+                emit q->authenticationSuccessed();
 
         } else {
-            emit q->authenticationError("Wrong Scissorhands service answer.\nPlease check your host settings.");
+            emit q->authenticationErrorOccurred("Wrong Scissorhands service answer.\nPlease check your host settings.");
         }
     });
 }
