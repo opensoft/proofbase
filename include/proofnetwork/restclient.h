@@ -74,7 +74,7 @@ signals:
     void networkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
     void proxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator);
     void sslErrors(QNetworkReply *reply, const QList<QSslError> &errors);
-    void authenticationSuccessed();
+    void authenticationSucceed();
     void authenticationErrorOccurred(const QString &errorMessage);
 };
 

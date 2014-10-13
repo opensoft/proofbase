@@ -197,8 +197,8 @@ void RestClient::authenticate()
 {
     Q_D(RestClient);
     if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, "authenticate", Qt::BlockingQueuedConnection);
-    } else    {
+        QMetaObject::invokeMethod(this, "authenticate", Qt::QueuedConnection);
+    } else {
         if (authType() == RestClient::AuthType::QuasiOAuth2Auth)
             d->requestQuasiOAuth2token();
     }
@@ -304,7 +304,7 @@ void RestClientPrivate::requestQuasiOAuth2token(const QString &method)
             if (quasiOAuth2Token.isEmpty())
                 emit q->authenticationErrorOccurred("Wrong Scissorhands service authentication.\nPlease check your authentication settings.");
             else
-                emit q->authenticationSuccessed();
+                emit q->authenticationSucceed();
 
         } else {
             emit q->authenticationErrorOccurred("Wrong Scissorhands service answer.\nPlease check your host settings.");
