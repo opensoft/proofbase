@@ -90,6 +90,21 @@ QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, const QStri
     return reply;
 }
 
+QNetworkReply *AbstractRestApiPrivate::patch(qulonglong &operationId, const QString &method, const QUrlQuery &query, const QByteArray &body)
+{
+    Q_Q(AbstractRestApi);
+    if (QThread::currentThread() != restClient->thread()) {
+        qWarning() << "AbstractRestApi::patch(): RestApi and RestClient should live in same thread."
+                   << "\nRestClient object is in thread =" << restClient->thread()
+                   << "\nRestApi is in thread =" << q->thread()
+                   << "\nrunning in thread =" << QThread::currentThread();
+        return 0;
+    }
+    QNetworkReply *reply = restClient->patch(method, query, body);
+    setupReply(operationId, reply);
+    return reply;
+}
+
 void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply *reply)
 {
     Q_Q(AbstractRestApi);

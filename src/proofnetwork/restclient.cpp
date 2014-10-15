@@ -12,6 +12,7 @@
 #include <QJsonParseError>
 #include <QJsonObject>
 #include <QThread>
+#include <QBuffer>
 
 static const qlonglong DEFAULT_REPLY_TIMEOUT = 30000;
 
@@ -190,6 +191,17 @@ QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, c
     Q_D(RestClient);
     QNetworkReply *reply = d->qnam->post(d->createNetworkRequest(method, query, body), body);
     d->handleReply(reply);
+    return reply;
+}
+
+QNetworkReply *RestClient::patch(const QString &method, const QUrlQuery &query, const QByteArray &body)
+{
+    Q_D(RestClient);
+    QBuffer *bodyBuffer = new QBuffer;
+    bodyBuffer->setData(body);
+    QNetworkReply *reply = d->qnam->sendCustomRequest(d->createNetworkRequest(method, query, body), "PATCH", bodyBuffer);
+    d->handleReply(reply);
+    bodyBuffer->setParent(reply);
     return reply;
 }
 
