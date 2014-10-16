@@ -268,8 +268,12 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
 
 QByteArray RestClientPrivate::generateWsseToken() const
 {
-    QCryptographicHash passwordHasher(QCryptographicHash::Md5);
-    passwordHasher.addData(password.toLatin1());
+    QByteArray hashedPassword;
+    if (!password.isEmpty()) {
+        QCryptographicHash passwordHasher(QCryptographicHash::Md5);
+        passwordHasher.addData(password.toLatin1());
+        hashedPassword = passwordHasher.result().toHex();
+    }
 
     QString createdAt = QDateTime::currentDateTime().toString(Qt::ISODate);
     QString nonce = QUuid::createUuid().toString().replace("-", "");
@@ -277,7 +281,7 @@ QByteArray RestClientPrivate::generateWsseToken() const
     QCryptographicHash hasher(QCryptographicHash::Sha1);
     hasher.addData(nonce.toLatin1());
     hasher.addData(createdAt.toLatin1());
-    hasher.addData(passwordHasher.result().toHex());
+    hasher.addData(hashedPassword);
 
     return QString("UsernameToken Username=\"%1\", PasswordDigest=\"%2\", Nonce=\"%3\", Created=\"%4\"")
             .arg(userName)
