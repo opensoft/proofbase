@@ -39,7 +39,7 @@ public:
                  Args &&... args)
     {
         acquireFutures(taskAddingSpinSleepTimeInMSecs);
-        m_futures.push_back(std::async(std::launch::async, task, args...));
+        m_futures.push_back(std::async(std::launch::async, task, std::forward<Args>(args)...));
         releaseFutures();
         startSelfManagementThreadIfNeeded();
     }
@@ -47,7 +47,7 @@ public:
     //TODO: make it thread local to allow proper tree chain
     template<class SignalSender, class SignalType, class ...Args>
     void addSignalWaiter(SignalSender *sender,
-                         SignalType &&signal,
+                         SignalType signal,
                          const std::function<bool(Args...)> &callback)
     {
         if (!m_signalWaitersEventLoop)
