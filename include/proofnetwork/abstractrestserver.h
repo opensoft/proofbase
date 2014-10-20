@@ -26,9 +26,9 @@ protected:
     virtual QStringList allowedMethods() const = 0;
 
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());
-    void send404(QTcpSocket *socket, const QString &reason);
-    void send401(QTcpSocket *socket);
-    void send500(QTcpSocket *socket);
+    void sendNotFound(QTcpSocket *socket, const QString &reason = "Not Found");
+    void sendNotAuthorized(QTcpSocket *socket);
+    void sendInternalError(QTcpSocket *socket);
     bool checkBasicAuth(const QString &encryptedAuth) const;
     QString parseAuth(QTcpSocket *socket, const QString &header);
 

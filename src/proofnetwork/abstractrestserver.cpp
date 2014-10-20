@@ -99,11 +99,11 @@ QString AbstractRestServer::parseAuth(QTcpSocket *socket, const QString &header)
     QString auth;
     QStringList parts = header.split(":");
     if (parts.count() != 2) {
-        send500(socket);
+        sendInternalError(socket);
     } else {
         parts = parts.at(1).split(" ", QString::SkipEmptyParts);
         if (parts.count() != 2 || parts.at(0) != "Basic") {
-            send401(socket);
+            sendNotAuthorized(socket);
         } else {
             auth = parts.at(1);
         }
@@ -111,17 +111,17 @@ QString AbstractRestServer::parseAuth(QTcpSocket *socket, const QString &header)
     return auth;
 }
 
-void AbstractRestServer::send404(QTcpSocket *socket, const QString &reason)
+void AbstractRestServer::sendNotFound(QTcpSocket *socket, const QString &reason)
 {
     sendAnswer(socket, "", "text/plain; charset=utf-8", 404, reason);
 }
 
-void AbstractRestServer::send401(QTcpSocket *socket)
+void AbstractRestServer::sendNotAuthorized(QTcpSocket *socket)
 {
     sendAnswer(socket, "", "text/plain; charset=utf-8", 401, "Unauthorized");
 }
 
-void AbstractRestServer::send500(QTcpSocket *socket)
+void AbstractRestServer::sendInternalError(QTcpSocket *socket)
 {
     sendAnswer(socket, "", "text/plain; charset=utf-8", 500, "Internal Server Error");
 }
@@ -154,13 +154,13 @@ void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
 
     QStringList requestParts = QString(request).split("\r\n\r\n");
     if (requestParts.count() < 2) {
-        q->send500(socket);
+        q->sendInternalError(socket);
         return;
     }
 
     QStringList headersParts = requestParts.at(0).split("\r\n", QString::SkipEmptyParts);
     if (headersParts.count() < 2) {
-        q->send500(socket);
+        q->sendInternalError(socket);
         return;
     }
 
@@ -173,13 +173,13 @@ void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
             headersParts.removeFirst();
             q->handleRequest(socket, tokens[1], headersParts, body);
         } else {
-            q->send404(socket, "Wrong method");
+            q->sendNotFound(socket, "Wrong method");
         }
         socket->disconnectFromHost();
         if (socket->state() == QTcpSocket::UnconnectedState)
             delete socket;
     } else {
-        q->send404(socket, "Only GET requests allowed");
+        q->sendNotFound(socket, "Only GET requests allowed");
     }
 }
 
@@ -187,7 +187,7 @@ bool AbstractRestServerPrivate::isAllowedMethod(const QString &method)
 {
     Q_Q(AbstractRestServer);
     for (const QString &allowed : q->allowedMethods()) {
-        if (method.startsWith(allowed))
+        if (method == allowed || method.startsWith(allowed + "/"))
             return true;
     }
     return false;
