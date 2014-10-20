@@ -39,7 +39,8 @@ public:
     void addTask(Task &&task,
                  Args &&... args)
     {
-        addFuture(std::async(std::launch::async, task, std::forward<Args>(args)...));
+        addFuture(std::async(std::launch::async, std::forward<Task>(task),
+                             std::forward<Args>(args)...));
     }
 
     //TODO: make it thread local to allow proper tree chain
