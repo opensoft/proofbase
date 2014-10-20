@@ -20,8 +20,10 @@ class TaskChain;
 typedef QSharedPointer<TaskChain> TaskChainSP;
 typedef QWeakPointer<TaskChain> TaskChainWP;
 
+class TaskChainPrivate;
 class PROOF_CORE_EXPORT TaskChain : public QThread
 {
+    Q_DECLARE_PRIVATE(TaskChain)
 public:
     ~TaskChain();
 
@@ -37,32 +39,35 @@ public:
     void addTask(Task &&task,
                  Args &&... args)
     {
-        acquireFutures(taskAddingSpinSleepTimeInMSecs);
-        m_futures.push_back(std::async(std::launch::async, task, std::forward<Args>(args)...));
-        releaseFutures();
-        startSelfManagementThreadIfNeeded();
+        addFuture(std::async(std::launch::async, task, std::forward<Args>(args)...));
     }
 
     //TODO: make it thread local to allow proper tree chain
     template<class SignalSender, class SignalType, class ...Args>
     void addSignalWaiter(SignalSender *sender,
                          SignalType signal,
-                         const std::function<bool(Args...)> &callback)
+                         std::function<bool(Args...)> callback)
     {
-        if (!m_signalWaitersEventLoop)
-            m_signalWaitersEventLoop.reset(new QEventLoop);
-        QWeakPointer<QEventLoop> eventLoopWeak = m_signalWaitersEventLoop.toWeakRef();
-        auto connection = QSharedPointer<QMetaObject::Connection>::create();
-        std::function<void(Args...)> slot = [&callback, eventLoopWeak, connection] (Args... args) {
-            QSharedPointer<QEventLoop> eventLoop = eventLoopWeak.toStrongRef();
-            if (!eventLoop)
-                return;
-            if (!callback(args...))
-                return;
-            QObject::disconnect(*connection);
-            eventLoop->quit();
-        };
-        *connection = QObject::connect(sender, signal, m_signalWaitersEventLoop.data(), slot, Qt::QueuedConnection);
+        std::function<void (const QSharedPointer<QEventLoop> &)> connector =
+            [sender, signal, callback] (const QSharedPointer<QEventLoop> &eventLoop)
+            {
+                auto connection = QSharedPointer<QMetaObject::Connection>::create();
+                auto eventLoopWeak = eventLoop.toWeakRef();
+                std::function<void(Args...)> slot =
+                    [callback, eventLoopWeak, connection] (Args... args)
+                    {
+                        QSharedPointer<QEventLoop> eventLoop = eventLoopWeak.toStrongRef();
+                        if (!eventLoop)
+                            return;
+                        if (!callback(args...))
+                            return;
+                        QObject::disconnect(*connection);
+                        eventLoop->quit();
+                    };
+                *connection = QObject::connect(sender, signal, eventLoop.data(),
+                                               slot, Qt::QueuedConnection);
+            };
+        addSignalWaiterPrivate(std::move(connector));
     }
 
     void fireSignalWaiters();
@@ -77,20 +82,10 @@ private:
     TaskChain &operator=(const TaskChain &other) = delete;
     TaskChain &operator=(TaskChain &&other) = delete;
 
-    void acquireFutures(qlonglong spinSleepTimeInMsecs);
-    void releaseFutures();
-    void startSelfManagementThreadIfNeeded();
+    void addFuture(std::future<void> &&taskFuture);
+    void addSignalWaiterPrivate(std::function<void (const QSharedPointer<QEventLoop> &)> &&connector);
 
-    std::vector<std::future<void>> m_futures;
-    std::atomic_flag m_futuresLock = ATOMIC_FLAG_INIT;
-    TaskChainSP m_selfPointer;
-    bool m_wasStarted = false;
-
-    QSharedPointer<QEventLoop> m_signalWaitersEventLoop;
-
-    static const qlonglong taskAddingSpinSleepTimeInMSecs = 1;
-    static const qlonglong selfManagementSpinSleepTimeInMSecs = 5;
-    static const qlonglong selfManagementPauseSleepTimeInMSecs = 1000;
+    QScopedPointer<TaskChainPrivate> d_ptr;
 };
 
 }
