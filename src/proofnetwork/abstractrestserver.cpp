@@ -30,7 +30,7 @@ private:
     int m_port = 0;
     QString m_userName;
     QString m_password;
-    QThread m_thread;
+    QThread *m_thread;
 };
 }
 
@@ -47,22 +47,25 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
 {
     Q_D(AbstractRestServer);
     d->q_ptr = this;
+
+    d->m_thread = new QThread(this);
+
     d->m_port = port;
     d->m_userName = userName;
     d->m_password = password;
 
     connect(this, &AbstractRestServer::newConnection, this, [d](){d->createNewConnection();});
-    moveToThread(&d->m_thread);
-    d->m_thread.moveToThread(&d->m_thread);
-    d->m_thread.start();
+    moveToThread(d->m_thread);
+    d->m_thread->moveToThread(d->m_thread);
+    d->m_thread->start();
 }
 
 AbstractRestServer::~AbstractRestServer()
 {
     Q_D(AbstractRestServer);
-    d->m_thread.quit();
-    d->m_thread.wait(1000);
-    d->m_thread.terminate();
+    d->m_thread->quit();
+    d->m_thread->wait(1000);
+    d->m_thread->terminate();
 }
 
 void AbstractRestServer::startListen()
@@ -102,11 +105,10 @@ QString AbstractRestServer::parseAuth(QTcpSocket *socket, const QString &header)
         sendInternalError(socket);
     } else {
         parts = parts.at(1).split(" ", QString::SkipEmptyParts);
-        if (parts.count() != 2 || parts.at(0) != "Basic") {
+        if (parts.count() != 2 || parts.at(0) != "Basic")
             sendNotAuthorized(socket);
-        } else {
+        else
             auth = parts.at(1);
-        }
     }
     return auth;
 }
