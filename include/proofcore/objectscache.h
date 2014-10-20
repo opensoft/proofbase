@@ -11,6 +11,10 @@
 
 #include <type_traits>
 
+/* YOU MUST USE special functions to obtain instance of cache of Proof's exported types.
+ * DO NOT USE methods 'instance' for Proof's exported types
+ */
+
 namespace Proof {
 
 template<class Key, class T>
