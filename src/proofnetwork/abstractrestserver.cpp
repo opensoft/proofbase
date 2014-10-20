@@ -147,9 +147,11 @@ void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
     QByteArray request;
     forever {
         QByteArray read = socket->read(1024);
-        if (read.isEmpty() && !socket->waitForReadyRead(100))
+        if (!read.isEmpty())
+            request.append(read);
+        if (!socket->waitForReadyRead(500))
             break;
-        request.append(read);
+
     }
 
     QStringList requestParts = QString(request).split("\r\n\r\n");
