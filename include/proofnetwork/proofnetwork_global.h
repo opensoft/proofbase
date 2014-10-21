@@ -7,4 +7,9 @@
 #  define PROOF_NETWORK_EXPORT Q_DECL_IMPORT
 #endif
 
+#include <QLoggingCategory>
+
+Q_DECLARE_LOGGING_CATEGORY(proofNetworkLog)
+Q_DECLARE_LOGGING_CATEGORY(proofNetworkCommonLog)
+
 #endif // PROOFNETWORK_GLOBAL_H
