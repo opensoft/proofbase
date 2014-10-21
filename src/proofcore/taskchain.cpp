@@ -1,8 +1,8 @@
 #include "taskchain.h"
 
-static const qlonglong taskAddingSpinSleepTimeInMSecs = 1;
-static const qlonglong selfManagementSpinSleepTimeInMSecs = 5;
-static const qlonglong selfManagementPauseSleepTimeInMSecs = 1000;
+static const qlonglong TASK_ADDING_SPIN_SLEEP_TIME_IN_MSECS = 1;
+static const qlonglong SELF_MANAGEMENT_SPIN_SLEEP_TIME_IN_MSECS = 5;
+static const qlonglong SELF_MANAGEMENT_PAUSE_SLEEP_TIME_IN_MSECS = 1000;
 
 namespace Proof {
 
@@ -16,12 +16,12 @@ class TaskChainPrivate
 
     TaskChain *q_ptr = nullptr;
 
-    std::vector<std::future<void>> m_futures;
-    std::atomic_flag m_futuresLock = ATOMIC_FLAG_INIT;
-    TaskChainSP m_selfPointer;
-    bool m_wasStarted = false;
+    std::vector<std::future<void>> futures;
+    std::atomic_flag futuresLock = ATOMIC_FLAG_INIT;
+    TaskChainSP selfPointer;
+    bool wasStarted = false;
 
-    QSharedPointer<QEventLoop> m_signalWaitersEventLoop;
+    QSharedPointer<QEventLoop> signalWaitersEventLoop;
 };
 
 }
@@ -42,12 +42,12 @@ TaskChain::~TaskChain()
 TaskChainSP TaskChain::createChain()
 {
     TaskChainSP result(new TaskChain());
-    result->d_func()->m_selfPointer = result;
+    result->d_func()->selfPointer = result;
 
     auto connection = QSharedPointer<QMetaObject::Connection>::create();
     auto checker = [result, connection](){
         QObject::disconnect(*connection);
-        result->d_func()->m_selfPointer.clear();
+        result->d_func()->selfPointer.clear();
     };
     *connection = connect(result.data(), &QThread::finished, result.data(), checker);
 
@@ -57,43 +57,43 @@ TaskChainSP TaskChain::createChain()
 void TaskChain::fireSignalWaiters()
 {
     Q_D(TaskChain);
-    if (!d->m_signalWaitersEventLoop)
+    if (!d->signalWaitersEventLoop)
         return;
-    d->m_signalWaitersEventLoop->exec();
-    d->m_signalWaitersEventLoop.clear();
+    d->signalWaitersEventLoop->exec();
+    d->signalWaitersEventLoop.clear();
 }
 
 void TaskChain::run()
 {
     Q_D(TaskChain);
-    Q_ASSERT(!d->m_wasStarted);
-    d->m_wasStarted = true;
+    Q_ASSERT(!d->wasStarted);
+    d->wasStarted = true;
 
     bool deleteSelf = false;
     while (!deleteSelf) {
-        d->acquireFutures(selfManagementSpinSleepTimeInMSecs);
-        for (unsigned i = 0; i < d->m_futures.size(); ++i) {
-            const std::future<void> &currentFuture = d->m_futures.at(i);
+        d->acquireFutures(SELF_MANAGEMENT_SPIN_SLEEP_TIME_IN_MSECS);
+        for (unsigned i = 0; i < d->futures.size(); ++i) {
+            const std::future<void> &currentFuture = d->futures.at(i);
             bool removeIt = !currentFuture.valid();
             if (!removeIt)
                 removeIt = currentFuture.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready;
             if (removeIt) {
-                d->m_futures.erase(d->m_futures.begin() + i);
+                d->futures.erase(d->futures.begin() + i);
                 --i;
             }
         }
-        deleteSelf = !d->m_futures.size();
+        deleteSelf = !d->futures.size();
         d->releaseFutures();
         if (!deleteSelf)
-            QThread::msleep(selfManagementPauseSleepTimeInMSecs);
+            QThread::msleep(SELF_MANAGEMENT_PAUSE_SLEEP_TIME_IN_MSECS);
     }
 }
 
-void TaskChain::addFuture(std::future<void> &&taskFuture)
+void TaskChain::addTaskPrivate(std::future<void> &&taskFuture)
 {
     Q_D(TaskChain);
-    d->acquireFutures(taskAddingSpinSleepTimeInMSecs);
-    d->m_futures.push_back(std::move(taskFuture));
+    d->acquireFutures(TASK_ADDING_SPIN_SLEEP_TIME_IN_MSECS);
+    d->futures.push_back(std::move(taskFuture));
     d->releaseFutures();
     d->startSelfManagementThreadIfNeeded();
 }
@@ -102,25 +102,25 @@ void TaskChain::addSignalWaiterPrivate(
         std::function<void (const QSharedPointer<QEventLoop> &)> &&connector)
 {
     Q_D(TaskChain);
-    if (!d->m_signalWaitersEventLoop)
-        d->m_signalWaitersEventLoop.reset(new QEventLoop);
-    connector(d->m_signalWaitersEventLoop);
+    if (!d->signalWaitersEventLoop)
+        d->signalWaitersEventLoop.reset(new QEventLoop);
+    connector(d->signalWaitersEventLoop);
 }
 
 void TaskChainPrivate::acquireFutures(qlonglong spinSleepTimeInMsecs)
 {
-    while (m_futuresLock.test_and_set(std::memory_order_acquire))
+    while (futuresLock.test_and_set(std::memory_order_acquire))
         QThread::msleep(spinSleepTimeInMsecs);
 }
 
 void TaskChainPrivate::releaseFutures()
 {
-    m_futuresLock.clear(std::memory_order_release);
+    futuresLock.clear(std::memory_order_release);
 }
 
 void TaskChainPrivate::startSelfManagementThreadIfNeeded()
 {
     Q_Q(TaskChain);
-    if (!q->isRunning() && !m_wasStarted)
+    if (!q->isRunning() && !wasStarted)
         q->start();
 }

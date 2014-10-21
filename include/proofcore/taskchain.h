@@ -39,7 +39,7 @@ public:
     void addTask(Task &&task,
                  Args &&... args)
     {
-        addFuture(std::async(std::launch::async, std::forward<Task>(task),
+        addTaskPrivate(std::async(std::launch::async, std::forward<Task>(task),
                              std::forward<Args>(args)...));
     }
 
@@ -83,7 +83,7 @@ private:
     TaskChain &operator=(const TaskChain &other) = delete;
     TaskChain &operator=(TaskChain &&other) = delete;
 
-    void addFuture(std::future<void> &&taskFuture);
+    void addTaskPrivate(std::future<void> &&taskFuture);
     void addSignalWaiterPrivate(std::function<void (const QSharedPointer<QEventLoop> &)> &&connector);
 
     QScopedPointer<TaskChainPrivate> d_ptr;
