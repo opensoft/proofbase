@@ -49,14 +49,12 @@ public:
                          SignalType signal,
                          std::function<bool(Args...)> callback)
     {
-        std::function<void (const QSharedPointer<QEventLoop> &)> connector =
-            [sender, signal, callback] (const QSharedPointer<QEventLoop> &eventLoop)
-            {
+        std::function<void (const QSharedPointer<QEventLoop> &)> connector
+            = [sender, signal, callback] (const QSharedPointer<QEventLoop> &eventLoop) {
                 auto connection = QSharedPointer<QMetaObject::Connection>::create();
                 auto eventLoopWeak = eventLoop.toWeakRef();
-                std::function<void(Args...)> slot =
-                    [callback, eventLoopWeak, connection] (Args... args)
-                    {
+                std::function<void(Args...)> slot
+                    = [callback, eventLoopWeak, connection] (Args... args) {
                         QSharedPointer<QEventLoop> eventLoop = eventLoopWeak.toStrongRef();
                         if (!eventLoop)
                             return;
