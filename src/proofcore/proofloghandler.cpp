@@ -4,6 +4,9 @@
 #include <QFile>
 #include <QDateTime>
 #include <QtMessageHandler>
+#include <QStandardPaths>
+#include <QCoreApplication>
+#include <QDir>
 
 QString ProofLogHandler::m_logFileBaseName;
 QtMessageHandler ProofLogHandler::m_coreHandler = nullptr;
@@ -19,6 +22,15 @@ static QMap<QtMsgType, QString> typeToString = {
 ProofLogHandler::ProofLogHandler()
 {
     m_coreHandler = qInstallMessageHandler(0);
+
+    QString configDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation));
+    if (configDir.isEmpty() && QDir::root().mkpath(configDir)) {
+        QFile loggingRulesFile(QDir(configDir).absoluteFilePath(qAppName() + ".qtlogging.rules"));
+        if (loggingRulesFile.open(QFile::ReadOnly)) {
+            QString rules = QString(loggingRulesFile.readAll());
+            QLoggingCategory::setFilterRules(rules);
+        }
+    }
 }
 
 ProofLogHandler::~ProofLogHandler()

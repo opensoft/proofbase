@@ -17,8 +17,10 @@ public:
 private:
     ProofLogHandler();
     ~ProofLogHandler();
-    Q_DISABLE_COPY(ProofLogHandler)
-
+    ProofLogHandler(const ProofLogHandler &other) = delete;
+    ProofLogHandler &operator=(const ProofLogHandler &other) = delete;
+    ProofLogHandler(const ProofLogHandler &&other) = delete;
+    ProofLogHandler &operator=(const ProofLogHandler &&other) = delete;
 
 private:
     static QString m_logFileBaseName;
