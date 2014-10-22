@@ -8,6 +8,8 @@
 #include <QCoreApplication>
 #include <QDir>
 
+using namespace Proof;
+
 QString ProofLogHandler::m_logFileBaseName;
 QtMessageHandler ProofLogHandler::m_coreHandler = nullptr;
 

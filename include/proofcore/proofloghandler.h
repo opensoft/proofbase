@@ -6,6 +6,8 @@
 #include <QtGlobal>
 #include <QString>
 
+namespace Proof {
+
 class PROOF_CORE_EXPORT ProofLogHandler
 {
 public:
@@ -26,5 +28,6 @@ private:
     static QString m_logFileBaseName;
     static QtMessageHandler m_coreHandler;
 };
+}
 
 #endif // PROOFLOGHANDLER_H
