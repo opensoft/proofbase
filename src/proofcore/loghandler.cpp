@@ -1,4 +1,4 @@
-#include "proofloghandler.h"
+#include "loghandler.h"
 
 #include <QMap>
 #include <QFile>
@@ -10,8 +10,8 @@
 
 using namespace Proof;
 
-QString ProofLogHandler::m_logFileBaseName;
-QtMessageHandler ProofLogHandler::m_coreHandler = nullptr;
+QString LogHandler::m_logFileBaseName;
+QtMessageHandler LogHandler::m_coreHandler = nullptr;
 
 static QMap<QtMsgType, QString> typeToString = {
     { QtDebugMsg, "DEBUG"},
@@ -21,7 +21,7 @@ static QMap<QtMsgType, QString> typeToString = {
     { QtSystemMsg, "SYSTEM"}
 };
 
-ProofLogHandler::ProofLogHandler()
+LogHandler::LogHandler()
 {
     m_coreHandler = qInstallMessageHandler(0);
 
@@ -35,21 +35,21 @@ ProofLogHandler::ProofLogHandler()
     }
 }
 
-ProofLogHandler::~ProofLogHandler()
+LogHandler::~LogHandler()
 {
     uninstall();
 }
 
 
-ProofLogHandler *ProofLogHandler::instance()
+LogHandler *LogHandler::instance()
 {
-    static ProofLogHandler *_instance = nullptr;
+    static LogHandler *_instance = nullptr;
     if (!_instance)
-        _instance = new ProofLogHandler();
+        _instance = new LogHandler();
     return _instance;
 }
 
-void ProofLogHandler::install(const QString &logFileBaseName)
+void LogHandler::install(const QString &logFileBaseName)
 {
     m_logFileBaseName = logFileBaseName;
     qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &message) {
@@ -76,7 +76,7 @@ void ProofLogHandler::install(const QString &logFileBaseName)
     });
 }
 
-void ProofLogHandler::uninstall()
+void LogHandler::uninstall()
 {
     qInstallMessageHandler(0);
 }
