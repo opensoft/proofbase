@@ -8,7 +8,6 @@
 #include <QThread>
 #include <QCoreApplication>
 #include <QSharedPointer>
-#include <QDebug>
 
 #include <functional>
 #include <future>

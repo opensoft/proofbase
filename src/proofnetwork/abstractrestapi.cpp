@@ -5,7 +5,6 @@
 
 #include <QNetworkReply>
 #include <QThread>
-#include <QDebug>
 
 static const qlonglong NETWORK_SSL_ERROR_OFFSET = 1500;
 static const qlonglong NETWORK_ERROR_OFFSET = 1000;
@@ -64,10 +63,10 @@ QNetworkReply *AbstractRestApiPrivate::get(qulonglong &operationId, const QStrin
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
-        qWarning() << "AbstractRestApi::get(): RestApi and RestClient should live in same thread."
-                   << "\nRestClient object is in thread =" << restClient->thread()
-                   << "\nRestApi is in thread =" << q->thread()
-                   << "\nRunning in thread =" << QThread::currentThread();
+        qCWarning(proofNetworkLog) << "AbstractRestApi::get(): RestApi and RestClient should live in same thread."
+                                   << "\nRestClient object is in thread =" << restClient->thread()
+                                   << "\nRestApi is in thread =" << q->thread()
+                                   << "\nRunning in thread =" << QThread::currentThread();
         return 0;
     }
     QNetworkReply *reply = restClient->get(method, query);
@@ -79,10 +78,10 @@ QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, const QStri
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
-        qWarning() << "AbstractRestApi::post(): RestApi and RestClient should live in same thread."
-                   << "\nRestClient object is in thread =" << restClient->thread()
-                   << "\nRestApi is in thread =" << q->thread()
-                   << "\nrunning in thread =" << QThread::currentThread();
+        qCWarning(proofNetworkLog) << "AbstractRestApi::post(): RestApi and RestClient should live in same thread."
+                                   << "\nRestClient object is in thread =" << restClient->thread()
+                                   << "\nRestApi is in thread =" << q->thread()
+                                   << "\nrunning in thread =" << QThread::currentThread();
         return 0;
     }
     QNetworkReply *reply = restClient->post(method, query, body);
@@ -94,10 +93,10 @@ QNetworkReply *AbstractRestApiPrivate::patch(qulonglong &operationId, const QStr
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
-        qWarning() << "AbstractRestApi::patch(): RestApi and RestClient should live in same thread."
-                   << "\nRestClient object is in thread =" << restClient->thread()
-                   << "\nRestApi is in thread =" << q->thread()
-                   << "\nrunning in thread =" << QThread::currentThread();
+        qCWarning(proofNetworkLog) << "AbstractRestApi::patch(): RestApi and RestClient should live in same thread."
+                                   << "\nRestClient object is in thread =" << restClient->thread()
+                                   << "\nRestApi is in thread =" << q->thread()
+                                   << "\nrunning in thread =" << QThread::currentThread();
         return 0;
     }
     QNetworkReply *reply = restClient->patch(method, query, body);

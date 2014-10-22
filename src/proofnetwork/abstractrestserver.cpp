@@ -2,7 +2,6 @@
 
 #include <QDir>
 #include <QTcpSocket>
-#include <QDebug>
 
 namespace Proof {
 class AbstractRestServerPrivate
@@ -76,7 +75,7 @@ void AbstractRestServer::startListen()
     } else {
         bool isListen = listen(QHostAddress::Any, d->m_port);
         if (!isListen)
-            qDebug() << "Server down";
+            qCDebug(proofNetworkLog) << "Server can't start on port" << d->m_port;
     }
 }
 

@@ -7,7 +7,6 @@
 #include <QSharedPointer>
 #include <QStandardPaths>
 #include <QCoreApplication>
-#include <QDebug>
 
 namespace Proof {
 class SettingsPrivate : public ProofObjectPrivate
@@ -100,7 +99,7 @@ void SettingsPrivate::openSettings()
 {
     QString configPath = filePath();
     settings = QSharedPointer<QSettings>::create(configPath, QSettings::IniFormat);
-    qDebug() << Q_FUNC_INFO << "Settings at:" << configPath;
+    qCDebug(proofCoreLog) << "Settings at:" << configPath;
 }
 
 void SettingsPrivate::readSettings()
