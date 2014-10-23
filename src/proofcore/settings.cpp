@@ -99,7 +99,7 @@ void SettingsPrivate::openSettings()
 {
     QString configPath = filePath();
     settings = QSharedPointer<QSettings>::create(configPath, QSettings::IniFormat);
-    qCDebug(proofCoreLog) << "Settings at:" << configPath;
+    qCDebug(proofCoreSettingsLog) << "Settings at:" << configPath;
 }
 
 void SettingsPrivate::readSettings()

@@ -63,7 +63,7 @@ QNetworkReply *AbstractRestApiPrivate::get(qulonglong &operationId, const QStrin
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
-        qCWarning(proofNetworkLog) << "AbstractRestApi::get(): RestApi and RestClient should live in same thread."
+        qCWarning(proofNetworkMiscLog) << "AbstractRestApi::get(): RestApi and RestClient should live in same thread."
                                    << "\nRestClient object is in thread =" << restClient->thread()
                                    << "\nRestApi is in thread =" << q->thread()
                                    << "\nRunning in thread =" << QThread::currentThread();
@@ -78,7 +78,7 @@ QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, const QStri
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
-        qCWarning(proofNetworkLog) << "AbstractRestApi::post(): RestApi and RestClient should live in same thread."
+        qCWarning(proofNetworkMiscLog) << "AbstractRestApi::post(): RestApi and RestClient should live in same thread."
                                    << "\nRestClient object is in thread =" << restClient->thread()
                                    << "\nRestApi is in thread =" << q->thread()
                                    << "\nrunning in thread =" << QThread::currentThread();
@@ -93,7 +93,7 @@ QNetworkReply *AbstractRestApiPrivate::patch(qulonglong &operationId, const QStr
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
-        qCWarning(proofNetworkLog) << "AbstractRestApi::patch(): RestApi and RestClient should live in same thread."
+        qCWarning(proofNetworkMiscLog) << "AbstractRestApi::patch(): RestApi and RestClient should live in same thread."
                                    << "\nRestClient object is in thread =" << restClient->thread()
                                    << "\nRestApi is in thread =" << q->thread()
                                    << "\nrunning in thread =" << QThread::currentThread();

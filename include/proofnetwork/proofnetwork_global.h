@@ -10,6 +10,6 @@
 #include <QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(proofNetworkLog)
-Q_DECLARE_LOGGING_CATEGORY(proofNetworkCommonLog)
+Q_DECLARE_LOGGING_CATEGORY(proofNetworkMiscLog)
 
 #endif // PROOFNETWORK_GLOBAL_H

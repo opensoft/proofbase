@@ -59,9 +59,9 @@ void LogHandler::install(const QString &logFileBaseName)
         if (!m_logFileBaseName.isEmpty()) {
             QMutexLocker writeLocker(&m_writeLogMutex);
 
-            QFile logFile(QString("%1.%2.log");
-                        .arg(m_logFileBaseName)
-                    .arg(QDate::currentDate().toString("YYYYMMdd"));
+            QFile logFile(QString("%1.%2.log")
+                          .arg(m_logFileBaseName)
+                          .arg(QDate::currentDate().toString("yyyyMMdd")));
 
             if (logFile.open(QFile::Append | QFile::Text)) {
                 QString logLine = QString("[%1][%2] (%3:%4 %5) %6 - %7\n")
