@@ -10,9 +10,9 @@
 
 using namespace Proof;
 
-QString LogHandler::m_logFileBaseName;
-QtMessageHandler LogHandler::m_coreHandler = nullptr;
-QMutex LogHandler::m_writeLogMutex;
+static QString logFileBaseName;
+static QtMessageHandler coreHandler = nullptr;
+static QMutex logFileWriteMutex;
 
 static QMap<QtMsgType, QString> stringifiedTypes = {
     { QtDebugMsg, "D"},
@@ -24,14 +24,13 @@ static QMap<QtMsgType, QString> stringifiedTypes = {
 
 LogHandler::LogHandler()
 {
-    m_coreHandler = qInstallMessageHandler(0);
+    coreHandler = qInstallMessageHandler(0);
 }
 
 LogHandler::~LogHandler()
 {
     uninstall();
 }
-
 
 LogHandler *LogHandler::instance()
 {
@@ -49,18 +48,18 @@ void LogHandler::setup()
             QLoggingCategory::setFilterRules(rules);
         }
     }
-    qSetMessagePattern("[%{type}] %{function} - %{message}");
+    qSetMessagePattern("[%{type}][%{function}] %{message}");
 }
 
-void LogHandler::install(const QString &logFileBaseName)
+void LogHandler::install(const QString &fileName)
 {
-    m_logFileBaseName = logFileBaseName;
+    logFileBaseName = fileName;
     qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &message) {
-        if (!m_logFileBaseName.isEmpty()) {
-            QMutexLocker writeLocker(&m_writeLogMutex);
+        if (!logFileBaseName.isEmpty()) {
+            QMutexLocker writeLocker(&logFileWriteMutex);
 
             QFile logFile(QString("%1.%2.log")
-                          .arg(m_logFileBaseName)
+                          .arg(logFileBaseName)
                           .arg(QDate::currentDate().toString("yyyyMMdd")));
 
             if (logFile.open(QFile::Append | QFile::Text)) {
@@ -74,12 +73,11 @@ void LogHandler::install(const QString &logFileBaseName)
                         .arg(message);
 
                 logFile.write(logLine.toLocal8Bit());
+                logFile.close();
             }
-            logFile.close();
         }
-        if (m_coreHandler)
-            m_coreHandler(type, context, message);
-
+        if (coreHandler)
+            coreHandler(type, context, message);
     });
 }
 

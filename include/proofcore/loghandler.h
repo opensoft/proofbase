@@ -15,7 +15,7 @@ public:
     static LogHandler *instance();
     static void setup();
 
-    void install(const QString &logFileBaseName = QString());
+    void install(const QString &fileName = QString());
     void uninstall();
 
 private:
@@ -25,12 +25,6 @@ private:
     LogHandler &operator=(const LogHandler &other) = delete;
     LogHandler(const LogHandler &&other) = delete;
     LogHandler &operator=(const LogHandler &&other) = delete;
-
-private:
-    static QString m_logFileBaseName;
-    static QtMessageHandler m_coreHandler;
-    static QMutex m_writeLogMutex;
-
 };
 }
 
