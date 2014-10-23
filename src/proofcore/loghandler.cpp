@@ -12,27 +12,19 @@ using namespace Proof;
 
 QString LogHandler::m_logFileBaseName;
 QtMessageHandler LogHandler::m_coreHandler = nullptr;
+QMutex LogHandler::m_writeLogMutex;
 
-static QMap<QtMsgType, QString> typeToString = {
-    { QtDebugMsg, "DEBUG"},
-    { QtWarningMsg, "WARNING"},
-    { QtCriticalMsg, "CRITICAL"},
-    { QtFatalMsg, "FATAL"},
-    { QtSystemMsg, "SYSTEM"}
+static QMap<QtMsgType, QString> stringifiedTypes = {
+    { QtDebugMsg, "D"},
+    { QtWarningMsg, "W"},
+    { QtCriticalMsg, "C"},
+    { QtFatalMsg, "F"},
+    { QtSystemMsg, "S"}
 };
 
 LogHandler::LogHandler()
 {
     m_coreHandler = qInstallMessageHandler(0);
-
-    QString configDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation));
-    if (configDir.isEmpty() && QDir::root().mkpath(configDir)) {
-        QFile loggingRulesFile(QDir(configDir).absoluteFilePath(qAppName() + ".qtlogging.rules"));
-        if (loggingRulesFile.open(QFile::ReadOnly)) {
-            QString rules = QString(loggingRulesFile.readAll());
-            QLoggingCategory::setFilterRules(rules);
-        }
-    }
 }
 
 LogHandler::~LogHandler()
@@ -43,10 +35,21 @@ LogHandler::~LogHandler()
 
 LogHandler *LogHandler::instance()
 {
-    static LogHandler *_instance = nullptr;
-    if (!_instance)
-        _instance = new LogHandler();
-    return _instance;
+    static LogHandler _instance;
+    return &_instance;
+}
+
+void LogHandler::setup()
+{
+    QString configDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation));
+    if (configDir.isEmpty() && QDir::root().mkpath(configDir)) {
+        QFile loggingRulesFile(QDir(configDir).absoluteFilePath(qAppName() + ".qtlogging.rules"));
+        if (loggingRulesFile.open(QFile::ReadOnly)) {
+            QString rules = QString(loggingRulesFile.readAll());
+            QLoggingCategory::setFilterRules(rules);
+        }
+    }
+    qSetMessagePattern("[%{type}] %{function} - %{message}");
 }
 
 void LogHandler::install(const QString &logFileBaseName)
@@ -54,12 +57,16 @@ void LogHandler::install(const QString &logFileBaseName)
     m_logFileBaseName = logFileBaseName;
     qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &message) {
         if (!m_logFileBaseName.isEmpty()) {
-            QFile logFile(m_logFileBaseName + "." + QDate::currentDate().toString(Qt::ISODate));
+            QMutexLocker writeLocker(&m_writeLogMutex);
+
+            QFile logFile(QString("%1.%2.log");
+                        .arg(m_logFileBaseName)
+                    .arg(QDate::currentDate().toString("YYYYMMdd"));
 
             if (logFile.open(QFile::Append | QFile::Text)) {
                 QString logLine = QString("[%1][%2] (%3:%4 %5) %6 - %7\n")
                         .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
-                        .arg(typeToString[type])
+                        .arg(stringifiedTypes[type])
                         .arg(context.file)
                         .arg(context.line)
                         .arg(context.function)

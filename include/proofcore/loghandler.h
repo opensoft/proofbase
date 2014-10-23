@@ -5,6 +5,7 @@
 
 #include <QtGlobal>
 #include <QString>
+#include <QMutex>
 
 namespace Proof {
 
@@ -12,6 +13,7 @@ class PROOF_CORE_EXPORT LogHandler
 {
 public:
     static LogHandler *instance();
+    static void setup();
 
     void install(const QString &logFileBaseName = QString());
     void uninstall();
@@ -27,6 +29,8 @@ private:
 private:
     static QString m_logFileBaseName;
     static QtMessageHandler m_coreHandler;
+    static QMutex m_writeLogMutex;
+
 };
 }
 
