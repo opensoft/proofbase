@@ -67,11 +67,11 @@ void Proof::Logs::setup()
 #else
     QString configPath = QString("%1/%2")
             .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
-            .arg(QCoreApplication::organizationName());
+            .arg(qApp->organizationName());
 #endif
 
     if (!configPath.isEmpty() && QDir::root().mkpath(configPath)) {
-        QFile loggingRulesFile(QDir(configPath).absoluteFilePath(qAppName() + ".qtlogging.rules"));
+        QFile loggingRulesFile(QDir(configPath).absoluteFilePath(qApp->applicationName() + ".qtlogging.rules"));
         if (loggingRulesFile.open(QFile::ReadOnly)) {
             QString rules = QString(loggingRulesFile.readAll());
             QLoggingCategory::setFilterRules(rules);

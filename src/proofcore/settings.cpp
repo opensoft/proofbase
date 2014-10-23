@@ -84,12 +84,12 @@ QString SettingsPrivate::filePath()
     //Windows already gives us org/app as part of conf location
     QString configPath = QString("%1/%2.conf")
             .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
-            .arg(QCoreApplication::applicationName());
+            .arg(qApp->applicationName());
 #else
     QString configPath = QString("%1/%2/%3.conf")
             .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
-            .arg(QCoreApplication::organizationName())
-            .arg(QCoreApplication::applicationName());
+            .arg(qApp->organizationName())
+            .arg(qApp->applicationName());
 #endif
     return configPath;
 }
