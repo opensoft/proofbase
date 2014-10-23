@@ -99,7 +99,6 @@ void SettingsPrivate::openSettings()
 {
     QString configPath = filePath();
     settings = QSharedPointer<QSettings>::create(configPath, QSettings::IniFormat);
-    qDebug() << __func__ << QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
     qCDebug(proofCoreSettingsLog) << "Settings at:" << configPath;
 }
 
