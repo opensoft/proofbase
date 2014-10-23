@@ -6,6 +6,7 @@
 #include <QtMessageHandler>
 #include <QStandardPaths>
 #include <QCoreApplication>
+#include <QRegularExpression>
 #include <QDir>
 
 using namespace Proof;
@@ -53,7 +54,12 @@ void LogHandler::setup()
 
 void LogHandler::install(const QString &fileName)
 {
-    logFileBaseName = fileName;
+    //TODO: consider add setter for it if will be needed later
+    QDir genericDataDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
+    genericDataDir.mkpath("Opensoft/prooflogs");
+    genericDataDir.cd("Opensoft/prooflogs");
+
+    logFileBaseName = genericDataDir.absoluteFilePath(fileName);
     qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &message) {
         if (!logFileBaseName.isEmpty()) {
             QMutexLocker writeLocker(&logFileWriteMutex);
@@ -63,13 +69,13 @@ void LogHandler::install(const QString &fileName)
                           .arg(QDate::currentDate().toString("yyyyMMdd")));
 
             if (logFile.open(QFile::Append | QFile::Text)) {
-                QString logLine = QString("[%1][%2] (%3:%4 %5) %6 - %7\n")
-                        .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
+                QString logLine = QString("[%1][%2][%3][%4@%5:%6] %7\n")
                         .arg(stringifiedTypes[type])
-                        .arg(context.file)
-                        .arg(context.line)
-                        .arg(context.function)
+                        .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
                         .arg(context.category)
+                        .arg(context.function)
+                        .arg(QString(context.file).remove(QRegularExpression("^(\\.\\.[/\\\\])+")))
+                        .arg(context.line)
                         .arg(message);
 
                 logFile.write(logLine.toLocal8Bit());
