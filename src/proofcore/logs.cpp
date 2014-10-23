@@ -61,12 +61,22 @@ void consoleHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 
 void Proof::Logs::setup()
 {
-    QString configDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation));
-    if (configDir.isEmpty() && QDir::root().mkpath(configDir)) {
-        QFile loggingRulesFile(QDir(configDir).absoluteFilePath(qAppName() + ".qtlogging.rules"));
+#ifdef Q_OS_WIN
+    //Windows already gives us org/app as part of conf location
+    QString configPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
+#else
+    QString configPath = QString("%1/%2")
+            .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
+            .arg(QCoreApplication::organizationName());
+#endif
+
+    if (!configPath.isEmpty() && QDir::root().mkpath(configPath)) {
+        QFile loggingRulesFile(QDir(configPath).absoluteFilePath(qAppName() + ".qtlogging.rules"));
         if (loggingRulesFile.open(QFile::ReadOnly)) {
             QString rules = QString(loggingRulesFile.readAll());
             QLoggingCategory::setFilterRules(rules);
+        } else {
+            loggingRulesFile.open(QFile::WriteOnly|QFile::Append);
         }
     }
     qSetMessagePattern("[%{type}][%{function}] %{message}");

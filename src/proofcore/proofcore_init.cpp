@@ -10,5 +10,4 @@ Q_LOGGING_CATEGORY(proofCoreCacheLog, "proof.core.cache")
 __attribute__((constructor))
 static void libraryInit()
 {
-    Proof::Logs::setup();
 }
