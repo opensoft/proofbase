@@ -9,7 +9,7 @@ namespace Proof {
 
 namespace Logs {
     PROOF_CORE_EXPORT void setup();
-    PROOF_CORE_EXPORT void setLogsDirPath(QString dirPath = QString());
+    PROOF_CORE_EXPORT void setLogsStoragePath(QString storagePath = QString());
     PROOF_CORE_EXPORT void setConsoleOutputEnabled(bool enabled);
     PROOF_CORE_EXPORT void installFileHandler(const QString &fileName = QString());
     PROOF_CORE_EXPORT void uninstallFileHandler();

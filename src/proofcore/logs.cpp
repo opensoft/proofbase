@@ -11,7 +11,7 @@
 #include <QMutex>
 
 static bool isConsoleOutputEnabled = true;
-static QString logsDirPath;
+static QString logsStoragePath;
 static QString logFileNameBase;
 static QtMessageHandler defaultHandler = nullptr;
 static QMutex logFileWriteMutex;
@@ -30,7 +30,7 @@ void fileHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
         QMutexLocker writeLocker(&logFileWriteMutex);
 
         QFile logFile(QString("%1/%2.%3.log")
-                      .arg(logsDirPath)
+                      .arg(logsStoragePath)
                       .arg(logFileNameBase)
                       .arg(QDate::currentDate().toString("yyyyMMdd")));
 
@@ -76,14 +76,14 @@ void Proof::Logs::setup()
         defaultHandler = oldHandler;
 }
 
-void Proof::Logs::setLogsDirPath(QString dirPath)
+void Proof::Logs::setLogsStoragePath(QString storagePath)
 {
-    if (dirPath.isEmpty())
-        dirPath = QString("%1/%2/prooflogs")
+    if (storagePath.isEmpty())
+        storagePath = QString("%1/%2/prooflogs")
                 .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
                 .arg(qApp->organizationName());
-    logsDirPath = dirPath;
-    QDir logsDir = QDir(logsDirPath);
+    logsStoragePath = storagePath;
+    QDir logsDir = QDir(logsStoragePath);
     logsDir.mkpath(".");
 }
 
