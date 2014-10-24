@@ -181,6 +181,7 @@ void RestClient::setMsecsForTimeout(qlonglong arg)
 QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query)
 {
     Q_D(RestClient);
+    qCDebug(proofNetworkLog) << method << query.toString();
     QNetworkReply *reply = d->qnam->get(d->createNetworkRequest(method, query, ""));
     d->handleReply(reply);
     return reply;
@@ -189,6 +190,7 @@ QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query)
 QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
     Q_D(RestClient);
+    qCDebug(proofNetworkLog) << method << query.toString() << body;
     QNetworkReply *reply = d->qnam->post(d->createNetworkRequest(method, query, body), body);
     d->handleReply(reply);
     return reply;
@@ -199,6 +201,7 @@ QNetworkReply *RestClient::patch(const QString &method, const QUrlQuery &query, 
     Q_D(RestClient);
     QBuffer *bodyBuffer = new QBuffer;
     bodyBuffer->setData(body);
+    qCDebug(proofNetworkLog) << method << query.toString() << body;
     QNetworkReply *reply = d->qnam->sendCustomRequest(d->createNetworkRequest(method, query, body), "PATCH", bodyBuffer);
     d->handleReply(reply);
     bodyBuffer->setParent(reply);
@@ -335,6 +338,7 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
     timer->setSingleShot(true);
     replyTimeouts.insert(reply, timer);
     QObject::connect(timer, &QTimer::timeout, [timer, reply](){
+        qCDebug(proofNetworkLog) << "Timed out:" << reply->request().url().path() << reply->request().url().query() << reply->isRunning();
         if (reply->isRunning())
             reply->abort();
         timer->deleteLater();
@@ -343,9 +347,15 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
     timer->start(msecsForTimeout);
 
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-                     q, [this, reply](QNetworkReply::NetworkError) {cleanupReplyHandler(reply);});
+                     q, [this, reply](QNetworkReply::NetworkError) {
+        qCDebug(proofNetworkLog) << "Error occured:" << reply->request().url().path() << reply->request().url().query();
+        cleanupReplyHandler(reply);
+    });
     QObject::connect(reply, &QNetworkReply::finished,
-                     q, [this, reply]() {cleanupReplyHandler(reply);});
+                     q, [this, reply]() {
+        qCDebug(proofNetworkLog) << "Finished:" << reply->request().url().path() << reply->request().url().query();
+        cleanupReplyHandler(reply);
+    });
 }
 
 void RestClientPrivate::cleanupReplyHandler(QNetworkReply *reply)
