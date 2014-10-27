@@ -71,7 +71,7 @@ void TaskChain::run()
     Q_ASSERT(!d->wasStarted);
     d->wasStarted = true;
 
-    qCDebug(proofCoreTaskChainLog) << "Chain:" << this << " thread runned";
+    qCDebug(proofCoreTaskChainLog) << "Chain:" << this << " thread started";
     bool deleteSelf = false;
     while (!deleteSelf) {
         d->acquireFutures(SELF_MANAGEMENT_SPIN_SLEEP_TIME_IN_MSECS);
