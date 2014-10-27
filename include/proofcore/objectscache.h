@@ -43,6 +43,19 @@ protected:
     ObjectsCache &operator=(const ObjectsCache &other) = delete;
     ObjectsCache(const ObjectsCache &&other) = delete;
     ObjectsCache &operator=(const ObjectsCache &&other) = delete;
+
+    template<typename U = T>
+    QString valueTypeName(typename std::enable_if<!std::is_base_of<QObject, U>::value>::type* = 0) const
+    {
+        return QString();
+    }
+
+    template<typename U = T>
+    QString valueTypeName(typename std::enable_if<std::is_base_of<QObject, U>::value>::type* = 0) const
+    {
+        return U::staticMetaObject.className();
+    }
+
 };
 
 
@@ -62,6 +75,9 @@ public:
             return;
         m_cacheLock.lockForWrite();
         m_cache[key] = object.toWeakRef();
+        qCDebug(proofCoreCacheLog) << "Add object" << object.data() << "to"
+                                   << this->valueTypeName()
+                                   << "weakcache with key" << key;
         m_cacheLock.unlock();
     }
 
@@ -69,6 +85,9 @@ public:
     {
         m_cacheLock.lockForWrite();
         m_cache.remove(key);
+        qCDebug(proofCoreCacheLog) << "Remove object with key" << key << "from"
+                                   << this->valueTypeName()
+                                   << "weakcache";
         m_cacheLock.unlock();
     }
 
@@ -76,6 +95,9 @@ public:
     {
         m_cacheLock.lockForWrite();
         m_cache.clear();
+        qCDebug(proofCoreCacheLog) << "Clear"
+                                   << this->valueTypeName()
+                                   << "weakcache";
         m_cacheLock.unlock();
     }
 
@@ -118,6 +140,13 @@ public:
                 m_cache.remove(key);
             m_cacheLock.unlock();
         }
+        qCDebug(proofCoreCacheLog) << "Return value"
+                                   << foundValue.data()
+                                   << "from"
+                                   << this->valueTypeName()
+                                   << "weakcache"
+                                   << "for key"
+                                   << key;
         return foundValue;
     }
 
@@ -230,8 +259,12 @@ private:
 
     void addObjectToExpirator(const QSharedPointer<ProofObject> &object)
     {
-        if (m_objectsMinLifeTimeInSeconds)
+        if (m_objectsMinLifeTimeInSeconds) {
             Expirator::instance()->addObject(object, QDateTime::currentDateTime().addSecs(m_objectsMinLifeTimeInSeconds));
+            qCDebug(proofCoreCacheLog) << "Add"
+                                       << this->valueTypeName()
+                                       << "object" << object.data() << "to expirator";
+        }
     }
 
     qulonglong m_objectsMinLifeTimeInSeconds = 8 * 60 * 60; //Default value is 8 hours
@@ -253,6 +286,9 @@ public:
             return;
         m_cacheLock.lockForWrite();
         m_cache[key] = object;
+        qCDebug(proofCoreCacheLog) << "Add object" << object.data() << "to"
+                                   << this->valueTypeName()
+                                   << "strongcache with key" << key;
         m_cacheLock.unlock();
     }
 
@@ -260,6 +296,9 @@ public:
     {
         m_cacheLock.lockForWrite();
         m_cache.remove(key);
+        qCDebug(proofCoreCacheLog) << "Remove object with key" << key << "from"
+                                   << this->valueTypeName()
+                                   << "strongcache";
         m_cacheLock.unlock();
     }
 
@@ -267,6 +306,9 @@ public:
     {
         m_cacheLock.lockForWrite();
         m_cache.clear();
+        qCDebug(proofCoreCacheLog) << "Clear"
+                                   << this->valueTypeName()
+                                   << "strongcache";
         m_cacheLock.unlock();
     }
 
@@ -298,6 +340,13 @@ public:
         }
         if (!foundValue && key == Key())
             foundValue = T::defaultObject();
+        qCDebug(proofCoreCacheLog) << "Return value"
+                                   << foundValue.data()
+                                   << "from"
+                                   << this->valueTypeName()
+                                   << "strongcache"
+                                   << "for key"
+                                   << key;
         return foundValue;
     }
 
