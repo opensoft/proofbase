@@ -71,7 +71,7 @@ void AbstractRestServer::startListen()
 {
     Q_D(AbstractRestServer);
     if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, "startListen", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(this, __func__, Qt::QueuedConnection);
     } else {
         bool isListen = listen(QHostAddress::Any, d->m_port);
         if (!isListen)

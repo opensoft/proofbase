@@ -212,7 +212,7 @@ void RestClient::authenticate()
 {
     Q_D(RestClient);
     if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, "authenticate", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(this, __func__, Qt::QueuedConnection);
     } else {
         if (authType() == RestClient::AuthType::QuasiOAuth2Auth)
             d->requestQuasiOAuth2token();
