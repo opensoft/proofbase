@@ -97,7 +97,7 @@ void Proof::Logs::setLogsStoragePath(QString storagePath)
     logsDir.mkpath(".");
 }
 
-void Proof::Logs::setLoggingRulesFromString(const QString &rulesString)
+void Proof::Logs::setRulesFromString(const QString &rulesString)
 {
     QLoggingCategory::setFilterRules(rulesString);
 }
