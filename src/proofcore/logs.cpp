@@ -97,6 +97,11 @@ void Proof::Logs::setLogsStoragePath(QString storagePath)
     logsDir.mkpath(".");
 }
 
+void Proof::Logs::setLoggingRulesFromString(const QString &rulesString)
+{
+    QLoggingCategory::setFilterRules(rulesString);
+}
+
 void Proof::Logs::setConsoleOutputEnabled(bool enabled)
 {
     isConsoleOutputEnabled = enabled;
