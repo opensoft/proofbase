@@ -35,6 +35,7 @@ Expirator::Expirator()
     connect(timer, &QTimer::timeout, this, [this, timer](){
         Q_D(Expirator);
         d->m_timerId = startTimer(1000 * 60 * 10, Qt::VeryCoarseTimer);
+        qCDebug(proofCoreCacheLog) << "Cache expirator timer started";
         timer->deleteLater();
     }, Qt::QueuedConnection);
     timer->setSingleShot(true);
@@ -52,8 +53,10 @@ Expirator::~Expirator()
 Expirator *Expirator::instance()
 {
     static Expirator *inst = nullptr;
-    if (!inst)
+    if (!inst) {
         inst = new Expirator;
+        qCDebug(proofCoreCacheLog) << "Cache expirator instantiated";
+    }
     return inst;
 }
 
@@ -78,6 +81,7 @@ void Expirator::timerEvent(QTimerEvent *ev)
             break;
         toRemove << time;
     }
+    qCDebug(proofCoreCacheLog) << "Cache expirator remove" << toRemove.count() << "objects";
     for (const QDateTime &time : toRemove)
         d->m_controlledObjects.remove(time);
     d->m_mutex->unlock();

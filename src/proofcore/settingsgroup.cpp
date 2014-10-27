@@ -72,7 +72,9 @@ SettingsGroup *SettingsGroup::addGroup(const QString &groupName)
             emit valueChanged(newKey, value);
         });
         emit groupAdded(groupName);
+        qCDebug(proofCoreSettingsLog) << "Group" << groupName << "was added as child of" << d->name;
     }
+
     return newGroup;
 }
 
@@ -89,19 +91,25 @@ void SettingsGroup::setValue(const QString &key, const QVariant &value)
         else
             d->values[key] = value;
         emit valueChanged({key}, value);
+        qCDebug(proofCoreSettingsLog) << "Group" << d->name << ": new value for key" << key
+                                        << "is" << value << "old value was" << oldValue;
     }
 }
 
 void SettingsGroup::deleteGroup(const QString &groupName)
 {
     Q_D(SettingsGroup);
-    if (d->groups.contains(groupName))
+    if (d->groups.contains(groupName)) {
         d->groups.take(groupName)->deleteLater();
+        qCDebug(proofCoreSettingsLog) << "Group" << groupName << "was deleted";
+    }
 }
 
 void SettingsGroup::deleteValue(const QString &key)
 {
+    Q_D(SettingsGroup);
     setValue(key, QVariant());
+    qCDebug(proofCoreSettingsLog) << "Group:" << d->name << "value for key" << key << "was deleted";
 }
 
 QString SettingsGroup::name() const

@@ -50,6 +50,7 @@ TaskChainSP TaskChain::createChain()
         result->d_func()->selfPointer.clear();
     };
     *connection = connect(result.data(), &QThread::finished, result.data(), checker);
+    qCDebug(proofCoreTaskChainLog) << "New chain created" << result.data();
 
     return result;
 }
@@ -61,6 +62,7 @@ void TaskChain::fireSignalWaiters()
         return;
     d->signalWaitersEventLoop->exec();
     d->signalWaitersEventLoop.clear();
+    qCDebug(proofCoreTaskChainLog) << "Chain:" << this << " signal waiters fired";
 }
 
 void TaskChain::run()
@@ -69,6 +71,7 @@ void TaskChain::run()
     Q_ASSERT(!d->wasStarted);
     d->wasStarted = true;
 
+    qCDebug(proofCoreTaskChainLog) << "Chain:" << this << " thread runned";
     bool deleteSelf = false;
     while (!deleteSelf) {
         d->acquireFutures(SELF_MANAGEMENT_SPIN_SLEEP_TIME_IN_MSECS);
@@ -93,6 +96,7 @@ void TaskChain::addTaskPrivate(std::future<void> &&taskFuture)
 {
     Q_D(TaskChain);
     d->acquireFutures(TASK_ADDING_SPIN_SLEEP_TIME_IN_MSECS);
+    qCDebug(proofCoreTaskChainLog) << "Chain" << this << ": task added" << &taskFuture;
     d->futures.push_back(std::move(taskFuture));
     d->releaseFutures();
     d->startSelfManagementThreadIfNeeded();
