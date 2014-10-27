@@ -15,6 +15,7 @@ class PROOF_NETWORK_EXPORT NetworkDataEntityQmlWrapperPrivate : public ProofObje
 public:
     NetworkDataEntityQmlWrapperPrivate() : ProofObjectPrivate() {}
     QSharedPointer<NetworkDataEntity> dataEntity;
+    QObject *lambdaConnectContext = 0;
 
     template<class T>
     QSharedPointer<T> entity()

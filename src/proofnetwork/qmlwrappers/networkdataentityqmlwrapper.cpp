@@ -35,6 +35,11 @@ const QSharedPointer<NetworkDataEntity> NetworkDataEntityQmlWrapper::entity() co
 void NetworkDataEntityQmlWrapper::setEntity(const QSharedPointer<NetworkDataEntity> &networkDataEntity)
 {
     Q_D(NetworkDataEntityQmlWrapper);
+    if (d->dataEntity)
+        disconnect(d->dataEntity.data(), 0, this, 0);
+    if (d->lambdaConnectContext)
+        d->lambdaConnectContext->deleteLater();
+    d->lambdaConnectContext = new QObject(this);
     d->dataEntity = networkDataEntity;
     setupEntity();
 }

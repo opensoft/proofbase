@@ -29,7 +29,7 @@ signals:
 
 protected:
     explicit UserQmlWrapper(const UserSP &user, UserQmlWrapperPrivate &dd, QObject *parent = 0);
-    void setupEntity() override;
+    void setupEntity(const QSharedPointer<NetworkDataEntity> &old = QSharedPointer<NetworkDataEntity>()) override;
 };
 }
 

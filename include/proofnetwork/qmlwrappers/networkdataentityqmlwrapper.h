@@ -77,7 +77,7 @@ protected:
     explicit NetworkDataEntityQmlWrapper(const QSharedPointer<NetworkDataEntity> &networkDataEntity,
                                          NetworkDataEntityQmlWrapperPrivate &dd, QObject *parent = 0);
 
-    virtual void setupEntity() = 0;
+    virtual void setupEntity(const QSharedPointer<NetworkDataEntity> &old = QSharedPointer<NetworkDataEntity>()) = 0;
 };
 }
 
