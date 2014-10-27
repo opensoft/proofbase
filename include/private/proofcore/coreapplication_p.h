@@ -1,11 +1,13 @@
 #ifndef COREAPPLICATION_P_H
 #define COREAPPLICATION_P_H
 
+#include "proofcore_global.h"
+
 #include <QtGlobal>
 
 namespace Proof {
 class CoreApplication;
-class CoreApplicationPrivate
+class PROOF_CORE_EXPORT CoreApplicationPrivate
 {
     Q_DECLARE_PUBLIC(CoreApplication)
 protected:

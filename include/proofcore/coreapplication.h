@@ -1,12 +1,14 @@
 #ifndef PROOF_COREAPPLICATION_H
 #define PROOF_COREAPPLICATION_H
 
+#include "proofcore_global.h"
+
 #include <QCoreApplication>
 
 namespace Proof {
 
 class CoreApplicationPrivate;
-class CoreApplication : public QCoreApplication
+class PROOF_CORE_EXPORT CoreApplication : public QCoreApplication
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(CoreApplication)
