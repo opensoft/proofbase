@@ -10,14 +10,18 @@
 #include <QDir>
 #include <QMutex>
 #include <QThreadPool>
+#include <QTimer>
 
 #include <zlib.h>
+
+static const int COMPRESS_TIMEOUT = 24 * 60 * 60 * 1000; // 1 day
 
 static bool isConsoleOutputEnabled = true;
 static QString logsStoragePath;
 static QString logFileNameBase;
 static QtMessageHandler defaultHandler = nullptr;
 static QMutex logFileWriteMutex;
+static QTimer compressTimer;
 
 static QMap<QtMsgType, QString> stringifiedTypes = {
     { QtDebugMsg, "D"},
@@ -87,11 +91,9 @@ void consoleHandler(QtMsgType type, const QMessageLogContext &context, const QSt
         defaultHandler(type, context, message);
 }
 
-void compressOldFiles(const QDir &dir)
+void compressOldFiles()
 {
-    QStringList filters = {"*.*", "~*.gz"};
-    filters << QString("~*.%1.log").arg(QDate::currentDate().toString("yyyyMMdd"));
-    QFileInfoList files = dir.entryInfoList(QDir::Files | QDir::NoSymLinks);
+    QFileInfoList files = QDir(logsStoragePath).entryInfoList(QDir::Files | QDir::NoSymLinks);
 
     for(const QFileInfo &file: files) {
         if (file.suffix() != "gz"
@@ -139,7 +141,12 @@ void Proof::Logs::setLogsStoragePath(QString storagePath)
     QDir logsDir = QDir(logsStoragePath);
     logsDir.mkpath(".");
 
-    compressOldFiles(logsDir);
+    QObject::connect(&compressTimer, &QTimer::timeout, []() {
+        compressOldFiles();
+    });
+    compressOldFiles();
+    compressTimer.setTimerType(Qt::VeryCoarseTimer);
+    compressTimer.start(COMPRESS_TIMEOUT);
 }
 
 void Proof::Logs::setRulesFromString(const QString &rulesString)
