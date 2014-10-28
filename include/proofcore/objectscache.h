@@ -75,7 +75,7 @@ public:
             return;
         m_cacheLock.lockForWrite();
         m_cache[key] = object.toWeakRef();
-        qCDebug(proofCoreCacheLog) << "Add object" << object.data() << "to"
+        qCDebug(proofCoreCacheLog) << "Adding object" << object.data() << "to"
                                    << this->valueTypeName()
                                    << "weakcache with key" << key;
         m_cacheLock.unlock();
@@ -85,7 +85,7 @@ public:
     {
         m_cacheLock.lockForWrite();
         m_cache.remove(key);
-        qCDebug(proofCoreCacheLog) << "Remove object with key" << key << "from"
+        qCDebug(proofCoreCacheLog) << "Removing object with key" << key << "from"
                                    << this->valueTypeName()
                                    << "weakcache";
         m_cacheLock.unlock();
@@ -95,7 +95,7 @@ public:
     {
         m_cacheLock.lockForWrite();
         m_cache.clear();
-        qCDebug(proofCoreCacheLog) << "Clear"
+        qCDebug(proofCoreCacheLog) << "Clearing"
                                    << this->valueTypeName()
                                    << "weakcache";
         m_cacheLock.unlock();
@@ -140,7 +140,7 @@ public:
                 m_cache.remove(key);
             m_cacheLock.unlock();
         }
-        qCDebug(proofCoreCacheLog) << "Return value"
+        qCDebug(proofCoreCacheLog) << "Returning value"
                                    << foundValue.data()
                                    << "from"
                                    << this->valueTypeName()
@@ -261,9 +261,9 @@ private:
     {
         if (m_objectsMinLifeTimeInSeconds) {
             Expirator::instance()->addObject(object, QDateTime::currentDateTime().addSecs(m_objectsMinLifeTimeInSeconds));
-            qCDebug(proofCoreCacheLog) << "Add"
+            qCDebug(proofCoreCacheLog) << "Object"
                                        << this->valueTypeName()
-                                       << "object" << object.data() << "to expirator";
+                                       << "added" << object.data() << "to expirator";
         }
     }
 
@@ -286,7 +286,7 @@ public:
             return;
         m_cacheLock.lockForWrite();
         m_cache[key] = object;
-        qCDebug(proofCoreCacheLog) << "Add object" << object.data() << "to"
+        qCDebug(proofCoreCacheLog) << "Adding object" << object.data() << "to"
                                    << this->valueTypeName()
                                    << "strongcache with key" << key;
         m_cacheLock.unlock();
@@ -296,7 +296,7 @@ public:
     {
         m_cacheLock.lockForWrite();
         m_cache.remove(key);
-        qCDebug(proofCoreCacheLog) << "Remove object with key" << key << "from"
+        qCDebug(proofCoreCacheLog) << "Removing object with key" << key << "from"
                                    << this->valueTypeName()
                                    << "strongcache";
         m_cacheLock.unlock();
@@ -306,7 +306,7 @@ public:
     {
         m_cacheLock.lockForWrite();
         m_cache.clear();
-        qCDebug(proofCoreCacheLog) << "Clear"
+        qCDebug(proofCoreCacheLog) << "Clearing"
                                    << this->valueTypeName()
                                    << "strongcache";
         m_cacheLock.unlock();
@@ -340,7 +340,7 @@ public:
         }
         if (!foundValue && key == Key())
             foundValue = T::defaultObject();
-        qCDebug(proofCoreCacheLog) << "Return value"
+        qCDebug(proofCoreCacheLog) << "Returning value"
                                    << foundValue.data()
                                    << "from"
                                    << this->valueTypeName()
