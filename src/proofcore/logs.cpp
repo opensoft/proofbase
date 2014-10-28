@@ -9,6 +9,9 @@
 #include <QRegularExpression>
 #include <QDir>
 #include <QMutex>
+#include <QThreadPool>
+
+#include <zlib.h>
 
 static bool isConsoleOutputEnabled = true;
 static QString logsStoragePath;
@@ -23,6 +26,31 @@ static QMap<QtMsgType, QString> stringifiedTypes = {
     { QtFatalMsg, "F"},
     { QtSystemMsg, "S"}
 };
+
+class DetachedCompresser: public QRunnable
+{
+public:
+    DetachedCompresser(const QString &filePath) :
+        m_filePath(filePath) {}
+
+    void run() override
+    {
+        QFile file(m_filePath);
+        if (file.open(QFile::ReadOnly)) {
+            QByteArray fileData = file.readAll();
+            gzFile fi = gzopen(QString("%1.gz").arg(m_filePath).toLocal8Bit().constData(), "wb");
+            gzwrite(fi, fileData.constData(), fileData.length());
+            gzclose(fi);
+
+            file.remove();
+        }
+    }
+
+
+private:
+    QString m_filePath;
+};
+
 
 void fileHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
@@ -57,6 +85,21 @@ void consoleHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 {
     if (isConsoleOutputEnabled && defaultHandler)
         defaultHandler(type, context, message);
+}
+
+void compressOldFiles(const QDir &dir)
+{
+    QStringList filters = {"*.*", "~*.gz"};
+    filters << QString("~*.%1.log").arg(QDate::currentDate().toString("yyyyMMdd"));
+    QFileInfoList files = dir.entryInfoList(QDir::Files | QDir::NoSymLinks);
+
+    for(const QFileInfo &file: files) {
+        if (file.suffix() != "gz"
+                && file.completeSuffix() != QString("%1.log").arg(QDate::currentDate().toString("yyyyMMdd"))) {
+            DetachedCompresser *compresser = new DetachedCompresser(file.absoluteFilePath());
+            QThreadPool::globalInstance()->start(compresser);
+        }
+    }
 }
 
 void Proof::Logs::setup()
@@ -95,6 +138,8 @@ void Proof::Logs::setLogsStoragePath(QString storagePath)
     logsStoragePath = storagePath;
     QDir logsDir = QDir(logsStoragePath);
     logsDir.mkpath(".");
+
+    compressOldFiles(logsDir);
 }
 
 void Proof::Logs::setRulesFromString(const QString &rulesString)
