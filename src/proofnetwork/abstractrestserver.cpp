@@ -5,6 +5,8 @@
 #include <QMetaObject>
 #include <QMetaMethod>
 
+#include <algorithm>
+
 namespace Proof {
 class AbstractRestServerPrivate
 {
@@ -25,6 +27,7 @@ private:
     void callMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body);
     QString makeMethodName(const QString &type, QString name);
     QString findMethod(const QString &method);
+    void fillMethods();
 
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());
 
@@ -35,7 +38,7 @@ private:
     QString m_pathPrefix;
     QThread *m_thread;
 
-    QHash<QString, QString> m_foundedMethodsCache;
+    QList<QString> m_methods;
 };
 }
 
@@ -80,6 +83,7 @@ void AbstractRestServer::startListen()
     if (QThread::currentThread() != thread()) {
         QMetaObject::invokeMethod(this, __func__, Qt::QueuedConnection);
     } else {
+        d->fillMethods();
         bool isListen = listen(QHostAddress::Any, d->m_port);
         if (!isListen)
             qCDebug(proofNetworkMiscLog) << "Server can't start on port" << d->m_port;
@@ -179,7 +183,7 @@ void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
     QStringList tokens = headersParts.at(0).split(" ");
 
     if (tokens.count() == 3 && (tokens[0] == "GET" || tokens[0] == "POST")) {
-        callMethod(socket, tokens[0], tokens[1].mid(1), headersParts, body.toUtf8());
+        callMethod(socket, tokens[0], tokens[1], headersParts, body.toUtf8());
         socket->disconnectFromHost();
         if (socket->state() == QTcpSocket::UnconnectedState)
             delete socket;
@@ -190,30 +194,47 @@ void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
 
 QString AbstractRestServerPrivate::makeMethodName(const QString &type, QString name)
 {
-    return QString(QMetaObject::normalizedSignature(QString("%1%2")
-                                                    .arg(type.toLower())
-                                                    .arg(name.replace("-", "")).toLatin1().constData()));
+    QStringList splittedName = name.split("/");
+
+    for (int i = 0; i < splittedName.count(); ++i) {
+        QStringList minusSplitted = splittedName.at(i).split("-");
+        for (int j = 0; j < minusSplitted.count(); ++j) {
+            if (!minusSplitted[j].isEmpty()) {
+                minusSplitted[j] = minusSplitted[j].toLower();
+                minusSplitted[j][0] = minusSplitted[j][0].toUpper();
+            }
+        }
+        splittedName[i] = minusSplitted.join("");
+    }
+    name = splittedName.join("_");
+
+    return QString("%1%2")
+            .arg(type.toLower())
+            .arg(name);
 }
 
 QString AbstractRestServerPrivate::findMethod(const QString &method)
 {
-    Q_Q(AbstractRestServer);
-    if (m_foundedMethodsCache.contains(method))
-        return m_foundedMethodsCache[method];
+    for (const QString &currentMethod : m_methods) {
+        if (method.startsWith(currentMethod))
+            return currentMethod;
+    }
+    return QString();
+}
 
+void AbstractRestServerPrivate::fillMethods()
+{
+    Q_Q(AbstractRestServer);
     for (int i = 0; i < q->metaObject()->methodCount(); ++i) {
         if (q->metaObject()->method(i).methodType() == QMetaMethod::Slot) {
             QString currentMethod = QString(q->metaObject()->method(i).name());
-            if (currentMethod.startsWith("get") || currentMethod.startsWith("post")) {
-                if (!currentMethod.compare(method, Qt::CaseInsensitive)) {
-                    m_foundedMethodsCache[method] = currentMethod;
-                    return currentMethod;
-                }
+            if (currentMethod.startsWith("get_") || currentMethod.startsWith("post_")) {
+                m_methods << currentMethod;
             }
         }
     }
-
-    return QString();
+    qSort(m_methods);
+    std::reverse(std::begin(m_methods), std::end(m_methods));
 }
 
 void AbstractRestServerPrivate::callMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body)
