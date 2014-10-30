@@ -201,7 +201,6 @@ QString AbstractRestServerPrivate::findMethod(const QString &method)
     if (m_foundedMethodsCache.contains(method))
         return m_foundedMethodsCache[method];
 
-    qCDebug(proofNetworkMiscLog()) << "!!!!!!!!!!!!!!" << q->metaObject()->className();
     for (int i = 0; i < q->metaObject()->methodCount(); ++i) {
         if (q->metaObject()->method(i).methodType() == QMetaMethod::Slot) {
             QString currentMethod = QString(q->metaObject()->method(i).name());
