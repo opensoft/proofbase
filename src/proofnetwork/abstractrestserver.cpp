@@ -2,6 +2,8 @@
 
 #include <QDir>
 #include <QTcpSocket>
+#include <QMetaObject>
+#include <QMetaMethod>
 
 namespace Proof {
 class AbstractRestServerPrivate
@@ -20,27 +22,31 @@ private:
 
     void createNewConnection();
     void handleRequest(QTcpSocket *socket);
+    void callMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body);
+    QString makeMethodName(const QString &type, QString name);
+    QString findMethod(const QString &method);
 
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());
-
-    bool isAllowedMethod(const QString &method);
 
     AbstractRestServer *q_ptr = 0;
     int m_port = 0;
     QString m_userName;
     QString m_password;
+    QString m_pathPrefix;
     QThread *m_thread;
+
+    QHash<QString, QString> m_foundedMethodsCache;
 };
 }
 
 using namespace Proof;
 
-AbstractRestServer::AbstractRestServer(const QString &userName, const QString &password, int port, QObject *parent)
-    : AbstractRestServer(*new AbstractRestServerPrivate, userName, password, port, parent)
+AbstractRestServer::AbstractRestServer(const QString &userName, const QString &password, const QString &pathPrefix, int port, QObject *parent)
+    : AbstractRestServer(*new AbstractRestServerPrivate, userName, password, pathPrefix, port, parent)
 {
 }
 
-AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QString &userName, const QString &password, int port, QObject *parent)
+AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QString &userName, const QString &password, const QString &pathPrefix, int port, QObject *parent)
     : QTcpServer(parent),
       d_ptr(&dd)
 {
@@ -52,6 +58,7 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     d->m_port = port;
     d->m_userName = userName;
     d->m_password = password;
+    d->m_pathPrefix = pathPrefix;
 
     connect(this, &AbstractRestServer::newConnection, this, [d](){d->createNewConnection();});
     moveToThread(d->m_thread);
@@ -171,29 +178,57 @@ void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
 
     QStringList tokens = headersParts.at(0).split(" ");
 
-    if (tokens.count() == 3 && tokens[0] == "GET") {
-        if (isAllowedMethod(tokens[1])) {
-            headersParts.removeFirst();
-            q->handleRequest(socket, tokens[1], headersParts, body);
-        } else {
-            q->sendNotFound(socket, "Wrong method");
-        }
+    if (tokens.count() == 3 && (tokens[0] == "GET" || tokens[0] == "POST")) {
+        callMethod(socket, tokens[0], tokens[1].mid(1), headersParts, body.toUtf8());
         socket->disconnectFromHost();
         if (socket->state() == QTcpSocket::UnconnectedState)
             delete socket;
     } else {
-        q->sendNotFound(socket, "Only GET requests allowed");
+        q->sendNotFound(socket, "Only GET and POST requests allowed");
     }
 }
 
-bool AbstractRestServerPrivate::isAllowedMethod(const QString &method)
+QString AbstractRestServerPrivate::makeMethodName(const QString &type, QString name)
+{
+    return QString(QMetaObject::normalizedSignature(QString("%1%2")
+                                                    .arg(type.toLower())
+                                                    .arg(name.replace("-", "")).toLatin1().constData()));
+}
+
+QString AbstractRestServerPrivate::findMethod(const QString &method)
 {
     Q_Q(AbstractRestServer);
-    for (const QString &allowed : q->allowedMethods()) {
-        if (method == allowed || method.startsWith(allowed + "/"))
-            return true;
+    if (m_foundedMethodsCache.contains(method))
+        return m_foundedMethodsCache[method];
+
+    qCDebug(proofNetworkMiscLog()) << "!!!!!!!!!!!!!!" << q->metaObject()->className();
+    for (int i = 0; i < q->metaObject()->methodCount(); ++i) {
+        if (q->metaObject()->method(i).methodType() == QMetaMethod::Slot) {
+            QString currentMethod = QString(q->metaObject()->method(i).name());
+            if (currentMethod.startsWith("get") || currentMethod.startsWith("post")) {
+                if (!currentMethod.compare(method, Qt::CaseInsensitive)) {
+                    m_foundedMethodsCache[method] = currentMethod;
+                    return currentMethod;
+                }
+            }
+        }
     }
-    return false;
+
+    return QString();
+}
+
+void AbstractRestServerPrivate::callMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body)
+{
+    Q_Q(AbstractRestServer);
+    QString methodName = findMethod(makeMethodName(type, method));
+    if (!methodName.isEmpty()) {
+        QMetaObject::invokeMethod(q, methodName.toLatin1().constData(), Qt::AutoConnection,
+                                  Q_ARG(QTcpSocket *,socket),
+                                  Q_ARG(const QStringList &, headers),
+                                  Q_ARG(const QByteArray &, body));
+    } else {
+        q->sendNotFound(socket, "Wrong method");
+    }
 }
 
 void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason) {
