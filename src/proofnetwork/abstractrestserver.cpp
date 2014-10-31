@@ -242,10 +242,21 @@ void AbstractRestServerPrivate::callMethod(QTcpSocket *socket, const QString &ty
     Q_Q(AbstractRestServer);
     QString methodName = findMethod(makeMethodName(type, method));
     if (!methodName.isEmpty()) {
-        QMetaObject::invokeMethod(q, methodName.toLatin1().constData(), Qt::AutoConnection,
-                                  Q_ARG(QTcpSocket *,socket),
-                                  Q_ARG(const QStringList &, headers),
-                                  Q_ARG(const QByteArray &, body));
+        QString encryptedAuth;
+        for (int i = 1; i < headers.count(); ++i) {
+            if (headers.at(i).startsWith("Authorization")) {
+                encryptedAuth = q->parseAuth(socket, headers.at(i));
+                break;
+            }
+        }
+        if (!encryptedAuth.isEmpty() && q->checkBasicAuth(encryptedAuth)) {
+            QMetaObject::invokeMethod(q, methodName.toLatin1().constData(), Qt::AutoConnection,
+                                      Q_ARG(QTcpSocket *,socket),
+                                      Q_ARG(const QStringList &, headers),
+                                      Q_ARG(const QByteArray &, body));
+        } else {
+            q->sendNotAuthorized(socket);
+        }
     } else {
         q->sendNotFound(socket, "Wrong method");
     }
@@ -255,6 +266,7 @@ void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray 
     QTextStream os(socket);
     os.setAutoDetectUnicode(true);
     os << QString("HTTP/1.0 %1 %2\r\n"
+                  "Server: proof\r\n"
                   "Content-Type: %3\r\n"
                   "%4"
                   "\r\n")
@@ -262,6 +274,6 @@ void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray 
           .arg(reason)
           .arg(contentType)
           .arg(!body.isEmpty() ? QString("Content-Size: %1\r\n").arg(body.size()) : QString())
-          .toLatin1().constData()
-       << body << "\n";
+          .toUtf8().constData()
+       << body << "\r\n";
 }

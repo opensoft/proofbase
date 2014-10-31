@@ -181,7 +181,7 @@ void RestClient::setMsecsForTimeout(qlonglong arg)
 QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkLog) << method << query.toString();
+    qCDebug(proofNetworkMiscLog) << method << query.toString();
     QNetworkReply *reply = d->qnam->get(d->createNetworkRequest(method, query, ""));
     d->handleReply(reply);
     return reply;
@@ -242,6 +242,8 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
             result.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
         else
             result.setHeader(QNetworkRequest::ContentTypeHeader, "application/xml");
+    } else {
+        result.setHeader(QNetworkRequest::ContentTypeHeader, "plain/text");
     }
 
     switch (authType) {
@@ -338,7 +340,7 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
     timer->setSingleShot(true);
     replyTimeouts.insert(reply, timer);
     QObject::connect(timer, &QTimer::timeout, [timer, reply](){
-        qCDebug(proofNetworkLog) << "Timed out:" << reply->request().url().path() << reply->request().url().query() << reply->isRunning();
+        qCDebug(proofNetworkMiscLog) << "Timed out:" << reply->request().url().path() << reply->request().url().query() << reply->isRunning();
         if (reply->isRunning())
             reply->abort();
         timer->deleteLater();
@@ -348,12 +350,12 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
 
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [this, reply](QNetworkReply::NetworkError) {
-        qCDebug(proofNetworkLog) << "Error occured:" << reply->request().url().path() << reply->request().url().query();
+        qCDebug(proofNetworkMiscLog) << "Error occured:" << reply->request().url().path() << reply->request().url().query();
         cleanupReplyHandler(reply);
     });
     QObject::connect(reply, &QNetworkReply::finished,
                      q, [this, reply]() {
-        qCDebug(proofNetworkLog) << "Finished:" << reply->request().url().path() << reply->request().url().query();
+        qCDebug(proofNetworkMiscLog) << "Finished:" << reply->request().url().path() << reply->request().url().query();
         cleanupReplyHandler(reply);
     });
 }
