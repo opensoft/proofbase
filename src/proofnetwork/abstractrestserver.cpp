@@ -10,13 +10,17 @@ static const QString REST_METHOD_PREFIX = QString("rest_");
 
 namespace Proof {
 struct MethodNode {
-    MethodNode(const QString &_value = QString())
-        : value(_value)
+    MethodNode()
     {}
 
-    bool contains(const QString &name)
+    bool contains(const QString &name) const
     {
         return nodes.contains(name);
+    }
+
+    void clear()
+    {
+        nodes.clear();
     }
 
     operator QString()
@@ -34,12 +38,15 @@ struct MethodNode {
         return nodes[name];
     }
 
+    void setValue(const QString &_value)
+    {
+        value = _value;
+    }
+
 private:
     QHash<QString, MethodNode> nodes;
     QString value = "";
 };
-
-typedef MethodNode MethodsTree;
 
 class AbstractRestServerPrivate
 {
@@ -58,8 +65,8 @@ private:
     void createNewConnection();
     void handleRequest(QTcpSocket *socket);
     void tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body);
-    QStringList makeMethodName(const QString &type, QString name);
-    QString findMethod(const QStringList &splittedMethod, QStringList &outRestsOfMethod);
+    QStringList makeMethodName(const QString &type, const QString &name);
+    QString findMethod(const QStringList &splittedMethod, QStringList &methodVariablePart);
     void fillMethods();
     void addMethodToTree(const QString &realMethod);
 
@@ -72,7 +79,7 @@ private:
     QString pathPrefix;
     QThread *thread;
 
-    MethodsTree methodsTree;
+    MethodNode methodsTreeRoot;
 };
 }
 
@@ -222,18 +229,18 @@ void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
         delete socket;
 }
 
-QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, QString name)
+QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const QString &name)
 {
     QStringList splittedName = name.toLower().split("/", QString::SkipEmptyParts);
     splittedName.prepend(type.toLower());
     return splittedName;
 }
 
-QString AbstractRestServerPrivate::findMethod(const QStringList &splittedMethod, QStringList &outRestsOfMethod)
+QString AbstractRestServerPrivate::findMethod(const QStringList &splittedMethod, QStringList &methodVariablePart)
 {
     Q_ASSERT(splittedMethod.count() >= 2);
 
-    MethodNode *currentNode = &methodsTree;
+    MethodNode *currentNode = &methodsTreeRoot;
     int i = 0;
     for (; i < splittedMethod.count(); ++i) {
         if (!currentNode->contains(splittedMethod[i]))
@@ -241,17 +248,18 @@ QString AbstractRestServerPrivate::findMethod(const QStringList &splittedMethod,
         currentNode = &(*currentNode)[splittedMethod[i]];
     }
 
-    if (currentNode->contains("") && !QString((*currentNode)[""]).isEmpty()) {
-        outRestsOfMethod = splittedMethod.mid(i);
-        return(*currentNode)[""];
-    }
+    QString methodName = (*currentNode);
 
-    return QString();
+    if (!methodName.isEmpty())
+        methodVariablePart = splittedMethod.mid(i);
+
+    return methodName;
 }
 
 void AbstractRestServerPrivate::fillMethods()
 {
     Q_Q(AbstractRestServer);
+    methodsTreeRoot.clear();
     for (int i = 0; i < q->metaObject()->methodCount(); ++i) {
         if (q->metaObject()->method(i).methodType() == QMetaMethod::Slot) {
             QString currentMethod = QString(q->metaObject()->method(i).name());
@@ -269,21 +277,21 @@ void AbstractRestServerPrivate::addMethodToTree(const QString &realMethod)
         if (method[i].isUpper()) {
             method[i] = method[i].toLower();
             if (i > 0 && method[i - 1] != '_')
-                method.insert(i, '-');
+                method.insert(i++, '-');
         }
     }
 
     QStringList splittedMethod = method.split("_");
     Q_ASSERT(splittedMethod.count() >= 2);
 
-    MethodNode *currentNode = &methodsTree;
+    MethodNode *currentNode = &methodsTreeRoot;
     for (int i = 0; i < splittedMethod.count(); ++i) {
         if (!currentNode->contains(splittedMethod[i])) {
             (*currentNode)[splittedMethod[i]] = MethodNode();
         }
         currentNode = &(*currentNode)[splittedMethod[i]];
     }
-    (*currentNode)[""] = MethodNode(realMethod);
+    currentNode->setValue(realMethod);
 
 
 }
@@ -292,14 +300,14 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
 {
     Q_Q(AbstractRestServer);
     QStringList splittedByParamsMethod = method.split('?');
-    QStringList restsOfMethod;
+    QStringList methodVariablePart;
     QUrlQuery queryParams;
 
     Q_ASSERT(splittedByParamsMethod.count());
     if (splittedByParamsMethod.count() > 1)
         queryParams = QUrlQuery(splittedByParamsMethod.at(1));
 
-    QString methodName = findMethod(makeMethodName(type, splittedByParamsMethod.at(0)), restsOfMethod);
+    QString methodName = findMethod(makeMethodName(type, splittedByParamsMethod.at(0)), methodVariablePart);
     if (!methodName.isEmpty()) {
         QString encryptedAuth;
         for (int i = 1; i < headers.count(); ++i) {
@@ -312,7 +320,7 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
             QMetaObject::invokeMethod(q, methodName.toLatin1().constData(), Qt::AutoConnection,
                                       Q_ARG(QTcpSocket *,socket),
                                       Q_ARG(const QStringList &, headers),
-                                      Q_ARG(const QStringList &, restsOfMethod),
+                                      Q_ARG(const QStringList &, methodVariablePart),
                                       Q_ARG(const QUrlQuery &, queryParams),
                                       Q_ARG(const QByteArray &, body));
         } else {

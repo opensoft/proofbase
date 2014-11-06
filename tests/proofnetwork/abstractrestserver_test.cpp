@@ -103,6 +103,10 @@ class AnotherRestServerMethodsTest : public RestServerMethodsTest
 {
 };
 
+class SomeMoreRestServerMethodsTest : public RestServerMethodsTest
+{
+};
+
 TEST_P(RestServerMethodsTest, methodsNames)
 {
     QString method = std::get<0>(GetParam());
@@ -128,7 +132,19 @@ TEST_P(RestServerMethodsTest, methodsNames)
     delete reply;
 }
 
-TEST_P(AnotherRestServerMethodsTest, methodsRestsAndParams)
+INSTANTIATE_TEST_CASE_P(RestServerMethodsTestInstance,
+                        RestServerMethodsTest,
+                        testing::Values(std::tuple<QString, QString, int, bool>("/test-method", "rest_get_TestMethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-met-hod", "",  404, false),
+                                        std::tuple<QString, QString, int, bool>("/tEst-meThoD", "rest_get_TestMethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/testmethod", "rest_get_Testmethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method/sub-method", "rest_get_TestMethod_SubMethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method/sub-method/subsub", "rest_get_TestMethod_SubMethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method",  "rest_post_TestMethod", 200, true),
+                                        std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, false),
+                                        std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, true)));
+
+TEST_P(AnotherRestServerMethodsTest, methodsParams)
 {
     QString method = std::get<0>(GetParam());
     QString params = std::get<1>(GetParam());
@@ -158,24 +174,49 @@ TEST_P(AnotherRestServerMethodsTest, methodsRestsAndParams)
     delete reply;
 }
 
-INSTANTIATE_TEST_CASE_P(RestServerMethodsTestInstance,
-                        RestServerMethodsTest,
-                        testing::Values(std::tuple<QString, QString, int, bool>("/test-method", "rest_get_TestMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-met-hod", "",  404, false),
-                                        std::tuple<QString, QString, int, bool>("/tEst-meThoD", "rest_get_TestMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/testmethod", "rest_get_Testmethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method/sub-method", "rest_get_TestMethod_SubMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method/sub-method/subsub", "rest_get_TestMethod_SubMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method",  "rest_post_TestMethod", 200, true),
-                                        std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, false),
-                                        std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, true)));
-
 INSTANTIATE_TEST_CASE_P(AnotherRestServerMethodsTestInstance,
                         AnotherRestServerMethodsTest,
                         testing::Values(std::tuple<QString, QString, int, bool>("/test-method/123", "", 200, false),
                                         std::tuple<QString, QString, int, bool>("/test-method", "param=123&another_param=true", 200, true),
-                                        std::tuple<QString, QString, int, bool>("/test-method/",  "param=hello&another_param=true", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method/123/sub-method",  "param=321&some_param=false", 200, true)
+                                        std::tuple<QString, QString, int, bool>("/test-method/", "param=hello&another_param=true", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method/123/sub-method", "param=321&some_param=false", 200, true)
+                                        ));
+
+TEST_P(SomeMoreRestServerMethodsTest, methodsVariableParts)
+{
+    QString method = std::get<0>(GetParam());
+    QString variablePart = std::get<1>(GetParam());
+    int resultCode = std::get<2>(GetParam());
+    bool isPost = std::get<3>(GetParam());
+
+    ASSERT_TRUE(restServerUT->isListening());
+
+    QNetworkReply *reply = isPost ? restClientUT->post(method): restClientUT->get(method);
+
+    QSignalSpy spy(reply, SIGNAL(finished()));
+
+    ASSERT_TRUE(spy.wait());
+    EXPECT_EQ(1, spy.count());
+
+    EXPECT_EQ(resultCode, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+
+    QStringList reasonResult = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed().split('|');
+
+    ASSERT_EQ(2, reasonResult.count());
+
+    EXPECT_EQ(variablePart, reasonResult.at(0));
+
+    delete reply;
+}
+
+INSTANTIATE_TEST_CASE_P(SomeMoreRestServerMethodsTestInstance,
+                        SomeMoreRestServerMethodsTest,
+                        testing::Values(std::tuple<QString, QString, int, bool>("/test-method/123", "123", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method", "", 200, true),
+                                        std::tuple<QString, QString, int, bool>("/test-method/", "", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method////", "", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method/\\`123", "%5c%60123", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method/123/sub-method", "123/sub-method", 200, true)
                                         ));
 
 #include "abstractrestserver_test.moc"
