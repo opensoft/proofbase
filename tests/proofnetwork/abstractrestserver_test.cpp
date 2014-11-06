@@ -21,40 +21,40 @@ public:
         : Proof::AbstractRestServer("username", "password", "api", 9091) {}
 
 public slots:
-    void rest_get_TestMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &restsOfMethod,
+    void rest_get_TestMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
                              const QUrlQuery &queryParams, const QByteArray &body)
     {
         Q_UNUSED(headers)
         Q_UNUSED(body)
-        sendAnswer(socket, __func__, "plain/text", 200, restsOfMethod.join('/') + "|" + queryParams.toString());
+        sendAnswer(socket, __func__, "plain/text", 200, methodVariableParts.join('/') + "|" + queryParams.toString());
     }
 
-    void rest_get_Testmethod(QTcpSocket *socket, const QStringList &headers, const QStringList &restsOfMethod,
+    void rest_get_Testmethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
                              const QUrlQuery &queryParams, const QByteArray &body)
     {
         Q_UNUSED(headers)
-        Q_UNUSED(restsOfMethod)
+        Q_UNUSED(methodVariableParts)
         Q_UNUSED(queryParams)
         Q_UNUSED(body)
         sendAnswer(socket, __func__, "plain/text");
     }
 
-    void rest_get_TestMethod_SubMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &restsOfMethod,
+    void rest_get_TestMethod_SubMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
                                        const QUrlQuery &queryParams, const QByteArray &body)
     {
         Q_UNUSED(headers)
-        Q_UNUSED(restsOfMethod)
+        Q_UNUSED(methodVariableParts)
         Q_UNUSED(queryParams)
         Q_UNUSED(body)
         sendAnswer(socket, __func__, "plain/text");
     }
 
-    void rest_post_TestMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &restsOfMethod,
+    void rest_post_TestMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
                               const QUrlQuery &queryParams, const QByteArray &body)
     {
         Q_UNUSED(headers)
         Q_UNUSED(body)
-        sendAnswer(socket, __func__, "plain/text", 200, restsOfMethod.join('/') + "|" + queryParams.toString());
+        sendAnswer(socket, __func__, "plain/text", 200, methodVariableParts.join('/') + "|" + queryParams.toString());
     }
 };
 

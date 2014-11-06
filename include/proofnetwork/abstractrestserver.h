@@ -25,7 +25,7 @@ public:
 protected:
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());
     void sendNotFound(QTcpSocket *socket, const QString &reason = "Not Found");
-    void sendNotAuthorized(QTcpSocket *socket);
+    void sendNotAuthorized(QTcpSocket *socket, const QString &reason = "Unauthorized");
     void sendInternalError(QTcpSocket *socket);
     bool checkBasicAuth(const QString &encryptedAuth) const;
     QString parseAuth(QTcpSocket *socket, const QString &header);

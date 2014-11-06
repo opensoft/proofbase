@@ -66,7 +66,7 @@ private:
     void handleRequest(QTcpSocket *socket);
     void tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body);
     QStringList makeMethodName(const QString &type, const QString &name);
-    QString findMethod(const QStringList &splittedMethod, QStringList &methodVariablePart);
+    QString findMethod(const QStringList &splittedMethod, QStringList &methodVariableParts);
     void fillMethods();
     void addMethodToTree(const QString &realMethod);
 
@@ -77,7 +77,7 @@ private:
     QString userName;
     QString password;
     QString pathPrefix;
-    QThread *thread;
+    QThread *thread = nullptr;
 
     MethodNode methodsTreeRoot;
 };
@@ -169,9 +169,9 @@ void AbstractRestServer::sendNotFound(QTcpSocket *socket, const QString &reason)
     sendAnswer(socket, "", "text/plain; charset=utf-8", 404, reason);
 }
 
-void AbstractRestServer::sendNotAuthorized(QTcpSocket *socket)
+void AbstractRestServer::sendNotAuthorized(QTcpSocket *socket, const QString &reason)
 {
-    sendAnswer(socket, "", "text/plain; charset=utf-8", 401, "Unauthorized");
+    sendAnswer(socket, "", "text/plain; charset=utf-8", 401, reason);
 }
 
 void AbstractRestServer::sendInternalError(QTcpSocket *socket)
@@ -236,7 +236,7 @@ QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const
     return splittedName;
 }
 
-QString AbstractRestServerPrivate::findMethod(const QStringList &splittedMethod, QStringList &methodVariablePart)
+QString AbstractRestServerPrivate::findMethod(const QStringList &splittedMethod, QStringList &methodVariableParts)
 {
     Q_ASSERT(splittedMethod.count() >= 2);
 
@@ -251,7 +251,7 @@ QString AbstractRestServerPrivate::findMethod(const QStringList &splittedMethod,
     QString methodName = (*currentNode);
 
     if (!methodName.isEmpty())
-        methodVariablePart = splittedMethod.mid(i);
+        methodVariableParts = splittedMethod.mid(i);
 
     return methodName;
 }
@@ -263,9 +263,8 @@ void AbstractRestServerPrivate::fillMethods()
     for (int i = 0; i < q->metaObject()->methodCount(); ++i) {
         if (q->metaObject()->method(i).methodType() == QMetaMethod::Slot) {
             QString currentMethod = QString(q->metaObject()->method(i).name());
-            if (currentMethod.startsWith(REST_METHOD_PREFIX)) {
+            if (currentMethod.startsWith(REST_METHOD_PREFIX))
                 addMethodToTree(currentMethod);
-            }
         }
     }
 }
@@ -286,9 +285,8 @@ void AbstractRestServerPrivate::addMethodToTree(const QString &realMethod)
 
     MethodNode *currentNode = &methodsTreeRoot;
     for (int i = 0; i < splittedMethod.count(); ++i) {
-        if (!currentNode->contains(splittedMethod[i])) {
+        if (!currentNode->contains(splittedMethod[i]))
             (*currentNode)[splittedMethod[i]] = MethodNode();
-        }
         currentNode = &(*currentNode)[splittedMethod[i]];
     }
     currentNode->setValue(realMethod);
@@ -300,14 +298,14 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
 {
     Q_Q(AbstractRestServer);
     QStringList splittedByParamsMethod = method.split('?');
-    QStringList methodVariablePart;
+    QStringList methodVariableParts;
     QUrlQuery queryParams;
 
     Q_ASSERT(splittedByParamsMethod.count());
     if (splittedByParamsMethod.count() > 1)
         queryParams = QUrlQuery(splittedByParamsMethod.at(1));
 
-    QString methodName = findMethod(makeMethodName(type, splittedByParamsMethod.at(0)), methodVariablePart);
+    QString methodName = findMethod(makeMethodName(type, splittedByParamsMethod.at(0)), methodVariableParts);
     if (!methodName.isEmpty()) {
         QString encryptedAuth;
         for (int i = 1; i < headers.count(); ++i) {
@@ -320,7 +318,7 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
             QMetaObject::invokeMethod(q, methodName.toLatin1().constData(), Qt::AutoConnection,
                                       Q_ARG(QTcpSocket *,socket),
                                       Q_ARG(const QStringList &, headers),
-                                      Q_ARG(const QStringList &, methodVariablePart),
+                                      Q_ARG(const QStringList &, methodVariableParts),
                                       Q_ARG(const QUrlQuery &, queryParams),
                                       Q_ARG(const QByteArray &, body));
         } else {
