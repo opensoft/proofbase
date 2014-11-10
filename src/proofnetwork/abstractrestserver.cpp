@@ -127,7 +127,7 @@ void AbstractRestServer::startListen()
         d->fillMethods();
         bool isListen = listen(QHostAddress::Any, d->port);
         if (!isListen)
-            qCDebug(proofNetworkMiscLog) << "Server can't start on port" << d->port;
+            qCCritical(proofNetworkMiscLog) << "Server can't start on port" << d->port;
     }
 }
 
