@@ -32,6 +32,7 @@ public:
     RestClient::AuthType authType = RestClient::AuthType::WithoutAuth;
     QHash<QNetworkReply *, QTimer *> replyTimeouts;
     qlonglong msecsForTimeout = DEFAULT_REPLY_TIMEOUT;
+    QHash<QString, QByteArray> customHeaders;
 
     QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body) const;
     QByteArray generateWsseToken() const;
@@ -178,6 +179,30 @@ void RestClient::setMsecsForTimeout(qlonglong arg)
     }
 }
 
+void RestClient::setCustomHeader(const QByteArray &header, const QByteArray &value)
+{
+    Q_D(RestClient);
+    d->customHeaders[header] = value;
+}
+
+QByteArray RestClient::customHeader(const QByteArray &header) const
+{
+    Q_D(const RestClient);
+    return d->customHeaders.value(header);
+}
+
+bool RestClient::containsCustomHeader(const QByteArray &header) const
+{
+    Q_D(const RestClient);
+    return d->customHeaders.contains(header);
+}
+
+void RestClient::removeCustomHeader(const QByteArray &header)
+{
+    Q_D(RestClient);
+    d->customHeaders.remove(header);
+}
+
 QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query)
 {
     Q_D(RestClient);
@@ -245,6 +270,9 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
     } else {
         result.setHeader(QNetworkRequest::ContentTypeHeader, "plain/text");
     }
+
+    for (const QByteArray &header : customHeaders)
+        result.setRawHeader(header, customHeaders[header]);
 
     switch (authType) {
     case RestClient::AuthType::WsseAuth:
