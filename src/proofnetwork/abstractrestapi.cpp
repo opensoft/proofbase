@@ -19,9 +19,9 @@ AbstractRestApi::AbstractRestApi(const RestClientSP &restClient, AbstractRestApi
     setRestClient(restClient);
 }
 
-RestClientSP AbstractRestApi::restClient()
+RestClientSP AbstractRestApi::restClient() const
 {
-    Q_D(AbstractRestApi);
+    Q_D(const AbstractRestApi);
     return d->restClient;
 }
 

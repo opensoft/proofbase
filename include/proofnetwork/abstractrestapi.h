@@ -17,7 +17,7 @@ class PROOF_NETWORK_EXPORT AbstractRestApi : public ProofObject
     Q_OBJECT
     Q_DECLARE_PRIVATE(AbstractRestApi)
 public:
-    RestClientSP restClient();
+    RestClientSP restClient() const;
     void setRestClient(const RestClientSP &client);
 
 signals:
