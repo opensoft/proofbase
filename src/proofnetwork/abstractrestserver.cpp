@@ -113,6 +113,7 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
 AbstractRestServer::~AbstractRestServer()
 {
     Q_D(AbstractRestServer);
+    stopListen();
     d->thread->quit();
     d->thread->wait(1000);
     d->thread->terminate();
@@ -134,7 +135,7 @@ void AbstractRestServer::startListen()
 void AbstractRestServer::stopListen()
 {
     if (QThread::currentThread() != thread())
-        QMetaObject::invokeMethod(this, __func__, Qt::QueuedConnection);
+        QMetaObject::invokeMethod(this, __func__, Qt::BlockingQueuedConnection);
     else
         close();
 }

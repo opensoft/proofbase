@@ -74,7 +74,6 @@ public:
 
     static void TearDownTestCase()
     {
-        restServerUT->stopListen();
         delete restServerUT;
     }
 
