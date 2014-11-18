@@ -131,6 +131,14 @@ void AbstractRestServer::startListen()
     }
 }
 
+void AbstractRestServer::stopListen()
+{
+    if (QThread::currentThread() != thread())
+        QMetaObject::invokeMethod(this, __func__, Qt::QueuedConnection);
+    else
+        close();
+}
+
 void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
 {
     Q_D(AbstractRestServer);

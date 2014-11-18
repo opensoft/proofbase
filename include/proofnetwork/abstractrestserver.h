@@ -21,6 +21,7 @@ public:
     ~AbstractRestServer();
 
     Q_INVOKABLE void startListen();
+    Q_INVOKABLE void stopListen();
 
 protected:
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());
