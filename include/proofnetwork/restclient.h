@@ -57,7 +57,7 @@ public:
     void setCustomHeader(const QByteArray &header, const QByteArray &value);
     QByteArray customHeader(const QByteArray &header) const;
     bool containsCustomHeader(const QByteArray &header) const;
-    void removeCustomHeader(const QByteArray &header);
+    void unsetCustomHeader(const QByteArray &header);
 
     QNetworkReply *get(const QString &method, const QUrlQuery &query = QUrlQuery());
     QNetworkReply *post(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");

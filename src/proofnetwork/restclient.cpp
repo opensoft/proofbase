@@ -197,7 +197,7 @@ bool RestClient::containsCustomHeader(const QByteArray &header) const
     return d->customHeaders.contains(header);
 }
 
-void RestClient::removeCustomHeader(const QByteArray &header)
+void RestClient::unsetCustomHeader(const QByteArray &header)
 {
     Q_D(RestClient);
     d->customHeaders.remove(header);
