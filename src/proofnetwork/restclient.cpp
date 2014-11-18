@@ -32,7 +32,7 @@ public:
     RestClient::AuthType authType = RestClient::AuthType::WithoutAuth;
     QHash<QNetworkReply *, QTimer *> replyTimeouts;
     qlonglong msecsForTimeout = DEFAULT_REPLY_TIMEOUT;
-    QHash<QString, QByteArray> customHeaders;
+    QHash<QByteArray, QByteArray> customHeaders;
 
     QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body) const;
     QByteArray generateWsseToken() const;
@@ -271,7 +271,7 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         result.setHeader(QNetworkRequest::ContentTypeHeader, "plain/text");
     }
 
-    for (const QByteArray &header : customHeaders)
+    for (const QByteArray &header : customHeaders.keys())
         result.setRawHeader(header, customHeaders[header]);
 
     switch (authType) {
