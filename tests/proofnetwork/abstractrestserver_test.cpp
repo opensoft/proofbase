@@ -214,8 +214,9 @@ INSTANTIATE_TEST_CASE_P(SomeMoreRestServerMethodsTestInstance,
                                         std::tuple<QString, QString, int, bool>("/test-method", "", 200, true),
                                         std::tuple<QString, QString, int, bool>("/test-method/", "", 200, false),
                                         std::tuple<QString, QString, int, bool>("/test-method////", "", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method/\\`123", "%5c%60123", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method/123/sub-method", "123/sub-method", 200, true)
+                                        std::tuple<QString, QString, int, bool>("/test-method/\\`123", "%5C%60123", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method/123/sub-method", "123/sub-method", 200, true),
+                                        std::tuple<QString, QString, int, bool>("/test-method/CaSetEST", "CaSetEST", 200, false)
                                         ));
 
 #include "abstractrestserver_test.moc"

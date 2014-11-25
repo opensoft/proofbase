@@ -240,7 +240,7 @@ void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
 
 QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const QString &name)
 {
-    QStringList splittedName = name.toLower().split("/", QString::SkipEmptyParts);
+    QStringList splittedName = name.split("/", QString::SkipEmptyParts);
     splittedName.prepend(type.toLower());
     return splittedName;
 }
@@ -252,9 +252,10 @@ QString AbstractRestServerPrivate::findMethod(const QStringList &splittedMethod,
     MethodNode *currentNode = &methodsTreeRoot;
     int i = 0;
     for (; i < splittedMethod.count(); ++i) {
-        if (!currentNode->contains(splittedMethod[i]))
+        QString loweredPart = splittedMethod[i].toLower();
+        if (!currentNode->contains(loweredPart))
             break;
-        currentNode = &(*currentNode)[splittedMethod[i]];
+        currentNode = &(*currentNode)[loweredPart];
     }
 
     QString methodName = (*currentNode);
