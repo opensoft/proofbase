@@ -2,6 +2,12 @@
 #include "coreapplication_p.h"
 
 #include "logs.h"
+#include "settings.h"
+#include "settingsgroup.h"
+
+#ifdef Q_OS_LINUX
+#include <unistd.h>
+#endif
 
 using namespace Proof;
 
@@ -18,8 +24,29 @@ CoreApplication::~CoreApplication()
 {
 }
 
-void Proof::CoreApplicationPrivate::initApp()
+Settings *CoreApplication::settings() const
 {
-    Proof::Logs::setup();
+    Q_D(const CoreApplication);
+    return d->settings;
 }
 
+void Proof::CoreApplicationPrivate::initApp()
+{
+    Logs::setup();
+    settings = new Proof::Settings(q_ptr);
+
+    bool daemonized = false;
+#ifdef Q_OS_LINUX
+    if (a.arguments().count() == 2 && a.arguments().last() == "-d") {
+        daemonized = true;
+        daemon(0, 0);
+    }
+#endif
+
+    SettingsGroup *logGroup = settings->group("logs", Settings::NotFoundPolicy::Add);
+    Logs::setConsoleOutputEnabled(!daemonized && logGroup->value("console", true, Settings::NotFoundPolicy::Add).toBool());
+    Logs::setLogsStoragePath(logGroup->value("custom_storage_path", "", Settings::NotFoundPolicy::Add).toString());
+    QString logFileName = logGroup->value("filename", qAppName(), Settings::NotFoundPolicy::Add).toString();
+    if (!logFileName.isEmpty())
+        Logs::installFileHandler(logFileName);
+}

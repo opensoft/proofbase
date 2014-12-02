@@ -5,8 +5,13 @@
 
 #include <QCoreApplication>
 
-namespace Proof {
+#if defined(qApp)
+#undef qApp
+#endif
+#define qApp (static_cast<Proof::CoreApplication *>(QCoreApplication::instance()))
 
+namespace Proof {
+class Settings;
 class CoreApplicationPrivate;
 class PROOF_CORE_EXPORT CoreApplication : public QCoreApplication
 {
@@ -15,6 +20,8 @@ class PROOF_CORE_EXPORT CoreApplication : public QCoreApplication
 public:
     CoreApplication(int &argc, char **argv, const QString &orgName = QString(), const QString &appName = QString());
     ~CoreApplication();
+
+    Settings *settings() const;
 private:
     QScopedPointer<CoreApplicationPrivate> d_ptr;
 };
