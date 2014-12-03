@@ -3,6 +3,7 @@
 #include "proofcore/taskchain.h"
 
 #include <QThread>
+#include <QDateTime>
 #include <QTimer>
 
 using namespace Proof;
@@ -196,4 +197,171 @@ TEST(TaskChainTest, signalWaiting)
     EXPECT_TRUE(result);
     EXPECT_TRUE(finished);
     EXPECT_TRUE(chainWeak.isNull());
+}
+
+TEST(TaskChainTest, tasksTree)
+{
+    TaskChainWP chainWeak;
+    QThread thread;
+    thread.start();
+    std::atomic<bool> startedFlag1(false);
+    std::atomic<bool> startedFlag2(false);
+    std::atomic<bool> result1(false);
+    std::atomic<bool> result2(false);
+    std::atomic<bool> finished1(false);
+    std::atomic<bool> finished2(false);
+    std::atomic_ullong evLoopThread1(0);
+    std::atomic_ullong evLoopThread2(0);
+    QTimer *timer = new QTimer();
+    timer = new QTimer;
+    timer->setSingleShot(true);
+    timer->moveToThread(&thread);
+    {
+        TaskChainSP chain = TaskChain::createChain();
+        chain->moveToThread(&thread);
+        chainWeak = chain.toWeakRef();
+        auto secondTask = TaskChain::createTask<>();
+        auto thirdTask = TaskChain::createTask<>();
+        auto firstTask = TaskChain::createTask<>();
+        *firstTask = [chain, secondTask, thirdTask]() {
+            chain->addTask(*secondTask);
+            chain->addTask(*thirdTask);
+        };
+
+        *secondTask = [chain, timer, &result1, &finished1, &startedFlag1, &evLoopThread1]() {
+            std::function<bool()> timerCallback = [&result1, &evLoopThread1]() {
+                result1 = true;
+                evLoopThread1 = reinterpret_cast<unsigned long long>(QThread::currentThread());
+                return true;
+            };
+            chain->addSignalWaiter(timer, &QTimer::timeout, timerCallback);
+            startedFlag1 = true;
+            chain->fireSignalWaiters();
+            finished1 = true;
+        };
+        *thirdTask = [chain, timer, &result2, &finished2, &startedFlag2, &evLoopThread2]() {
+            std::function<bool()> timerCallback = [&result2, &evLoopThread2]() {
+                result2 = true;
+                evLoopThread2 = reinterpret_cast<unsigned long long>(QThread::currentThread());
+                return true;
+            };
+            chain->addSignalWaiter(timer, &QTimer::timeout, timerCallback);
+            startedFlag2 = true;
+            chain->fireSignalWaiters();
+            finished2 = true;
+        };
+
+        chain->addTask(*firstTask);
+    }
+    EXPECT_FALSE(chainWeak.isNull());
+    while (!startedFlag1 && !startedFlag2) {}
+    EXPECT_FALSE(finished1);
+    EXPECT_FALSE(finished2);
+    QMetaObject::invokeMethod(timer, "start", Qt::BlockingQueuedConnection, Q_ARG(int, 100));
+    for (int i = 0; i < 2000; ++i) {
+        if (chainWeak.isNull())
+            break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    thread.quit();
+    thread.wait(100);
+    delete timer;
+    EXPECT_TRUE(result1);
+    EXPECT_TRUE(finished1);
+    EXPECT_TRUE(result2);
+    EXPECT_TRUE(finished2);
+    EXPECT_NE(0ull, evLoopThread1);
+    EXPECT_NE(0ull, evLoopThread2);
+    EXPECT_NE(evLoopThread1, evLoopThread2);
+    EXPECT_TRUE(chainWeak.isNull());
+}
+
+TEST(TaskChainTest, tasksTreeWaiting)
+{
+    QThread thread;
+    thread.start();
+    std::atomic_ullong rootTaskEndedTime(0);
+    std::atomic_ullong child1TaskEndedTime(0);
+    std::atomic_ullong child2TaskEndedTime(0);
+    qlonglong rootTaskId = 0;
+
+    TaskChainSP chain = TaskChain::createChain();
+    chain->moveToThread(&thread);
+    {
+        auto secondTask = TaskChain::createTask<>();
+        auto thirdTask = TaskChain::createTask<>();
+        auto firstTask = TaskChain::createTask<>();
+        *firstTask = [chain, secondTask, thirdTask, &rootTaskEndedTime]() {
+            qlonglong firstId = chain->addTask(*secondTask);
+            qlonglong secondId = chain->addTask(*thirdTask);
+            chain->waitForTask(firstId);
+            chain->waitForTask(secondId);
+            rootTaskEndedTime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+        };
+
+        *secondTask = [chain, &child1TaskEndedTime]() {
+            QThread::msleep(30);
+            child1TaskEndedTime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+            QThread::msleep(10);
+        };
+        *thirdTask = [chain, &child2TaskEndedTime]() {
+            QThread::msleep(30);
+            child2TaskEndedTime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+            QThread::msleep(10);
+        };
+
+        rootTaskId = chain->addTask(*firstTask);
+    }
+    EXPECT_NE(0ll, rootTaskId);
+    chain->waitForTask(rootTaskId);
+    thread.quit();
+    thread.wait(100);
+    EXPECT_GT(rootTaskEndedTime, child1TaskEndedTime);
+    EXPECT_GT(rootTaskEndedTime, child2TaskEndedTime);
+}
+
+TEST(TaskChainTest, tasksTreeWaitingTimeout)
+{
+    QThread thread;
+    thread.start();
+    std::atomic_ullong rootTaskEndedTime(0);
+    std::atomic_ullong child1TaskEndedTime(0);
+    std::atomic_ullong child2TaskEndedTime(0);
+    std::atomic_ullong rootCounter(0);
+    qlonglong rootTaskId = 0;
+
+    TaskChainSP chain = TaskChain::createChain();
+    chain->moveToThread(&thread);
+    {
+        auto secondTask = TaskChain::createTask<>();
+        auto thirdTask = TaskChain::createTask<>();
+        auto firstTask = TaskChain::createTask<>();
+        *firstTask = [chain, secondTask, thirdTask, &rootTaskEndedTime]() {
+            qlonglong firstId = chain->addTask(*secondTask);
+            qlonglong secondId = chain->addTask(*thirdTask);
+            while (!chain->waitForTask(firstId, 1)) {}
+            while (!chain->waitForTask(secondId, 1)) {}
+            rootTaskEndedTime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+        };
+
+        *secondTask = [chain, &child1TaskEndedTime]() {
+            QThread::msleep(30);
+            child1TaskEndedTime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+            QThread::msleep(10);
+        };
+        *thirdTask = [chain, &child2TaskEndedTime]() {
+            QThread::msleep(30);
+            child2TaskEndedTime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+            QThread::msleep(10);
+        };
+
+        rootTaskId = chain->addTask(*firstTask);
+    }
+    EXPECT_NE(0ll, rootTaskId);
+    while (!chain->waitForTask(rootTaskId, 1)) {++rootCounter;}
+    thread.quit();
+    thread.wait(100);
+    EXPECT_GT(rootTaskEndedTime, child1TaskEndedTime);
+    EXPECT_GT(rootTaskEndedTime, child2TaskEndedTime);
+    EXPECT_GT(rootCounter, 0ull);
 }
