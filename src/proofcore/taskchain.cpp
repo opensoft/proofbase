@@ -109,7 +109,7 @@ void TaskChain::run()
     bool deleteSelf = false;
     while (!deleteSelf) {
         d->acquireFutures(SELF_MANAGEMENT_SPIN_SLEEP_TIME_IN_MSECS);
-        std::map<qlonglong, std::future<void>>::iterator it = d->futures.begin();
+        auto it = d->futures.begin();
         while (it != d->futures.end()) {
             bool removeIt = !it->second.valid();
             if (!removeIt)
@@ -117,7 +117,7 @@ void TaskChain::run()
             if (removeIt) {
                 bool startOver = it == d->futures.begin();
                 d->futures.erase(it);
-                startOver &= d->futures.size();
+                startOver = startOver && d->futures.size();
                 if (startOver)
                     it = d->futures.begin();
                 else
