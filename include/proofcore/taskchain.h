@@ -36,11 +36,10 @@ public:
     static TaskChainSP createChain();
 
     template<class Task, class ...Args>
-    void addTask(Task &&task,
-                 Args &&... args)
+    qlonglong addTask(Task &&task,
+                      Args &&... args)
     {
-        addTaskPrivate(std::async(std::launch::async, std::forward<Task>(task),
-                             std::forward<Args>(args)...));
+        return addTaskPrivate(std::async(std::launch::async, std::forward<Task>(task), std::forward<Args>(args)...));
     }
 
     //TODO: make it thread local to allow proper tree chain
@@ -73,6 +72,9 @@ public:
 
     void fireSignalWaiters();
 
+    bool waitForTask(qlonglong taskId, qlonglong msecs = 0);
+    bool touchTask(qlonglong taskId);
+
 protected:
     void run() override;
 
@@ -83,7 +85,7 @@ private:
     TaskChain &operator=(const TaskChain &other) = delete;
     TaskChain &operator=(TaskChain &&other) = delete;
 
-    void addTaskPrivate(std::future<void> &&taskFuture);
+    qlonglong addTaskPrivate(std::future<void> &&taskFuture);
     void addSignalWaiterPrivate(std::function<void (const QSharedPointer<QEventLoop> &)> &&connector);
 
     QScopedPointer<TaskChainPrivate> d_ptr;
