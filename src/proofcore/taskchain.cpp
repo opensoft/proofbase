@@ -114,17 +114,10 @@ void TaskChain::run()
             bool removeIt = !it->second.valid();
             if (!removeIt)
                 removeIt = it->second.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready;
-            if (removeIt) {
-                bool startOver = it == d->futures.begin();
-                d->futures.erase(it);
-                startOver = startOver && d->futures.size();
-                if (startOver)
-                    it = d->futures.begin();
-                else
-                    break;
-            } else {
+            if (removeIt)
+                it = d->futures.erase(it);
+            else
                 ++it;
-            }
         }
         deleteSelf = !d->futures.size();
         d->releaseFutures();
@@ -139,7 +132,7 @@ qlonglong TaskChain::addTaskPrivate(std::future<void> &&taskFuture)
     d->acquireFutures(TASK_ADDING_SPIN_SLEEP_TIME_IN_MSECS);
     qlonglong id = ++d->lastUsedId;
     qCDebug(proofCoreTaskChainLog) << "Chain" << this << ": task added" << &taskFuture;
-    d->futures.insert(std::move(std::pair<qlonglong, std::future<void>>(id, std::move(taskFuture))));
+    d->futures.insert(std::make_pair(id, std::move(taskFuture)));
     d->releaseFutures();
     d->startSelfManagementThreadIfNeeded();
     return id;
