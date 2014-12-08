@@ -37,7 +37,7 @@ void Proof::CoreApplicationPrivate::initApp()
 
     bool daemonized = false;
 #ifdef Q_OS_LINUX
-    if (a.arguments().count() == 2 && a.arguments().last() == "-d") {
+    if (q_ptr->arguments().count() == 2 && q_ptr->arguments().last() == "-d") {
         daemonized = true;
         daemon(0, 0);
     }
