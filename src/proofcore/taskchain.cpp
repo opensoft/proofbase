@@ -26,9 +26,11 @@ class TaskChainPrivate
     std::atomic_llong lastUsedId {0};
 
     static thread_local QSharedPointer<QEventLoop> signalWaitersEventLoop;
+    static std::atomic_llong chainsCounter;
 };
 
 thread_local QSharedPointer<QEventLoop> TaskChainPrivate::signalWaitersEventLoop;
+std::atomic_llong TaskChainPrivate::chainsCounter {0};
 }
 
 using namespace Proof;
@@ -38,10 +40,14 @@ TaskChain::TaskChain()
 {
     Q_D(TaskChain);
     d->q_ptr = this;
+    ++TaskChainPrivate::chainsCounter;
+    qCDebug(proofCoreTaskChainStatsLog) << "Chains in use:" << TaskChainPrivate::chainsCounter;
 }
 
 TaskChain::~TaskChain()
 {
+    --TaskChainPrivate::chainsCounter;
+    qCDebug(proofCoreTaskChainStatsLog) << "Chains in use:" << TaskChainPrivate::chainsCounter;
 }
 
 TaskChainSP TaskChain::createChain()
