@@ -23,6 +23,9 @@ static QtMessageHandler defaultHandler = nullptr;
 static QMutex logFileWriteMutex;
 static QTimer compressTimer;
 
+static QFile *currentLogFile = nullptr;
+static QDate currentLogFileDate;
+
 static QMap<QtMsgType, QString> stringifiedTypes = {
     { QtDebugMsg, "D"},
     { QtWarningMsg, "W"},
@@ -41,12 +44,17 @@ public:
     {
         QFile file(m_filePath);
         if (file.open(QFile::ReadOnly)) {
-            QByteArray fileData = file.readAll();
-            gzFile fi = gzopen(QString("%1.gz").arg(m_filePath).toLocal8Bit().constData(), "wb");
-            gzwrite(fi, fileData.constData(), fileData.length());
+            QTime compressTimer;
+            compressTimer.start();
+            qCDebug(proofCoreLoggerLog) << "Compressing" << m_filePath;
+            gzFile fi = gzopen(QString("%1.gz").arg(m_filePath).toLocal8Bit().constData(), "wb2");
+            while (!file.atEnd()) {
+                QByteArray fileData = file.read(1048576);
+                gzwrite(fi, fileData.constData(), fileData.length());
+            }
             gzclose(fi);
-
             file.remove();
+            qCDebug(proofCoreLoggerLog) << m_filePath << "compressed in" << compressTimer.elapsed() << "msecs";
         }
     }
 
@@ -56,29 +64,38 @@ private:
 };
 
 
+
 void fileHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
     if (!logFileNameBase.isEmpty()) {
         QMutexLocker writeLocker(&logFileWriteMutex);
-
-        QFile logFile(QString("%1/%2.%3.log")
-                      .arg(logsStoragePath)
-                      .arg(logFileNameBase)
-                      .arg(QDate::currentDate().toString("yyyyMMdd")));
-
-        if (logFile.open(QFile::Append | QFile::Text)) {
-            QString logLine = QString("[%1][%2][%3][%4@%5:%6] %7\n")
-                    .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
-                    .arg(stringifiedTypes[type])
-                    .arg(context.category)
-                    .arg(context.function)
-                    .arg(QString(context.file).remove(QRegularExpression("^(\\.\\.[/\\\\])+")))
-                    .arg(context.line)
-                    .arg(message);
-
-            logFile.write(logLine.toLocal8Bit());
-            logFile.close();
+        if (currentLogFile
+                && (QDate::currentDate() != currentLogFileDate
+                    || !currentLogFile->isOpen())) {
+            delete currentLogFile;
+            currentLogFile = nullptr;
         }
+        if (!currentLogFile) {
+            currentLogFileDate = QDate::currentDate();
+            currentLogFile = new QFile(QString("%1/%2.%3.log")
+                                       .arg(logsStoragePath)
+                                       .arg(logFileNameBase)
+                                       .arg(currentLogFileDate.toString("yyyyMMdd")));
+            if (!currentLogFile->open(QFile::Append | QFile::Text))
+                return;
+        }
+
+        QString logLine = QString("[%1][%2][%3][%4@%5:%6] %7\n")
+                .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
+                .arg(stringifiedTypes[type])
+                .arg(context.category)
+                .arg(context.function)
+                .arg(QString(context.file).remove(QRegularExpression("^(\\.\\.[/\\\\])+")))
+                .arg(context.line)
+                .arg(message);
+
+        currentLogFile->write(logLine.toLocal8Bit());
+        currentLogFile->flush();
     }
 
     if (isConsoleOutputEnabled && defaultHandler)
@@ -97,7 +114,8 @@ void compressOldFiles()
 
     for(const QFileInfo &file: files) {
         if (file.suffix() != "gz"
-                && file.completeSuffix() != QString("%1.log").arg(QDate::currentDate().toString("yyyyMMdd"))) {
+                && file.completeSuffix() != QString("%1.log").arg(QDate::currentDate().toString("yyyyMMdd"))
+                && file.completeSuffix() != QString("%1.log").arg(currentLogFileDate.toString("yyyyMMdd"))) {
             DetachedCompresser *compresser = new DetachedCompresser(file.absoluteFilePath());
             QThreadPool::globalInstance()->start(compresser);
         }
@@ -117,11 +135,15 @@ void Proof::Logs::setup()
 
     if (!configPath.isEmpty() && QDir::root().mkpath(configPath)) {
         QFile loggingRulesFile(QDir(configPath).absoluteFilePath(qApp->applicationName() + ".qtlogging.rules"));
-        if (loggingRulesFile.open(QFile::ReadOnly)) {
+        if (!loggingRulesFile.exists()) {
+            QString defaultRules = QStringLiteral("proof.core.cache=false\n"
+                                                  "proof.core.taskchain=false\n");
+            if (loggingRulesFile.open(QFile::WriteOnly|QFile::Append))
+                loggingRulesFile.write(defaultRules.toLatin1());
+            QLoggingCategory::setFilterRules(defaultRules);
+        } else if (loggingRulesFile.open(QFile::ReadOnly)) {
             QString rules = QString(loggingRulesFile.readAll());
             QLoggingCategory::setFilterRules(rules);
-        } else {
-            loggingRulesFile.open(QFile::WriteOnly|QFile::Append);
         }
     }
     qSetMessagePattern("[%{type}][%{function}] %{message}");
