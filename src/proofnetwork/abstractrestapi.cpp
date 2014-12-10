@@ -111,7 +111,7 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
             || (reply->error() >= 100 && (reply->error() % 100) != 99)) {
         int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if (errorCode != 200 && errorCode != 201) {
-            qCDebug(proofNetworkLog) << "Error occurred for" << operationId
+            qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
                                      << reply->request().url().path()
                                      << reply->request().url().query()
                                      << ": " << errorCode
@@ -132,7 +132,7 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
             && (reply->error() < 100 || (reply->error() % 100) == 99)) {
         int errorCode = NETWORK_ERROR_OFFSET
                 + static_cast<int>(reply->error());
-        qCDebug(proofNetworkLog) << "Error occurred for" << operationId
+        qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
                                  << reply->request().url().path()
                                  << reply->request().url().query()
                                  << ": " << errorCode << reply->errorString();
@@ -151,7 +151,7 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
     for (const QSslError &error : errors) {
         if (error.error() != QSslError::SslError::NoError) {
             int errorCode = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
-            qCDebug(proofNetworkLog) << "SSL error occurred for" << operationId
+            qCDebug(proofNetworkMiscLog) << "SSL error occurred for" << operationId
                                      << reply->request().url().path()
                                      << reply->request().url().query()
                                      << ": " << errorCode << error.errorString();

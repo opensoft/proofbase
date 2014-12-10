@@ -65,7 +65,7 @@ public:
                 *connection = QObject::connect(sender, signal, eventLoop.data(),
                                                slot, Qt::QueuedConnection);
             };
-        qCDebug(proofCoreTaskChainLog) << "Chain" << this << ": signal waiter added, sender:" << sender
+        qCDebug(proofCoreTaskChainExtraLog) << "Chain" << this << ": signal waiter added, sender:" << sender
                                        << "signal:" << &signal;
         addSignalWaiterPrivate(std::move(connector));
     }

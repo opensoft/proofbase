@@ -1,7 +1,6 @@
 #include "abstractrestapi.h"
 #include "proofnetwork_global.h"
 
-Q_LOGGING_CATEGORY(proofNetworkLog, "proof.network")
 Q_LOGGING_CATEGORY(proofNetworkMiscLog, "proof.network.misc")
 
 __attribute__((constructor))

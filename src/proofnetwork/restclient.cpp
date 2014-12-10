@@ -215,7 +215,7 @@ QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query)
 QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkLog) << method << query.toString() << body;
+    qCDebug(proofNetworkMiscLog) << method << query.toString() << body;
     QNetworkReply *reply = d->qnam->post(d->createNetworkRequest(method, query, body), body);
     d->handleReply(reply);
     return reply;
@@ -226,7 +226,7 @@ QNetworkReply *RestClient::patch(const QString &method, const QUrlQuery &query, 
     Q_D(RestClient);
     QBuffer *bodyBuffer = new QBuffer;
     bodyBuffer->setData(body);
-    qCDebug(proofNetworkLog) << method << query.toString() << body;
+    qCDebug(proofNetworkMiscLog) << method << query.toString() << body;
     QNetworkReply *reply = d->qnam->sendCustomRequest(d->createNetworkRequest(method, query, body), "PATCH", bodyBuffer);
     d->handleReply(reply);
     bodyBuffer->setParent(reply);
