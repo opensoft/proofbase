@@ -16,12 +16,29 @@ class PROOF_NETWORK_EXPORT AbstractRestServer : public QTcpServer
     Q_OBJECT
     Q_DECLARE_PRIVATE(AbstractRestServer)
 public:
-    explicit AbstractRestServer(const QString &userName, const QString &password,
+    explicit AbstractRestServer(QObject *parent = 0);
+    AbstractRestServer(const QString &userName, const QString &password,
                                 const QString &pathPrefix = QString(), int port = 80, QObject *parent = 0);
     ~AbstractRestServer();
 
+    QString userName() const;
+    QString password() const;
+    QString pathPrefix() const;
+    int port() const;
+
+    void setUserName(const QString &userName);
+    void setPassword(const QString &password);
+    void setPathPrefix(const QString &pathPrefix);
+    void setPort(int port);
+
     Q_INVOKABLE void startListen();
     Q_INVOKABLE void stopListen();
+
+signals:
+    void userNameChanged(const QString &arg);
+    void passwordChanged(const QString &arg);
+    void pathPrefixChanged(const QString &arg);
+    void portChanged(int arg);
 
 protected:
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());

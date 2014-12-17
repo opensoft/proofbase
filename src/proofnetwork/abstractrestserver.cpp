@@ -85,6 +85,11 @@ private:
 
 using namespace Proof;
 
+AbstractRestServer::AbstractRestServer(QObject *parent)
+    : AbstractRestServer(*new AbstractRestServerPrivate, "", "", "", 80, parent)
+{
+}
+
 AbstractRestServer::AbstractRestServer(const QString &userName, const QString &password, const QString &pathPrefix, int port, QObject *parent)
     : AbstractRestServer(*new AbstractRestServerPrivate, userName, password, pathPrefix, port, parent)
 {
@@ -117,6 +122,66 @@ AbstractRestServer::~AbstractRestServer()
     d->thread->quit();
     d->thread->wait(1000);
     d->thread->terminate();
+}
+
+QString AbstractRestServer::userName() const
+{
+    Q_D(const AbstractRestServer);
+    return d->userName;
+}
+
+QString AbstractRestServer::password() const
+{
+    Q_D(const AbstractRestServer);
+    return d->password;
+}
+
+QString AbstractRestServer::pathPrefix() const
+{
+    Q_D(const AbstractRestServer);
+    return d->pathPrefix;
+}
+
+int AbstractRestServer::port() const
+{
+    Q_D(const AbstractRestServer);
+    return d->port;
+}
+
+void AbstractRestServer::setUserName(const QString &userName)
+{
+    Q_D(AbstractRestServer);
+    if (d->userName != userName) {
+        d->userName = userName;
+        emit userNameChanged(d->userName);
+    }
+}
+
+void AbstractRestServer::setPassword(const QString &password)
+{
+    Q_D(AbstractRestServer);
+    if (d->password != password) {
+        d->password = password;
+        emit passwordChanged(d->password);
+    }
+}
+
+void AbstractRestServer::setPathPrefix(const QString &pathPrefix)
+{
+    Q_D(AbstractRestServer);
+    if (d->pathPrefix != pathPrefix) {
+        d->pathPrefix = pathPrefix;
+        emit pathPrefixChanged(d->pathPrefix);
+    }
+}
+
+void AbstractRestServer::setPort(int port)
+{
+    Q_D(AbstractRestServer);
+    if (d->port != port) {
+        d->port = port;
+        emit portChanged(d->port);
+    }
 }
 
 void AbstractRestServer::startListen()
