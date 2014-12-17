@@ -415,7 +415,7 @@ void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray 
           .arg(returnCode)
           .arg(reason)
           .arg(contentType)
-          .arg(!body.isEmpty() ? QString("Content-Size: %1\r\n").arg(body.size()) : QString())
+          .arg(!body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString())
           .toUtf8().constData()
-       << body << "\r\n";
+       << body;
 }
