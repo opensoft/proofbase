@@ -121,6 +121,7 @@ void TaskChain::run()
             if (!removeIt)
                 removeIt = it->second.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready;
             if (removeIt)
+                // NOTE Here might be a crash because of std::system_error exception with deadlock
                 it = d->futures.erase(it);
             else
                 ++it;

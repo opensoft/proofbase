@@ -33,6 +33,7 @@ public:
         return QSharedPointer<std::function<void(Args...)>>::create();
     }
 
+    // NOTE Chain must be created (or moved after creation) in thread with Qt event loop and that thread must live all time that chain lives
     static TaskChainSP createChain();
 
     template<class Task, class ...Args>
