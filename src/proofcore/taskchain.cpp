@@ -90,12 +90,13 @@ bool TaskChain::waitForTask(qlonglong taskId, qlonglong msecs)
         } else if (msecs < 1) {
             futureToWait = std::move(task->second);
             d->futures.erase(task);
+            result = false;
         } else {
             result = task->second.wait_for(std::chrono::milliseconds(msecs)) == std::future_status::ready;
         }
     }
     d->releaseFutures();
-    if (msecs < 1)
+    if (!result && msecs < 1)
         futureToWait.wait();
     return result;
 }
