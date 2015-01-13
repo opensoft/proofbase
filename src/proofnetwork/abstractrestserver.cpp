@@ -298,9 +298,6 @@ void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
     QStringList tokens = headersParts.at(0).split(" ");
 
     tryToCallMethod(socket, tokens[0], tokens[1], headersParts, body.toUtf8());
-    socket->disconnectFromHost();
-    if (socket->state() == QTcpSocket::UnconnectedState)
-        delete socket;
 }
 
 QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const QString &name)
@@ -418,4 +415,8 @@ void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray 
           .arg(!body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString())
           .toUtf8().constData()
        << body;
+    os.flush();
+    socket->disconnectFromHost();
+    if (socket->state() == QTcpSocket::UnconnectedState)
+        delete socket;
 }
