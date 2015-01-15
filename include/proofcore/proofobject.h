@@ -24,7 +24,7 @@ public:
     template <class CallerType, class ReturnType, class Method, class ...Args>
     static typename std::enable_if<!std::is_base_of<ProofObject, CallerType>::value
                                     && std::is_base_of<QObject, CallerType>::value, bool>::type
-    blockingDelayedCall(CallerType *caller, Method method, ReturnType *result, Args... args)
+    blockingDelayedCall(CallerType *caller, Method method, ReturnType &result, Args... args)
     {
         if (QThread::currentThread() == caller->thread())
             return false;
@@ -60,7 +60,7 @@ public:
 
     template <class CallerType, class ReturnType, class Method, class ...Args>
     static typename std::enable_if<std::is_base_of<ProofObject, CallerType>::value, bool>::type
-    blockingDelayedProofedCall(CallerType *caller, Method method, ReturnType &result, Args... args)
+    blockingDelayedCall(CallerType *caller, Method method, ReturnType &result, Args... args)
     {
         if (QThread::currentThread() == caller->thread())
             return false;
@@ -79,7 +79,7 @@ public:
 
     template <class CallerType, class Method, class ...Args>
     static typename std::enable_if<std::is_base_of<ProofObject, CallerType>::value, bool>::type
-    blockingDelayedProofedCall(CallerType *caller, Method method, void *dummy, Args... args)
+    blockingDelayedCall(CallerType *caller, Method method, void *dummy, Args... args)
     {
         Q_UNUSED(dummy);
         if (QThread::currentThread() == caller->thread())
@@ -117,7 +117,7 @@ public:
 
     template <class CallerType, class Method, class ...Args>
     static typename std::enable_if<std::is_base_of<ProofObject, CallerType>::value, bool>::type
-    delayedProofedCall(CallerType *caller, Method method, Args... args)
+    delayedCall(CallerType *caller, Method method, Args... args)
     {
         if (QThread::currentThread() == caller->thread())
             return false;
