@@ -17,9 +17,3 @@ ProofObject::ProofObject(ProofObjectPrivate &dd, QObject *parent)
 {
     d_ptr->q_ptr = this;
 }
-
-qulonglong ProofObject::nextDelayedCallId()
-{
-    Q_D(ProofObject);
-    return ++d->nextDelayedCallId;
-}

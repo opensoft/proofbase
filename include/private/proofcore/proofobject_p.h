@@ -21,8 +21,6 @@ private:
     ProofObjectPrivate &operator=(const ProofObjectPrivate &other) = delete;
     ProofObjectPrivate(const ProofObjectPrivate &&other) = delete;
     ProofObjectPrivate &operator=(const ProofObjectPrivate &&other) = delete;
-
-    QAtomicInteger<qulonglong> nextDelayedCallId {0};
 };
 }
 
