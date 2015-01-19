@@ -264,7 +264,6 @@ void AbstractRestServerPrivate::createNewConnection()
              Q_ASSERT(socket);
              handleRequest(socket);
         });
-        QObject::connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
     }
 }
 
@@ -402,20 +401,22 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
 }
 
 void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason) {
-    socket->write(QString("HTTP/1.0 %1 %2\r\n"
-                  "Server: proof\r\n"
-                  "Content-Type: %3\r\n"
-                  "%4"
-                  "\r\n")
-          .arg(returnCode)
-          .arg(reason)
-          .arg(contentType)
-          .arg(!body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString())
-          .toUtf8());
+    if (socket->state() == QTcpSocket::ConnectedState) {
+        socket->write(QString("HTTP/1.0 %1 %2\r\n"
+                              "Server: proof\r\n"
+                              "Content-Type: %3\r\n"
+                              "%4"
+                              "\r\n")
+                      .arg(returnCode)
+                      .arg(reason)
+                      .arg(contentType)
+                      .arg(!body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString())
+                      .toUtf8());
 
-    socket->write(body);
-    socket->flush();
-    socket->disconnectFromHost();
+        socket->write(body);
+        socket->flush();
+        socket->disconnectFromHost();
+    }
     if (socket->state() == QTcpSocket::UnconnectedState)
         delete socket;
 }
