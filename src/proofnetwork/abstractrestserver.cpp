@@ -402,9 +402,7 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
 }
 
 void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason) {
-    QTextStream os(socket);
-    os.setAutoDetectUnicode(true);
-    os << QString("HTTP/1.0 %1 %2\r\n"
+    socket->write(QString("HTTP/1.0 %1 %2\r\n"
                   "Server: proof\r\n"
                   "Content-Type: %3\r\n"
                   "%4"
@@ -413,9 +411,10 @@ void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray 
           .arg(reason)
           .arg(contentType)
           .arg(!body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString())
-          .toUtf8().constData()
-       << body;
-    os.flush();
+          .toUtf8());
+
+    socket->write(body);
+    socket->flush();
     socket->disconnectFromHost();
     if (socket->state() == QTcpSocket::UnconnectedState)
         delete socket;
