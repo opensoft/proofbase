@@ -137,7 +137,8 @@ void Proof::Logs::setup()
         QFile loggingRulesFile(QDir(configPath).absoluteFilePath(qApp->applicationName() + ".qtlogging.rules"));
         if (!loggingRulesFile.exists()) {
             QString defaultRules = QStringLiteral("proof.core.cache=false\n"
-                                                  "proof.core.taskchain=false\n");
+                                                  "proof.core.taskchain.extra=false\n"
+                                                  "proof.core.taskchain.stats=false\n");
             if (loggingRulesFile.open(QFile::WriteOnly|QFile::Append))
                 loggingRulesFile.write(defaultRules.toLatin1());
             QLoggingCategory::setFilterRules(defaultRules);
