@@ -6,5 +6,5 @@ Makefile*
 *build*
 *.autosave
 release
-bin
+bin*
 *DS_Store*
