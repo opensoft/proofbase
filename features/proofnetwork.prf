@@ -5,3 +5,5 @@ win32 {
 } else {
     LIBS *= -lProofNetwork
 }
+
+android:ANDROID_EXTRA_LIBS *= $$(PROOF_PATH)/lib/libProofNetwork.so
