@@ -8,3 +8,4 @@ Makefile*
 release
 bin*
 *DS_Store*
+*.deb
