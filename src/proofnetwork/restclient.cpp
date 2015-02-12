@@ -14,7 +14,7 @@
 #include <QThread>
 #include <QBuffer>
 
-static const qlonglong DEFAULT_REPLY_TIMEOUT = 30000;
+static const qlonglong DEFAULT_REPLY_TIMEOUT = 60000;
 
 namespace Proof {
 class RestClientPrivate : public ProofObjectPrivate
