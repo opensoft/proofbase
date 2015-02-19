@@ -170,6 +170,16 @@ void AbstractRestApiPrivate::cleanupReply(qulonglong operationId, QNetworkReply 
     repliesIds.remove(reply);
 }
 
+void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error)
+{
+    Q_Q(AbstractRestApi);
+    QString jsonErrorString = QString("JSON error: %1").arg(error.errorString());
+    emit q->errorOccurred(operationId,
+                          RestApiError{RestApiError::ErrorLevel::JsonParseError,
+                                       error.error,
+                                       jsonErrorString});
+}
+
 void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *reply)
 {
     Q_Q(AbstractRestApi);

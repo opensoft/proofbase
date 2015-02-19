@@ -7,6 +7,7 @@
 
 #include <QSslError>
 #include <QHash>
+#include <QJsonParseError>
 
 #include <atomic>
 
@@ -31,6 +32,8 @@ public:
     virtual void replyErrorOccurred(qulonglong operationId, QNetworkReply *reply);
     virtual void sslErrorsOccurred(qulonglong operationId, QNetworkReply *reply, const QList<QSslError> &errors);
     virtual void cleanupReply(qulonglong operationId, QNetworkReply *reply);
+
+    void notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error);
 
     QMetaObject::Connection replyFinishedConnection;
     QMetaObject::Connection sslErrorsConnection;
