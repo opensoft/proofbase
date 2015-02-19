@@ -46,7 +46,7 @@ void Proof::CoreApplicationPrivate::initApp()
     SettingsGroup *logGroup = settings->group("logs", Settings::NotFoundPolicy::Add);
     Logs::setConsoleOutputEnabled(!daemonized && logGroup->value("console", true, Settings::NotFoundPolicy::Add).toBool());
     Logs::setLogsStoragePath(logGroup->value("custom_storage_path", "", Settings::NotFoundPolicy::Add).toString());
-    QString logFileName = logGroup->value("filename", qAppName(), Settings::NotFoundPolicy::Add).toString();
+    QString logFileName = logGroup->value("filename", q_ptr->applicationName(), Settings::NotFoundPolicy::Add).toString();
     if (!logFileName.isEmpty())
         Logs::installFileHandler(logFileName);
 }
