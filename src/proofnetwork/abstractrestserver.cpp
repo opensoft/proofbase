@@ -83,7 +83,7 @@ private:
     QString pathPrefix;
     QThread *thread = nullptr;
     QThreadPool *connectionThreadPool = nullptr;
-
+    QHash<qintptr, QRunnable *> connectionTasks;
     MethodNode methodsTreeRoot;
 };
 
@@ -94,6 +94,11 @@ public:
         : socket(_socket),
           server_d(_server_d)
     {
+        setAutoDelete(false);
+    }
+
+    ~ServerConnectionTask() {
+        qCDebug(proofNetworkMiscLog) << "Task for Socket DESTROYED!";
     }
 
     void run() override
@@ -242,6 +247,7 @@ void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
 {
     Q_D(AbstractRestServer);
     ServerConnectionTask *task = new ServerConnectionTask(socketDescriptor, d);
+    d->connectionTasks[socketDescriptor] = task;
     d->connectionThreadPool->start(task);
 }
 
@@ -449,7 +455,13 @@ void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray 
         socket->write(body);
         socket->flush();
         socket->disconnectFromHost();
+        if (socket->state() != QTcpSocket::UnconnectedState)
+            socket->waitForDisconnected();
     }
-    if (socket->state() == QTcpSocket::UnconnectedState)
+    if (socket->state() == QTcpSocket::UnconnectedState) {
+        qintptr socketDescriptor = socket->socketDescriptor();
         delete socket;
+        QRunnable *task = connectionTasks.take(socketDescriptor);
+        delete task;
+    }
 }
