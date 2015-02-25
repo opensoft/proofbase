@@ -5,10 +5,13 @@
 #include <QMetaObject>
 #include <QMetaMethod>
 #include <QUrlQuery>
+#include <QThreadPool>
 
 static const QString REST_METHOD_PREFIX = QString("rest_");
+static const int MAX_CONNECTION_THREADS_COUNT = 30;
 
 namespace Proof {
+
 struct MethodNode {
     MethodNode()
     {}
@@ -51,6 +54,7 @@ private:
 class AbstractRestServerPrivate
 {
     Q_DECLARE_PUBLIC(AbstractRestServer)
+    friend class ServerConnectionTask;
 
 public:
     AbstractRestServerPrivate() {}
@@ -62,7 +66,7 @@ private:
     AbstractRestServerPrivate(const AbstractRestServerPrivate &&other) = delete;
     AbstractRestServerPrivate &operator=(const AbstractRestServerPrivate &&other) = delete;
 
-    void createNewConnection();
+    void createNewConnection(QTcpSocket *socket);
     void handleRequest(QTcpSocket *socket);
     void tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body);
     QStringList makeMethodName(const QString &type, const QString &name);
@@ -78,8 +82,33 @@ private:
     QString password;
     QString pathPrefix;
     QThread *thread = nullptr;
+    QThreadPool *connectionThreadPool = nullptr;
 
     MethodNode methodsTreeRoot;
+};
+
+class ServerConnectionTask: public QRunnable
+{
+public:
+    ServerConnectionTask(qintptr _socket, AbstractRestServerPrivate *const _server_d)
+        : socket(_socket),
+          server_d(_server_d)
+    {
+    }
+
+    void run() override
+    {
+        QTcpSocket *tcpSocket = new QTcpSocket();
+        if (!tcpSocket->setSocketDescriptor(socket)) {
+            qCDebug(proofNetworkMiscLog) << "Can't create socket, error:" << tcpSocket->errorString();
+            return;
+        }
+        server_d->createNewConnection(tcpSocket);
+    }
+
+private:
+    qintptr socket;
+    AbstractRestServerPrivate *const server_d;
 };
 }
 
@@ -102,14 +131,18 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     Q_D(AbstractRestServer);
     d->q_ptr = this;
 
-    d->thread = new QThread(this);
+    qRegisterMetaType<QTcpSocket *>("QTcpSocket *");
+    qRegisterMetaType<QUrlQuery>("QUrlQuery");
 
+    d->thread = new QThread(this);
+    d->connectionThreadPool = new QThreadPool(this);
+    d->connectionThreadPool->setMaxThreadCount(MAX_CONNECTION_THREADS_COUNT > QThread::idealThreadCount()
+                                               ? MAX_CONNECTION_THREADS_COUNT : QThread::idealThreadCount());
     d->port = port;
     d->userName = userName;
     d->password = password;
     d->pathPrefix = pathPrefix;
 
-    connect(this, &AbstractRestServer::newConnection, this, [d](){d->createNewConnection();});
     moveToThread(d->thread);
     d->thread->moveToThread(d->thread);
     d->thread->start();
@@ -205,6 +238,13 @@ void AbstractRestServer::stopListen()
         close();
 }
 
+void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
+{
+    Q_D(AbstractRestServer);
+    ServerConnectionTask *task = new ServerConnectionTask(socketDescriptor, d);
+    d->connectionThreadPool->start(task);
+}
+
 void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
 {
     Q_D(AbstractRestServer);
@@ -254,17 +294,10 @@ void AbstractRestServer::sendInternalError(QTcpSocket *socket)
 }
 
 
-void AbstractRestServerPrivate::createNewConnection()
+void AbstractRestServerPrivate::createNewConnection(QTcpSocket *socket)
 {
-    Q_Q(AbstractRestServer);
-    if (q->hasPendingConnections()) {
-        QTcpSocket *socket = q->nextPendingConnection();
-        QObject::connect(socket, &QTcpSocket::readyRead, q, [this, q]() {
-             QTcpSocket *socket = qobject_cast<QTcpSocket *>(q->sender());
-             Q_ASSERT(socket);
-             handleRequest(socket);
-        });
-    }
+    Q_ASSERT(socket);
+    handleRequest(socket);
 }
 
 void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
@@ -386,7 +419,7 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
             }
         }
         if (!encryptedAuth.isEmpty() && q->checkBasicAuth(encryptedAuth)) {
-            QMetaObject::invokeMethod(q, methodName.toLatin1().constData(), Qt::AutoConnection,
+            QMetaObject::invokeMethod(q, methodName.toLatin1().constData(), Qt::DirectConnection,
                                       Q_ARG(QTcpSocket *,socket),
                                       Q_ARG(const QStringList &, headers),
                                       Q_ARG(const QStringList &, methodVariableParts),
