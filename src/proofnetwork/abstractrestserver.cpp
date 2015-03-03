@@ -1,16 +1,20 @@
 #include "abstractrestserver.h"
 
+#include "proofcore/proofobject.h"
+
 #include <QDir>
 #include <QTcpSocket>
 #include <QMetaObject>
 #include <QMetaMethod>
 #include <QUrlQuery>
-#include <QThreadPool>
+#include <QQueue>
+#include <QMutex>
 
 static const QString REST_METHOD_PREFIX = QString("rest_");
 static const int MAX_CONNECTION_THREADS_COUNT = 30;
 
 namespace Proof {
+class ServerConnectionTask;
 
 struct MethodNode {
     MethodNode()
@@ -51,7 +55,7 @@ private:
     QString value = "";
 };
 
-class AbstractRestServerPrivate
+class AbstractRestServerPrivate: public QObject
 {
     Q_DECLARE_PUBLIC(AbstractRestServer)
     friend class ServerConnectionTask;
@@ -66,7 +70,10 @@ private:
     AbstractRestServerPrivate(const AbstractRestServerPrivate &&other) = delete;
     AbstractRestServerPrivate &operator=(const AbstractRestServerPrivate &&other) = delete;
 
-    void createNewConnection(QTcpSocket *socket);
+    void createNewConnection(QTcpSocket *socket, ServerConnectionTask *task);
+    void removeFinishedConnection(QTcpSocket *socket);
+    void freeTaskThread();
+
     void handleRequest(QTcpSocket *socket);
     void tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body);
     QStringList makeMethodName(const QString &type, const QString &name);
@@ -81,20 +88,22 @@ private:
     QString userName;
     QString password;
     QString pathPrefix;
-    QThread *thread = nullptr;
-    QThreadPool *connectionThreadPool = nullptr;
-    QHash<qintptr, QRunnable *> connectionTasks;
+    QThread *serverThread = nullptr;
+    QHash<QTcpSocket *, ServerConnectionTask *> activeConnectionTasks;
+    QQueue<ServerConnectionTask *> waitingConnectionTasks;
     MethodNode methodsTreeRoot;
+    QMutex connectionsMutex;
 };
 
-class ServerConnectionTask: public QRunnable
+class ServerConnectionTask: public QThread
 {
 public:
-    ServerConnectionTask(qintptr _socket, AbstractRestServerPrivate *const _server_d)
-        : socket(_socket),
+    ServerConnectionTask(qintptr _socket_ptr, AbstractRestServerPrivate *const _server_d)
+        : socket_ptr(_socket_ptr),
           server_d(_server_d)
     {
-        setAutoDelete(false);
+        moveToThread(this);
+        QObject::connect(this, &QThread::finished, server_d, &AbstractRestServerPrivate::freeTaskThread);
     }
 
     ~ServerConnectionTask() {
@@ -104,15 +113,49 @@ public:
     void run() override
     {
         QTcpSocket *tcpSocket = new QTcpSocket();
-        if (!tcpSocket->setSocketDescriptor(socket)) {
+        if (!tcpSocket->setSocketDescriptor(socket_ptr)) {
             qCDebug(proofNetworkMiscLog) << "Can't create socket, error:" << tcpSocket->errorString();
             return;
         }
-        server_d->createNewConnection(tcpSocket);
+
+        server_d->createNewConnection(tcpSocket, this);
+
+        exec();
+    }
+
+    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
+    {
+        if (Proof::ProofObject::delayedCall(this,
+                                            &ServerConnectionTask::sendAnswer,
+                                            socket, body, contentType, returnCode, reason)) {
+            return;
+        }
+
+        if (socket->state() == QTcpSocket::ConnectedState) {
+            socket->write(QString("HTTP/1.0 %1 %2\r\n"
+                                  "Server: proof\r\n"
+                                  "Content-Type: %3\r\n"
+                                  "%4"
+                                  "\r\n")
+                          .arg(returnCode)
+                          .arg(reason)
+                          .arg(contentType)
+                          .arg(!body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString())
+                          .toUtf8());
+
+            socket->write(body);
+            socket->flush();
+            socket->disconnectFromHost();
+            if (socket->state() != QTcpSocket::UnconnectedState)
+                socket->waitForDisconnected();
+        }
+        delete socket;
+        quit();
+        server_d->removeFinishedConnection(socket);
     }
 
 private:
-    qintptr socket;
+    qintptr socket_ptr;
     AbstractRestServerPrivate *const server_d;
 };
 }
@@ -139,27 +182,24 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     qRegisterMetaType<QTcpSocket *>("QTcpSocket *");
     qRegisterMetaType<QUrlQuery>("QUrlQuery");
 
-    d->thread = new QThread(this);
-    d->connectionThreadPool = new QThreadPool(this);
-    d->connectionThreadPool->setMaxThreadCount(MAX_CONNECTION_THREADS_COUNT > QThread::idealThreadCount()
-                                               ? MAX_CONNECTION_THREADS_COUNT : QThread::idealThreadCount());
+    d->serverThread = new QThread(this);
     d->port = port;
     d->userName = userName;
     d->password = password;
     d->pathPrefix = pathPrefix;
 
-    moveToThread(d->thread);
-    d->thread->moveToThread(d->thread);
-    d->thread->start();
+    moveToThread(d->serverThread);
+    d->serverThread->moveToThread(d->serverThread);
+    d->serverThread->start();
 }
 
 AbstractRestServer::~AbstractRestServer()
 {
     Q_D(AbstractRestServer);
     stopListen();
-    d->thread->quit();
-    d->thread->wait(1000);
-    d->thread->terminate();
+    d->serverThread->quit();
+    d->serverThread->wait(1000);
+    d->serverThread->terminate();
 }
 
 QString AbstractRestServer::userName() const
@@ -247,8 +287,12 @@ void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
 {
     Q_D(AbstractRestServer);
     ServerConnectionTask *task = new ServerConnectionTask(socketDescriptor, d);
-    d->connectionTasks[socketDescriptor] = task;
-    d->connectionThreadPool->start(task);
+    d->connectionsMutex.lock();
+    if (d->activeConnectionTasks.count() >= MAX_CONNECTION_THREADS_COUNT)
+        d->waitingConnectionTasks.enqueue(task);
+    else
+        task->start();
+    d->connectionsMutex.unlock();
 }
 
 void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
@@ -300,10 +344,42 @@ void AbstractRestServer::sendInternalError(QTcpSocket *socket)
 }
 
 
-void AbstractRestServerPrivate::createNewConnection(QTcpSocket *socket)
+void AbstractRestServerPrivate::createNewConnection(QTcpSocket *socket, ServerConnectionTask *task)
 {
-    Q_ASSERT(socket);
+    connectionsMutex.lock();
+    activeConnectionTasks[socket] = task;
+    connectionsMutex.unlock();
     handleRequest(socket);
+}
+
+void AbstractRestServerPrivate::removeFinishedConnection(QTcpSocket *socket)
+{
+    if (Proof::ProofObject::blockingDelayedCall(this,
+                                        &AbstractRestServerPrivate::removeFinishedConnection, 0,
+                                        socket)) {
+        return;
+    }
+
+    connectionsMutex.lock();
+    activeConnectionTasks.remove(socket);
+    connectionsMutex.unlock();
+
+    ServerConnectionTask *newTask = nullptr;
+    connectionsMutex.lock();
+    if (activeConnectionTasks.count() < MAX_CONNECTION_THREADS_COUNT && !waitingConnectionTasks.isEmpty())
+        newTask = waitingConnectionTasks.dequeue();
+    connectionsMutex.unlock();
+
+    if (newTask)
+        newTask->start();
+
+}
+
+void AbstractRestServerPrivate::freeTaskThread()
+{
+    QThread *taskThread = qobject_cast<QThread *>(sender());
+    Q_ASSERT(taskThread);
+    delete taskThread;
 }
 
 void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
@@ -440,28 +516,10 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
 }
 
 void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason) {
-    if (socket->state() == QTcpSocket::ConnectedState) {
-        socket->write(QString("HTTP/1.0 %1 %2\r\n"
-                              "Server: proof\r\n"
-                              "Content-Type: %3\r\n"
-                              "%4"
-                              "\r\n")
-                      .arg(returnCode)
-                      .arg(reason)
-                      .arg(contentType)
-                      .arg(!body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString())
-                      .toUtf8());
+    connectionsMutex.lock();
+    ServerConnectionTask *task = activeConnectionTasks.value(socket);
+    connectionsMutex.unlock();
 
-        socket->write(body);
-        socket->flush();
-        socket->disconnectFromHost();
-        if (socket->state() != QTcpSocket::UnconnectedState)
-            socket->waitForDisconnected();
-    }
-    if (socket->state() == QTcpSocket::UnconnectedState) {
-        qintptr socketDescriptor = socket->socketDescriptor();
-        delete socket;
-        QRunnable *task = connectionTasks.take(socketDescriptor);
-        delete task;
-    }
+    if (task)
+        task->sendAnswer(socket, body, contentType, returnCode, reason);
 }
