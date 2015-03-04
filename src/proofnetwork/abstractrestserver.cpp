@@ -11,44 +11,21 @@
 #include <QMutex>
 
 static const QString REST_METHOD_PREFIX = QString("rest_");
-static const int MAX_CONNECTION_THREADS_COUNT = 30;
+static const int MIN_THREADS_COUNT = 5;
 
 namespace Proof {
 class ServerConnectionTask;
 
-struct MethodNode {
-    MethodNode()
-    {}
+class MethodNode {
+public:
+    MethodNode();
+    bool contains(const QString &name) const;
+    void clear();
 
-    bool contains(const QString &name) const
-    {
-        return nodes.contains(name);
-    }
-
-    void clear()
-    {
-        nodes.clear();
-    }
-
-    operator QString()
-    {
-        return value;
-    }
-
-    MethodNode &operator [](const QString &name)
-    {
-        return nodes[name];
-    }
-
-    const MethodNode operator [](const QString &name) const
-    {
-        return nodes[name];
-    }
-
-    void setValue(const QString &_value)
-    {
-        value = _value;
-    }
+    operator QString();
+    MethodNode &operator [](const QString &name);
+    const MethodNode operator [](const QString &name) const;
+    void setValue(const QString &_value);
 
 private:
     QHash<QString, MethodNode> nodes;
@@ -89,74 +66,26 @@ private:
     QString password;
     QString pathPrefix;
     QThread *serverThread = nullptr;
+    QList<ServerConnectionTask *> taskThreads;
+    QList<ServerConnectionTask *> inactiveConnectionTasks;
     QHash<QTcpSocket *, ServerConnectionTask *> activeConnectionTasks;
-    QQueue<ServerConnectionTask *> waitingConnectionTasks;
+    QQueue<qintptr> waitingConnections;
     MethodNode methodsTreeRoot;
     QMutex connectionsMutex;
+    int countOfConnectionThreads;
 };
 
 class ServerConnectionTask: public QThread
 {
 public:
-    ServerConnectionTask(qintptr _socket_ptr, AbstractRestServerPrivate *const _server_d)
-        : socket_ptr(_socket_ptr),
-          server_d(_server_d)
-    {
-        moveToThread(this);
-        QObject::connect(this, &QThread::finished, server_d, &AbstractRestServerPrivate::freeTaskThread);
-    }
+    ServerConnectionTask(AbstractRestServerPrivate *const _serverD);
+    ~ServerConnectionTask();
 
-    ~ServerConnectionTask() {
-        qCDebug(proofNetworkMiscLog) << "Task for Socket DESTROYED!";
-    }
-
-    void run() override
-    {
-        QTcpSocket *tcpSocket = new QTcpSocket();
-        if (!tcpSocket->setSocketDescriptor(socket_ptr)) {
-            qCDebug(proofNetworkMiscLog) << "Can't create socket, error:" << tcpSocket->errorString();
-            return;
-        }
-
-        server_d->createNewConnection(tcpSocket, this);
-
-        exec();
-    }
-
-    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
-    {
-        if (Proof::ProofObject::delayedCall(this,
-                                            &ServerConnectionTask::sendAnswer,
-                                            socket, body, contentType, returnCode, reason)) {
-            return;
-        }
-
-        if (socket->state() == QTcpSocket::ConnectedState) {
-            socket->write(QString("HTTP/1.0 %1 %2\r\n"
-                                  "Server: proof\r\n"
-                                  "Content-Type: %3\r\n"
-                                  "%4"
-                                  "\r\n")
-                          .arg(returnCode)
-                          .arg(reason)
-                          .arg(contentType)
-                          .arg(!body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString())
-                          .toUtf8());
-
-            socket->write(body);
-            socket->flush();
-            socket->disconnectFromHost();
-            if (socket->state() != QTcpSocket::UnconnectedState)
-                socket->waitForDisconnected();
-        }
-        delete socket;
-        quit();
-        server_d->removeFinishedConnection(socket);
-    }
+    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason);
+    void handleNewConnection(qintptr socketDescriptor);
 
 private:
-    qintptr socket_ptr;
-    AbstractRestServerPrivate *const server_d;
+    AbstractRestServerPrivate * const serverD;
 };
 }
 
@@ -179,14 +108,13 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     Q_D(AbstractRestServer);
     d->q_ptr = this;
 
-    qRegisterMetaType<QTcpSocket *>("QTcpSocket *");
-    qRegisterMetaType<QUrlQuery>("QUrlQuery");
-
     d->serverThread = new QThread(this);
     d->port = port;
     d->userName = userName;
     d->password = password;
     d->pathPrefix = pathPrefix;
+
+    setNumberOfConnectionThreads();
 
     moveToThread(d->serverThread);
     d->serverThread->moveToThread(d->serverThread);
@@ -200,6 +128,13 @@ AbstractRestServer::~AbstractRestServer()
     d->serverThread->quit();
     d->serverThread->wait(1000);
     d->serverThread->terminate();
+
+    while (d->taskThreads.count()) {
+        QThread *thread = d->taskThreads.takeFirst();
+        thread->quit();
+        thread->wait(300);
+        delete thread;
+    }
 }
 
 QString AbstractRestServer::userName() const
@@ -262,6 +197,19 @@ void AbstractRestServer::setPort(int port)
     }
 }
 
+void AbstractRestServer::setNumberOfConnectionThreads(int count)
+{
+    Q_D(AbstractRestServer);
+    if (count < 0) {
+        count = QThread::idealThreadCount();
+        if (count < MIN_THREADS_COUNT)
+            count = MIN_THREADS_COUNT;
+        else
+            count += 2;
+    }
+    d->countOfConnectionThreads = count;
+}
+
 void AbstractRestServer::startListen()
 {
     Q_D(AbstractRestServer);
@@ -286,13 +234,26 @@ void AbstractRestServer::stopListen()
 void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
 {
     Q_D(AbstractRestServer);
-    ServerConnectionTask *task = new ServerConnectionTask(socketDescriptor, d);
+
+    ServerConnectionTask *task = nullptr;
     d->connectionsMutex.lock();
-    if (d->activeConnectionTasks.count() >= MAX_CONNECTION_THREADS_COUNT)
-        d->waitingConnectionTasks.enqueue(task);
-    else
-        task->start();
+    if (d->activeConnectionTasks.count() == d->taskThreads.count()) {
+        if (d->taskThreads.count() >= d->countOfConnectionThreads)
+            d->waitingConnections.enqueue(socketDescriptor);
+        else
+            task = new ServerConnectionTask(d);
+    } else if (!d->inactiveConnectionTasks.count()) {
+        d->waitingConnections.enqueue(socketDescriptor);
+    } else {
+        task = d->inactiveConnectionTasks.takeFirst();
+    }
     d->connectionsMutex.unlock();
+
+    if (task) {
+        if (!task->isRunning())
+            task->start();
+        task->handleNewConnection(socketDescriptor);
+    }
 }
 
 void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
@@ -354,32 +315,15 @@ void AbstractRestServerPrivate::createNewConnection(QTcpSocket *socket, ServerCo
 
 void AbstractRestServerPrivate::removeFinishedConnection(QTcpSocket *socket)
 {
-    if (Proof::ProofObject::blockingDelayedCall(this,
-                                        &AbstractRestServerPrivate::removeFinishedConnection, 0,
-                                        socket)) {
-        return;
-    }
-
     connectionsMutex.lock();
-    activeConnectionTasks.remove(socket);
+    ServerConnectionTask *task = activeConnectionTasks.take(socket);
+    qintptr socketDescriptor = 0;
+    if (waitingConnections.count())
+        socketDescriptor = waitingConnections.dequeue();
     connectionsMutex.unlock();
 
-    ServerConnectionTask *newTask = nullptr;
-    connectionsMutex.lock();
-    if (activeConnectionTasks.count() < MAX_CONNECTION_THREADS_COUNT && !waitingConnectionTasks.isEmpty())
-        newTask = waitingConnectionTasks.dequeue();
-    connectionsMutex.unlock();
-
-    if (newTask)
-        newTask->start();
-
-}
-
-void AbstractRestServerPrivate::freeTaskThread()
-{
-    QThread *taskThread = qobject_cast<QThread *>(sender());
-    Q_ASSERT(taskThread);
-    delete taskThread;
+    if (socketDescriptor)
+        task->handleNewConnection(socketDescriptor);
 }
 
 void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
@@ -522,4 +466,96 @@ void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray 
 
     if (task)
         task->sendAnswer(socket, body, contentType, returnCode, reason);
+}
+
+ServerConnectionTask::ServerConnectionTask(AbstractRestServerPrivate *const _server_d)
+    : serverD(_server_d)
+{
+    moveToThread(this);
+}
+
+ServerConnectionTask::~ServerConnectionTask()
+{
+}
+
+void ServerConnectionTask::handleNewConnection(qintptr socketDescriptor)
+{
+    if (Proof::ProofObject::delayedCall(this,
+                                        &ServerConnectionTask::handleNewConnection,
+                                        socketDescriptor)) {
+        return;
+    }
+
+    QTcpSocket *tcpSocket = new QTcpSocket();
+    if (!tcpSocket->setSocketDescriptor(socketDescriptor)) {
+        qCDebug(proofNetworkMiscLog) << "Can't create socket, error:" << tcpSocket->errorString();
+        return;
+    }
+
+    serverD->createNewConnection(tcpSocket, this);
+}
+
+void ServerConnectionTask::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
+{
+    if (Proof::ProofObject::delayedCall(this,
+                                        &ServerConnectionTask::sendAnswer,
+                                        socket, body, contentType, returnCode, reason)) {
+        return;
+    }
+
+    if (socket->state() == QTcpSocket::ConnectedState) {
+        socket->write(QString("HTTP/1.0 %1 %2\r\n"
+                              "Server: proof\r\n"
+                              "Content-Type: %3\r\n"
+                              "%4"
+                              "\r\n")
+                      .arg(returnCode)
+                      .arg(reason)
+                      .arg(contentType)
+                      .arg(!body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString())
+                      .toUtf8());
+
+        socket->write(body);
+        socket->flush();
+        socket->disconnectFromHost();
+        if (socket->state() != QTcpSocket::UnconnectedState)
+            socket->waitForDisconnected();
+    }
+    delete socket;
+    serverD->removeFinishedConnection(socket);
+}
+
+MethodNode::MethodNode()
+{
+
+}
+
+bool MethodNode::contains(const QString &name) const
+{
+    return nodes.contains(name);
+}
+
+void MethodNode::clear()
+{
+    nodes.clear();
+}
+
+MethodNode::operator QString()
+{
+    return value;
+}
+
+MethodNode &MethodNode::operator [](const QString &name)
+{
+    return nodes[name];
+}
+
+const MethodNode MethodNode::operator [](const QString &name) const
+{
+    return nodes[name];
+}
+
+void MethodNode::setValue(const QString &_value)
+{
+    value = _value;
 }
