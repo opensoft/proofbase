@@ -113,7 +113,7 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     d->password = password;
     d->pathPrefix = pathPrefix;
 
-    setNumberOfConnectionThreads();
+    setSuggestedMaxThreadsCount();
 
     moveToThread(d->serverThread);
     d->serverThread->moveToThread(d->serverThread);
@@ -196,7 +196,7 @@ void AbstractRestServer::setPort(int port)
     }
 }
 
-void AbstractRestServer::setNumberOfConnectionThreads(int count)
+void AbstractRestServer::setSuggestedMaxThreadsCount(int count)
 {
     Q_D(AbstractRestServer);
     if (count < 0) {

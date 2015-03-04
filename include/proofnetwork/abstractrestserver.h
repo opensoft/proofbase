@@ -29,7 +29,7 @@ public:
     void setPassword(const QString &password);
     void setPathPrefix(const QString &pathPrefix);
     void setPort(int port);
-    void setNumberOfConnectionThreads(int count = -1);
+    void setSuggestedMaxThreadsCount(int count = -1);
 
     Q_INVOKABLE void startListen();
     Q_INVOKABLE void stopListen();
