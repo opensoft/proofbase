@@ -14,7 +14,7 @@ static const QString REST_METHOD_PREFIX = QString("rest_");
 static const int MIN_THREADS_COUNT = 5;
 
 namespace Proof {
-class ServerConnectionTask;
+class WorkerThread;
 
 class MethodNode {
 public:
@@ -35,7 +35,7 @@ private:
 class AbstractRestServerPrivate: public QObject
 {
     Q_DECLARE_PUBLIC(AbstractRestServer)
-    friend class ServerConnectionTask;
+    friend class WorkerThread;
 
 public:
     AbstractRestServerPrivate() {}
@@ -47,8 +47,8 @@ private:
     AbstractRestServerPrivate(const AbstractRestServerPrivate &&other) = delete;
     AbstractRestServerPrivate &operator=(const AbstractRestServerPrivate &&other) = delete;
 
-    void createNewConnection(QTcpSocket *socket, ServerConnectionTask *task);
-    void removeFinishedConnection(QTcpSocket *socket);
+    void createNewConnection(QTcpSocket *socket);
+    void markWorkerInactive(WorkerThread *worker);
     void freeTaskThread();
 
     void handleRequest(QTcpSocket *socket);
@@ -66,20 +66,19 @@ private:
     QString password;
     QString pathPrefix;
     QThread *serverThread = nullptr;
-    QList<ServerConnectionTask *> taskThreads;
-    QList<ServerConnectionTask *> inactiveConnectionTasks;
-    QHash<QTcpSocket *, ServerConnectionTask *> activeConnectionTasks;
+    QList<WorkerThread *> threadPool;
+    QList<WorkerThread *> inactiveWorkerThreads;
     QQueue<qintptr> waitingConnections;
     MethodNode methodsTreeRoot;
-    QMutex connectionsMutex;
-    int countOfConnectionThreads;
+    int suggestedMaxThreadsCount;
 };
 
-class ServerConnectionTask: public QThread
+class WorkerThread: public QThread
 {
+    Q_OBJECT
 public:
-    ServerConnectionTask(AbstractRestServerPrivate *const _serverD);
-    ~ServerConnectionTask();
+    WorkerThread(AbstractRestServerPrivate *const _serverD);
+    ~WorkerThread();
 
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason);
     void handleNewConnection(qintptr socketDescriptor);
@@ -129,8 +128,8 @@ AbstractRestServer::~AbstractRestServer()
     d->serverThread->wait(1000);
     d->serverThread->terminate();
 
-    while (d->taskThreads.count()) {
-        QThread *thread = d->taskThreads.takeFirst();
+    while (d->threadPool.count()) {
+        QThread *thread = d->threadPool.takeFirst();
         thread->quit();
         thread->wait(300);
         delete thread;
@@ -207,7 +206,7 @@ void AbstractRestServer::setNumberOfConnectionThreads(int count)
         else
             count += 2;
     }
-    d->countOfConnectionThreads = count;
+    d->suggestedMaxThreadsCount = count;
 }
 
 void AbstractRestServer::startListen()
@@ -235,24 +234,23 @@ void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
 {
     Q_D(AbstractRestServer);
 
-    ServerConnectionTask *task = nullptr;
-    d->connectionsMutex.lock();
-    if (d->activeConnectionTasks.count() == d->taskThreads.count()) {
-        if (d->taskThreads.count() >= d->countOfConnectionThreads)
-            d->waitingConnections.enqueue(socketDescriptor);
-        else
-            task = new ServerConnectionTask(d);
-    } else if (!d->inactiveConnectionTasks.count()) {
-        d->waitingConnections.enqueue(socketDescriptor);
-    } else {
-        task = d->inactiveConnectionTasks.takeFirst();
-    }
-    d->connectionsMutex.unlock();
+    WorkerThread *worker = nullptr;
 
-    if (task) {
-        if (!task->isRunning())
-            task->start();
-        task->handleNewConnection(socketDescriptor);
+    if (!d->inactiveWorkerThreads.count()) {
+        if (d->threadPool.count() >= d->suggestedMaxThreadsCount) {
+            d->waitingConnections.enqueue(socketDescriptor);
+        } else {
+            worker = new WorkerThread(d);
+            d->threadPool.append(worker);
+        }
+    } else {
+        worker = d->inactiveWorkerThreads.takeFirst();
+    }
+
+    if (worker) {
+        if (!worker->isRunning())
+            worker->start();
+        worker->handleNewConnection(socketDescriptor);
     }
 }
 
@@ -305,25 +303,23 @@ void AbstractRestServer::sendInternalError(QTcpSocket *socket)
 }
 
 
-void AbstractRestServerPrivate::createNewConnection(QTcpSocket *socket, ServerConnectionTask *task)
+void AbstractRestServerPrivate::createNewConnection(QTcpSocket *socket)
 {
-    connectionsMutex.lock();
-    activeConnectionTasks[socket] = task;
-    connectionsMutex.unlock();
     handleRequest(socket);
 }
 
-void AbstractRestServerPrivate::removeFinishedConnection(QTcpSocket *socket)
+void AbstractRestServerPrivate::markWorkerInactive(WorkerThread *worker)
 {
-    connectionsMutex.lock();
-    ServerConnectionTask *task = activeConnectionTasks.take(socket);
-    qintptr socketDescriptor = 0;
-    if (waitingConnections.count())
-        socketDescriptor = waitingConnections.dequeue();
-    connectionsMutex.unlock();
+    Q_Q(AbstractRestServer);
+    if (Proof::ProofObject::delayedCall(this,
+                                        &AbstractRestServerPrivate::markWorkerInactive,
+                                        worker)) {
+        return;
+    }
 
-    if (socketDescriptor)
-        task->handleNewConnection(socketDescriptor);
+    inactiveWorkerThreads.append(worker);
+    if (waitingConnections.count())
+        q->incomingConnection(waitingConnections.dequeue());
 }
 
 void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
@@ -460,28 +456,28 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
 }
 
 void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason) {
-    connectionsMutex.lock();
-    ServerConnectionTask *task = activeConnectionTasks.value(socket);
-    connectionsMutex.unlock();
 
-    if (task)
-        task->sendAnswer(socket, body, contentType, returnCode, reason);
+    WorkerThread *worker = qobject_cast<WorkerThread *>(socket->thread());
+    Q_ASSERT(worker);
+
+    if (worker)
+        worker->sendAnswer(socket, body, contentType, returnCode, reason);
 }
 
-ServerConnectionTask::ServerConnectionTask(AbstractRestServerPrivate *const _server_d)
+WorkerThread::WorkerThread(AbstractRestServerPrivate *const _server_d)
     : serverD(_server_d)
 {
     moveToThread(this);
 }
 
-ServerConnectionTask::~ServerConnectionTask()
+WorkerThread::~WorkerThread()
 {
 }
 
-void ServerConnectionTask::handleNewConnection(qintptr socketDescriptor)
+void WorkerThread::handleNewConnection(qintptr socketDescriptor)
 {
     if (Proof::ProofObject::delayedCall(this,
-                                        &ServerConnectionTask::handleNewConnection,
+                                        &WorkerThread::handleNewConnection,
                                         socketDescriptor)) {
         return;
     }
@@ -492,13 +488,13 @@ void ServerConnectionTask::handleNewConnection(qintptr socketDescriptor)
         return;
     }
 
-    serverD->createNewConnection(tcpSocket, this);
+    serverD->createNewConnection(tcpSocket);
 }
 
-void ServerConnectionTask::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
+void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
 {
     if (Proof::ProofObject::delayedCall(this,
-                                        &ServerConnectionTask::sendAnswer,
+                                        &WorkerThread::sendAnswer,
                                         socket, body, contentType, returnCode, reason)) {
         return;
     }
@@ -522,7 +518,7 @@ void ServerConnectionTask::sendAnswer(QTcpSocket *socket, const QByteArray &body
             socket->waitForDisconnected();
     }
     delete socket;
-    serverD->removeFinishedConnection(socket);
+    serverD->markWorkerInactive(this);
 }
 
 MethodNode::MethodNode()
@@ -559,3 +555,5 @@ void MethodNode::setValue(const QString &_value)
 {
     value = _value;
 }
+
+#include "abstractrestserver.moc"
