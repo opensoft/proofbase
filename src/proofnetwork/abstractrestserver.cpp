@@ -460,8 +460,7 @@ void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray 
     WorkerThread *worker = qobject_cast<WorkerThread *>(socket->thread());
     Q_ASSERT(worker);
 
-    if (worker)
-        worker->sendAnswer(socket, body, contentType, returnCode, reason);
+    worker->sendAnswer(socket, body, contentType, returnCode, reason);
 }
 
 WorkerThread::WorkerThread(AbstractRestServerPrivate *const _server_d)
