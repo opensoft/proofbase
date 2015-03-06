@@ -9,3 +9,5 @@ release
 bin*
 *DS_Store*
 *.deb
+html
+latex
