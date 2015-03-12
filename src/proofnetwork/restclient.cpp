@@ -236,9 +236,7 @@ QNetworkReply *RestClient::patch(const QString &method, const QUrlQuery &query, 
 void RestClient::authenticate()
 {
     Q_D(RestClient);
-    if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, __func__, Qt::QueuedConnection);
-    } else {
+    if (!delayedCall(this, &RestClient::authenticate)) {
         if (authType() == RestClient::AuthType::QuasiOAuth2Auth)
             d->requestQuasiOAuth2token();
     }

@@ -212,9 +212,7 @@ void AbstractRestServer::setSuggestedMaxThreadsCount(int count)
 void AbstractRestServer::startListen()
 {
     Q_D(AbstractRestServer);
-    if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, __func__, Qt::QueuedConnection);
-    } else {
+    if (!ProofObject::delayedCall(this, &AbstractRestServer::startListen)) {
         d->fillMethods();
         bool isListen = listen(QHostAddress::Any, d->port);
         if (!isListen)
@@ -224,9 +222,7 @@ void AbstractRestServer::startListen()
 
 void AbstractRestServer::stopListen()
 {
-    if (QThread::currentThread() != thread())
-        QMetaObject::invokeMethod(this, __func__, Qt::BlockingQueuedConnection);
-    else
+    if (!ProofObject::blockingDelayedCall(this, &AbstractRestServer::stopListen, nullptr))
         close();
 }
 
