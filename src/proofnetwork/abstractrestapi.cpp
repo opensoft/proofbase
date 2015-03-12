@@ -34,6 +34,28 @@ void AbstractRestApi::setRestClient(const RestClientSP &client)
     d->restClient = client;
 }
 
+AbstractRestApi::ErrorCallbackType AbstractRestApi::generateErrorCallback(qulonglong &currentOperationId, RestApiError &error)
+{
+    return [&currentOperationId, &error]
+           (qulonglong operationId, const Proof::RestApiError &_error) {
+        if (currentOperationId != operationId)
+            return false;
+        error = _error;
+        return true;
+    };
+}
+
+AbstractRestApi::ErrorCallbackType AbstractRestApi::generateErrorCallback(qulonglong &currentOperationId, QString &errorMessage)
+{
+    return [&currentOperationId, &errorMessage]
+           (qulonglong operationId, const Proof::RestApiError &_error) {
+        if (currentOperationId != operationId)
+            return false;
+        errorMessage = QString("%1: %2").arg(_error.code).arg(_error.message);
+        return true;
+    };
+}
+
 void AbstractRestApi::onRestClientChanging(const RestClientSP &client)
 {
     Q_D(AbstractRestApi);
@@ -117,7 +139,7 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
                                      << ": " << errorCode
                                      << reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::ErrorLevel::ServerError,
+                                  RestApiError{RestApiError::Level::ServerError,
                                                errorCode,
                                                reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString()});
             cleanupReply(operationId, reply);
@@ -137,7 +159,7 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
                                  << reply->request().url().query()
                                  << ": " << errorCode << reply->errorString();
         emit q->errorOccurred(operationId,
-                              RestApiError{RestApiError::ErrorLevel::ClientError,
+                              RestApiError{RestApiError::Level::ClientError,
                                            errorCode,
                                            reply->errorString()});
         cleanupReply(operationId, reply);
@@ -156,7 +178,7 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
                                      << reply->request().url().query()
                                      << ": " << errorCode << error.errorString();
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::ErrorLevel::ClientError,
+                                  RestApiError{RestApiError::Level::ClientError,
                                                errorCode,
                                                error.errorString()});
             cleanupReply(operationId, reply);
@@ -175,7 +197,7 @@ void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, c
     Q_Q(AbstractRestApi);
     QString jsonErrorString = QString("JSON error: %1").arg(error.errorString());
     emit q->errorOccurred(operationId,
-                          RestApiError{RestApiError::ErrorLevel::JsonParseError,
+                          RestApiError{RestApiError::Level::JsonParseError,
                                        error.error,
                                        jsonErrorString});
 }

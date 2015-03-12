@@ -24,134 +24,134 @@ public:
 
     //TODO: change all binds to normal lambdas after switch to gcc>=4.9.0
 
-    template <class CallerType, class ReturnType, class Method, class ...Args>
-    static typename std::enable_if<!std::is_base_of<ProofObject, CallerType>::value
-                                    && std::is_base_of<QObject, CallerType>::value, bool>::type
-    blockingDelayedCall(CallerType *caller, Method method, ReturnType &result, Args... args)
+    template <class Callee, class Result, class Method, class ...Args>
+    static typename std::enable_if<!std::is_base_of<ProofObject, Callee>::value
+                                    && std::is_base_of<QObject, Callee>::value, bool>::type
+    blockingDelayedCall(Callee *callee, Method method, Result &result, Args... args)
     {
-        if (QThread::currentThread() == caller->thread())
+        if (QThread::currentThread() == callee->thread())
             return false;
 
         ProofObject *temporaryObject = new ProofObject(0);
-        auto f = std::bind([](qulonglong, ReturnType *result,
-                           CallerType *caller, ProofObject *temporaryObject,
+        auto f = std::bind([](qulonglong, Result *result,
+                           Callee *callee, ProofObject *temporaryObject,
                            Method method, Args... args) {
-                result = (*caller.*method)(args...);
+                result = (*callee.*method)(args...);
                 temporaryObject->deleteLater();
-        }, std::placeholders::_1, &result, caller, temporaryObject, method, args...);
+        }, std::placeholders::_1, &result, callee, temporaryObject, method, args...);
         connect(temporaryObject, &ProofObject::delayedCallRequested,
-                caller, f, Qt::BlockingQueuedConnection);
+                callee, f, Qt::BlockingQueuedConnection);
         emit temporaryObject->delayedCallRequested(0, QPrivateSignal{});
         return true;
     }
 
-    template <class CallerType, class Method, class ...Args>
-    static typename std::enable_if<!std::is_base_of<ProofObject, CallerType>::value
-                                    && std::is_base_of<QObject, CallerType>::value, bool>::type
-    blockingDelayedCall(CallerType *caller, Method method, void *dummy, Args... args)
+    template <class Callee, class Method, class ...Args>
+    static typename std::enable_if<!std::is_base_of<ProofObject, Callee>::value
+                                    && std::is_base_of<QObject, Callee>::value, bool>::type
+    blockingDelayedCall(Callee *callee, Method method, void *dummy, Args... args)
     {
         Q_UNUSED(dummy);
-        if (QThread::currentThread() == caller->thread())
+        if (QThread::currentThread() == callee->thread())
             return false;
 
         ProofObject *temporaryObject = new ProofObject(0);
         auto f = std::bind([](qulonglong,
-                           CallerType *caller, ProofObject *temporaryObject,
+                           Callee *callee, ProofObject *temporaryObject,
                            Method method, Args... args) {
-                (*caller.*method)(args...);
+                (*callee.*method)(args...);
                 temporaryObject->deleteLater();
-        }, std::placeholders::_1, caller, temporaryObject, method, args...);
+        }, std::placeholders::_1, callee, temporaryObject, method, args...);
         connect(temporaryObject, &ProofObject::delayedCallRequested,
-                caller, f, Qt::BlockingQueuedConnection);
+                callee, f, Qt::BlockingQueuedConnection);
         emit temporaryObject->delayedCallRequested(0, QPrivateSignal{});
         return true;
     }
 
-    template <class CallerType, class ReturnType, class Method, class ...Args>
-    static typename std::enable_if<std::is_base_of<ProofObject, CallerType>::value, bool>::type
-    blockingDelayedCall(CallerType *caller, Method method, ReturnType &result, Args... args)
+    template <class Callee, class Result, class Method, class ...Args>
+    static typename std::enable_if<std::is_base_of<ProofObject, Callee>::value, bool>::type
+    blockingDelayedCall(Callee *callee, Method method, Result &result, Args... args)
     {
-        if (QThread::currentThread() == caller->thread())
+        if (QThread::currentThread() == callee->thread())
             return false;
-        qulonglong currentId = caller->nextDelayedCallId();
+        qulonglong currentId = callee->nextDelayedCallId();
         auto conn = QSharedPointer<QMetaObject::Connection>::create();
-        auto f = std::bind([](qulonglong delayedCallId, ReturnType *result,
-                           CallerType *caller, QSharedPointer<QMetaObject::Connection> conn,
+        auto f = std::bind([](qulonglong delayedCallId, Result *result,
+                           Callee *callee, QSharedPointer<QMetaObject::Connection> conn,
                            qulonglong currentId, Method method, Args... args) {
             if (currentId != delayedCallId)
                 return;
-            *result = (*caller.*method)(args...);
+            *result = (*callee.*method)(args...);
             disconnect(*conn);
-        }, std::placeholders::_1, &result, caller, conn, currentId, method, args...);
-        *conn = connect(caller, &ProofObject::delayedCallRequested,
-                        caller, f, Qt::BlockingQueuedConnection);
-        emit caller->delayedCallRequested(currentId, QPrivateSignal{});
+        }, std::placeholders::_1, &result, callee, conn, currentId, method, args...);
+        *conn = connect(callee, &ProofObject::delayedCallRequested,
+                        callee, f, Qt::BlockingQueuedConnection);
+        emit callee->delayedCallRequested(currentId, QPrivateSignal{});
         return true;
     }
 
-    template <class CallerType, class Method, class ...Args>
-    static typename std::enable_if<std::is_base_of<ProofObject, CallerType>::value, bool>::type
-    blockingDelayedCall(CallerType *caller, Method method, void *dummy, Args... args)
+    template <class Callee, class Method, class ...Args>
+    static typename std::enable_if<std::is_base_of<ProofObject, Callee>::value, bool>::type
+    blockingDelayedCall(Callee *callee, Method method, void *dummy, Args... args)
     {
         Q_UNUSED(dummy);
-        if (QThread::currentThread() == caller->thread())
+        if (QThread::currentThread() == callee->thread())
             return false;
-        qulonglong currentId = caller->nextDelayedCallId();
+        qulonglong currentId = callee->nextDelayedCallId();
         auto conn = QSharedPointer<QMetaObject::Connection>::create();
         auto f = std::bind([](qulonglong delayedCallId,
-                           CallerType *caller, QSharedPointer<QMetaObject::Connection> conn,
+                           Callee *callee, QSharedPointer<QMetaObject::Connection> conn,
                            qulonglong currentId, Method method, Args... args) {
             if (currentId != delayedCallId)
                 return;
-            (*caller.*method)(args...);
+            (*callee.*method)(args...);
             disconnect(*conn);
-        }, std::placeholders::_1, caller, conn, currentId, method, args...);
-        *conn = connect(caller, &ProofObject::delayedCallRequested,
-                        caller, f, Qt::BlockingQueuedConnection);
-        emit caller->delayedCallRequested(currentId, QPrivateSignal{});
+        }, std::placeholders::_1, callee, conn, currentId, method, args...);
+        *conn = connect(callee, &ProofObject::delayedCallRequested,
+                        callee, f, Qt::BlockingQueuedConnection);
+        emit callee->delayedCallRequested(currentId, QPrivateSignal{});
         return true;
     }
 
-    template <class CallerType, class Method, class ...Args>
-    static typename std::enable_if<!std::is_base_of<ProofObject, CallerType>::value
-                                    && std::is_base_of<QObject, CallerType>::value, bool>::type
-    delayedCall(CallerType *caller, Method method, Args... args)
+    template <class Callee, class Method, class ...Args>
+    static typename std::enable_if<!std::is_base_of<ProofObject, Callee>::value
+                                    && std::is_base_of<QObject, Callee>::value, bool>::type
+    delayedCall(Callee *callee, Method method, Args... args)
     {
-        if (QThread::currentThread() == caller->thread())
+        if (QThread::currentThread() == callee->thread())
             return false;
 
         ProofObject *temporaryObject = new ProofObject(0);
         auto f = std::bind([](qulonglong,
-                           CallerType *caller, ProofObject *temporaryObject,
+                           Callee *callee, ProofObject *temporaryObject,
                            Method method, Args... args) {
-                (*caller.*method)(args...);
+                (*callee.*method)(args...);
                 temporaryObject->deleteLater();
-        }, std::placeholders::_1, caller, temporaryObject, method, args...);
+        }, std::placeholders::_1, callee, temporaryObject, method, args...);
         connect(temporaryObject, &ProofObject::delayedCallRequested,
-                caller, f);
+                callee, f);
         emit temporaryObject->delayedCallRequested(0, QPrivateSignal{});
         return true;
     }
 
-    template <class CallerType, class Method, class ...Args>
-    static typename std::enable_if<std::is_base_of<ProofObject, CallerType>::value, bool>::type
-    delayedCall(CallerType *caller, Method method, Args... args)
+    template <class Callee, class Method, class ...Args>
+    static typename std::enable_if<std::is_base_of<ProofObject, Callee>::value, bool>::type
+    delayedCall(Callee *callee, Method method, Args... args)
     {
-        if (QThread::currentThread() == caller->thread())
+        if (QThread::currentThread() == callee->thread())
             return false;
-        qulonglong currentId = caller->nextDelayedCallId();
+        qulonglong currentId = callee->nextDelayedCallId();
         auto conn = QSharedPointer<QMetaObject::Connection>::create();
         auto f = std::bind([](qulonglong delayedCallId,
-                           CallerType *caller, QSharedPointer<QMetaObject::Connection> conn,
+                           Callee *callee, QSharedPointer<QMetaObject::Connection> conn,
                            qulonglong currentId, Method method, Args... args) {
                 if (currentId != delayedCallId)
                     return;
-                (*caller.*method)(args...);
+                (*callee.*method)(args...);
                 disconnect(*conn);
-        }, std::placeholders::_1, caller, conn, currentId, method, args...);
-        *conn = connect(caller, &ProofObject::delayedCallRequested,
-                        caller, f);
-        emit caller->delayedCallRequested(currentId, QPrivateSignal{});
+        }, std::placeholders::_1, callee, conn, currentId, method, args...);
+        *conn = connect(callee, &ProofObject::delayedCallRequested,
+                        callee, f);
+        emit callee->delayedCallRequested(currentId, QPrivateSignal{});
         return true;
     }
 
