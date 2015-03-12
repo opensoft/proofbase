@@ -22,6 +22,10 @@ struct PROOF_NETWORK_EXPORT RestApiError
     RestApiError(Level _level = Level::NoError, qlonglong _code = 0, const QString &_message = QString())
         : level(_level), code(_code), message(_message)
     {}
+
+    QString toString() const;
+    void reset();
+
     Level level;
     qlonglong code;
     QString message;
@@ -51,6 +55,23 @@ public:
                 return false;
             result = received;
             return true;
+        };
+        RestApiError error;
+        taskChain->addSignalWaiter(callee, signal, callback);
+        taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
+        currentOperationId = (*callee.*method)(args...);
+        taskChain->fireSignalWaiters();
+        return error;
+    }
+
+    template <class Callee, class Method, class Signal, class ...Args>
+    static RestApiError chainedApiCallWithoutResult(const TaskChainSP &taskChain, Callee *callee, Method method,
+                                                    Signal signal, Args... args)
+    {
+        qulonglong currentOperationId = 0;
+        std::function<bool(qulonglong)> callback
+                = [&currentOperationId] (qulonglong operationId) {
+            return (currentOperationId == operationId);
         };
         RestApiError error;
         taskChain->addSignalWaiter(callee, signal, callback);

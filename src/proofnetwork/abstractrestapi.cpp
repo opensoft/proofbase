@@ -210,3 +210,18 @@ void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [this, reply, operationId](QNetworkReply::NetworkError) {replyErrorOccurred(operationId, reply);});
 }
+
+
+QString RestApiError::toString() const
+{
+    if (level == Level::NoError)
+        return QString();
+    return QString("%1: %2").arg(code).arg(message);
+}
+
+void RestApiError::reset()
+{
+    level = Level::NoError;
+    code = 0;
+    message = QString();
+}
