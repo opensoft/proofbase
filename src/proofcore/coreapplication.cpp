@@ -7,6 +7,48 @@
 
 #ifdef Q_OS_LINUX
 #include <unistd.h>
+#include <cxxabi.h>
+#include <execinfo.h>
+#include <signal.h>
+#endif
+
+#ifdef Q_OS_LINUX
+constexpr int BACKTRACE_MAX_SIZE = 50;
+static void signalHandler(int sig)
+{
+    qCCritical(proofCoreCrashLog) << "#######################################";
+    qCCritical(proofCoreCrashLog) << QString("signal %1 (%2)").arg(sig).arg(strsignal(sig));
+
+    void *backtraceInfo[BACKTRACE_MAX_SIZE];
+    int size = backtrace(backtraceInfo, BACKTRACE_MAX_SIZE);
+
+    char **backtraceArray = backtrace_symbols(backtraceInfo, size);
+
+    if (!backtraceArray)
+        exit(EXIT_FAILURE);
+
+    for (int i = 0; i < size; ++i) {
+        QRegExp re("^(.+)\\((.*)\\+([x0-9a-fA-F]*)\\)\\s+\\[(.+)\\]\\s*$");
+
+        if (re.indexIn(backtraceArray[i]) < 0) {
+            qCCritical(proofCoreCrashLog) << QString("[trace] #%1) %2")
+                                             .arg(i)
+                                             .arg(backtraceArray[i]);
+        } else {
+            char *name = abi::__cxa_demangle(re.cap(2).trimmed().toLatin1().constData(), 0, 0, 0);
+            qCCritical(proofCoreCrashLog) << QString("[trace] #%1) %2 : %3+%4 (%5)")
+                                                     .arg(i)
+                                                     .arg(re.cap(1).trimmed()) //scope
+                                                     .arg(name ? name : re.cap(2).trimmed()) //name
+                                                     .arg(re.cap(3).trimmed()) //offset
+                                                     .arg(re.cap(4).trimmed()); //address
+            free(name);
+        }
+    }
+
+    free(backtraceArray);
+    exit(EXIT_FAILURE);
+}
 #endif
 
 using namespace Proof;
@@ -49,4 +91,9 @@ void Proof::CoreApplicationPrivate::initApp()
     QString logFileName = logGroup->value("filename", q_ptr->applicationName(), Settings::NotFoundPolicy::Add).toString();
     if (!logFileName.isEmpty())
         Logs::installFileHandler(logFileName);
+
+#ifdef Q_OS_LINUX
+    signal(SIGSEGV, signalHandler);
+#endif
+
 }
