@@ -5,7 +5,7 @@
 #include "settings.h"
 #include "settingsgroup.h"
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
 #include <unistd.h>
 #include <cxxabi.h>
 #include <execinfo.h>
@@ -13,14 +13,21 @@
 #include <sys/ucontext.h>
 #endif
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
 constexpr int BACKTRACE_MAX_SIZE = 50;
-static struct sigaction sigAction;
 
 static void signalHandler(int sig, siginfo_t *info, void *context)
 {
+    static bool sigSegvHandlerAlreadyCalled = false;
+    if (sigSegvHandlerAlreadyCalled)
+        return;
+    sigSegvHandlerAlreadyCalled = true;
     ucontext_t *uc = (ucontext_t *)context;
+# ifdef Q_OS_LINUX
     void *caller = (void *) uc->uc_mcontext.fpregs->rip;
+# else
+    void *caller = (void *) uc->uc_mcontext->__ss.__rip;
+# endif
 
     qCCritical(proofCoreCrashLog) << "#######################################";
     qCCritical(proofCoreCrashLog) << QString("signal %1 (%2), address is 0x%3 from 0x%4")
@@ -41,20 +48,38 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
         exit(EXIT_FAILURE);
 
     for (int i = 0; i < size; ++i) {
+# ifdef Q_OS_LINUX
         QRegExp re("^(.+)\\((.*)\\+([x0-9a-fA-F]*)\\)\\s+\\[(.+)\\]\\s*$");
+# else
+        QRegExp re("^\\d*\\s+(.+)\\s+(.+)\\s+(.+)\\s+\\+\\s+(\\d*)\\s*$");
+# endif
 
         if (re.indexIn(backtraceArray[i]) < 0) {
             qCCritical(proofCoreCrashLog) << QString("[trace] #%1) %2")
                                              .arg(i)
                                              .arg(backtraceArray[i]);
         } else {
-            char *name = abi::__cxa_demangle(re.cap(2).trimmed().toLatin1().constData(), 0, 0, 0);
+# ifdef Q_OS_LINUX
+            QString mangledName = re.cap(2).trimmed();
+#else
+            QString mangledName = re.cap(3).trimmed();
+#endif
+            char *name = abi::__cxa_demangle(mangledName.toLatin1().constData(), 0, 0, 0);
+# ifdef Q_OS_LINUX
             qCCritical(proofCoreCrashLog) << QString("[trace] #%1) %2 : %3+%4 (%5)")
                                              .arg(i)
                                              .arg(re.cap(1).trimmed()) //scope
-                                             .arg(name ? name : re.cap(2).trimmed()) //name
+                                             .arg(name ? name : mangledName) //name
                                              .arg(re.cap(3).trimmed()) //offset
                                              .arg(re.cap(4).trimmed()); //address
+#else
+            qCCritical(proofCoreCrashLog) << QString("[trace] #%1) %2 : %3+%4 (%5)")
+                                             .arg(i)
+                                             .arg(re.cap(1).trimmed()) //scope
+                                             .arg(name ? name : mangledName) //name
+                                             .arg(re.cap(4).trimmed()) //offset
+                                             .arg(re.cap(2).trimmed()); //address
+#endif
             free(name);
         }
     }
@@ -105,7 +130,8 @@ void Proof::CoreApplicationPrivate::initApp()
     if (!logFileName.isEmpty())
         Logs::installFileHandler(logFileName);
 
-#ifdef Q_OS_LINUX    
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
+    static struct sigaction sigAction;
     sigAction.sa_sigaction = signalHandler;
     sigAction.sa_flags = SA_SIGINFO;
 
