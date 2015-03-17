@@ -18,10 +18,10 @@ constexpr int BACKTRACE_MAX_SIZE = 50;
 
 static void signalHandler(int sig, siginfo_t *info, void *context)
 {
-    static bool sigSegvHandlerAlreadyCalled = false;
-    if (sigSegvHandlerAlreadyCalled)
+    static bool handlerAlreadyCalled = false;
+    if (handlerAlreadyCalled)
         return;
-    sigSegvHandlerAlreadyCalled = true;
+    handlerAlreadyCalled = true;
     ucontext_t *uc = (ucontext_t *)context;
 # ifdef Q_OS_LINUX
     void *caller = (void *) uc->uc_mcontext.fpregs->rip;
@@ -131,12 +131,17 @@ void Proof::CoreApplicationPrivate::initApp()
         Logs::installFileHandler(logFileName);
 
 #if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
-    static struct sigaction sigAction;
-    sigAction.sa_sigaction = signalHandler;
-    sigAction.sa_flags = SA_SIGINFO;
+    static struct sigaction sigSegvAction;
+    sigSegvAction.sa_sigaction = signalHandler;
+    sigSegvAction.sa_flags = SA_SIGINFO;
+    static struct sigaction sigAbrtAction;
+    sigAbrtAction.sa_sigaction = signalHandler;
+    sigAbrtAction.sa_flags = SA_SIGINFO;
 
-    if (sigaction(SIGSEGV, &sigAction, (struct sigaction *)NULL) != 0)
+    if (sigaction(SIGSEGV, &sigSegvAction, (struct sigaction *)NULL) != 0)
         qCWarning(proofCoreLoggerLog()) << "No segfault handler is on your back.";
+    if (sigaction(SIGABRT, &sigAbrtAction, (struct sigaction *)NULL) != 0)
+        qCWarning(proofCoreLoggerLog()) << "No abort handler is on your back.";
 #endif
 
 }
