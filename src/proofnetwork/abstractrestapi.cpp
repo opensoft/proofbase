@@ -225,8 +225,3 @@ void RestApiError::reset()
     code = 0;
     message = QString();
 }
-
-bool RestApiError::isError() const
-{
-    return (level != Level::NoError);
-}
