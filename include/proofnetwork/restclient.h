@@ -6,6 +6,7 @@
 
 #include <QNetworkAccessManager>
 #include <QUrlQuery>
+#include <QNetworkCookie>
 #include <QByteArray>
 
 class QNetworkReply;
@@ -58,6 +59,11 @@ public:
     QByteArray customHeader(const QByteArray &header) const;
     bool containsCustomHeader(const QByteArray &header) const;
     void unsetCustomHeader(const QByteArray &header);
+
+    void setCookie(const QNetworkCookie &cookie);
+    QNetworkCookie cookie(const QString &name) const;
+    bool containsCookie(const QString &name) const;
+    void unsetCookie(const QString &name);
 
     QNetworkReply *get(const QString &method, const QUrlQuery &query = QUrlQuery());
     QNetworkReply *post(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");

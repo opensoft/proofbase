@@ -33,6 +33,7 @@ public:
     QHash<QNetworkReply *, QTimer *> replyTimeouts;
     qlonglong msecsForTimeout = DEFAULT_REPLY_TIMEOUT;
     QHash<QByteArray, QByteArray> customHeaders;
+    QHash<QString, QNetworkCookie> cookies;
 
     QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body) const;
     QByteArray generateWsseToken() const;
@@ -203,6 +204,30 @@ void RestClient::unsetCustomHeader(const QByteArray &header)
     d->customHeaders.remove(header);
 }
 
+void RestClient::setCookie(const QNetworkCookie &cookie)
+{
+    Q_D(RestClient);
+    d->cookies[cookie.name()] = cookie;
+}
+
+QNetworkCookie RestClient::cookie(const QString &name) const
+{
+    Q_D(const RestClient);
+    return d->cookies.value(name);
+}
+
+bool RestClient::containsCookie(const QString &name) const
+{
+    Q_D(const RestClient);
+    return d->cookies.contains(name);
+}
+
+void RestClient::unsetCookie(const QString &name)
+{
+    Q_D(RestClient);
+    d->cookies.remove(name);
+}
+
 QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query)
 {
     Q_D(RestClient);
@@ -268,6 +293,9 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
     } else {
         result.setHeader(QNetworkRequest::ContentTypeHeader, "plain/text");
     }
+
+    for (const QNetworkCookie &cookie : cookies)
+        result.setHeader(QNetworkRequest::CookieHeader, QVariant::fromValue(cookie));
 
     for (const QByteArray &header : customHeaders.keys())
         result.setRawHeader(header, customHeaders[header]);
