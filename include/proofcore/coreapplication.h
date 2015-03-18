@@ -1,7 +1,7 @@
 #ifndef PROOF_COREAPPLICATION_H
 #define PROOF_COREAPPLICATION_H
 
-#include "proofcore_global.h"
+#include "proofcore/proofcore_global.h"
 
 #include <QCoreApplication>
 
