@@ -26,8 +26,8 @@ struct PROOF_NETWORK_EXPORT RestApiError
     QString toString() const;
     void reset();
 
-    Level level;
-    qlonglong code;
+    Level level = Level::NoError;
+    qlonglong code = 0;
     QString message;
 };
 
