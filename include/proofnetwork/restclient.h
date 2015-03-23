@@ -67,7 +67,9 @@ public:
 
     QNetworkReply *get(const QString &method, const QUrlQuery &query = QUrlQuery());
     QNetworkReply *post(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");
+    QNetworkReply *put(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");
     QNetworkReply *patch(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");
+    QNetworkReply *deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery());
 
     Q_INVOKABLE void authenticate();
 

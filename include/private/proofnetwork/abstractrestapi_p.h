@@ -25,8 +25,11 @@ public:
     QNetworkReply *get(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery());
     QNetworkReply *post(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery(),
                         const QByteArray &body = "");
+    QNetworkReply *put(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery(),
+                        const QByteArray &body = "");
     QNetworkReply *patch(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery(),
                         const QByteArray &body = "");
+    QNetworkReply *deleteResource(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery());
 
     virtual void replyFinished(qulonglong operationId, QNetworkReply *reply);
     virtual void replyErrorOccurred(qulonglong operationId, QNetworkReply *reply);

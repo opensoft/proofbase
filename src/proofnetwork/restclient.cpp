@@ -246,6 +246,15 @@ QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, c
     return reply;
 }
 
+QNetworkReply *RestClient::put(const QString &method, const QUrlQuery &query, const QByteArray &body)
+{
+    Q_D(RestClient);
+    qCDebug(proofNetworkMiscLog) << method << query.toString() << body;
+    QNetworkReply *reply = d->qnam->put(d->createNetworkRequest(method, query, body), body);
+    d->handleReply(reply);
+    return reply;
+}
+
 QNetworkReply *RestClient::patch(const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
     Q_D(RestClient);
@@ -255,6 +264,15 @@ QNetworkReply *RestClient::patch(const QString &method, const QUrlQuery &query, 
     QNetworkReply *reply = d->qnam->sendCustomRequest(d->createNetworkRequest(method, query, body), "PATCH", bodyBuffer);
     d->handleReply(reply);
     bodyBuffer->setParent(reply);
+    return reply;
+}
+
+QNetworkReply *RestClient::deleteResource(const QString &method, const QUrlQuery &query)
+{
+    Q_D(RestClient);
+    qCDebug(proofNetworkMiscLog) << method << query.toString();
+    QNetworkReply *reply = d->qnam->deleteResource(d->createNetworkRequest(method, query, QByteArray()));
+    d->handleReply(reply);
     return reply;
 }
 

@@ -111,6 +111,21 @@ QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, const QStri
     return reply;
 }
 
+QNetworkReply *AbstractRestApiPrivate::put(qulonglong &operationId, const QString &method, const QUrlQuery &query, const QByteArray &body)
+{
+    Q_Q(AbstractRestApi);
+    if (QThread::currentThread() != restClient->thread()) {
+        qCWarning(proofNetworkMiscLog) << "AbstractRestApi::put(): RestApi and RestClient should live in same thread."
+                                   << "\nRestClient object is in thread =" << restClient->thread()
+                                   << "\nRestApi is in thread =" << q->thread()
+                                   << "\nrunning in thread =" << QThread::currentThread();
+        return 0;
+    }
+    QNetworkReply *reply = restClient->put(method, query, body);
+    setupReply(operationId, reply);
+    return reply;
+}
+
 QNetworkReply *AbstractRestApiPrivate::patch(qulonglong &operationId, const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
     Q_Q(AbstractRestApi);
@@ -122,6 +137,21 @@ QNetworkReply *AbstractRestApiPrivate::patch(qulonglong &operationId, const QStr
         return 0;
     }
     QNetworkReply *reply = restClient->patch(method, query, body);
+    setupReply(operationId, reply);
+    return reply;
+}
+
+QNetworkReply *AbstractRestApiPrivate::deleteResource(qulonglong &operationId, const QString &method, const QUrlQuery &query)
+{
+    Q_Q(AbstractRestApi);
+    if (QThread::currentThread() != restClient->thread()) {
+        qCWarning(proofNetworkMiscLog) << "AbstractRestApiPrivate::deleteResource(): RestApi and RestClient should live in same thread."
+                                   << "\nRestClient object is in thread =" << restClient->thread()
+                                   << "\nRestApi is in thread =" << q->thread()
+                                   << "\nrunning in thread =" << QThread::currentThread();
+        return 0;
+    }
+    QNetworkReply *reply = restClient->deleteResource(method, query);
     setupReply(operationId, reply);
     return reply;
 }
