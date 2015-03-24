@@ -18,10 +18,10 @@ public:
     NetworkDataEntityPrivate() : ProofObjectPrivate() {}
 
     template<class T, class Entity, class EntityKey>
-    QSharedPointer<Entity> updateEntityWeakPtr(QWeakPointer<Entity> &storedEntity, EntityKey &storedKey, const EntityKey &key,
-                                               ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&keyFunction,
-                                               T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal,
-                                               std::function<QSharedPointer<Entity>()> &&customEntityCreator)
+    QSharedPointer<Entity> updateEntityField(QWeakPointer<Entity> &storedEntity, EntityKey &storedKey, const EntityKey &key,
+                                             ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&keyFunction,
+                                             T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal,
+                                             std::function<QSharedPointer<Entity>()> &&customEntityCreator)
     {
         QSharedPointer<Entity> result = storedEntity.toStrongRef();
         qlonglong oldKey = result ? keyFunction(result.data()) : storedKey;
@@ -40,21 +40,21 @@ public:
     }
 
     template<class T, class Entity, class EntityKey>
-    QSharedPointer<Entity> updateEntityWeakPtr(QWeakPointer<Entity> &storedEntity, EntityKey &storedKey, const EntityKey &key,
-                                               ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&keyFunction,
-                                               T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal)
+    QSharedPointer<Entity> updateEntityField(QWeakPointer<Entity> &storedEntity, EntityKey &storedKey, const EntityKey &key,
+                                             ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&keyFunction,
+                                             T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal)
     {
-        return updateEntityWeakPtr<T, Entity, EntityKey>(storedEntity, storedKey, key,
-                                                         cache, std::move(keyFunction),
-                                                         notifySignalEmitter, std::move(notifySignal),
-                                                         std::bind(&Entity::create, key));
+        return updateEntityField<T, Entity, EntityKey>(storedEntity, storedKey, key,
+                                                       cache, std::move(keyFunction),
+                                                       notifySignalEmitter, std::move(notifySignal),
+                                                       std::bind(&Entity::create, key));
     }
 
     template<class T, class Entity, class EntityKey>
-    QSharedPointer<Entity> updateEntitySharedPtr(QSharedPointer<Entity> &storedEntity, const EntityKey &key,
-                                                 ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&keyFunction,
-                                                 T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal,
-                                                 std::function<QSharedPointer<Entity>()> &&customEntityCreator)
+    QSharedPointer<Entity> updateEntityField(QSharedPointer<Entity> &storedEntity, const EntityKey &key,
+                                             ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&keyFunction,
+                                             T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal,
+                                             std::function<QSharedPointer<Entity>()> &&customEntityCreator)
     {
         if (!storedEntity || storedEntity == Entity::defaultObject() || keyFunction(storedEntity.data()) != key) {
             QSharedPointer<Entity> newEntity = cache.value(key);
@@ -69,14 +69,14 @@ public:
     }
 
     template<class T, class Entity, class EntityKey>
-    QSharedPointer<Entity> updateEntitySharedPtr(QSharedPointer<Entity> &storedEntity, const EntityKey &key,
-                                                 ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&keyFunction,
-                                                 T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal)
+    QSharedPointer<Entity> updateEntityField(QSharedPointer<Entity> &storedEntity, const EntityKey &key,
+                                             ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&keyFunction,
+                                             T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal)
     {
-        return updateEntitySharedPtr<T, Entity, EntityKey>(storedEntity, key,
-                                                           cache, std::move(keyFunction),
-                                                           notifySignalEmitter, std::move(notifySignal),
-                                                           std::bind(&Entity::create, key));
+        return updateEntityField<T, Entity, EntityKey>(storedEntity, key,
+                                                       cache, std::move(keyFunction),
+                                                       notifySignalEmitter, std::move(notifySignal),
+                                                       std::bind(&Entity::create, key));
     }
 
     bool isFetched = false;
