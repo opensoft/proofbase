@@ -32,7 +32,7 @@ public:
                 cache.add(key, result);
             }
             storedEntity = result.toWeakRef();
-            storedKey = result->id();
+            storedKey = keyFunction(result.data());
             if (oldKey != key)
                 emit notifySignal(notifySignalEmitter, result);
         }
