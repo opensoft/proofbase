@@ -24,7 +24,7 @@ public:
                                              std::function<QSharedPointer<Entity>()> &&customEntityCreator)
     {
         QSharedPointer<Entity> result = storedEntity.toStrongRef();
-        qlonglong oldKey = result ? keyFunction(result.data()) : storedKey;
+        EntityKey oldKey = result ? keyFunction(result.data()) : storedKey;
         if (oldKey != key || !result || result == Entity::defaultObject()) {
             result = cache.value(key);
             if (!result) {
