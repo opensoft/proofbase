@@ -18,5 +18,9 @@ class RestClient;
 typedef QSharedPointer<RestClient> RestClientSP;
 typedef QWeakPointer<RestClient> RestClientWP;
 
+class UrlQueryBuilder;
+typedef QSharedPointer<UrlQueryBuilder> UrlQueryBuilderSP;
+typedef QWeakPointer<UrlQueryBuilder> UrlQueryBuilderWP;
+
 }
 #endif // PROOFNETWORK_TYPES_H
