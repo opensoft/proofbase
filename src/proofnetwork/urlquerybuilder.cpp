@@ -1,0 +1,105 @@
+#include "urlquerybuilder.h"
+#include "urlquerybuilder_p.h"
+
+namespace Proof {
+
+UrlQueryBuilder::UrlQueryBuilder()
+    : UrlQueryBuilder(*new UrlQueryBuilderPrivate)
+{
+}
+
+UrlQueryBuilder::~UrlQueryBuilder()
+{
+
+}
+
+void UrlQueryBuilder::setCustomParam(const QString &name, const QString &value)
+{
+    Q_D(UrlQueryBuilder);
+    d->params[name] = value;
+}
+
+void UrlQueryBuilder::setCustomParam(const QString &name, qlonglong value)
+{
+    setCustomParam(name, QString::number(value));
+}
+
+void UrlQueryBuilder::setCustomParam(const QString &name, qulonglong value)
+{
+    setCustomParam(name, QString::number(value));
+}
+
+void UrlQueryBuilder::setCustomParam(const QString &name, long value)
+{
+    setCustomParam(name, QString::number(value));
+}
+
+void UrlQueryBuilder::setCustomParam(const QString &name, unsigned long value)
+{
+    setCustomParam(name, QString::number(value));
+}
+
+void UrlQueryBuilder::setCustomParam(const QString &name, int value)
+{
+    setCustomParam(name, QString::number(value));
+}
+
+void UrlQueryBuilder::setCustomParam(const QString &name, unsigned int value)
+{
+    setCustomParam(name, QString::number(value));
+}
+
+void UrlQueryBuilder::setCustomParam(const QString &name, const QDateTime &value)
+{
+    setCustomParam(name, value.toString("yyyy-MM-dd HH:mm:ss"));
+}
+
+void UrlQueryBuilder::setCustomParam(const QString &name, bool value)
+{
+    setCustomParam(name, value ? QStringLiteral("true") : QStringLiteral("false"));
+}
+
+void UrlQueryBuilder::setCustomParam(const QString &name, const char *value)
+{
+    setCustomParam(name, QString(value));
+}
+
+void UrlQueryBuilder::setCustomParam(const QString &name, double value)
+{
+    setCustomParam(name, QString::number(value, 'f', 3));
+}
+
+bool UrlQueryBuilder::containsCustomParam(const QString &name) const
+{
+    Q_D(const UrlQueryBuilder);
+    return d->params.contains(name);
+}
+
+QString UrlQueryBuilder::customParam(const QString &name) const
+{
+    Q_D(const UrlQueryBuilder);
+    return d->params.value(name, QString());
+}
+
+void UrlQueryBuilder::unsetCustomParam(const QString &name)
+{
+    Q_D(UrlQueryBuilder);
+    d->params.remove(name);
+}
+
+QUrlQuery UrlQueryBuilder::toUrlQuery() const
+{
+    Q_D(const UrlQueryBuilder);
+    QUrlQuery urlQuery;
+    for (const QString &param : d->params.keys())
+        urlQuery.addQueryItem(param, d->params.value(param));
+    return urlQuery;
+}
+
+UrlQueryBuilder::UrlQueryBuilder(UrlQueryBuilderPrivate &dd)
+    : d_ptr(&dd)
+{
+    d_ptr->q_ptr = this;
+}
+
+}
