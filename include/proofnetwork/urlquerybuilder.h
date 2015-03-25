@@ -16,7 +16,7 @@ class PROOF_NETWORK_EXPORT UrlQueryBuilder
     Q_DECLARE_PRIVATE(UrlQueryBuilder)
 public:
     UrlQueryBuilder();
-    ~UrlQueryBuilder();
+    virtual ~UrlQueryBuilder();
 
     void setCustomParam(const QString &name, const QString &value);
     void setCustomParam(const QString &name, qlonglong value);
