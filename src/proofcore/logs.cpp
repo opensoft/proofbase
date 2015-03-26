@@ -156,10 +156,11 @@ void Proof::Logs::setup()
 
 void Proof::Logs::setLogsStoragePath(QString storagePath)
 {
-    if (storagePath.isEmpty())
+    if (storagePath.isEmpty()) {
         storagePath = QString("%1/%2/prooflogs")
                 .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
                 .arg(qApp->organizationName());
+    }
     logsStoragePath = storagePath;
     QDir logsDir = QDir(logsStoragePath);
     logsDir.mkpath(".");

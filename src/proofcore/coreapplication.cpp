@@ -11,6 +11,8 @@
 #include <execinfo.h>
 #include <signal.h>
 #include <sys/ucontext.h>
+#include <stdio.h>
+#include <fcntl.h>
 #endif
 
 #if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
@@ -22,6 +24,8 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
     if (handlerAlreadyCalled)
         return;
     handlerAlreadyCalled = true;
+
+    int crashFileDescriptor = open("/tmp/last_proof_crash", O_WRONLY | O_TRUNC | O_CREAT, 0644);
     ucontext_t *uc = (ucontext_t *)context;
 # ifdef Q_OS_LINUX
     void *caller = (void *) uc->uc_mcontext.fpregs->rip;
@@ -29,12 +33,23 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
     void *caller = (void *) uc->uc_mcontext->__ss.__rip;
 # endif
 
-    qCCritical(proofCoreCrashLog) << "#######################################";
-    qCCritical(proofCoreCrashLog) << QString("signal %1 (%2), address is 0x%3 from 0x%4")
-                                     .arg(sig)
-                                     .arg(strsignal(sig))
-                                     .arg((unsigned long long) info->si_addr, 0, 16)
-                                     .arg((unsigned long long) caller, 0, 16);
+    QString toLog = "#######################################";
+    qCCritical(proofCoreCrashLog) << toLog;
+    qCCritical(proofCoreCrashLog) << "Crash file /tmp/last_proof_crash opened with fd" << crashFileDescriptor;
+    if (crashFileDescriptor != -1) {
+        write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
+        write(crashFileDescriptor, "\n", 1);
+    }
+    toLog = QString("signal %1 (%2), address is 0x%3 from 0x%4")
+            .arg(sig)
+            .arg(strsignal(sig))
+            .arg((unsigned long long) info->si_addr, 0, 16)
+            .arg((unsigned long long) caller, 0, 16);
+    qCCritical(proofCoreCrashLog) << toLog;
+    if (crashFileDescriptor != -1) {
+        write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
+        write(crashFileDescriptor, "\n", 1);
+    }
 
     void *backtraceInfo[BACKTRACE_MAX_SIZE];
     int size = backtrace(backtraceInfo, BACKTRACE_MAX_SIZE);
@@ -44,8 +59,11 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
 
     char **backtraceArray = backtrace_symbols(backtraceInfo, size);
 
-    if (!backtraceArray)
+    if (!backtraceArray) {
+        if (crashFileDescriptor != -1)
+            close(crashFileDescriptor);
         exit(EXIT_FAILURE);
+    }
 
     for (int i = 0; i < size; ++i) {
 # ifdef Q_OS_LINUX
@@ -55,9 +73,14 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
 # endif
 
         if (re.indexIn(backtraceArray[i]) < 0) {
-            qCCritical(proofCoreCrashLog) << QString("[trace] #%1) %2")
-                                             .arg(i)
-                                             .arg(backtraceArray[i]);
+            toLog = QString("[trace] #%1) %2")
+                    .arg(i)
+                    .arg(backtraceArray[i]);
+            qCCritical(proofCoreCrashLog) << toLog;
+            if (crashFileDescriptor != -1) {
+                write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
+                write(crashFileDescriptor, "\n", 1);
+            }
         } else {
 # ifdef Q_OS_LINUX
             QString mangledName = re.cap(2).trimmed();
@@ -66,25 +89,32 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
 #endif
             char *name = abi::__cxa_demangle(mangledName.toLatin1().constData(), 0, 0, 0);
 # ifdef Q_OS_LINUX
-            qCCritical(proofCoreCrashLog) << QString("[trace] #%1) %2 : %3+%4 (%5)")
-                                             .arg(i)
-                                             .arg(re.cap(1).trimmed()) //scope
-                                             .arg(name ? name : mangledName) //name
-                                             .arg(re.cap(3).trimmed()) //offset
-                                             .arg(re.cap(4).trimmed()); //address
+            toLog = QString("[trace] #%1) %2 : %3+%4 (%5)")
+                    .arg(i)
+                    .arg(re.cap(1).trimmed()) //scope
+                    .arg(name ? name : mangledName) //name
+                    .arg(re.cap(3).trimmed()) //offset
+                    .arg(re.cap(4).trimmed()); //address
 #else
-            qCCritical(proofCoreCrashLog) << QString("[trace] #%1) %2 : %3+%4 (%5)")
-                                             .arg(i)
-                                             .arg(re.cap(1).trimmed()) //scope
-                                             .arg(name ? name : mangledName) //name
-                                             .arg(re.cap(4).trimmed()) //offset
-                                             .arg(re.cap(2).trimmed()); //address
+            toLog = QString("[trace] #%1) %2 : %3+%4 (%5)")
+                    .arg(i)
+                    .arg(re.cap(1).trimmed()) //scope
+                    .arg(name ? name : mangledName) //name
+                    .arg(re.cap(4).trimmed()) //offset
+                    .arg(re.cap(2).trimmed()); //address
 #endif
+            qCCritical(proofCoreCrashLog) << toLog;
+            if (crashFileDescriptor != -1) {
+                write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
+                write(crashFileDescriptor, "\n", 1);
+            }
             free(name);
         }
     }
 
     free(backtraceArray);
+    if (crashFileDescriptor != -1)
+        close(crashFileDescriptor);
     exit(EXIT_FAILURE);
 }
 #endif
@@ -139,9 +169,11 @@ void Proof::CoreApplicationPrivate::initApp()
     sigAbrtAction.sa_flags = SA_SIGINFO;
 
     if (sigaction(SIGSEGV, &sigSegvAction, (struct sigaction *)NULL) != 0)
-        qCWarning(proofCoreLoggerLog()) << "No segfault handler is on your back.";
+        qCWarning(proofCoreLoggerLog) << "No segfault handler is on your back.";
     if (sigaction(SIGABRT, &sigAbrtAction, (struct sigaction *)NULL) != 0)
-        qCWarning(proofCoreLoggerLog()) << "No abort handler is on your back.";
+        qCWarning(proofCoreLoggerLog) << "No abort handler is on your back.";
 #endif
 
+    //TODO: Qt5.4: use noquote() here instead
+    qCDebug(proofCoreMiscLog) << QString("%1 started").arg(q_ptr->applicationName()).toLatin1().constData();
 }
