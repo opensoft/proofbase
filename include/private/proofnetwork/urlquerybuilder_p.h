@@ -13,6 +13,8 @@ class PROOF_NETWORK_EXPORT UrlQueryBuilderPrivate
 {
     Q_DECLARE_PUBLIC(UrlQueryBuilder)
 public:
+    virtual ~UrlQueryBuilderPrivate() {}
+
     UrlQueryBuilder *q_ptr;
 
     QHash<QString, QString> params;
