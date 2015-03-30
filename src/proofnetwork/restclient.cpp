@@ -15,6 +15,7 @@
 #include <QBuffer>
 
 static const qlonglong DEFAULT_REPLY_TIMEOUT = 60000;
+static const qlonglong OAUTH_TOKEN_REFRESH_TIMEOUT = 1000 * 60 * 60;//1 hour
 
 namespace Proof {
 class RestClientPrivate : public ProofObjectPrivate
@@ -34,6 +35,7 @@ public:
     qlonglong msecsForTimeout = DEFAULT_REPLY_TIMEOUT;
     QHash<QByteArray, QByteArray> customHeaders;
     QHash<QString, QNetworkCookie> cookies;
+    QTimer *oAuth2TokenCheckTimer = nullptr;
 
     QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body) const;
     QByteArray generateWsseToken() const;
@@ -161,6 +163,8 @@ void RestClient::setAuthType(AuthType arg)
     Q_D(RestClient);
     if (d->authType != arg) {
         d->authType = arg;
+        if (arg != AuthType::QuasiOAuth2Auth && d->oAuth2TokenCheckTimer)
+            d->oAuth2TokenCheckTimer->stop();
         emit authTypeChanged(arg);
     }
 }
@@ -280,8 +284,18 @@ void RestClient::authenticate()
 {
     Q_D(RestClient);
     if (!delayedCall(this, &RestClient::authenticate)) {
-        if (authType() == RestClient::AuthType::QuasiOAuth2Auth)
+        if (authType() == RestClient::AuthType::QuasiOAuth2Auth) {
+            if (!d->oAuth2TokenCheckTimer) {
+                d->oAuth2TokenCheckTimer = new QTimer(this);
+                d->oAuth2TokenCheckTimer->setInterval(OAUTH_TOKEN_REFRESH_TIMEOUT);
+
+                connect(d->oAuth2TokenCheckTimer, &QTimer::timeout, this, [d]() {
+                    d->requestQuasiOAuth2token();
+                });
+            }
+            d->oAuth2TokenCheckTimer->start();
             d->requestQuasiOAuth2token();
+        }
     }
 }
 
