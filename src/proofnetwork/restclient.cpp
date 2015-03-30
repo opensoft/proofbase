@@ -1,6 +1,7 @@
 #include "restclient.h"
 
 #include "proofcore/proofobject_p.h"
+#include "proofcore/taskchain.h"
 
 #include <QAuthenticator>
 #include <QNetworkRequest>
@@ -35,9 +36,10 @@ public:
     qlonglong msecsForTimeout = DEFAULT_REPLY_TIMEOUT;
     QHash<QByteArray, QByteArray> customHeaders;
     QHash<QString, QNetworkCookie> cookies;
-    QTimer *oAuth2TokenCheckTimer = nullptr;
+    QTimer *quasiOAuth2TokenCheckTimer = nullptr;
+    QDateTime quasiOAuth2TokenExpiredDateTime;
 
-    QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body) const;
+    QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body);
     QByteArray generateWsseToken() const;
     void requestQuasiOAuth2token(const QString &method = QString("/oauth2/token"));
 
@@ -163,8 +165,8 @@ void RestClient::setAuthType(AuthType arg)
     Q_D(RestClient);
     if (d->authType != arg) {
         d->authType = arg;
-        if (arg != AuthType::QuasiOAuth2Auth && d->oAuth2TokenCheckTimer)
-            d->oAuth2TokenCheckTimer->stop();
+        if (arg != AuthType::QuasiOAuth2Auth && d->quasiOAuth2TokenCheckTimer)
+            d->quasiOAuth2TokenCheckTimer->stop();
         emit authTypeChanged(arg);
     }
 }
@@ -285,23 +287,25 @@ void RestClient::authenticate()
     Q_D(RestClient);
     if (!delayedCall(this, &RestClient::authenticate)) {
         if (authType() == RestClient::AuthType::QuasiOAuth2Auth) {
-            if (!d->oAuth2TokenCheckTimer) {
-                d->oAuth2TokenCheckTimer = new QTimer(this);
-                d->oAuth2TokenCheckTimer->setInterval(OAUTH_TOKEN_REFRESH_TIMEOUT);
+            if (!d->quasiOAuth2TokenCheckTimer) {
+                d->quasiOAuth2TokenCheckTimer = new QTimer(this);
+                d->quasiOAuth2TokenCheckTimer->setInterval(OAUTH_TOKEN_REFRESH_TIMEOUT);
 
-                connect(d->oAuth2TokenCheckTimer, &QTimer::timeout, this, [d]() {
+                connect(d->quasiOAuth2TokenCheckTimer, &QTimer::timeout, this, [d]() {
                     d->requestQuasiOAuth2token();
                 });
             }
-            d->oAuth2TokenCheckTimer->start();
+            d->quasiOAuth2TokenCheckTimer->start();
             d->requestQuasiOAuth2token();
         }
     }
 }
 
 
-QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body) const
+QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
+    Q_Q(RestClient);
+
     QNetworkRequest result;
 
     QUrl url;
@@ -348,6 +352,21 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
                             .toLatin1());
         break;
     case RestClient::AuthType::QuasiOAuth2Auth:
+        if (QDateTime::currentDateTime() >= quasiOAuth2TokenExpiredDateTime) {
+            Proof::TaskChainSP taskChain = Proof::TaskChain::createChain();
+            auto task = [taskChain, this, q]() {
+                std::function<bool()> callback = [](){return true;};
+                taskChain->addSignalWaiter(q, &RestClient::authenticationErrorOccurred, callback);
+                taskChain->addSignalWaiter(q, &RestClient::authenticationSucceed, callback);
+                q->authenticate();
+
+                taskChain->fireSignalWaiters();
+            };
+            qlonglong taskId = taskChain->addTask(task);
+
+            while(!taskChain->touchTask(taskId))
+                qApp->processEvents();
+        }
         result.setRawHeader("Authorization", QString("Bearer %1").arg(quasiOAuth2Token).toLatin1());
         break;
     case RestClient::AuthType::WithoutAuth:
@@ -393,6 +412,7 @@ void RestClientPrivate::requestQuasiOAuth2token(const QString &method)
     QString quasiOAuth2TokenRequestData = QString("grant_type=password&username=%1&password=%2")
             .arg(userName)
             .arg(password);
+    QDateTime expiredTime = QDateTime::currentDateTime();
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     auto reply = qnam->post(request, QUrlQuery(quasiOAuth2TokenRequestData).toString().toLatin1());
@@ -402,12 +422,14 @@ void RestClientPrivate::requestQuasiOAuth2token(const QString &method)
         emit q->authenticationErrorOccurred("Can't connect to Scissorhands service.\nPlease check your internet connection.");
     });
     QObject::connect(reply, &QNetworkReply::finished,
-                     q, [this, q, reply]() {
+                     q, [this, q, reply, expiredTime]() {
         QJsonParseError error;
         QJsonObject response = QJsonDocument::fromJson(reply->readAll(), &error).object();
 
         if (error.error == QJsonParseError::NoError) {
             quasiOAuth2Token = response.value("access_token").toString();
+            int expiresInSeconds = response.value("expires_in").toInt();
+            quasiOAuth2TokenExpiredDateTime = expiredTime.addSecs(expiresInSeconds);
             if (quasiOAuth2Token.isEmpty())
                 emit q->authenticationErrorOccurred("Wrong Scissorhands service authentication.\nPlease check your authentication settings.");
             else
