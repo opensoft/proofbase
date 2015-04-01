@@ -66,7 +66,7 @@ TEST_F(ObjectsCacheTest, weakCache)
         EXPECT_TRUE(cache.contains(42));
         EXPECT_EQ(data, cache.value(42));
     }
-    EXPECT_TRUE(cache.contains(42));
+    EXPECT_FALSE(cache.contains(42));
     DummyDataSP data = cache.value(42);
     EXPECT_TRUE(data.isNull());
     EXPECT_FALSE(cache.contains(42));
