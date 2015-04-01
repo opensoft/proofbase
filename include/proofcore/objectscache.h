@@ -32,7 +32,7 @@ public:
     virtual void remove(const Key &key) = 0;
     virtual void clear() = 0;
     virtual bool isEmpty() const = 0;
-    virtual bool contains(const Key &key) = 0;
+    virtual bool contains(const Key &key) const = 0;
     virtual QSharedPointer<T> value(const Key &key, bool useOtherCaches = true) = 0;
     virtual QList<Key> keys() const = 0;
 
@@ -109,12 +109,10 @@ public:
         return result;
     }
 
-    bool contains(const Key &key) override
+    bool contains(const Key &key) const override
     {
-        m_cacheLock.lockForWrite();
-        if (m_cache.contains(key) && !m_cache[key])
-            m_cache.remove(key);
-        bool result = m_cache.contains(key);
+        m_cacheLock.lockForRead();
+        bool result = m_cache.contains(key) && m_cache[key];
         m_cacheLock.unlock();
         return result;
     }
@@ -205,7 +203,7 @@ public:
         Q_ASSERT_X(false, "GuaranteedLifeTimeObjectsCache", "Should not be called for non-ProofObject values");
     }
     bool isEmpty() const override {return true;}
-    bool contains(const Key &) override {return false;}
+    bool contains(const Key &) const override {return false;}
     QSharedPointer<T> value(const Key &, bool = true) override {return QSharedPointer<T>();}
     QList<Key> keys() const override {return QList<Key>();}
 private:
@@ -322,11 +320,9 @@ public:
         return result;
     }
 
-    bool contains(const Key &key) override
+    bool contains(const Key &key) const override
     {
-        m_cacheLock.lockForWrite();
-        if (m_cache.contains(key) && !m_cache[key])
-            m_cache.remove(key);
+        m_cacheLock.lockForRead();
         bool result = m_cache.contains(key);
         m_cacheLock.unlock();
         return result;
