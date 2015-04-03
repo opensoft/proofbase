@@ -14,7 +14,7 @@
 /* YOU MUST USE special functions to obtain instance of cache of Proof's exported types.
  * DO NOT USE methods 'instance' for Proof's exported types
  */
-
+//TODO: make contains+add pair atomic (proper way is something to think about)
 namespace Proof {
 
 template<class Key, class T>
