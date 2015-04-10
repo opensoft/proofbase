@@ -182,7 +182,7 @@ bool TaskChainPrivate::waitForFuture(std::future<void> &future, qlonglong msecs)
     QTime timer;
     if (!waitForever)
         timer.start();
-    while (waitForever || (timer.elapsed() > msecs)) {
+    while (waitForever || (timer.elapsed() <= msecs)) {
         qlonglong chunk = 5;
         if (!waitForever && (msecs - timer.elapsed() < chunk))
             chunk = msecs - timer.elapsed();
