@@ -71,6 +71,7 @@ private:
     QQueue<qintptr> waitingConnections;
     MethodNode methodsTreeRoot;
     int suggestedMaxThreadsCount;
+    RestAuthType authType;
 };
 
 class WorkerThread: public QThread
@@ -91,16 +92,23 @@ private:
 using namespace Proof;
 
 AbstractRestServer::AbstractRestServer(QObject *parent)
-    : AbstractRestServer(*new AbstractRestServerPrivate, "", "", "", 80, parent)
+    : AbstractRestServer(*new AbstractRestServerPrivate, "", "", "", 80, RestAuthType::NoAuth, parent)
 {
 }
 
-AbstractRestServer::AbstractRestServer(const QString &userName, const QString &password, const QString &pathPrefix, int port, QObject *parent)
-    : AbstractRestServer(*new AbstractRestServerPrivate, userName, password, pathPrefix, port, parent)
+AbstractRestServer::AbstractRestServer(const QString &pathPrefix, int port, RestAuthType authType, QObject *parent)
+    : AbstractRestServer(*new AbstractRestServerPrivate, "", "", pathPrefix, port, authType, parent)
 {
 }
 
-AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QString &userName, const QString &password, const QString &pathPrefix, int port, QObject *parent)
+AbstractRestServer::AbstractRestServer(const QString &userName, const QString &password, const QString &pathPrefix, int port,
+                                       QObject *parent)
+    : AbstractRestServer(*new AbstractRestServerPrivate, userName, password, pathPrefix, port, RestAuthType::Basic, parent)
+{
+}
+
+AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QString &userName, const QString &password,
+                                       const QString &pathPrefix, int port, RestAuthType authType, QObject *parent)
     : QTcpServer(parent),
       d_ptr(&dd)
 {
@@ -112,6 +120,7 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     d->userName = userName;
     d->password = password;
     d->pathPrefix = pathPrefix;
+    d->authType = authType;
 
     setSuggestedMaxThreadsCount();
 
@@ -158,6 +167,12 @@ int AbstractRestServer::port() const
 {
     Q_D(const AbstractRestServer);
     return d->port;
+}
+
+RestAuthType AbstractRestServer::authType() const
+{
+    Q_D(const AbstractRestServer);
+    return d->authType;
 }
 
 void AbstractRestServer::setUserName(const QString &userName)
@@ -207,6 +222,16 @@ void AbstractRestServer::setSuggestedMaxThreadsCount(int count)
             count += 2;
     }
     d->suggestedMaxThreadsCount = count;
+}
+
+void AbstractRestServer::setAuthType(RestAuthType authType)
+{
+    Q_ASSERT(authType == RestAuthType::NoAuth || authType == RestAuthType::Basic);
+    Q_D(AbstractRestServer);
+    if (d->authType != authType) {
+        d->authType = authType;
+        emit authTypeChanged(d->authType);
+    }
 }
 
 void AbstractRestServer::startListen()
@@ -429,14 +454,18 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
 
     QString methodName = findMethod(makeMethodName(type, splittedByParamsMethod.at(0)), methodVariableParts);
     if (!methodName.isEmpty()) {
-        QString encryptedAuth;
-        for (int i = 1; i < headers.count(); ++i) {
-            if (headers.at(i).startsWith("Authorization")) {
-                encryptedAuth = q->parseAuth(socket, headers.at(i));
-                break;
+        bool isAuthenticationSuccessful = true;
+        if (authType == RestAuthType::Basic) {
+            QString encryptedAuth;
+            for (int i = 1; i < headers.count(); ++i) {
+                if (headers.at(i).startsWith("Authorization")) {
+                    encryptedAuth = q->parseAuth(socket, headers.at(i));
+                    break;
+                }
             }
+            isAuthenticationSuccessful = (!encryptedAuth.isEmpty() && q->checkBasicAuth(encryptedAuth));
         }
-        if (!encryptedAuth.isEmpty() && q->checkBasicAuth(encryptedAuth)) {
+        if (isAuthenticationSuccessful) {
             QMetaObject::invokeMethod(q, methodName.toLatin1().constData(), Qt::DirectConnection,
                                       Q_ARG(QTcpSocket *,socket),
                                       Q_ARG(const QStringList &, headers),
