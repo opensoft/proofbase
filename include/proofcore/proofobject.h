@@ -42,10 +42,7 @@ public:
                 if (currentId != delayedCallId)
                     return;
                 *result = (*callee.*method)(args...);
-                if (static_cast<QObject *>(delayer) == static_cast<QObject *>(callee))
-                    disconnect(*conn);
-                else
-                    delayer->deleteLater();
+                cleanupDelayer(callee, delayer, conn);
                 *done = true;
         }, std::placeholders::_1, &result, &done, callee, delayer, conn, currentId, method, args...);
         *conn = connect(delayer, &ProofObject::delayedCallRequested,
@@ -75,10 +72,7 @@ public:
                 if (currentId != delayedCallId)
                     return;
                 (*callee.*method)(args...);
-                if (static_cast<QObject *>(delayer) == static_cast<QObject *>(callee))
-                    disconnect(*conn);
-                else
-                    delayer->deleteLater();
+                cleanupDelayer(callee, delayer, conn);
                 *done = true;
         }, std::placeholders::_1, &done, callee, delayer, conn, currentId, method, args...);
         *conn = connect(delayer, &ProofObject::delayedCallRequested,
@@ -104,10 +98,7 @@ public:
                 if (currentId != delayedCallId)
                     return;
                 (*callee.*method)(args...);
-                if (static_cast<QObject *>(delayer) == static_cast<QObject *>(callee))
-                    disconnect(*conn);
-                else
-                    delayer->deleteLater();
+                cleanupDelayer(callee, delayer, conn);
         }, std::placeholders::_1, callee, delayer, conn, currentId, method, args...);
         *conn = connect(delayer, &ProofObject::delayedCallRequested,
                         callee, f);
@@ -141,6 +132,27 @@ private:
     delayerForObject(Callee *callee)
     {
         return callee;
+    }
+
+    template <class Callee>
+    static typename std::enable_if<!std::is_base_of<ProofObject, Callee>::value
+                                    && std::is_base_of<QObject, Callee>::value, bool>::type
+    cleanupDelayer(Callee *callee, ProofObject *delayer, QSharedPointer<QMetaObject::Connection> conn)
+    {
+        Q_UNUSED(callee);
+        Q_UNUSED(conn);
+        delayer->deleteLater();
+        return true;
+    }
+
+    template <class Callee>
+    static typename std::enable_if<std::is_base_of<ProofObject, Callee>::value, bool>::type
+    cleanupDelayer(Callee *callee, ProofObject *delayer, QSharedPointer<QMetaObject::Connection> conn)
+    {
+        Q_UNUSED(callee);
+        Q_UNUSED(delayer);
+        disconnect(*conn);
+        return true;
     }
 };
 
