@@ -3,6 +3,7 @@
 
 #include "proofcore/proofobject.h"
 #include "proofnetwork/proofnetwork_global.h"
+#include "proofnetwork/proofnetwork_types.h"
 
 #include <QNetworkAccessManager>
 #include <QUrlQuery>
@@ -18,16 +19,8 @@ class RestClientPrivate;
 class PROOF_NETWORK_EXPORT RestClient : public ProofObject
 {
     Q_OBJECT
-    Q_ENUMS(AuthType)
     Q_DECLARE_PRIVATE(RestClient)
 public:
-    enum class AuthType
-    {
-        WithoutAuth,
-        BasicAuth,
-        WsseAuth,
-        QuasiOAuth2Auth
-    };
 
     explicit RestClient();
 
@@ -49,8 +42,8 @@ public:
     QString scheme() const;
     void setScheme(const QString &arg);
 
-    RestClient::AuthType authType() const;
-    void setAuthType(RestClient::AuthType arg);
+    RestAuthType authType() const;
+    void setAuthType(RestAuthType arg);
 
     qlonglong msecsForTimeout() const;
     void setMsecsForTimeout(qlonglong arg);
@@ -80,7 +73,7 @@ signals:
     void hostChanged(const QString &arg);
     void portChanged(int arg);
     void schemeChanged(const QString &arg);
-    void authTypeChanged(RestClient::AuthType arg);
+    void authTypeChanged(Proof::RestAuthType arg);
     void msecsForTimeoutChanged(qlonglong arg);
 
     void authenticationRequired(QNetworkReply *reply, QAuthenticator *authenticator);

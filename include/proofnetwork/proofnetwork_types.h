@@ -22,5 +22,15 @@ class UrlQueryBuilder;
 typedef QSharedPointer<UrlQueryBuilder> UrlQueryBuilderSP;
 typedef QWeakPointer<UrlQueryBuilder> UrlQueryBuilderWP;
 
+enum class RestAuthType
+{
+    NoAuth,
+    Basic,
+    Wsse,
+    QuasiOAuth2
+};
+
 }
+
+Q_DECLARE_METATYPE(Proof::RestAuthType)
 #endif // PROOFNETWORK_TYPES_H

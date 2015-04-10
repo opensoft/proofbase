@@ -31,7 +31,7 @@ public:
     QString quasiOAuth2Token;
     int port = 443;
     QString scheme = QString("https");
-    RestClient::AuthType authType = RestClient::AuthType::WithoutAuth;
+    RestAuthType authType = RestAuthType::NoAuth;
     QHash<QNetworkReply *, QTimer *> replyTimeouts;
     qlonglong msecsForTimeout = DEFAULT_REPLY_TIMEOUT;
     QHash<QByteArray, QByteArray> customHeaders;
@@ -154,18 +154,18 @@ void RestClient::setScheme(const QString &arg)
     }
 }
 
-RestClient::AuthType RestClient::authType() const
+RestAuthType RestClient::authType() const
 {
     Q_D(const RestClient);
     return d->authType;
 }
 
-void RestClient::setAuthType(AuthType arg)
+void RestClient::setAuthType(RestAuthType arg)
 {
     Q_D(RestClient);
     if (d->authType != arg) {
         d->authType = arg;
-        if (arg != AuthType::QuasiOAuth2Auth && d->quasiOAuth2TokenCheckTimer)
+        if (arg != RestAuthType::QuasiOAuth2 && d->quasiOAuth2TokenCheckTimer)
             d->quasiOAuth2TokenCheckTimer->stop();
         emit authTypeChanged(arg);
     }
@@ -286,7 +286,7 @@ void RestClient::authenticate()
 {
     Q_D(RestClient);
     if (!delayedCall(this, &RestClient::authenticate)) {
-        if (authType() == RestClient::AuthType::QuasiOAuth2Auth) {
+        if (authType() == RestAuthType::QuasiOAuth2) {
             if (!d->quasiOAuth2TokenCheckTimer) {
                 d->quasiOAuth2TokenCheckTimer = new QTimer(this);
                 d->quasiOAuth2TokenCheckTimer->setInterval(OAUTH_TOKEN_REFRESH_TIMEOUT);
@@ -337,12 +337,12 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         result.setRawHeader(header, customHeaders[header]);
 
     switch (authType) {
-    case RestClient::AuthType::WsseAuth:
+    case RestAuthType::Wsse:
         result.setRawHeader("X-WSSE", generateWsseToken());
         result.setRawHeader("X-Client-Name", clientName.toLocal8Bit());
         result.setRawHeader("Authorization", "WSSE profile=\"UsernameToken\"");
         break;
-    case RestClient::AuthType::BasicAuth:
+    case RestAuthType::Basic:
         result.setRawHeader("Authorization",
                             QString("Basic %1")
                             .arg(QString(QString("%1:%2")
@@ -351,7 +351,7 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
                                  .toLatin1().toBase64()))
                             .toLatin1());
         break;
-    case RestClient::AuthType::QuasiOAuth2Auth:
+    case RestAuthType::QuasiOAuth2:
         if (QDateTime::currentDateTime() >= quasiOAuth2TokenExpiredDateTime) {
             Proof::TaskChainSP taskChain = Proof::TaskChain::createChain();
             auto task = [taskChain, this, q]() {
@@ -369,7 +369,7 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         }
         result.setRawHeader("Authorization", QString("Bearer %1").arg(quasiOAuth2Token).toLatin1());
         break;
-    case RestClient::AuthType::WithoutAuth:
+    case RestAuthType::NoAuth:
         break;
     }
 

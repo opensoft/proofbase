@@ -81,7 +81,7 @@ protected:
     void SetUp() override
     {
         restClientUT = Proof::RestClientSP::create();
-        restClientUT->setAuthType(Proof::RestClient::AuthType::BasicAuth);
+        restClientUT->setAuthType(Proof::RestAuthType::Basic);
         restClientUT->setUserName("username");
         restClientUT->setPassword("password");
         restClientUT->setHost("127.0.0.1");
