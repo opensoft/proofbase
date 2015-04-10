@@ -58,6 +58,25 @@ public slots:
     }
 };
 
+class TestRestServerWithoutAuth : public Proof::AbstractRestServer
+{
+    Q_OBJECT
+public:
+    TestRestServerWithoutAuth()
+        : Proof::AbstractRestServer("", 9092, Proof::RestAuthType::NoAuth) {}
+
+public slots:
+    void rest_get_TestMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
+                             const QUrlQuery &queryParams, const QByteArray &body)
+    {
+        Q_UNUSED(headers)
+        Q_UNUSED(methodVariableParts)
+        Q_UNUSED(queryParams)
+        Q_UNUSED(body)
+        sendAnswer(socket, __func__, "plain/text");
+    }
+};
+
 class RestServerMethodsTest : public TestWithParam<std::tuple<QString, QString, int, bool>>
 {
 public:
@@ -70,10 +89,15 @@ public:
         restServerUT = new TestRestServer();
         restServerUT->startListen();
         QTest::qWait(300);
+
+        restServerWithoutAuthUT = new TestRestServerWithoutAuth();
+        restServerWithoutAuthUT->startListen();
+        QTest::qWait(300);
     }
 
     static void TearDownTestCase()
     {
+        delete restServerWithoutAuthUT;
         delete restServerUT;
     }
 
@@ -88,15 +112,25 @@ protected:
         restClientUT->setPort(9091);
         restClientUT->setScheme("http");
         restClientUT->setClientName("Proof-test");
+
+        restClientWithoutAuthUT = Proof::RestClientSP::create();
+        restClientWithoutAuthUT->setAuthType(Proof::RestAuthType::NoAuth);
+        restClientWithoutAuthUT->setHost("127.0.0.1");
+        restClientWithoutAuthUT->setPort(9092);
+        restClientWithoutAuthUT->setScheme("http");
+        restClientWithoutAuthUT->setClientName("Proof-test");
     }
 
 protected:
     Proof::RestClientSP restClientUT;
     static TestRestServer *restServerUT;
+    Proof::RestClientSP restClientWithoutAuthUT;
+    static TestRestServerWithoutAuth *restServerWithoutAuthUT;
 
 };
 
 TestRestServer *RestServerMethodsTest::restServerUT = nullptr;
+TestRestServerWithoutAuth *RestServerMethodsTest::restServerWithoutAuthUT = nullptr;
 
 class AnotherRestServerMethodsTest : public RestServerMethodsTest
 {
@@ -105,6 +139,25 @@ class AnotherRestServerMethodsTest : public RestServerMethodsTest
 class SomeMoreRestServerMethodsTest : public RestServerMethodsTest
 {
 };
+
+TEST_F(RestServerMethodsTest, withoutAuth)
+{
+    ASSERT_TRUE(restServerWithoutAuthUT->isListening());
+
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/test-method");
+
+    QSignalSpy spy(reply, SIGNAL(finished()));
+
+    ASSERT_TRUE(spy.wait());
+    EXPECT_EQ(1, spy.count());
+
+    EXPECT_EQ(200, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+
+    const QString answer = QString(reply->readAll()).trimmed();
+    EXPECT_EQ("rest_get_TestMethod", answer);
+
+    delete reply;
+}
 
 TEST_P(RestServerMethodsTest, methodsNames)
 {
