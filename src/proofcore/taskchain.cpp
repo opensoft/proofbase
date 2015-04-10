@@ -1,5 +1,7 @@
 #include "taskchain.h"
 
+#include <QTime>
+
 #include <map>
 
 static const qlonglong TASK_ADDING_SPIN_SLEEP_TIME_IN_MSECS = 1;
@@ -16,6 +18,8 @@ class TaskChainPrivate
     void acquireFutures(qlonglong spinSleepTimeInMsecs);
     void releaseFutures();
     void startSelfManagementThreadIfNeeded();
+
+    bool waitForFuture(std::future<void> &future, qlonglong msecs = 0);
 
     TaskChain *q_ptr = nullptr;
 
@@ -92,12 +96,12 @@ bool TaskChain::waitForTask(qlonglong taskId, qlonglong msecs)
             d->futures.erase(task);
             result = false;
         } else {
-            result = task->second.wait_for(std::chrono::milliseconds(msecs)) == std::future_status::ready;
+            result = d->waitForFuture(task->second, msecs);
         }
     }
     d->releaseFutures();
     if (!result && msecs < 1)
-        futureToWait.wait();
+        result = d->waitForFuture(futureToWait);
     return result;
 }
 
@@ -170,4 +174,24 @@ void TaskChainPrivate::startSelfManagementThreadIfNeeded()
     Q_Q(TaskChain);
     if (!q->isRunning() && !wasStarted)
         q->start();
+}
+
+bool TaskChainPrivate::waitForFuture(std::future<void> &future, qlonglong msecs)
+{
+    bool waitForever = msecs < 1;
+    QTime timer;
+    if (!waitForever)
+        timer.start();
+    while (waitForever || (timer.elapsed() > msecs)) {
+        qlonglong chunk = 5;
+        if (!waitForever && (msecs - timer.elapsed() < chunk))
+            chunk = msecs - timer.elapsed();
+        if (chunk < 0)
+            continue;
+        bool result = future.wait_for(std::chrono::milliseconds(chunk)) == std::future_status::ready;
+        if (result)
+            return true;
+        QCoreApplication::processEvents();
+    }
+    return false;
 }

@@ -222,7 +222,7 @@ void AbstractRestServer::startListen()
 
 void AbstractRestServer::stopListen()
 {
-    if (!ProofObject::blockingDelayedCall(this, &AbstractRestServer::stopListen, nullptr))
+    if (!ProofObject::blockingDelayedCall(this, &AbstractRestServer::stopListen, false, nullptr))
         close();
 }
 
