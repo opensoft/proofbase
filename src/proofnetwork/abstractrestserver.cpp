@@ -237,7 +237,7 @@ void AbstractRestServer::setAuthType(RestAuthType authType)
 void AbstractRestServer::startListen()
 {
     Q_D(AbstractRestServer);
-    if (!ProofObject::delayedCall(this, &AbstractRestServer::startListen)) {
+    if (!ProofObject::call(this, &AbstractRestServer::startListen)) {
         d->fillMethods();
         bool isListen = listen(QHostAddress::Any, d->port);
         if (!isListen)
@@ -247,7 +247,7 @@ void AbstractRestServer::startListen()
 
 void AbstractRestServer::stopListen()
 {
-    if (!ProofObject::blockingDelayedCall(this, &AbstractRestServer::stopListen, false, nullptr))
+    if (!ProofObject::call(this, &AbstractRestServer::stopListen, Proof::Call::Block))
         close();
 }
 
@@ -332,7 +332,7 @@ void AbstractRestServerPrivate::createNewConnection(QTcpSocket *socket)
 void AbstractRestServerPrivate::markWorkerInactive(WorkerThread *worker)
 {
     Q_Q(AbstractRestServer);
-    if (Proof::ProofObject::delayedCall(this,
+    if (Proof::ProofObject::call(this,
                                         &AbstractRestServerPrivate::markWorkerInactive,
                                         worker)) {
         return;
@@ -500,7 +500,7 @@ WorkerThread::~WorkerThread()
 
 void WorkerThread::handleNewConnection(qintptr socketDescriptor)
 {
-    if (Proof::ProofObject::delayedCall(this,
+    if (Proof::ProofObject::call(this,
                                         &WorkerThread::handleNewConnection,
                                         socketDescriptor)) {
         return;
@@ -517,7 +517,7 @@ void WorkerThread::handleNewConnection(qintptr socketDescriptor)
 
 void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
 {
-    if (Proof::ProofObject::delayedCall(this,
+    if (Proof::ProofObject::call(this,
                                         &WorkerThread::sendAnswer,
                                         socket, body, contentType, returnCode, reason)) {
         return;

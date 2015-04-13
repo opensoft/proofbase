@@ -285,7 +285,7 @@ QNetworkReply *RestClient::deleteResource(const QString &method, const QUrlQuery
 void RestClient::authenticate()
 {
     Q_D(RestClient);
-    if (!delayedCall(this, &RestClient::authenticate)) {
+    if (!call(this, &RestClient::authenticate)) {
         if (authType() == RestAuthType::QuasiOAuth2) {
             if (!d->quasiOAuth2TokenCheckTimer) {
                 d->quasiOAuth2TokenCheckTimer = new QTimer(this);

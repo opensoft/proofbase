@@ -18,7 +18,7 @@ ProofObject::ProofObject(ProofObjectPrivate &dd, QObject *parent)
     d_ptr->q_ptr = this;
 }
 
-qulonglong ProofObject::nextDelayedCallId()
+qulonglong ProofObject::nextQueuedCallId()
 {
     Q_D(ProofObject);
     return ++d->nextDelayedCallId;
