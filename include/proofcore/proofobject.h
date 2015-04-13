@@ -15,7 +15,6 @@
 namespace Proof {
 
 enum class Call {
-    Async,
     Block,
     BlockEvents
 };
@@ -32,24 +31,23 @@ public:
 
     template <class Callee, class Result, class MethodCallee, class... MethodArgs, class... Args>
     static typename std::enable_if<std::is_base_of<MethodCallee, Callee>::value && sizeof...(MethodArgs) == sizeof...(Args), bool>::type
-    call(Callee* callee, Result (MethodCallee::*method)(MethodArgs...), Proof::Call callType, Result &result, Args... args)
+    call(Callee *callee, Result (MethodCallee:: *method)(MethodArgs...), Proof::Call callType, Result &result, Args... args)
     {
-        Q_ASSERT_X(!result || callType != Proof::Call::Async, "ProofObject::call", "result can't be non nullptr if callType == Proof::Call::Async");
         return callPrivate(callee, method, callType, &result, args...);
     }
 
     template <class Callee, class Result, class MethodCallee, class... MethodArgs, class... Args>
     static typename std::enable_if<std::is_base_of<MethodCallee, Callee>::value && sizeof...(MethodArgs) == sizeof...(Args), bool>::type
-    call(Callee* callee, Result (MethodCallee::*method)(MethodArgs...), Proof::Call callType, Args... args)
+    call(Callee *callee, Result (MethodCallee:: *method)(MethodArgs...), Proof::Call callType, Args... args)
     {
         return callPrivate(callee, method, callType, nullptr, args...);
     }
 
     template <class Callee, class Result, class MethodCallee, class... MethodArgs, class... Args>
     static typename std::enable_if<std::is_base_of<MethodCallee, Callee>::value && sizeof...(MethodArgs) == sizeof...(Args), bool>::type
-    call(Callee* callee, Result (MethodCallee::*method)(MethodArgs...), Args... args)
+    call(Callee *callee, Result (MethodCallee:: *method)(MethodArgs...), Args... args)
     {
-        return callPrivate(callee, method, Proof::Call::Async, nullptr, args...);
+        return callPrivate(callee, method, args...);
     }
 
 signals:
@@ -64,8 +62,8 @@ private:
 
     qulonglong nextQueuedCallId();
 
-    template <class Callee, class Result, class Method, class... Args>
-    static bool callPrivate(Callee* callee, Method method, Proof::Call callType, Result result, Args... args)
+    template <class Callee, class ResultPtr, class Method, class... Args>
+    static bool callPrivate(Callee *callee, Method method, Proof::Call callType, ResultPtr resultPtr, Args... args)
     {
         if (QThread::currentThread() == callee->thread())
             return false;
@@ -74,31 +72,17 @@ private:
         qulonglong currentId = invoker->nextQueuedCallId();
         auto conn = QSharedPointer<QMetaObject::Connection>::create();
         std::atomic_bool done(false);
-        std::function<void(qulonglong)> f;
 
-        if (callType == Proof::Call::Async) {
-            //TODO: change binds to normal lambdas after switch to gcc>=4.9.0
-            f = std::bind([](qulonglong delayedCallId,
-                          Callee *callee, ProofObject *delayer,
-                          QSharedPointer<QMetaObject::Connection> conn,
-                          qulonglong currentId, Method method, Args... args) {
-                    if (currentId != delayedCallId)
-                        return;
-                    doTheCall(nullptr, callee, method, args...);
-                    cleanupAfterCall(callee, delayer, conn);
-            }, std::placeholders::_1, callee, invoker, conn, currentId, method, args...);
-        } else {
-            f = std::bind([](qulonglong queuedCallId, Result *result, std::atomic_bool *done,
-                               Callee *callee, ProofObject *delayer,
-                               QSharedPointer<QMetaObject::Connection> conn,
-                               qulonglong currentId, Method method, Args... args) {
-                    if (currentId != queuedCallId)
-                        return;
-                    doTheCall(*result, callee, method, args...);
-                    cleanupAfterCall(callee, delayer, conn);
-                    *done = true;
-            }, std::placeholders::_1, &result, &done, callee, invoker, conn, currentId, method, args...);
-        }
+        auto f = std::bind([](qulonglong queuedCallId, ResultPtr resultPtr, std::atomic_bool *done,
+                      Callee *callee, ProofObject *invoker,
+                      QSharedPointer<QMetaObject::Connection> conn,
+                      qulonglong currentId, Method method, Args... args) {
+                if (currentId != queuedCallId)
+                    return;
+                doTheCall(resultPtr, callee, method, args...);
+                cleanupAfterCall(callee, invoker, conn);
+                *done = true;
+        }, std::placeholders::_1, resultPtr, &done, callee, invoker, conn, currentId, method, args...);
 
         *conn = connect(invoker, &ProofObject::queuedCallRequested,
                         callee, f, callType == Proof::Call::BlockEvents ? Qt::BlockingQueuedConnection : Qt::QueuedConnection);
@@ -110,6 +94,33 @@ private:
         }
         return true;
     }
+
+    template <class Callee, class Method, class... Args>
+    static bool callPrivate(Callee *callee, Method method, Args... args)
+    {
+        if (QThread::currentThread() == callee->thread())
+            return false;
+
+        ProofObject *invoker = invokerForCallee(callee);
+        qulonglong currentId = invoker->nextQueuedCallId();
+        auto conn = QSharedPointer<QMetaObject::Connection>::create();
+
+        auto f = std::bind([](qulonglong queuedCallId,
+                      Callee *callee, ProofObject *invoker,
+                      QSharedPointer<QMetaObject::Connection> conn,
+                      qulonglong currentId, Method method, Args... args) {
+                if (currentId != queuedCallId)
+                    return;
+                doTheCall(nullptr, callee, method, args...);
+                cleanupAfterCall(callee, invoker, conn);
+        }, std::placeholders::_1, callee, invoker, conn, currentId, method, args...);
+        *conn = connect(invoker, &ProofObject::queuedCallRequested,
+                        callee, f, Qt::QueuedConnection);
+        emit invoker->queuedCallRequested(currentId, QPrivateSignal{});
+
+        return true;
+    }
+
 
     template <class Callee, class Result, class Method, class... Args>
     static void doTheCall(Result *result, Callee* callee, Method method, Args... args)
@@ -125,8 +136,7 @@ private:
     }
 
     template <class Callee>
-    static typename std::enable_if<!std::is_base_of<ProofObject, Callee>::value
-                                    && std::is_base_of<QObject, Callee>::value, ProofObject *>::type
+    static typename std::enable_if<!std::is_base_of<ProofObject, Callee>::value && std::is_base_of<QObject, Callee>::value, ProofObject *>::type
     invokerForCallee(Callee *callee)
     {
         Q_UNUSED(callee);
@@ -141,8 +151,7 @@ private:
     }
 
     template <class Callee>
-    static typename std::enable_if<!std::is_base_of<ProofObject, Callee>::value
-                                    && std::is_base_of<QObject, Callee>::value, bool>::type
+    static typename std::enable_if<!std::is_base_of<ProofObject, Callee>::value && std::is_base_of<QObject, Callee>::value, bool>::type
     cleanupAfterCall(Callee *callee, ProofObject *delayer, QSharedPointer<QMetaObject::Connection> conn)
     {
         Q_UNUSED(callee);
