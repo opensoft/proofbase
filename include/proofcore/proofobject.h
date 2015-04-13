@@ -46,16 +46,9 @@ public:
 
     template <class Callee, class Result, class MethodCallee, class... MethodArgs, class... Args>
     static typename std::enable_if<std::is_base_of<MethodCallee, Callee>::value && sizeof...(MethodArgs) == sizeof...(Args), bool>::type
-    call(Callee* callee, Result (MethodCallee::*method)(MethodArgs...), Result &result, Args... args)
-    {
-        return callPrivate(callee, method, Proof::Call::Async, &result, args...);
-    }
-
-    template <class Callee, class Result, class MethodCallee, class... MethodArgs, class... Args>
-    static typename std::enable_if<std::is_base_of<MethodCallee, Callee>::value && sizeof...(MethodArgs) == sizeof...(Args), bool>::type
     call(Callee* callee, Result (MethodCallee::*method)(MethodArgs...), Args... args)
     {
-        return callPrivate(callee, method, Proof::Call::Block, nullptr, args...);
+        return callPrivate(callee, method, Proof::Call::Async, nullptr, args...);
     }
 
 signals:
@@ -82,8 +75,18 @@ private:
         std::atomic_bool done(false);
         std::function<void(qulonglong)> f;
 
-        if (callType == Proof::Call::Block) {
+        if (callType == Proof::Call::Async) {
             //TODO: change binds to normal lambdas after switch to gcc>=4.9.0
+            f = std::bind([](qulonglong delayedCallId,
+                          Callee *callee, ProofObject *delayer,
+                          QSharedPointer<QMetaObject::Connection> conn,
+                          qulonglong currentId, Method method, Args... args) {
+                    if (currentId != delayedCallId)
+                        return;
+                    doTheCall(nullptr, callee, method, args...);
+                    cleanupAfterCall(callee, delayer, conn);
+            }, std::placeholders::_1, callee, invoker, conn, currentId, method, args...);
+        } else {
             f = std::bind([](qulonglong queuedCallId, Result *result, std::atomic_bool *done,
                                Callee *callee, ProofObject *delayer,
                                QSharedPointer<QMetaObject::Connection> conn,
@@ -94,16 +97,6 @@ private:
                     cleanupAfterCall(callee, delayer, conn);
                     *done = true;
             }, std::placeholders::_1, &result, &done, callee, invoker, conn, currentId, method, args...);
-        } else {
-            f = std::bind([](qulonglong delayedCallId,
-                          Callee *callee, ProofObject *delayer,
-                          QSharedPointer<QMetaObject::Connection> conn,
-                          qulonglong currentId, Method method, Args... args) {
-                    if (currentId != delayedCallId)
-                        return;
-                    doTheCall(nullptr, callee, method, args...);
-                    cleanupAfterCall(callee, delayer, conn);
-            }, std::placeholders::_1, callee, invoker, conn, currentId, method, args...);
         }
 
         *conn = connect(invoker, &ProofObject::queuedCallRequested,
