@@ -121,7 +121,6 @@ private:
         return true;
     }
 
-
     template <class Callee, class Result, class Method, class... Args>
     static void doTheCall(Result *result, Callee* callee, Method method, Args... args)
     {
