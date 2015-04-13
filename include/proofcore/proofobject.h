@@ -34,6 +34,7 @@ public:
     static typename std::enable_if<std::is_base_of<MethodCallee, Callee>::value && sizeof...(MethodArgs) == sizeof...(Args), bool>::type
     call(Callee* callee, Result (MethodCallee::*method)(MethodArgs...), Proof::Call callType, Result &result, Args... args)
     {
+        Q_ASSERT_X(!result || callType != Proof::Call::Async, "ProofObject::call", "result can't be non nullptr if callType == Proof::Call::Async");
         return callPrivate(callee, method, callType, &result, args...);
     }
 
