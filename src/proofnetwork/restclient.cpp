@@ -420,6 +420,7 @@ void RestClientPrivate::requestQuasiOAuth2token(const QString &method)
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [q, reply](QNetworkReply::NetworkError) {
         emit q->authenticationErrorOccurred("Can't connect to Scissorhands service.\nPlease check your internet connection.");
+        reply->deleteLater();
     });
     QObject::connect(reply, &QNetworkReply::finished,
                      q, [this, q, reply, expiredTime]() {
@@ -438,6 +439,7 @@ void RestClientPrivate::requestQuasiOAuth2token(const QString &method)
         } else {
             emit q->authenticationErrorOccurred("Wrong Scissorhands service answer.\nPlease check your host settings.");
         }
+        reply->deleteLater();
     });
 }
 
