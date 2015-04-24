@@ -91,7 +91,7 @@ QNetworkReply *AbstractRestApiPrivate::get(qulonglong &operationId, const QStrin
                                        << "\nRunning in thread =" << QThread::currentThread();
         return 0;
     }
-    QNetworkReply *reply = restClient->get(method, query);
+    QNetworkReply *reply = restClient->get(method, query, vendor);
     setupReply(operationId, reply);
     return reply;
 }
@@ -106,7 +106,7 @@ QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, const QStri
                                        << "\nrunning in thread =" << QThread::currentThread();
         return 0;
     }
-    QNetworkReply *reply = restClient->post(method, query, body);
+    QNetworkReply *reply = restClient->post(method, query, body, vendor);
     setupReply(operationId, reply);
     return reply;
 }
@@ -121,7 +121,7 @@ QNetworkReply *AbstractRestApiPrivate::put(qulonglong &operationId, const QStrin
                                        << "\nrunning in thread =" << QThread::currentThread();
         return 0;
     }
-    QNetworkReply *reply = restClient->put(method, query, body);
+    QNetworkReply *reply = restClient->put(method, query, body, vendor);
     setupReply(operationId, reply);
     return reply;
 }
@@ -136,7 +136,7 @@ QNetworkReply *AbstractRestApiPrivate::patch(qulonglong &operationId, const QStr
                                        << "\nrunning in thread =" << QThread::currentThread();
         return 0;
     }
-    QNetworkReply *reply = restClient->patch(method, query, body);
+    QNetworkReply *reply = restClient->patch(method, query, body, vendor);
     setupReply(operationId, reply);
     return reply;
 }
@@ -151,7 +151,7 @@ QNetworkReply *AbstractRestApiPrivate::deleteResource(qulonglong &operationId, c
                                        << "\nrunning in thread =" << QThread::currentThread();
         return 0;
     }
-    QNetworkReply *reply = restClient->deleteResource(method, query);
+    QNetworkReply *reply = restClient->deleteResource(method, query, vendor);
     setupReply(operationId, reply);
     return reply;
 }
@@ -220,16 +220,6 @@ void AbstractRestApiPrivate::cleanupReply(qulonglong operationId, QNetworkReply 
 {
     Q_UNUSED(operationId);
     repliesIds.remove(reply);
-}
-
-QString AbstractRestApiPrivate::vendor() const
-{
-    return vendorValue;
-}
-
-void AbstractRestApiPrivate::setVendor(const QString &arg)
-{
-    vendorValue = arg;
 }
 
 void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error)

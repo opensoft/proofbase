@@ -36,21 +36,18 @@ public:
     virtual void sslErrorsOccurred(qulonglong operationId, QNetworkReply *reply, const QList<QSslError> &errors);
     virtual void cleanupReply(qulonglong operationId, QNetworkReply *reply);
 
-    QString vendor() const;
-    void setVendor(const QString &arg);
-
     void notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error);
 
     QMetaObject::Connection replyFinishedConnection;
     QMetaObject::Connection sslErrorsConnection;
     RestClientSP restClient;
+    QString vendor;
 
 private:
     void setupReply(qulonglong &operationId, QNetworkReply *reply);
 
     static std::atomic<qulonglong> lastUsedOperationId;
     QHash<QNetworkReply *, qulonglong> repliesIds;
-    QString vendorValue;
 };
 }
 #endif // ABSTRACTRESTAPI_P_H
