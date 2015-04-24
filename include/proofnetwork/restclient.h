@@ -58,11 +58,14 @@ public:
     bool containsCookie(const QString &name) const;
     void unsetCookie(const QString &name);
 
-    QNetworkReply *get(const QString &method, const QUrlQuery &query = QUrlQuery());
-    QNetworkReply *post(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");
-    QNetworkReply *put(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");
-    QNetworkReply *patch(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");
-    QNetworkReply *deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery());
+    QNetworkReply *get(const QString &method, const QUrlQuery &query = QUrlQuery(), const QString &vendor = QString());
+    QNetworkReply *post(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                        const QByteArray &body = "", const QString &vendor = QString());
+    QNetworkReply *put(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                       const QByteArray &body = "", const QString &vendor = QString());
+    QNetworkReply *patch(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                         const QByteArray &body = "", const QString &vendor = QString());
+    QNetworkReply *deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery(), const QString &vendor = QString());
 
     Q_INVOKABLE void authenticate();
 

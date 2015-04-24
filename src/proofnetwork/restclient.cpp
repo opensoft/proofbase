@@ -39,7 +39,8 @@ public:
     QTimer *quasiOAuth2TokenCheckTimer = nullptr;
     QDateTime quasiOAuth2TokenExpiredDateTime;
 
-    QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body);
+    QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query,
+                                         const QByteArray &body, const QString &vendor);
     QByteArray generateWsseToken() const;
     void requestQuasiOAuth2token(const QString &method = QString("/oauth2/token"));
 
@@ -234,50 +235,50 @@ void RestClient::unsetCookie(const QString &name)
     d->cookies.remove(name);
 }
 
-QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query)
+QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query, const QString &vendor)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString();
-    QNetworkReply *reply = d->qnam->get(d->createNetworkRequest(method, query, ""));
+    QNetworkReply *reply = d->qnam->get(d->createNetworkRequest(method, query, "", vendor));
     d->handleReply(reply);
     return reply;
 }
 
-QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, const QByteArray &body)
+QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString() << body;
-    QNetworkReply *reply = d->qnam->post(d->createNetworkRequest(method, query, body), body);
+    QNetworkReply *reply = d->qnam->post(d->createNetworkRequest(method, query, body, vendor), body);
     d->handleReply(reply);
     return reply;
 }
 
-QNetworkReply *RestClient::put(const QString &method, const QUrlQuery &query, const QByteArray &body)
+QNetworkReply *RestClient::put(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString() << body;
-    QNetworkReply *reply = d->qnam->put(d->createNetworkRequest(method, query, body), body);
+    QNetworkReply *reply = d->qnam->put(d->createNetworkRequest(method, query, body, vendor), body);
     d->handleReply(reply);
     return reply;
 }
 
-QNetworkReply *RestClient::patch(const QString &method, const QUrlQuery &query, const QByteArray &body)
+QNetworkReply *RestClient::patch(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
     QBuffer *bodyBuffer = new QBuffer;
     bodyBuffer->setData(body);
     qCDebug(proofNetworkMiscLog) << method << query.toString() << body;
-    QNetworkReply *reply = d->qnam->sendCustomRequest(d->createNetworkRequest(method, query, body), "PATCH", bodyBuffer);
+    QNetworkReply *reply = d->qnam->sendCustomRequest(d->createNetworkRequest(method, query, body, vendor), "PATCH", bodyBuffer);
     d->handleReply(reply);
     bodyBuffer->setParent(reply);
     return reply;
 }
 
-QNetworkReply *RestClient::deleteResource(const QString &method, const QUrlQuery &query)
+QNetworkReply *RestClient::deleteResource(const QString &method, const QUrlQuery &query, const QString &vendor)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString();
-    QNetworkReply *reply = d->qnam->deleteResource(d->createNetworkRequest(method, query, QByteArray()));
+    QNetworkReply *reply = d->qnam->deleteResource(d->createNetworkRequest(method, query, QByteArray(), vendor));
     d->handleReply(reply);
     return reply;
 }
@@ -302,7 +303,8 @@ void RestClient::authenticate()
 }
 
 
-QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, const QUrlQuery &query, const QByteArray &body)
+QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, const QUrlQuery &query,
+                                                        const QByteArray &body, const QString &vendor)
 {
     Q_Q(RestClient);
 
@@ -321,13 +323,18 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         QJsonParseError error;
         QJsonDocument::fromJson(body, &error);
 
+        QString contentTypePattern = vendor.isEmpty() ? QString("application/%1") : QString("application/vnd.%1+%2").arg(vendor);
+
         //NOTE: We assume that if it is not json then it is xml
         if (error.error == QJsonParseError::NoError)
-            result.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+            result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg("json"));
         else
-            result.setHeader(QNetworkRequest::ContentTypeHeader, "application/xml");
+            result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg("xml"));
     } else {
-        result.setHeader(QNetworkRequest::ContentTypeHeader, "plain/text");
+        if (vendor.isEmpty())
+            result.setHeader(QNetworkRequest::ContentTypeHeader, "plain/text");
+        else
+            result.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/%1").arg(vendor));
     }
 
     for (const QNetworkCookie &cookie : cookies)

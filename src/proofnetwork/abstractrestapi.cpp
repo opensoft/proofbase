@@ -222,6 +222,16 @@ void AbstractRestApiPrivate::cleanupReply(qulonglong operationId, QNetworkReply 
     repliesIds.remove(reply);
 }
 
+QString AbstractRestApiPrivate::vendor() const
+{
+    return vendorValue;
+}
+
+void AbstractRestApiPrivate::setVendor(const QString &arg)
+{
+    vendorValue = arg;
+}
+
 void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error)
 {
     Q_Q(AbstractRestApi);
