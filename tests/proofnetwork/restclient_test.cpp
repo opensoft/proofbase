@@ -5,6 +5,7 @@
 #include <QNetworkReply>
 #include <QSignalSpy>
 #include <QRegExp>
+#include <QScopedPointer>
 
 #include <tuple>
 #include <functional>
@@ -116,11 +117,11 @@ TEST_P(RestClientTest, vendorTest)
 
     const QByteArray body = file.isEmpty() ? QByteArray() : dataFromFile(file);
 
-    QNetworkReply *reply = methodCall(*restClient, body);
+    QScopedPointer<QNetworkReply> reply(methodCall(*restClient, body));
 
     ASSERT_NE(nullptr, reply);
 
-    QSignalSpy spy(reply, SIGNAL(finished()));
+    QSignalSpy spy(reply.data(), SIGNAL(finished()));
 
     ASSERT_TRUE(spy.wait());
     EXPECT_EQ(1, spy.count());
