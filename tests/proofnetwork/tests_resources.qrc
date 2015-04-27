@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>data/vendor_test_body.json</file>
+        <file>data/vendor_test_body.xml</file>
+    </qresource>
+</RCC>
