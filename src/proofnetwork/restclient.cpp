@@ -334,7 +334,7 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         if (vendor.isEmpty())
             result.setHeader(QNetworkRequest::ContentTypeHeader, "plain/text");
         else
-            result.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/%1").arg(vendor));
+            result.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/vnd.%1").arg(vendor));
     }
 
     for (const QNetworkCookie &cookie : cookies)
