@@ -11,3 +11,4 @@ bin*/
 *.deb
 html
 latex
+*.pyc
