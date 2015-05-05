@@ -1,6 +1,7 @@
 #include "abstractrestserver.h"
 
 #include "proofcore/proofobject.h"
+#include "proofnetwork/httpparser_p.h"
 
 #include <QDir>
 #include <QTcpSocket>
@@ -9,11 +10,15 @@
 #include <QUrlQuery>
 #include <QQueue>
 #include <QMutex>
+#include <QTimer>
+
+#include <algorithm>
 
 static const QString REST_METHOD_PREFIX = QString("rest_");
 static const int MIN_THREADS_COUNT = 5;
 
-namespace Proof {
+namespace
+{
 class WorkerThread;
 
 class MethodNode {
@@ -32,10 +37,54 @@ private:
     QString value = "";
 };
 
+struct WorkerThreadInfo
+{
+    explicit WorkerThreadInfo(WorkerThread *thread, quint32 socketCount)
+        : thread(thread), socketCount(socketCount)
+    {
+    }
+
+    WorkerThread *thread;
+    quint32 socketCount;
+};
+
+struct SocketInfo
+{
+    SocketInfo()
+    {
+    }
+
+    Proof::HttpParser parser;
+    QMetaObject::Connection readyReadConnection;
+    QMetaObject::Connection disconnectConnection;
+    QMetaObject::Connection errorConnection;
+};
+
+class WorkerThread: public QThread
+{
+    Q_OBJECT
+public:
+    WorkerThread(Proof::AbstractRestServerPrivate *const _serverD);
+    ~WorkerThread();
+
+    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason);
+    void handleNewConnection(qintptr socketDescriptor);
+    void deleteSocket(QTcpSocket *socket);
+    void onReadyRead(QTcpSocket *socket);
+    void stop();
+
+private:
+    Proof::AbstractRestServerPrivate * const serverD;
+    QHash<QTcpSocket *, SocketInfo> sockets;
+};
+}
+
+namespace Proof {
+
 class AbstractRestServerPrivate: public QObject
 {
     Q_DECLARE_PUBLIC(AbstractRestServer)
-    friend class WorkerThread;
+    friend WorkerThread;
 
 public:
     AbstractRestServerPrivate() {}
@@ -47,11 +96,6 @@ private:
     AbstractRestServerPrivate(const AbstractRestServerPrivate &&other) = delete;
     AbstractRestServerPrivate &operator=(const AbstractRestServerPrivate &&other) = delete;
 
-    void createNewConnection(QTcpSocket *socket);
-    void markWorkerInactive(WorkerThread *worker);
-    void freeTaskThread();
-
-    void handleRequest(QTcpSocket *socket);
     void tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body);
     QStringList makeMethodName(const QString &type, const QString &name);
     QString findMethod(const QStringList &splittedMethod, QStringList &methodVariableParts);
@@ -59,6 +103,8 @@ private:
     void addMethodToTree(const QString &realMethod);
 
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());
+    void sendInternalError(QTcpSocket *socket);
+    void deleteSocket(QTcpSocket *socket, WorkerThread *worker);
 
     AbstractRestServer *q_ptr = 0;
     int port = 0;
@@ -66,27 +112,12 @@ private:
     QString password;
     QString pathPrefix;
     QThread *serverThread = nullptr;
-    QList<WorkerThread *> threadPool;
-    QList<WorkerThread *> inactiveWorkerThreads;
-    QQueue<qintptr> waitingConnections;
+    QList<WorkerThreadInfo> threadPool;
     MethodNode methodsTreeRoot;
     int suggestedMaxThreadsCount;
     RestAuthType authType;
 };
 
-class WorkerThread: public QThread
-{
-    Q_OBJECT
-public:
-    WorkerThread(AbstractRestServerPrivate *const _serverD);
-    ~WorkerThread();
-
-    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason);
-    void handleNewConnection(qintptr socketDescriptor);
-
-private:
-    AbstractRestServerPrivate * const serverD;
-};
 }
 
 using namespace Proof;
@@ -133,16 +164,16 @@ AbstractRestServer::~AbstractRestServer()
 {
     Q_D(AbstractRestServer);
     stopListen();
+    for (const WorkerThreadInfo &workerInfo : d->threadPool) {
+        workerInfo.thread->stop();
+        workerInfo.thread->quit();
+        workerInfo.thread->wait(1000);
+        delete workerInfo.thread;
+    }
+
     d->serverThread->quit();
     d->serverThread->wait(1000);
     d->serverThread->terminate();
-
-    while (d->threadPool.count()) {
-        QThread *thread = d->threadPool.takeFirst();
-        thread->quit();
-        thread->wait(300);
-        delete thread;
-    }
 }
 
 QString AbstractRestServer::userName() const
@@ -255,24 +286,28 @@ void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
 {
     Q_D(AbstractRestServer);
 
+    qCDebug(proofNetworkMiscLog) << "Incoming connection with socket descriptor" << socketDescriptor;
+
     WorkerThread *worker = nullptr;
 
-    if (!d->inactiveWorkerThreads.count()) {
-        if (d->threadPool.count() >= d->suggestedMaxThreadsCount) {
-            d->waitingConnections.enqueue(socketDescriptor);
-        } else {
-            worker = new WorkerThread(d);
-            d->threadPool.append(worker);
+    if (!d->threadPool.isEmpty()) {
+        auto iter = std::min_element(d->threadPool.begin(), d->threadPool.end(),
+                                     [](const WorkerThreadInfo &lhs, const WorkerThreadInfo &rhs) {
+                                         return lhs.socketCount < rhs.socketCount;
+                                     });
+        if (iter->socketCount == 0 || d->threadPool.count() >= d->suggestedMaxThreadsCount) {
+            worker = iter->thread;
+            ++iter->socketCount;
         }
-    } else {
-        worker = d->inactiveWorkerThreads.takeFirst();
     }
 
-    if (worker) {
-        if (!worker->isRunning())
-            worker->start();
-        worker->handleNewConnection(socketDescriptor);
+    if (worker == nullptr) {
+        worker = new WorkerThread(d);
+        worker->start();
+        d->threadPool << WorkerThreadInfo{worker, 1};
     }
+
+    worker->handleNewConnection(socketDescriptor);
 }
 
 void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
@@ -321,58 +356,6 @@ void AbstractRestServer::sendNotAuthorized(QTcpSocket *socket, const QString &re
 void AbstractRestServer::sendInternalError(QTcpSocket *socket)
 {
     sendAnswer(socket, "", "text/plain; charset=utf-8", 500, "Internal Server Error");
-}
-
-
-void AbstractRestServerPrivate::createNewConnection(QTcpSocket *socket)
-{
-    handleRequest(socket);
-}
-
-void AbstractRestServerPrivate::markWorkerInactive(WorkerThread *worker)
-{
-    Q_Q(AbstractRestServer);
-    if (Proof::ProofObject::call(this,
-                                        &AbstractRestServerPrivate::markWorkerInactive,
-                                        worker)) {
-        return;
-    }
-
-    inactiveWorkerThreads.append(worker);
-    if (waitingConnections.count())
-        q->incomingConnection(waitingConnections.dequeue());
-}
-
-void AbstractRestServerPrivate::handleRequest(QTcpSocket *socket)
-{
-    Q_Q(AbstractRestServer);
-    QByteArray request;
-    forever {
-        QByteArray read = socket->read(1024);
-        if (!read.isEmpty())
-            request.append(read);
-        if (!socket->waitForReadyRead(500))
-            break;
-
-    }
-
-    QStringList requestParts = QString(request).split("\r\n\r\n");
-    if (requestParts.count() < 2) {
-        q->sendInternalError(socket);
-        return;
-    }
-
-    QStringList headersParts = requestParts.at(0).split("\r\n", QString::SkipEmptyParts);
-    if (headersParts.count() < 2) {
-        q->sendInternalError(socket);
-        return;
-    }
-
-    QString body = requestParts.at(1);
-
-    QStringList tokens = headersParts.at(0).split(" ");
-
-    tryToCallMethod(socket, tokens[0], tokens[1], headersParts, body.toUtf8());
 }
 
 QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const QString &name)
@@ -480,15 +463,33 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
     }
 }
 
-void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason) {
-
+void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
+                                           int returnCode, const QString &reason)
+{
     WorkerThread *worker = qobject_cast<WorkerThread *>(socket->thread());
     Q_ASSERT(worker);
 
     worker->sendAnswer(socket, body, contentType, returnCode, reason);
 }
 
-WorkerThread::WorkerThread(AbstractRestServerPrivate *const _server_d)
+void AbstractRestServerPrivate::sendInternalError(QTcpSocket *socket)
+{
+    Q_Q(AbstractRestServer);
+    q->sendInternalError(socket);
+}
+
+void AbstractRestServerPrivate::deleteSocket(QTcpSocket *socket, WorkerThread *worker)
+{
+    if (!ProofObject::call(this, &AbstractRestServerPrivate::deleteSocket, socket, worker)) {
+        delete socket;
+        auto iter = std::find_if(threadPool.begin(), threadPool.end(), [worker](const WorkerThreadInfo &info) {
+            return info.thread == worker;
+        });
+        --iter->socketCount;
+    }
+}
+
+WorkerThread::WorkerThread(Proof::AbstractRestServerPrivate *const _server_d)
     : serverD(_server_d)
 {
     moveToThread(this);
@@ -507,12 +508,55 @@ void WorkerThread::handleNewConnection(qintptr socketDescriptor)
     }
 
     QTcpSocket *tcpSocket = new QTcpSocket();
+    SocketInfo info;
+    info.readyReadConnection = connect(tcpSocket, &QTcpSocket::readyRead, this, [tcpSocket, this] { onReadyRead(tcpSocket); });
+
+    void (QTcpSocket:: *errorSignal)(QAbstractSocket::SocketError) = &QTcpSocket::error;
+    info.errorConnection = connect(tcpSocket, errorSignal, this, [tcpSocket, this] {
+        serverD->sendInternalError(tcpSocket);
+    });
+
+    info.disconnectConnection = connect(tcpSocket, &QTcpSocket::disconnected, this, [tcpSocket, this] { deleteSocket(tcpSocket); });
+
     if (!tcpSocket->setSocketDescriptor(socketDescriptor)) {
         qCDebug(proofNetworkMiscLog) << "Can't create socket, error:" << tcpSocket->errorString();
+        serverD->deleteSocket(tcpSocket, this);
         return;
     }
+    sockets[tcpSocket] = info;
+}
 
-    serverD->createNewConnection(tcpSocket);
+void WorkerThread::deleteSocket(QTcpSocket *socket)
+{
+    sockets.remove(socket);
+    serverD->deleteSocket(socket, this);
+}
+
+void WorkerThread::onReadyRead(QTcpSocket *socket)
+{
+    SocketInfo &info = sockets[socket];
+    HttpParser::Result result = info.parser.parseNextPart(socket->readAll());
+    switch (result) {
+    case HttpParser::Result::Success:
+        disconnect(info.readyReadConnection);
+        serverD->tryToCallMethod(socket, info.parser.method(), info.parser.uri(), info.parser.headers(), info.parser.body());
+        break;
+    case HttpParser::Result::Error:
+        qCDebug(proofNetworkMiscLog) << "Parse error:" << info.parser.error();
+        disconnect(info.readyReadConnection);
+        serverD->sendInternalError(socket);
+        break;
+    case HttpParser::Result::NeedMore:
+        break;
+    }
+}
+
+void WorkerThread::stop()
+{
+    if (!ProofObject::call(this, &WorkerThread::stop, Proof::Call::Block)) {
+        for (QTcpSocket *socket : sockets.keys())
+            deleteSocket(socket);
+    }
 }
 
 void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
@@ -538,11 +582,7 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
         socket->write(body);
         socket->flush();
         socket->disconnectFromHost();
-        if (socket->state() != QTcpSocket::UnconnectedState)
-            socket->waitForDisconnected();
     }
-    delete socket;
-    serverD->markWorkerInactive(this);
 }
 
 MethodNode::MethodNode()
