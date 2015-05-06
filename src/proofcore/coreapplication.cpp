@@ -5,7 +5,7 @@
 #include "settings.h"
 #include "settingsgroup.h"
 
-#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
+#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
 #include <unistd.h>
 #include <cxxabi.h>
 #include <execinfo.h>
@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #endif
 
-#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
+#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
 constexpr int BACKTRACE_MAX_SIZE = 50;
 
 static void signalHandler(int sig, siginfo_t *info, void *context)
@@ -146,7 +146,7 @@ void Proof::CoreApplicationPrivate::initApp()
     settings = new Proof::Settings(q_ptr);
 
     bool daemonized = false;
-#ifdef Q_OS_LINUX
+#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
     if (q_ptr->arguments().count() == 2 && q_ptr->arguments().last() == "-d") {
         daemonized = true;
         daemon(0, 0);
@@ -160,7 +160,7 @@ void Proof::CoreApplicationPrivate::initApp()
     if (!logFileName.isEmpty())
         Logs::installFileHandler(logFileName);
 
-#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
+#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
     static struct sigaction sigSegvAction;
     sigSegvAction.sa_sigaction = signalHandler;
     sigSegvAction.sa_flags = SA_SIGINFO;
