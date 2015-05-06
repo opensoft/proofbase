@@ -8,9 +8,6 @@
 #include <QMetaObject>
 #include <QMetaMethod>
 #include <QUrlQuery>
-#include <QQueue>
-#include <QMutex>
-#include <QTimer>
 
 #include <algorithm>
 
