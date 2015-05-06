@@ -2,9 +2,8 @@
 
 #include <QRegExp>
 
-static const QRegExp FIRST_LINE_REG_EXP("(.*) (.*) HTTP/1.1\r\n");
+static const QRegExp FIRST_LINE_REG_EXP("(.*) (.*) HTTP/1[.][01]\r\n");
 static const QRegExp HEADER_REG_EXP("((.*): (.*))\r\n");
-static const char END_LINE[] = "\r\n";
 
 namespace Proof {
 
