@@ -544,7 +544,7 @@ void WorkerThread::onReadyRead(QTcpSocket *socket)
     case HttpParser::Result::Error:
         qCDebug(proofNetworkMiscLog) << "Parse error:" << info.parser.error();
         disconnect(info.readyReadConnection);
-        serverD->sendInternalError(socket);
+        sendAnswer(socket, "", "text/plain; charset=utf-8", 400, "Bad Request");
         break;
     case HttpParser::Result::NeedMore:
         break;
