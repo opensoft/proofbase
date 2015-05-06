@@ -8,6 +8,8 @@
 #include <QMetaObject>
 #include <QMetaMethod>
 #include <QUrlQuery>
+#include <QSet>
+#include <QMutex>
 
 #include <algorithm>
 
@@ -99,7 +101,7 @@ private:
     void addMethodToTree(const QString &realMethod);
 
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());
-    void sendInternalError(QTcpSocket *socket);
+    void registerSocket(QTcpSocket *socket);
     void deleteSocket(QTcpSocket *socket, WorkerThread *worker);
 
     AbstractRestServer *q_ptr = 0;
@@ -109,6 +111,8 @@ private:
     QString pathPrefix;
     QThread *serverThread = nullptr;
     QList<WorkerThreadInfo> threadPool;
+    QSet<QTcpSocket *> sockets;
+    QMutex socketsMutex;
     MethodNode methodsTreeRoot;
     int suggestedMaxThreadsCount;
     RestAuthType authType;
@@ -462,21 +466,33 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
 void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
                                            int returnCode, const QString &reason)
 {
-    WorkerThread *worker = qobject_cast<WorkerThread *>(socket->thread());
-    Q_ASSERT(worker);
-
-    worker->sendAnswer(socket, body, contentType, returnCode, reason);
+    WorkerThread *worker = nullptr;
+    {
+        QMutexLocker lock(&socketsMutex);
+        if (sockets.contains(socket))
+            worker = qobject_cast<WorkerThread *>(socket->thread());
+    }
+    if (worker != nullptr)
+        worker->sendAnswer(socket, body, contentType, returnCode, reason);
 }
 
-void AbstractRestServerPrivate::sendInternalError(QTcpSocket *socket)
+void AbstractRestServerPrivate::registerSocket(QTcpSocket *socket)
 {
-    Q_Q(AbstractRestServer);
-    q->sendInternalError(socket);
+    QMutexLocker lock(&socketsMutex);
+    sockets.insert(socket);
 }
 
 void AbstractRestServerPrivate::deleteSocket(QTcpSocket *socket, WorkerThread *worker)
 {
     if (!ProofObject::call(this, &AbstractRestServerPrivate::deleteSocket, socket, worker)) {
+        {
+            QMutexLocker lock(&socketsMutex);
+            auto iter = sockets.find(socket);
+            if (iter != sockets.end())
+                sockets.erase(iter);
+            else
+                return;
+        }
         delete socket;
         auto iter = std::find_if(threadPool.begin(), threadPool.end(), [worker](const WorkerThreadInfo &info) {
             return info.thread == worker;
@@ -504,13 +520,13 @@ void WorkerThread::handleNewConnection(qintptr socketDescriptor)
     }
 
     QTcpSocket *tcpSocket = new QTcpSocket();
+    serverD->registerSocket(tcpSocket);
     SocketInfo info;
     info.readyReadConnection = connect(tcpSocket, &QTcpSocket::readyRead, this, [tcpSocket, this] { onReadyRead(tcpSocket); });
 
     void (QTcpSocket:: *errorSignal)(QAbstractSocket::SocketError) = &QTcpSocket::error;
     info.errorConnection = connect(tcpSocket, errorSignal, this, [tcpSocket, this] {
         qCDebug(proofNetworkMiscLog) << "Socket error:" << tcpSocket->errorString();
-        deleteSocket(tcpSocket);
     });
 
     info.disconnectConnection = connect(tcpSocket, &QTcpSocket::disconnected, this, [tcpSocket, this] { deleteSocket(tcpSocket); });
@@ -564,7 +580,7 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
         return;
     }
 
-    if (socket->state() == QTcpSocket::ConnectedState) {
+    if (sockets.contains(socket) && socket->state() == QTcpSocket::ConnectedState) {
         socket->write(QString("HTTP/1.0 %1 %2\r\n"
                               "Server: proof\r\n"
                               "Content-Type: %3\r\n"
