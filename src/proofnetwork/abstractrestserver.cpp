@@ -580,8 +580,10 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
                       .toUtf8());
 
         socket->write(body);
-        socket->flush();
-        socket->disconnectFromHost();
+        connect(socket, &QTcpSocket::bytesWritten, this, [socket] {
+            if (socket->bytesToWrite() == 0)
+                socket->disconnectFromHost();
+        });
     }
 }
 
