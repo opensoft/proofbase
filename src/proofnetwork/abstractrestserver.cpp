@@ -509,7 +509,8 @@ void WorkerThread::handleNewConnection(qintptr socketDescriptor)
 
     void (QTcpSocket:: *errorSignal)(QAbstractSocket::SocketError) = &QTcpSocket::error;
     info.errorConnection = connect(tcpSocket, errorSignal, this, [tcpSocket, this] {
-        serverD->sendInternalError(tcpSocket);
+        qCDebug(proofNetworkMiscLog) << "Socket error:" << tcpSocket->errorString();
+        deleteSocket(tcpSocket);
     });
 
     info.disconnectConnection = connect(tcpSocket, &QTcpSocket::disconnected, this, [tcpSocket, this] { deleteSocket(tcpSocket); });
