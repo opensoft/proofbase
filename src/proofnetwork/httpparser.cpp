@@ -5,7 +5,7 @@
 static const QRegExp FIRST_LINE_REG_EXP("(.*) (.*) HTTP/1[.][01]\r\n");
 static const QRegExp HEADER_REG_EXP("((.*): (.*))\r\n");
 
-namespace Proof {
+using namespace Proof;
 
 HttpParser::HttpParser()
 {
@@ -127,5 +127,3 @@ HttpParser::Result HttpParser::bodyState(QByteArray &data)
     }
     return result;
 }
-
-} // namespace Proof

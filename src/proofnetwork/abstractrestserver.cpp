@@ -14,8 +14,7 @@
 static const QString REST_METHOD_PREFIX = QString("rest_");
 static const int MIN_THREADS_COUNT = 5;
 
-namespace
-{
+namespace {
 class WorkerThread;
 
 class MethodNode {
@@ -74,7 +73,7 @@ private:
     Proof::AbstractRestServerPrivate * const serverD;
     QHash<QTcpSocket *, SocketInfo> sockets;
 };
-}
+} // anonymous namespace
 
 namespace Proof {
 
