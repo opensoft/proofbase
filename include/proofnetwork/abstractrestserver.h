@@ -50,6 +50,8 @@ protected:
     void incomingConnection(qintptr socketDescriptor) override;
 
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());
+    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers,
+                    int returnCode = 200, const QString &reason = QString());
     void sendNotFound(QTcpSocket *socket, const QString &reason = "Not Found");
     void sendNotAuthorized(QTcpSocket *socket, const QString &reason = "Unauthorized");
     void sendInternalError(QTcpSocket *socket);

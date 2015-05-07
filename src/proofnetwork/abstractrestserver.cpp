@@ -65,7 +65,8 @@ public:
     WorkerThread(Proof::AbstractRestServerPrivate *const _serverD);
     ~WorkerThread();
 
-    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason);
+    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
+                    const QHash<QString, QString> &headers, int returnCode, const QString &reason);
     void handleNewConnection(qintptr socketDescriptor);
     void deleteSocket(QTcpSocket *socket);
     void onReadyRead(QTcpSocket *socket);
@@ -100,7 +101,8 @@ private:
     void fillMethods();
     void addMethodToTree(const QString &realMethod);
 
-    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());
+    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers,
+                    int returnCode = 200, const QString &reason = QString());
     void registerSocket(QTcpSocket *socket);
     void deleteSocket(QTcpSocket *socket, WorkerThread *worker);
 
@@ -313,7 +315,13 @@ void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
 void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
 {
     Q_D(AbstractRestServer);
-    d->sendAnswer(socket, body, contentType, returnCode, reason);
+    d->sendAnswer(socket, body, contentType, QHash<QString, QString>(), returnCode, reason);
+}
+
+void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers, int returnCode, const QString &reason)
+{
+    Q_D(AbstractRestServer);
+    d->sendAnswer(socket, body, contentType, headers, returnCode, reason);
 }
 
 bool AbstractRestServer::checkBasicAuth(const QString &encryptedAuth) const
@@ -463,7 +471,7 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
     }
 }
 
-void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
+void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers,
                                            int returnCode, const QString &reason)
 {
     WorkerThread *worker = nullptr;
@@ -473,7 +481,7 @@ void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray 
             worker = qobject_cast<WorkerThread *>(socket->thread());
     }
     if (worker != nullptr)
-        worker->sendAnswer(socket, body, contentType, returnCode, reason);
+        worker->sendAnswer(socket, body, contentType, headers, returnCode, reason);
 }
 
 void AbstractRestServerPrivate::registerSocket(QTcpSocket *socket)
@@ -557,7 +565,7 @@ void WorkerThread::onReadyRead(QTcpSocket *socket)
     case HttpParser::Result::Error:
         qCDebug(proofNetworkMiscLog) << "Parse error:" << info.parser.error();
         disconnect(info.readyReadConnection);
-        sendAnswer(socket, "", "text/plain; charset=utf-8", 400, "Bad Request");
+        sendAnswer(socket, "", "text/plain; charset=utf-8", QHash<QString, QString>(), 400, "Bad Request");
         break;
     case HttpParser::Result::NeedMore:
         break;
@@ -572,24 +580,35 @@ void WorkerThread::stop()
     }
 }
 
-void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
+void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
+                              const QHash<QString, QString> &headers, int returnCode, const QString &reason)
 {
     if (Proof::ProofObject::call(this,
                                         &WorkerThread::sendAnswer,
-                                        socket, body, contentType, returnCode, reason)) {
+                                        socket, body, contentType, headers, returnCode, reason)) {
         return;
     }
 
     if (sockets.contains(socket) && socket->state() == QTcpSocket::ConnectedState) {
-        socket->write(QString("HTTP/1.0 %1 %2\r\n"
+        QString additionalHeaders;
+        if (!headers.isEmpty()) {
+            QStringList stringified;
+            for (const QString &key : headers.keys())
+                stringified << QString("%1: %2").arg(key, headers[key]);
+            additionalHeaders = stringified.join("\r\n") + "\r\n";
+        }
+
+        socket->write(QString("HTTP/1.1 %1 %2\r\n"
                               "Server: proof\r\n"
                               "Content-Type: %3\r\n"
                               "%4"
+                              "%5"
                               "\r\n")
-                      .arg(returnCode)
-                      .arg(reason)
-                      .arg(contentType)
-                      .arg(!body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString())
+                      .arg(QString::number(returnCode),
+                           reason,
+                           contentType,
+                           !body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString(),
+                           additionalHeaders)
                       .toUtf8());
 
         socket->write(body);
