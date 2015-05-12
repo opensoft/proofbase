@@ -598,8 +598,10 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
             additionalHeaders = stringified.join("\r\n") + "\r\n";
         }
 
+        //TODO: Add support for keep-alive
         socket->write(QString("HTTP/1.1 %1 %2\r\n"
                               "Server: proof\r\n"
+                              "Connection: closed\r\n"
                               "Content-Type: %3\r\n"
                               "%4"
                               "%5"
