@@ -12,3 +12,4 @@ bin*/
 html
 latex
 *.pyc
+*_behave_tests_temp/
