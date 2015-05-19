@@ -15,7 +15,6 @@ public:
     void lock();
     bool tryLock();
     void unlock();
-    void sleep();
 
 private:
     std::atomic_flag m_lock = ATOMIC_FLAG_INIT;

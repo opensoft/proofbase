@@ -14,7 +14,7 @@ SpinLock::SpinLock()
 void SpinLock::lock()
 {
     while (!tryLock())
-        sleep();
+        QThread::msleep(SLEEP_MSECS);
 }
 
 bool SpinLock::tryLock()
@@ -28,11 +28,6 @@ bool SpinLock::tryLock()
 void SpinLock::unlock()
 {
     m_lock.clear(std::memory_order_release);
-}
-
-void SpinLock::sleep()
-{
-    QThread::msleep(SLEEP_MSECS);
 }
 
 } // namespace Proof

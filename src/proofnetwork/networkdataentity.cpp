@@ -27,7 +27,7 @@ void NetworkDataEntity::updateFrom(const Proof::NetworkDataEntitySP &other)
         if (other->d_func()->spinLock.tryLock())
             break;
         d->spinLock.unlock();
-        d->spinLock.sleep();
+        QThread::yieldCurrentThread();
     }
 
     d->updateFrom(other);
