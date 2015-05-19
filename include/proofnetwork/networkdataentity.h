@@ -16,7 +16,7 @@ class PROOF_NETWORK_EXPORT NetworkDataEntity : public ProofObject
 public:
     bool isFetched() const;
 
-    virtual void updateFrom(const Proof::NetworkDataEntitySP &other);
+    void updateFrom(const Proof::NetworkDataEntitySP &other);
     virtual NetworkDataEntityQmlWrapper *toQmlWrapper(QObject *parent = 0) const = 0;
 
 signals:
