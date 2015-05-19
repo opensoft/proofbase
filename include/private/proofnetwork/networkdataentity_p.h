@@ -5,6 +5,7 @@
 #include "proofnetwork/proofnetwork_types.h"
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofcore/objectscache.h"
+#include "proofcore/spinlock_p.h"
 
 #include <QtGlobal>
 
@@ -79,8 +80,11 @@ public:
                                                        std::bind(&Entity::create, key));
     }
 
+    virtual void updateFrom(const Proof::NetworkDataEntitySP &other);
+
     bool isFetched = false;
     NetworkDataEntityWP weakSelf;
+    SpinLock spinLock;
 };
 }
 

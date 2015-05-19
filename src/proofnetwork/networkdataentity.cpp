@@ -17,8 +17,23 @@ bool NetworkDataEntity::isFetched() const
 void NetworkDataEntity::updateFrom(const Proof::NetworkDataEntitySP &other)
 {
     Q_ASSERT(other);
-    if (other->isFetched())
-        setFetched(other->isFetched());
+    Q_D(NetworkDataEntity);
+
+    if (other == d->weakSelf)
+        return;
+
+    forever {
+        d->spinLock.lock();
+        if (other->d_func()->spinLock.tryLock())
+            break;
+        d->spinLock.unlock();
+        d->spinLock.sleep();
+    }
+
+    d->updateFrom(other);
+
+    other->d_func()->spinLock.unlock();
+    d->spinLock.unlock();
 }
 
 void NetworkDataEntity::setFetched(bool fetched)
@@ -30,3 +45,9 @@ void NetworkDataEntity::setFetched(bool fetched)
     }
 }
 
+void NetworkDataEntityPrivate::updateFrom(const NetworkDataEntitySP &other)
+{
+    Q_Q(NetworkDataEntity);
+    if (other->isFetched())
+        q->setFetched(other->isFetched());
+}
