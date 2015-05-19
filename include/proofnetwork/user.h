@@ -18,7 +18,6 @@ public:
     QString fullName() const;
     QString email() const;
 
-    void updateFrom(const NetworkDataEntitySP &other) override;
     UserQmlWrapper *toQmlWrapper(QObject *parent = 0) const override;
 
     static UserSP create(const QString &userName);

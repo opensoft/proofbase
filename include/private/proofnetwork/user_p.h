@@ -9,6 +9,8 @@ class PROOF_NETWORK_EXPORT UserPrivate : public NetworkDataEntityPrivate
 {
     Q_DECLARE_PUBLIC(User)
 public:
+    void updateFrom(const Proof::NetworkDataEntitySP &other) override;
+
     void setUserName(const QString &arg);
     void setFullName(const QString &arg);
     void setEmail(const QString &arg);

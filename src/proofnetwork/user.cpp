@@ -33,17 +33,6 @@ QString User::email() const
     return d->email;
 }
 
-void User::updateFrom(const NetworkDataEntitySP &other)
-{
-    Q_D(User);
-    UserSP castedOther = qSharedPointerCast<User>(other);
-    d->setUserName(castedOther->userName());
-    d->setFullName(castedOther->fullName());
-    d->setEmail(castedOther->email());
-
-    NetworkDataEntity::updateFrom(other);
-}
-
 UserQmlWrapper *User::toQmlWrapper(QObject *parent) const
 {
     Q_D(const User);
@@ -63,6 +52,16 @@ UserSP User::defaultObject()
 {
     static UserSP entity = create("");
     return entity;
+}
+
+void UserPrivate::updateFrom(const NetworkDataEntitySP &other)
+{
+    UserSP castedOther = qSharedPointerCast<User>(other);
+    setUserName(castedOther->userName());
+    setFullName(castedOther->fullName());
+    setEmail(castedOther->email());
+
+    NetworkDataEntityPrivate::updateFrom(other);
 }
 
 void UserPrivate::setUserName(const QString &arg)
