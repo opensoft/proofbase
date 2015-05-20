@@ -25,6 +25,8 @@ public:
     QNetworkReply *get(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery());
     QNetworkReply *post(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery(),
                         const QByteArray &body = "");
+    QNetworkReply *post(qulonglong &operationId, const QString &method, const QUrlQuery &query,
+                        QHttpMultiPart *multiParts);
     QNetworkReply *put(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery(),
                         const QByteArray &body = "");
     QNetworkReply *patch(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery(),

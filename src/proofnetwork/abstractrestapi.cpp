@@ -111,6 +111,21 @@ QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, const QStri
     return reply;
 }
 
+QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts)
+{
+    Q_Q(AbstractRestApi);
+    if (QThread::currentThread() != restClient->thread()) {
+        qCWarning(proofNetworkMiscLog) << "AbstractRestApi::post(): RestApi and RestClient should live in same thread."
+                                       << "\nRestClient object is in thread =" << restClient->thread()
+                                       << "\nRestApi is in thread =" << q->thread()
+                                       << "\nrunning in thread =" << QThread::currentThread();
+        return 0;
+    }
+    QNetworkReply *reply = restClient->post(method, query, multiParts);
+    setupReply(operationId, reply);
+    return reply;
+}
+
 QNetworkReply *AbstractRestApiPrivate::put(qulonglong &operationId, const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
     Q_Q(AbstractRestApi);
