@@ -56,7 +56,9 @@ INSTANTIATE_TEST_CASE_P(
             // Without vendor, without body
             HttpMethodsTestParam(std::bind(&Proof::RestClient::get, _1, "/", QUrlQuery(), QString()),
                                  "", "plain/text"),
-            HttpMethodsTestParam(std::bind(&Proof::RestClient::post, _1, "/", QUrlQuery(), _2, QString()),
+            HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
+                                           (const QString &, const QUrlQuery &, const QByteArray &,
+                                            const QString &)>(&Proof::RestClient::post), _1, "/", QUrlQuery(), _2, QString()),
                                  "", "plain/text"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::put, _1, "/", QUrlQuery(), _2, QString()),
                                  "", "plain/text"),
@@ -67,7 +69,9 @@ INSTANTIATE_TEST_CASE_P(
             // With vendor, without body
             HttpMethodsTestParam(std::bind(&Proof::RestClient::get, _1, "/", QUrlQuery(), "opensoft"),
                                  "", "application/vnd.opensoft"),
-            HttpMethodsTestParam(std::bind(&Proof::RestClient::post, _1, "/", QUrlQuery(), _2, "opensoft"),
+            HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
+                                           (const QString &, const QUrlQuery &, const QByteArray &,
+                                            const QString &)>(&Proof::RestClient::post), _1, "/", QUrlQuery(), _2, "opensoft"),
                                  "", "application/vnd.opensoft"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::put, _1, "/", QUrlQuery(), _2, "opensoft"),
                                  "", "application/vnd.opensoft"),
@@ -76,28 +80,36 @@ INSTANTIATE_TEST_CASE_P(
             HttpMethodsTestParam(std::bind(&Proof::RestClient::deleteResource, _1, "/", QUrlQuery(), "opensoft"),
                                  "", "application/vnd.opensoft"),
             // Without vendor, with json body
-            HttpMethodsTestParam(std::bind(&Proof::RestClient::post, _1, "/", QUrlQuery(), _2, QString()),
+            HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
+                                           (const QString &, const QUrlQuery &, const QByteArray &,
+                                            const QString &)>(&Proof::RestClient::post), _1, "/", QUrlQuery(), _2, QString()),
                                  ":/data/vendor_test_body.json", "application/json"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::put, _1, "/", QUrlQuery(), _2, QString()),
                                  ":/data/vendor_test_body.json", "application/json"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::patch, _1, "/", QUrlQuery(), _2, QString()),
                                  ":/data/vendor_test_body.json", "application/json"),
             // Without vendor, with xml body
-            HttpMethodsTestParam(std::bind(&Proof::RestClient::post, _1, "/", QUrlQuery(), _2, QString()),
+            HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
+                                           (const QString &, const QUrlQuery &, const QByteArray &,
+                                            const QString &)>(&Proof::RestClient::post), _1, "/", QUrlQuery(), _2, QString()),
                                  ":/data/vendor_test_body.xml", "application/xml"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::put, _1, "/", QUrlQuery(), _2, QString()),
                                  ":/data/vendor_test_body.xml", "application/xml"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::patch, _1, "/", QUrlQuery(), _2, QString()),
                                  ":/data/vendor_test_body.xml", "application/xml"),
             // With vendor, with json body
-            HttpMethodsTestParam(std::bind(&Proof::RestClient::post, _1, "/", QUrlQuery(), _2, "opensoft"),
+            HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
+                                           (const QString &, const QUrlQuery &, const QByteArray &,
+                                            const QString &)>(&Proof::RestClient::post), _1, "/", QUrlQuery(), _2, "opensoft"),
                                  ":/data/vendor_test_body.json", "application/vnd.opensoft+json"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::put, _1, "/", QUrlQuery(), _2, "opensoft"),
                                  ":/data/vendor_test_body.json", "application/vnd.opensoft+json"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::patch, _1, "/", QUrlQuery(), _2, "opensoft"),
                                  ":/data/vendor_test_body.json", "application/vnd.opensoft+json"),
             // With vendor, with xml body
-            HttpMethodsTestParam(std::bind(&Proof::RestClient::post, _1, "/", QUrlQuery(), _2, "opensoft"),
+            HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
+                                           (const QString &, const QUrlQuery &, const QByteArray &,
+                                            const QString &)>(&Proof::RestClient::post), _1, "/", QUrlQuery(), _2, "opensoft"),
                                  ":/data/vendor_test_body.xml", "application/vnd.opensoft+xml"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::put, _1, "/", QUrlQuery(), _2, "opensoft"),
                                  ":/data/vendor_test_body.xml", "application/vnd.opensoft+xml"),

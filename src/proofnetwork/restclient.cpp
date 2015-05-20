@@ -14,6 +14,7 @@
 #include <QJsonObject>
 #include <QThread>
 #include <QBuffer>
+#include <QHttpMultiPart>
 
 static const qlonglong DEFAULT_REPLY_TIMEOUT = 60000;
 static const qlonglong OAUTH_TOKEN_REFRESH_TIMEOUT = 1000 * 60 * 60;//1 hour
@@ -38,6 +39,7 @@ public:
     QHash<QString, QNetworkCookie> cookies;
     QTimer *quasiOAuth2TokenCheckTimer = nullptr;
     QDateTime quasiOAuth2TokenExpiredDateTime;
+    bool ignoreSslErrors = false;
 
     QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query,
                                          const QByteArray &body, const QString &vendor);
@@ -51,17 +53,19 @@ public:
 
 using namespace Proof;
 
-RestClient::RestClient()
+RestClient::RestClient(bool ignoreSslErrors)
     : ProofObject(*new RestClientPrivate)
 {
     Q_D(RestClient);
+    d->ignoreSslErrors = ignoreSslErrors;
     d->qnam = new QNetworkAccessManager(this);
     connect(d->qnam, &QNetworkAccessManager::authenticationRequired, this, &RestClient::authenticationRequired);
     connect(d->qnam, &QNetworkAccessManager::encrypted, this, &RestClient::encrypted);
     connect(d->qnam, &QNetworkAccessManager::finished, this, &RestClient::finished);
     connect(d->qnam, &QNetworkAccessManager::networkAccessibleChanged, this, &RestClient::networkAccessibleChanged);
     connect(d->qnam, &QNetworkAccessManager::proxyAuthenticationRequired, this, &RestClient::proxyAuthenticationRequired);
-    connect(d->qnam, &QNetworkAccessManager::sslErrors, this, &RestClient::sslErrors);
+    if (!ignoreSslErrors)
+        connect(d->qnam, &QNetworkAccessManager::sslErrors, this, &RestClient::sslErrors);
 }
 
 QString RestClient::userName() const
@@ -249,6 +253,20 @@ QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, c
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString() << body;
     QNetworkReply *reply = d->qnam->post(d->createNetworkRequest(method, query, body, vendor), body);
+    d->handleReply(reply);
+    return reply;
+}
+
+QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts)
+{
+    Q_D(RestClient);
+    qCDebug(proofNetworkMiscLog) << method << query.toString() << multiParts;
+    QNetworkRequest request = d->createNetworkRequest(method, query, "", "");
+    request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
+                      QString("multipart/form-data; boundary=%1").arg(QString(multiParts->boundary())));
+    QNetworkReply *reply = d->qnam->post(request, multiParts);
+    qCDebug(proofNetworkMiscLog) << request.header(QNetworkRequest::KnownHeaders::ContentTypeHeader).toString();
+    multiParts->setParent(reply);
     d->handleReply(reply);
     return reply;
 }
@@ -453,6 +471,10 @@ void RestClientPrivate::requestQuasiOAuth2token(const QString &method)
 void RestClientPrivate::handleReply(QNetworkReply *reply)
 {
     Q_Q(RestClient);
+
+    if (ignoreSslErrors)
+        reply->ignoreSslErrors();
+
     QTimer *timer = new QTimer();
     timer->setSingleShot(true);
     replyTimeouts.insert(reply, timer);
