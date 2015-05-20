@@ -60,7 +60,10 @@ public:
         taskChain->addSignalWaiter(callee, signal, callback);
         taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
         currentOperationId = (*callee.*method)(args...);
-        taskChain->fireSignalWaiters();
+        if (currentOperationId)
+            taskChain->fireSignalWaiters();
+        else
+            qApp->processEvents();
         return error;
     }
 
@@ -77,7 +80,10 @@ public:
         taskChain->addSignalWaiter(callee, signal, callback);
         taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
         currentOperationId = (*callee.*method)(args...);
-        taskChain->fireSignalWaiters();
+        if (currentOperationId)
+            taskChain->fireSignalWaiters();
+        else
+            qApp->processEvents();
         return error;
     }
 

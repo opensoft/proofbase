@@ -61,7 +61,10 @@ public:
                         if (!callback(args...))
                             return;
                         QObject::disconnect(*connection);
-                        eventLoop->quit();
+                        if (!eventLoop->isRunning())
+                            eventLoop.clear();
+                        else
+                            eventLoop->quit();
                     };
                 *connection = QObject::connect(sender, signal, eventLoop.data(),
                                                slot, Qt::QueuedConnection);
@@ -88,6 +91,7 @@ private:
 
     qlonglong addTaskPrivate(std::future<void> &&taskFuture);
     void addSignalWaiterPrivate(std::function<void (const QSharedPointer<QEventLoop> &)> &&connector);
+    void clearEventLoop();
 
     QScopedPointer<TaskChainPrivate> d_ptr;
 };

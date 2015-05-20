@@ -110,6 +110,14 @@ bool TaskChain::touchTask(qlonglong taskId)
     return waitForTask(taskId, 1);
 }
 
+void TaskChain::clearEventLoop()
+{
+    Q_D(TaskChain);
+    if (!d->signalWaitersEventLoop)
+        return;
+    d->signalWaitersEventLoop.clear();
+}
+
 void TaskChain::run()
 {
     Q_D(TaskChain);
