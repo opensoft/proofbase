@@ -1,6 +1,8 @@
 #include "urlquerybuilder.h"
 #include "urlquerybuilder_p.h"
 
+#include <QTimeZone>
+
 namespace Proof {
 
 UrlQueryBuilder::UrlQueryBuilder()
@@ -51,7 +53,15 @@ void UrlQueryBuilder::setCustomParam(const QString &name, unsigned int value)
 
 void UrlQueryBuilder::setCustomParam(const QString &name, const QDateTime &value)
 {
-    setCustomParam(name, value.toString("yyyy-MM-dd HH:mm:ss"));
+    //ProFIT supports slightly different format from ISO8601 so we need to modify it accordingly
+    QString result = value.toString(Qt::ISODate).replace("T", " ");
+    if (result.lastIndexOf(QRegExp("[-+]\\d\\d:?\\d\\d")) == -1) {
+        if (result.endsWith("Z"))
+            result = result.left(result.length() - 1);
+        result += value.timeZone().displayName(value, QTimeZone::OffsetName).replace("UTC", "");
+    }
+    result.replace(QRegExp("([-+])(\\d\\d):?(\\d\\d)"), "\\1\\2\\3");
+    setCustomParam(name, result);
 }
 
 void UrlQueryBuilder::setCustomParam(const QString &name, bool value)
