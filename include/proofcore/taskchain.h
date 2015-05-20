@@ -50,11 +50,11 @@ public:
                          std::function<bool(Args...)> callback)
     {
         std::function<void (const QSharedPointer<QEventLoop> &)> connector
-            = [sender, signal, callback] (const QSharedPointer<QEventLoop> &eventLoop) {
+            = [sender, signal, callback, this] (const QSharedPointer<QEventLoop> &eventLoop) {
                 auto connection = QSharedPointer<QMetaObject::Connection>::create();
                 auto eventLoopWeak = eventLoop.toWeakRef();
                 std::function<void(Args...)> slot
-                    = [callback, eventLoopWeak, connection] (Args... args) {
+                    = [callback, eventLoopWeak, connection, this] (Args... args) {
                         QSharedPointer<QEventLoop> eventLoop = eventLoopWeak.toStrongRef();
                         if (!eventLoop)
                             return;
@@ -62,7 +62,7 @@ public:
                             return;
                         QObject::disconnect(*connection);
                         if (!eventLoop->isRunning())
-                            eventLoop.clear();
+                            clearEventLoop();
                         else
                             eventLoop->quit();
                     };

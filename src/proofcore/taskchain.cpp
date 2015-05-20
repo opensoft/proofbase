@@ -73,6 +73,7 @@ TaskChainSP TaskChain::createChain()
 void TaskChain::fireSignalWaiters()
 {
     Q_D(TaskChain);
+    qApp->processEvents();
     if (!d->signalWaitersEventLoop)
         return;
     d->signalWaitersEventLoop->exec();
