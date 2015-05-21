@@ -57,7 +57,7 @@ void UrlQueryBuilder::setCustomParam(const QString &name, const QDateTime &value
     QString result = value.toString(Qt::ISODate).replace("T", " ");
     if (result.lastIndexOf(QRegExp("[-+]\\d\\d:?\\d\\d")) == -1) {
         if (result.endsWith("Z"))
-            result = result.left(result.length() - 1);
+            result.chop(1);
         result += value.timeZone().displayName(value, QTimeZone::OffsetName).replace("UTC", "");
     }
     result.replace(QRegExp("([-+])(\\d\\d):?(\\d\\d)"), "\\1\\2\\3");
