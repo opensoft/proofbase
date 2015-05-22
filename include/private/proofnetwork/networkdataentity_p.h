@@ -28,10 +28,8 @@ public:
         EntityKey oldKey = result ? keyFunction(result.data()) : storedKey;
         if (oldKey != key || !result || result == Entity::defaultObject()) {
             result = cache.value(key);
-            if (!result) {
-                result = customEntityCreator();
-                cache.add(key, result);
-            }
+            if (!result)
+                result = cache.add(key, customEntityCreator());
             storedEntity = result.toWeakRef();
             storedKey = keyFunction(result.data());
             if (oldKey != key)
@@ -59,10 +57,8 @@ public:
     {
         if (!storedEntity || storedEntity == Entity::defaultObject() || keyFunction(storedEntity.data()) != key) {
             QSharedPointer<Entity> newEntity = cache.value(key);
-            if (!newEntity) {
-                newEntity = customEntityCreator();
-                cache.add(key, newEntity);
-            }
+            if (!newEntity)
+                newEntity = cache.add(key, customEntityCreator());
             storedEntity = newEntity;
             emit notifySignal(notifySignalEmitter, storedEntity);
         }

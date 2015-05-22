@@ -14,7 +14,6 @@
 /* YOU MUST USE special functions to obtain instance of cache of Proof's exported types.
  * DO NOT USE methods 'instance' for Proof's exported types
  */
-//TODO: make contains+add pair atomic (proper way is something to think about)
 namespace Proof {
 
 template<class Key, class T>
@@ -28,7 +27,7 @@ template<class Key, class T>
 class ObjectsCache
 {
 public:
-    virtual void add(const Key &key, const QSharedPointer<T> &object) = 0;
+    virtual QSharedPointer<T> add(const Key &key, const QSharedPointer<T> &object, bool overwriteCurrent = false) = 0;
     virtual void remove(const Key &key) = 0;
     virtual void clear() = 0;
     virtual bool isEmpty() const = 0;
@@ -58,7 +57,6 @@ protected:
 
 };
 
-
 template<class Key, class T>
 class WeakObjectsCache : public ObjectsCache<Key, T>
 {
@@ -69,16 +67,24 @@ public:
         return inst;
     }
 
-    void add(const Key &key, const QSharedPointer<T> &object) override
+    QSharedPointer<T> add(const Key &key, const QSharedPointer<T> &object, bool overwriteCurrent = false) override
     {
         if (!object || key == Key())
-            return;
+            return object;
         m_cacheLock.lockForWrite();
+        if (!overwriteCurrent && m_cache.contains(key)) {
+            QSharedPointer<T> current = m_cache[key].toStrongRef();
+            if (current) {
+                m_cacheLock.unlock();
+                return current;
+            }
+        }
         m_cache[key] = object.toWeakRef();
         qCDebug(proofCoreCacheLog) << "Adding object" << object.data() << "to"
                                    << this->valueTypeName()
                                    << "weakcache with key" << key;
         m_cacheLock.unlock();
+        return object;
     }
 
     void remove(const Key &key) override
@@ -190,9 +196,10 @@ public:
         static GuaranteedLifeTimeObjectsCache<Key, T> inst;
         return inst;
     }
-    void add(const Key &, const QSharedPointer<T> &) override
+    QSharedPointer<T> add(const Key &, const QSharedPointer<T> &, bool = false) override
     {
         Q_ASSERT_X(false, "GuaranteedLifeTimeObjectsCache", "Should not be called for non-ProofObject values");
+        return QSharedPointer<T>();
     }
     void remove(const Key &) override
     {
@@ -232,12 +239,14 @@ public:
         m_objectsMinLifeTimeInSeconds = secs;
     }
 
-    void add(const Key &key, const QSharedPointer<T> &object) override
+    QSharedPointer<T> add(const Key &key, const QSharedPointer<T> &object, bool overwriteCurrent = false) override
     {
         if (!object || key == Key())
-            return;
-        addObjectToExpirator(qSharedPointerCast<ProofObject>(object));
-        WeakObjectsCache<Key, T>::add(key, object);
+            return object;
+        QSharedPointer<T> result = WeakObjectsCache<Key, T>::add(key, object, overwriteCurrent);
+        if (result == object)
+            addObjectToExpirator(qSharedPointerCast<ProofObject>(object));
+        return result;
     }
 
 protected:
@@ -280,16 +289,22 @@ public:
         return inst;
     }
 
-    void add(const Key &key, const QSharedPointer<T> &object) override
+    QSharedPointer<T> add(const Key &key, const QSharedPointer<T> &object, bool overwriteCurrent = false) override
     {
         if (!object || key == Key())
-            return;
+            return object;
         m_cacheLock.lockForWrite();
+        if (!overwriteCurrent && m_cache.contains(key)) {
+            QSharedPointer<T> current = m_cache[key];
+            m_cacheLock.unlock();
+            return current;
+        }
         m_cache[key] = object;
         qCDebug(proofCoreCacheLog) << "Adding object" << object.data() << "to"
                                    << this->valueTypeName()
                                    << "strongcache with key" << key;
         m_cacheLock.unlock();
+        return object;
     }
 
     void remove(const Key &key) override
