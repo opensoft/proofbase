@@ -178,15 +178,20 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
             || (reply->error() >= 100 && (reply->error() % 100) != 99)) {
         int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if (errorCode != 200 && errorCode != 201) {
+            QString message = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed();
+            QString mimeType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+            if (message.isEmpty() && mimeType == "text/plain")
+                message = reply->readAll().trimmed();
+
             qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
                                          << reply->request().url().path()
                                          << reply->request().url().query()
                                          << ": " << errorCode
-                                         << reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
+                                         << message;
             emit q->errorOccurred(operationId,
                                   RestApiError{RestApiError::Level::ServerError,
                                                errorCode,
-                                               reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString()});
+                                               message});
             cleanupReply(operationId, reply);
         }
     }
