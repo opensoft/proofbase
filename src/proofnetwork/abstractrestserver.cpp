@@ -375,7 +375,8 @@ QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const
 
 QString AbstractRestServerPrivate::findMethod(const QStringList &splittedMethod, QStringList &methodVariableParts)
 {
-    Q_ASSERT(splittedMethod.count() >= 2);
+    if (splittedMethod.count() < 2)
+        return QString();
 
     MethodNode *currentNode = &methodsTreeRoot;
     int i = 0;
