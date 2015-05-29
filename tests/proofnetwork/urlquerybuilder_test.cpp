@@ -31,7 +31,7 @@ TEST(UrlQueryBuilderTest, toUrlQuery)
         {"name5", QString::number(4UL)},
         {"name6", QString::number(-1)},
         {"name7", QString::number(1U)},
-        {"name8", now.toString("yyyy-MM-dd HH:mm:ss") + now.timeZone().displayName(now, QTimeZone::OffsetName).replace("UTC", "").replace(":", "")},
+        {"name8", now.toString("yyyy-MM-dd HH:mm:ss") + now.timeZone().displayName(now, QTimeZone::OffsetName).replace("UTC", "").replace(":", "").replace("+", "%2B")},
         {"name9", "true"},
         {"name10", "value10"},
         {"name11", QString::number(1.2, 'f', 3)}

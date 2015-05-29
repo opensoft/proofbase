@@ -101,8 +101,11 @@ QUrlQuery UrlQueryBuilder::toUrlQuery() const
 {
     Q_D(const UrlQueryBuilder);
     QUrlQuery urlQuery;
-    for (const QString &param : d->params.keys())
-        urlQuery.addQueryItem(param, d->params.value(param));
+    for (const QString &param : d->params.keys()) {
+        QString value = d->params[param];
+        value.replace("+", "%2B");
+        urlQuery.addQueryItem(param, value);
+    }
     return urlQuery;
 }
 
