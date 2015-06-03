@@ -70,7 +70,7 @@ public:
     void setEntity(const QSharedPointer<NetworkDataEntity> &networkDataEntity);
 
 signals:
-    void isFetchedChanged(bool arg);
+    void isFetchedChanged(bool isFetched);
 
 protected:
     NetworkDataEntityQmlWrapper() = delete;

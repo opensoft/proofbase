@@ -23,9 +23,9 @@ public:
     QString email() const;
 
 signals:
-    void userNameChanged(const QString &arg);
-    void fullNameChanged(const QString &arg);
-    void emailChanged(const QString &arg);
+    void userNameChanged(const QString &userName);
+    void fullNameChanged(const QString &fullName);
+    void emailChanged(const QString &email);
 
 protected:
     explicit UserQmlWrapper(const UserSP &user, UserQmlWrapperPrivate &dd, QObject *parent = 0);
