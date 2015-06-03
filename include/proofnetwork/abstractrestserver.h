@@ -24,7 +24,7 @@ public:
 
     QString userName() const;
     QString password() const;
-    //TODO: it is not used now. Remove or make it usable
+    //TODO: 1.0: it is not used now. Remove or make it usable
     QString pathPrefix() const;
     int port() const;
     RestAuthType authType() const;

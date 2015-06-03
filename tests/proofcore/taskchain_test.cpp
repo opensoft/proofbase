@@ -8,8 +8,6 @@
 
 using namespace Proof;
 
-//NOTE: add timeouts when CI will be live
-
 TEST(TaskChainTest, memoryCheckWithNoChainCapture)
 {
     TaskChainWP chainWeak;

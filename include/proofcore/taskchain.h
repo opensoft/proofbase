@@ -43,7 +43,6 @@ public:
         return addTaskPrivate(std::async(std::launch::async, std::forward<Task>(task), std::forward<Args>(args)...));
     }
 
-    //TODO: make it thread local to allow proper tree chain
     template<class SignalSender, class SignalType, class ...Args>
     void addSignalWaiter(SignalSender *sender,
                          SignalType signal,
