@@ -22,7 +22,7 @@ public:
     static typename std::enable_if<std::is_base_of<NetworkDataEntity, Argument>::value, bool>::type
     isValidAndNotDefault(const QSharedPointer<Argument> &sp)
     {
-        return !sp.isNull() && (sp == Argument::defaultObject());
+        return sp && (sp != Argument::defaultObject());
     }
 
     void updateFrom(const Proof::NetworkDataEntitySP &other);
