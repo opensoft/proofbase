@@ -80,10 +80,15 @@ QString Settings::filePath()
 
 QString SettingsPrivate::filePath()
 {
-#ifdef Q_OS_WIN
+#if defined Q_OS_WIN
     //Windows already gives us org/app as part of conf location
     QString configPath = QString("%1/%2.conf")
             .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
+            .arg(qApp->applicationName());
+#elif defined Q_OS_ANDROID
+    QString configPath = QString("%1/%2/%3.conf")
+            .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
+            .arg(qApp->organizationName())
             .arg(qApp->applicationName());
 #else
     QString configPath = QString("%1/%2/%3.conf")
