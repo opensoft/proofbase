@@ -8,4 +8,7 @@ win32 {
     LIBS *= -lProofCore
 }
 
-android:ANDROID_EXTRA_LIBS *= $$(PROOF_PATH)/lib/libProofCore.so
+android{
+    ANDROID_EXTRA_LIBS *= $$(PROOF_PATH)/lib/libProofCore.so
+    QT *= androidextras
+}
