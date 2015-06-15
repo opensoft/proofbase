@@ -13,6 +13,7 @@
 #include <sys/ucontext.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <ctime>
 #endif
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
@@ -25,7 +26,9 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
         return;
     handlerAlreadyCalled = true;
 
-    int crashFileDescriptor = open("/tmp/last_proof_crash", O_WRONLY | O_TRUNC | O_CREAT, 0644);
+    alarm(10);
+    QString crashFileName = QString("/tmp/proof_crash_%1").arg(time(0));
+    int crashFileDescriptor = open(crashFileName.toLatin1().constData(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
     ucontext_t *uc = (ucontext_t *)context;
 # ifdef Q_OS_LINUX
     void *caller = (void *) uc->uc_mcontext.fpregs->rip;
@@ -34,21 +37,22 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
 # endif
 
     QString toLog = "#######################################";
-    qCCritical(proofCoreCrashLog) << toLog;
-    qCCritical(proofCoreCrashLog) << "Crash file /tmp/last_proof_crash opened with fd" << crashFileDescriptor;
     if (crashFileDescriptor != -1) {
         write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
         write(crashFileDescriptor, "\n", 1);
+        write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
+        write(STDOUT_FILENO, "\n", 1);
     }
     toLog = QString("signal %1 (%2), address is 0x%3 from 0x%4")
             .arg(sig)
             .arg(strsignal(sig))
             .arg((unsigned long long) info->si_addr, 0, 16)
             .arg((unsigned long long) caller, 0, 16);
-    qCCritical(proofCoreCrashLog) << toLog;
     if (crashFileDescriptor != -1) {
         write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
         write(crashFileDescriptor, "\n", 1);
+        write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
+        write(STDOUT_FILENO, "\n", 1);
     }
 
     void *backtraceInfo[BACKTRACE_MAX_SIZE];
@@ -76,10 +80,11 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
             toLog = QString("[trace] #%1) %2")
                     .arg(i)
                     .arg(backtraceArray[i]);
-            qCCritical(proofCoreCrashLog) << toLog;
             if (crashFileDescriptor != -1) {
                 write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
                 write(crashFileDescriptor, "\n", 1);
+                write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
+                write(STDOUT_FILENO, "\n", 1);
             }
         } else {
 # ifdef Q_OS_LINUX
@@ -103,10 +108,11 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
                     .arg(re.cap(4).trimmed()) //offset
                     .arg(re.cap(2).trimmed()); //address
 #endif
-            qCCritical(proofCoreCrashLog) << toLog;
             if (crashFileDescriptor != -1) {
                 write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
                 write(crashFileDescriptor, "\n", 1);
+                write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
+                write(STDOUT_FILENO, "\n", 1);
             }
             free(name);
         }
