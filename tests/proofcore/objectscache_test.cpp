@@ -13,10 +13,9 @@ class DummyData : public ProofObject
 {
 public:
     explicit DummyData(int _value) : ProofObject(0), value(_value) {}
-    static DummyDataSP defaultObject()
+    static DummyDataSP create()
     {
-        static DummyDataSP result = DummyDataSP::create(0);
-        return result;
+        return DummyDataSP::create(0);
     }
     int value;
 };

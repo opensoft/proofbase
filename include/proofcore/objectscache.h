@@ -139,7 +139,7 @@ public:
             removeFromCache = !foundValue;
         }
         if (!foundValue && key == Key())
-            foundValue = T::defaultObject();
+            foundValue = T::create();
         if (removeFromCache) {
             m_cacheLock.lockForWrite();
             if (m_cache.contains(key) && !m_cache[key])
@@ -354,7 +354,7 @@ public:
                 foundValue = GuaranteedLifeTimeObjectsCache<Key, T>::instance().value(key, false);
         }
         if (!foundValue && key == Key())
-            foundValue = T::defaultObject();
+            foundValue = T::create();
         qCDebug(proofCoreCacheLog) << "Returning value"
                                    << foundValue.data()
                                    << "from"

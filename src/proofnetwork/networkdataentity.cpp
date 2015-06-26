@@ -17,22 +17,25 @@ bool NetworkDataEntity::isFetched() const
 void NetworkDataEntity::updateFrom(const Proof::NetworkDataEntitySP &other)
 {
     Q_ASSERT(other);
-    Q_D(NetworkDataEntity);
 
-    if (other == d->weakSelf)
+    const NetworkDataEntity *constOther = other.data();
+    if (constOther == this)
         return;
+
+    Q_D(NetworkDataEntity);
 
     forever {
         d->spinLock.lock();
-        if (other->d_func()->spinLock.tryLock())
+        if (constOther->d_func()->spinLock.tryLock())
             break;
         d->spinLock.unlock();
         QThread::yieldCurrentThread();
     }
 
     d->updateFrom(other);
+    d->setDirty(constOther->d_func()->isDirtyHimself());
 
-    other->d_func()->spinLock.unlock();
+    constOther->d_func()->spinLock.unlock();
     d->spinLock.unlock();
 }
 
@@ -43,6 +46,12 @@ void NetworkDataEntity::setFetched(bool fetched)
         d->isFetched = fetched;
         emit isFetchedChanged(fetched);
     }
+}
+
+void NetworkDataEntity::makeWeakSelf(const NetworkDataEntitySP &entity)
+{
+    const NetworkDataEntity *constEntity = entity.data();
+    constEntity->d_func()->weakSelf = entity;
 }
 
 void NetworkDataEntityPrivate::updateFrom(const NetworkDataEntitySP &other)

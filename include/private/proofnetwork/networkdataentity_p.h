@@ -26,7 +26,7 @@ public:
     {
         QSharedPointer<Entity> result = storedEntity.toStrongRef();
         EntityKey oldKey = result ? keyFunction(result.data()) : storedKey;
-        if (oldKey != key || !result || result == Entity::defaultObject()) {
+        if (oldKey != key || !result || !result->isDirty()) {
             result = cache.value(key);
             if (!result)
                 result = cache.add(key, customEntityCreator());
@@ -55,7 +55,7 @@ public:
                                              T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal,
                                              std::function<QSharedPointer<Entity>()> &&customEntityCreator)
     {
-        if (!storedEntity || storedEntity == Entity::defaultObject() || keyFunction(storedEntity.data()) != key) {
+        if (!storedEntity || !storedEntity->isDirty() || keyFunction(storedEntity.data()) != key) {
             QSharedPointer<Entity> newEntity = cache.value(key);
             if (!newEntity)
                 newEntity = cache.add(key, customEntityCreator());
@@ -79,8 +79,8 @@ public:
     virtual void updateFrom(const Proof::NetworkDataEntitySP &other);
 
     bool isFetched = false;
-    NetworkDataEntityWP weakSelf;
-    SpinLock spinLock;
+    mutable NetworkDataEntityWP weakSelf;
+    mutable SpinLock spinLock;
 };
 }
 

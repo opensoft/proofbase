@@ -2,6 +2,7 @@
 #define PROOFOBJECT_H
 
 #include "proofcore/proofcore_global.h"
+#include "proofcore/proofobjectprivatepointer.h"
 
 #include <QObject>
 #include <QThread>
@@ -29,6 +30,8 @@ public:
     explicit ProofObject(QObject *parent);
     ~ProofObject();
 
+    bool isDirty() const;
+
     template <class Callee, class Result, class MethodCallee, class... MethodArgs, class... Args>
     static typename std::enable_if<std::is_base_of<MethodCallee, Callee>::value && sizeof...(MethodArgs) == sizeof...(Args), bool>::type
     call(Callee *callee, Result (MethodCallee:: *method)(MethodArgs...), Proof::Call callType, Result &result, Args... args)
@@ -55,12 +58,12 @@ signals:
 
 protected:
     ProofObject(ProofObjectPrivate &dd, QObject *parent = 0);
-    QScopedPointer<ProofObjectPrivate> d_ptr;
+    ProofObjectPrivatePointer d_ptr;
 
 private:
     ProofObject() = delete;
 
-    qulonglong nextQueuedCallId();
+    qulonglong nextQueuedCallId() const;
 
     template <class Callee, class ResultPtr, class Method, class... Args>
     static bool callPrivate(Callee *callee, Method method, Proof::Call callType, ResultPtr resultPtr, Args... args)
