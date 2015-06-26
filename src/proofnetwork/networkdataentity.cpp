@@ -33,7 +33,7 @@ void NetworkDataEntity::updateFrom(const Proof::NetworkDataEntitySP &other)
     }
 
     d->updateFrom(other);
-    d->setDirty(constOther->d_func()->isDirtyHimself());
+    d->setDirty(constOther->d_func()->isDirtyItself());
 
     constOther->d_func()->spinLock.unlock();
     d->spinLock.unlock();

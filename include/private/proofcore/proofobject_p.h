@@ -19,7 +19,7 @@ public:
     virtual ~ProofObjectPrivate() {}
 
     bool isDirty() const;
-    bool isDirtyHimself() const;
+    bool isDirtyItself() const;
     void setDirty(bool arg);
 
     template<class... Childs>

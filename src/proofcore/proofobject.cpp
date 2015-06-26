@@ -39,7 +39,7 @@ bool ProofObjectPrivate::isDirty() const
                                     [](const std::function<bool ()> &func) { return func(); });
 }
 
-bool ProofObjectPrivate::isDirtyHimself() const
+bool ProofObjectPrivate::isDirtyItself() const
 {
     return m_isDirty;
 }
