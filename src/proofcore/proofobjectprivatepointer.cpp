@@ -14,13 +14,13 @@ ProofObjectPrivatePointer::~ProofObjectPrivatePointer()
     delete m_pointer;
 }
 
-void *ProofObjectPrivatePointer::data()
+ProofObjectPrivate *ProofObjectPrivatePointer::data()
 {
     m_pointer->setDirty(true);
     return m_pointer;
 }
 
-const void *ProofObjectPrivatePointer::data() const
+const ProofObjectPrivate *ProofObjectPrivatePointer::data() const
 {
     return m_pointer;
 }

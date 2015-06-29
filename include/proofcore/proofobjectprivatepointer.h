@@ -14,8 +14,8 @@ public:
     ProofObjectPrivatePointer(ProofObjectPrivate *d);
     ~ProofObjectPrivatePointer();
 
-    void *data();
-    const void *data() const;
+    ProofObjectPrivate *data();
+    const ProofObjectPrivate *data() const;
 
 private:
     ProofObjectPrivate *m_pointer;

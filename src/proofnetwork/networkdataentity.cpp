@@ -48,7 +48,7 @@ void NetworkDataEntity::setFetched(bool fetched)
     }
 }
 
-void NetworkDataEntity::makeWeakSelf(const NetworkDataEntitySP &entity)
+void NetworkDataEntity::initSelfWeakPtr(const NetworkDataEntitySP &entity)
 {
     const NetworkDataEntity *constEntity = entity.data();
     constEntity->d_func()->weakSelf = entity;

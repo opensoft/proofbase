@@ -22,11 +22,11 @@ public:
     bool isDirtyItself() const;
     void setDirty(bool arg);
 
-    template<class... Childs>
-    void registerChilds(const Childs &... childs)
+    template<class... Children>
+    void registerChildren(const Children &... children)
     {
-        std::tuple<const Childs *...> pointerToChilds(&childs...);
-        m_childsIsDirty << [pointerToChilds, this] { return isTupleDirty<0>(pointerToChilds); };
+        std::tuple<const Children *...> childrenPointers(&children...);
+        childrenDirtyCheckers << ([childrenPointers, this] { return isDirty<0>(childrenPointers); });
     }
 
     ProofObject *q_ptr = 0;
@@ -38,35 +38,35 @@ private:
     ProofObjectPrivate &operator=(const ProofObjectPrivate &&other) = delete;
 
     template<class T>
-    bool isChildDirty(const QSharedPointer<T> &child)
+    bool isDirty(const QSharedPointer<T> &child)
     {
         return child.data()->isDirty();
     }
 
     template<class Container>
-    bool isChildDirty(const Container &container)
+    bool isDirty(const Container &container)
     {
         return std::any_of(container.begin(), container.end(),
-                           [this](decltype(*container.begin()) child) { return isChildDirty(child); });
+                           [this](decltype(*container.begin()) child) { return isDirty(child); });
     }
 
     template<std::size_t N, class Tuple>
     typename std::enable_if<(N != std::tuple_size<Tuple>::value - 1), bool>::type
-    isTupleDirty(const Tuple &tuple)
+    isDirty(const Tuple &tuple)
     {
-        return isChildDirty(*std::get<N>(tuple)) || isTupleDirty<N + 1>(tuple);
+        return isDirty(*std::get<N>(tuple)) || isDirty<N + 1>(tuple);
     }
 
     template<std::size_t N, class Tuple>
     typename std::enable_if<(N == std::tuple_size<Tuple>::value - 1), bool>::type
-    isTupleDirty(const Tuple &tuple)
+    isDirty(const Tuple &tuple)
     {
-        return isChildDirty(*std::get<N>(tuple));
+        return isDirty(*std::get<N>(tuple));
     }
 
-    QList<std::function<bool ()>> m_childsIsDirty;
+    QList<std::function<bool ()>> childrenDirtyCheckers;
     mutable QAtomicInteger<qulonglong> nextDelayedCallId {0};
-    bool m_isDirty = false;
+    bool dirtyFlag = false;
 };
 }
 

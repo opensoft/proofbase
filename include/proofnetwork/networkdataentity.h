@@ -36,7 +36,7 @@ protected:
     NetworkDataEntity(NetworkDataEntityPrivate &dd, QObject *parent = 0);
     void setFetched(bool fetched);
 
-    static void makeWeakSelf(const NetworkDataEntitySP &entity);
+    static void initSelfWeakPtr(const NetworkDataEntitySP &entity);
 };
 }
 

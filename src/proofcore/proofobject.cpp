@@ -14,16 +14,16 @@ ProofObject::~ProofObject()
 {
 }
 
-bool ProofObject::isDirty() const
-{
-    Q_D(const ProofObject);
-    return d->m_isDirty;
-}
-
 ProofObject::ProofObject(ProofObjectPrivate &dd, QObject *parent)
     : QObject(parent), d_ptr(&dd)
 {
     dd.q_ptr = this;
+}
+
+bool ProofObject::isDirty() const
+{
+    Q_D(const ProofObject);
+    return d->dirtyFlag;
 }
 
 qulonglong ProofObject::nextQueuedCallId() const
@@ -35,16 +35,16 @@ qulonglong ProofObject::nextQueuedCallId() const
 
 bool ProofObjectPrivate::isDirty() const
 {
-    return m_isDirty || std::any_of(m_childsIsDirty.begin(), m_childsIsDirty.end(),
+    return dirtyFlag || std::any_of(childrenDirtyCheckers.begin(), childrenDirtyCheckers.end(),
                                     [](const std::function<bool ()> &func) { return func(); });
 }
 
 bool ProofObjectPrivate::isDirtyItself() const
 {
-    return m_isDirty;
+    return dirtyFlag;
 }
 
 void ProofObjectPrivate::setDirty(bool arg)
 {
-    m_isDirty = arg;
+    dirtyFlag = arg;
 }

@@ -44,7 +44,7 @@ UserQmlWrapper *User::toQmlWrapper(QObject *parent) const
 UserSP User::create(const QString &userName)
 {
     UserSP result(new User(userName));
-    result->d_func()->weakSelf = result.toWeakRef();
+    initSelfWeakPtr(result);
     return result;
 }
 
