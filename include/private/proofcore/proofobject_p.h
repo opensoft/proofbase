@@ -26,7 +26,7 @@ public:
     void registerChildren(const Children &... children)
     {
         std::tuple<const Children *...> childrenPointers(&children...);
-        childrenDirtyCheckers << ([childrenPointers, this] { return isDirty<0>(childrenPointers); });
+        childrenDirtyCheckers << [childrenPointers, this]() { return isDirty<0>(childrenPointers); };
     }
 
     ProofObject *q_ptr = 0;
