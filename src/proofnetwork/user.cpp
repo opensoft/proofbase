@@ -4,15 +4,13 @@
 using namespace Proof;
 
 User::User(const QString &userName)
-    : User(userName, *new UserPrivate)
+    : User(*new UserPrivate(userName))
 {
 }
 
-User::User(const QString &userName, Proof::UserPrivate &dd, QObject *parent)
+User::User(Proof::UserPrivate &dd, QObject *parent)
     : NetworkDataEntity(dd, parent)
 {
-    Q_D(User);
-    d->setUserName(userName);
 }
 
 QString User::userName() const
@@ -48,10 +46,10 @@ UserSP User::create(const QString &userName)
     return result;
 }
 
-UserSP User::defaultObject()
+UserPrivate::UserPrivate(const QString &userName)
+    : userName(userName)
 {
-    static UserSP entity = create("");
-    return entity;
+    setDirty(!userName.isEmpty());
 }
 
 void UserPrivate::updateFrom(const NetworkDataEntitySP &other)

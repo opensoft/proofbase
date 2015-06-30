@@ -30,7 +30,7 @@ signals:
 
 protected:
     explicit User(const QString &userName);
-    User(const QString &userName, UserPrivate &dd, QObject *parent = 0);
+    User(UserPrivate &dd, QObject *parent = 0);
 };
 }
 
