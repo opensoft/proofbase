@@ -522,23 +522,20 @@ WorkerThread::~WorkerThread()
 
 void WorkerThread::handleNewConnection(qintptr socketDescriptor)
 {
-    if (Proof::ProofObject::call(this,
-                                        &WorkerThread::handleNewConnection,
-                                        socketDescriptor)) {
+    if (Proof::ProofObject::call(this, &WorkerThread::handleNewConnection, socketDescriptor))
         return;
-    }
 
     QTcpSocket *tcpSocket = new QTcpSocket();
     serverD->registerSocket(tcpSocket);
     SocketInfo info;
-    info.readyReadConnection = connect(tcpSocket, &QTcpSocket::readyRead, this, [tcpSocket, this] { onReadyRead(tcpSocket); });
+    info.readyReadConnection = connect(tcpSocket, &QTcpSocket::readyRead, this, [tcpSocket, this] { onReadyRead(tcpSocket); }, Qt::QueuedConnection);
 
     void (QTcpSocket:: *errorSignal)(QAbstractSocket::SocketError) = &QTcpSocket::error;
     info.errorConnection = connect(tcpSocket, errorSignal, this, [tcpSocket, this] {
         qCDebug(proofNetworkMiscLog) << "Socket error:" << tcpSocket->errorString();
-    });
+    }, Qt::QueuedConnection);
 
-    info.disconnectConnection = connect(tcpSocket, &QTcpSocket::disconnected, this, [tcpSocket, this] { deleteSocket(tcpSocket); });
+    info.disconnectConnection = connect(tcpSocket, &QTcpSocket::disconnected, this, [tcpSocket, this] { deleteSocket(tcpSocket); }, Qt::QueuedConnection);
 
     if (!tcpSocket->setSocketDescriptor(socketDescriptor)) {
         qCDebug(proofNetworkMiscLog) << "Can't create socket, error:" << tcpSocket->errorString();
