@@ -4,6 +4,7 @@
 #include "logs.h"
 #include "settings.h"
 #include "settingsgroup.h"
+#include "proofglobal.h"
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
 #include <unistd.h>
@@ -159,10 +160,19 @@ void Proof::CoreApplicationPrivate::initApp()
     }
 #endif
 
-    SettingsGroup *logGroup = settings->group("logs", Settings::NotFoundPolicy::Add);
-    Logs::setConsoleOutputEnabled(!daemonized && logGroup->value("console", true, Settings::NotFoundPolicy::Add).toBool());
-    Logs::setLogsStoragePath(logGroup->value("custom_storage_path", "", Settings::NotFoundPolicy::Add).toString());
-    QString logFileName = logGroup->value("filename", q_ptr->applicationName(), Settings::NotFoundPolicy::Add).toString();
+    bool consoleOutputEnabled = true;
+    QString logsStoragePath = "";
+    QString logFileName = q_ptr->applicationName();
+
+    if (Proof::proofUsesSettings()) {
+        SettingsGroup *logGroup = settings->group("logs", Settings::NotFoundPolicy::Add);
+        consoleOutputEnabled = !daemonized && logGroup->value("console", consoleOutputEnabled, Settings::NotFoundPolicy::Add).toBool();
+        logsStoragePath = logGroup->value("custom_storage_path", logsStoragePath, Settings::NotFoundPolicy::Add).toString();
+        logFileName = logGroup->value("filename", logFileName, Settings::NotFoundPolicy::Add).toString();
+    }
+
+    Logs::setConsoleOutputEnabled(consoleOutputEnabled);
+    Logs::setLogsStoragePath(logsStoragePath);
     if (!logFileName.isEmpty())
         Logs::installFileHandler(logFileName);
 

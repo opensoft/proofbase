@@ -10,6 +10,9 @@ PROOF_CORE_EXPORT int proofVersionMajor();
 PROOF_CORE_EXPORT int proofVersionYear();
 PROOF_CORE_EXPORT int proofVersionMonth();
 PROOF_CORE_EXPORT int proofVersionDay();
+
+PROOF_CORE_EXPORT void setProofUsesSettings(bool value);
+PROOF_CORE_EXPORT bool proofUsesSettings();
 }
 
 #endif // PROOFGLOBAL_H

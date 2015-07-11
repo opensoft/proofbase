@@ -1,6 +1,7 @@
 #include "proofglobal.h"
 
 namespace Proof {
+static bool proofUsesSettingsValue = true;
 QString proofVersion() {
     return PROOF_VERSION;
 }
@@ -20,4 +21,15 @@ int proofVersionMonth() {
 int proofVersionDay() {
     return PROOF_VERSION_DAY;
 }
+
+void setProofUsesSettings(bool value)
+{
+    proofUsesSettingsValue = value;
+}
+
+bool proofUsesSettings()
+{
+    return proofUsesSettingsValue;
+}
+
 }
