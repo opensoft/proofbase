@@ -314,8 +314,10 @@ void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
 
 void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
 {
+    qCDebug(proofNetworkMiscLog) << 1;
     Q_D(AbstractRestServer);
     d->sendAnswer(socket, body, contentType, QHash<QString, QString>(), returnCode, reason);
+    qCDebug(proofNetworkMiscLog) << 2;
 }
 
 void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers, int returnCode, const QString &reason)
@@ -475,14 +477,21 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
 void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers,
                                            int returnCode, const QString &reason)
 {
+    qCDebug(proofNetworkMiscLog) << 1;
     WorkerThread *worker = nullptr;
+    qCDebug(proofNetworkMiscLog) << 2;
     {
+        qCDebug(proofNetworkMiscLog) << 3;
         QMutexLocker lock(&socketsMutex);
+        qCDebug(proofNetworkMiscLog) << 4;
         if (sockets.contains(socket))
             worker = qobject_cast<WorkerThread *>(socket->thread());
+        qCDebug(proofNetworkMiscLog) << 5;
     }
+    qCDebug(proofNetworkMiscLog) << 6;
     if (worker != nullptr)
         worker->sendAnswer(socket, body, contentType, headers, returnCode, reason);
+    qCDebug(proofNetworkMiscLog) << 7;
 }
 
 void AbstractRestServerPrivate::registerSocket(QTcpSocket *socket)
@@ -581,13 +590,16 @@ void WorkerThread::stop()
 void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
                               const QHash<QString, QString> &headers, int returnCode, const QString &reason)
 {
+    qCDebug(proofNetworkMiscLog) << 1;
     if (Proof::ProofObject::call(this,
                                         &WorkerThread::sendAnswer,
                                         socket, body, contentType, headers, returnCode, reason)) {
         return;
     }
 
+    qCDebug(proofNetworkMiscLog) << 2;
     if (sockets.contains(socket) && socket->state() == QTcpSocket::ConnectedState) {
+        qCDebug(proofNetworkMiscLog) << 3;
         QString additionalHeaders;
         if (!headers.isEmpty()) {
             QStringList stringified;
@@ -596,6 +608,7 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
             additionalHeaders = stringified.join("\r\n") + "\r\n";
         }
 
+        qCDebug(proofNetworkMiscLog) << 4;
         //TODO: Add support for keep-alive
         socket->write(QString("HTTP/1.1 %1 %2\r\n"
                               "Server: proof\r\n"
@@ -610,12 +623,16 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
                            !body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString(),
                            additionalHeaders)
                       .toUtf8());
+        qCDebug(proofNetworkMiscLog) << 5;
 
         socket->write(body);
+        qCDebug(proofNetworkMiscLog) << 6;
         connect(socket, &QTcpSocket::bytesWritten, this, [socket] {
+            qCDebug(proofNetworkMiscLog) << 6.5 << socket->bytesToWrite();
             if (socket->bytesToWrite() == 0)
                 socket->disconnectFromHost();
         });
+        qCDebug(proofNetworkMiscLog) << 7;
     }
 }
 
