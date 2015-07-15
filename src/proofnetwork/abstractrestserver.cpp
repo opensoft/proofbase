@@ -445,6 +445,8 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
         queryParams = QUrlQuery(splittedByParamsMethod.at(1));
 
     QString methodName = findMethod(makeMethodName(type, splittedByParamsMethod.at(0)), methodVariableParts);
+    qCDebug(proofNetworkMiscLog) << "Request for" << method << "associated with" << methodName << "at socket" << socket;
+
     if (!methodName.isEmpty()) {
         bool isAuthenticationSuccessful = true;
         if (authType == RestAuthType::Basic) {
@@ -475,6 +477,7 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
 void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers,
                                            int returnCode, const QString &reason)
 {
+    qCDebug(proofNetworkMiscLog) << "Replying" << returnCode << ":" << reason << "at socket" << socket;
     WorkerThread *worker = nullptr;
     {
         QMutexLocker lock(&socketsMutex);
@@ -543,6 +546,7 @@ void WorkerThread::handleNewConnection(qintptr socketDescriptor)
         return;
     }
     sockets[tcpSocket] = info;
+    qCDebug(proofNetworkMiscLog) << "Handling socket descriptor" << socketDescriptor << "with socket" << tcpSocket;
 }
 
 void WorkerThread::deleteSocket(QTcpSocket *socket)
@@ -582,8 +586,8 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
                               const QHash<QString, QString> &headers, int returnCode, const QString &reason)
 {
     if (Proof::ProofObject::call(this,
-                                        &WorkerThread::sendAnswer,
-                                        socket, body, contentType, headers, returnCode, reason)) {
+                                 &WorkerThread::sendAnswer,
+                                 socket, body, contentType, headers, returnCode, reason)) {
         return;
     }
 
