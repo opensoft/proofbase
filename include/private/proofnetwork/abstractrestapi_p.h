@@ -54,7 +54,7 @@ public:
     template<class EntityKey, class Entity>
     QSharedPointer<Entity> parseEntity(QNetworkReply *reply, ObjectsCache<EntityKey, Entity> &cache,
                                        std::function<EntityKey(Entity *)> &&cacheKey, qulonglong operationId,
-                                       QString *errorMessage = 0)
+                                       QString *errorMessage = nullptr)
     {
         QJsonObject obj = parseEntityObject<Entity>(reply, operationId, errorMessage);
         if (obj.isEmpty())
@@ -63,7 +63,7 @@ public:
     }
 
     template<class Entity>
-    QSharedPointer<Entity> parseEntity(QNetworkReply *reply, qulonglong operationId, QString *errorMessage = 0)
+    QSharedPointer<Entity> parseEntity(QNetworkReply *reply, qulonglong operationId, QString *errorMessage = nullptr)
     {
         QJsonObject obj = parseEntityObject<Entity>(reply, operationId, errorMessage);
         if (obj.isEmpty())
@@ -72,9 +72,68 @@ public:
     }
 
     template<class EntityKey, class Entity>
+    bool parseEntitiesList(QList<QSharedPointer<Entity>> &entityList, QNetworkReply *reply,
+                           ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&cacheKey,
+                           qulonglong operationId, QString *errorMessage = nullptr)
+    {
+        Q_Q(AbstractRestApi);
+        bool result = true;
+        QByteArray json = reply->readAll();
+        QJsonParseError jsonError;
+        QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
+        if (jsonError.error != QJsonParseError::NoError) {
+            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
+            if (errorMessage) {
+                jsonErrorString.prepend(*errorMessage);
+                *errorMessage = jsonErrorString;
+            }
+            emit q->errorOccurred(operationId,
+                                  RestApiError{RestApiError::Level::JsonParseError,
+                                               jsonError.error,
+                                               jsonErrorString});
+            result = false;
+        } else if (!doc.isArray()) {
+            if (doc.isObject()) {
+                QJsonObject jsonObject = doc.object();
+                for (const QString &attribute : serverErrorAttributes) {
+                    if (!jsonObject.value(attribute).isUndefined()) {
+                        QString jsonErrorMessage = jsonObject.value(attribute).toString();
+                        if (errorMessage) {
+                            jsonErrorMessage.prepend(*errorMessage);
+                            *errorMessage = jsonErrorMessage;
+                        }
+                        emit q->errorOccurred(operationId,
+                                              RestApiError{RestApiError::Level::JsonServerError,
+                                                           0,
+                                                           jsonErrorMessage});
+                        return false;
+                    }
+                }
+            }
+            QString invalidJson = "Can't create list of entities from server response";
+            if (errorMessage) {
+                invalidJson.prepend(*errorMessage);
+                *errorMessage = invalidJson;
+            }
+            emit q->errorOccurred(operationId,
+                                  RestApiError{RestApiError::Level::JsonDataError, 0, invalidJson});
+            result = false;
+        } else {
+            QJsonArray jsonTypeList = doc.array();
+            for (const QJsonValue &value : jsonTypeList) {
+                auto entity = parseEntity<EntityKey, Entity>(value.toObject(), cache, std::move(cacheKey), operationId);
+                if (entity)
+                    entityList.append(entity);
+            }
+            result = true;
+        }
+        return result;
+    }
+
+    template<class EntityKey, class Entity>
     QSharedPointer<Entity> parseEntity(const QJsonObject &jsonObject, ObjectsCache<EntityKey, Entity> &cache,
                                        std::function<EntityKey(Entity *)> &&cacheKey, qulonglong operationId,
-                                       QString *errorMessage = 0)
+                                       QString *errorMessage = nullptr)
     {
         QSharedPointer<Entity> entity = parseEntity<Entity>(jsonObject, operationId, errorMessage);
         if (entity) {
@@ -94,7 +153,7 @@ public:
     }
 
     template<class Entity>
-    QSharedPointer<Entity> parseEntity(const QJsonObject &jsonObject, qulonglong operationId, QString *errorMessage = 0)
+    QSharedPointer<Entity> parseEntity(const QJsonObject &jsonObject, qulonglong operationId, QString *errorMessage = nullptr)
     {
         Q_Q(AbstractRestApi);
         QSharedPointer<Entity> entity = Entity::fromJson(jsonObject);
