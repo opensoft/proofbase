@@ -50,6 +50,7 @@ public:
 
     void notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error);
 
+    //TODO: 1.0: add error message transmission from DTO
     template<class EntityKey, class Entity>
     QSharedPointer<Entity> parseEntity(QNetworkReply *reply, ObjectsCache<EntityKey, Entity> &cache,
                                        std::function<EntityKey(Entity *)> &&cacheKey, qulonglong operationId,
