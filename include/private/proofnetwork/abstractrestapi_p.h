@@ -17,8 +17,6 @@
 #include <QNetworkReply>
 
 #include <functional>
-
-
 #include <atomic>
 
 class QTimer;
