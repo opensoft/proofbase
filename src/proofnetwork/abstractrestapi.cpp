@@ -202,16 +202,18 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
     Q_Q(AbstractRestApi);
     if (reply->error() != QNetworkReply::NetworkError::NoError
             && (reply->error() < 100 || (reply->error() % 100) == 99)) {
-        int errorCode = NETWORK_ERROR_OFFSET
-                + static_cast<int>(reply->error());
+        int errorCode = NETWORK_ERROR_OFFSET + static_cast<int>(reply->error());
+        QString errorString = reply->errorString();
+        if (reply->error() == QNetworkReply::NetworkError::OperationCanceledError)
+            errorString = "Service is inaccessible. Try again later";
         qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
                                      << reply->request().url().path()
                                      << reply->request().url().query()
-                                     << ": " << errorCode << reply->errorString();
+                                     << ": " << errorCode << errorString;
         emit q->errorOccurred(operationId,
                               RestApiError{RestApiError::Level::ClientError,
                                            errorCode,
-                                           reply->errorString()});
+                                           errorString});
         cleanupReply(operationId, reply);
     }
 }

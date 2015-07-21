@@ -16,7 +16,7 @@
 #include <QBuffer>
 #include <QHttpMultiPart>
 
-static const qlonglong DEFAULT_REPLY_TIMEOUT = 60000;
+static const qlonglong DEFAULT_REPLY_TIMEOUT = 5 * 60 * 1000; //5 minutes
 static const qlonglong OAUTH_TOKEN_REFRESH_TIMEOUT = 1000 * 60 * 60;//1 hour
 
 namespace Proof {
