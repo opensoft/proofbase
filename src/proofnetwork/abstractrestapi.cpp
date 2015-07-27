@@ -177,7 +177,7 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
     if (reply->error() == QNetworkReply::NetworkError::NoError
             || (reply->error() >= 100 && (reply->error() % 100) != 99)) {
         int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if (errorCode != 200 && errorCode != 201) {
+        if (errorCode < 200 || 299 < errorCode) {
             QString message = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed();
             QString mimeType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
             if (message.isEmpty() && mimeType == "text/plain")
