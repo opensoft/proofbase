@@ -92,7 +92,7 @@ QNetworkReply *AbstractRestApiPrivate::get(qulonglong &operationId, RestAnswerHa
         return 0;
     }
     QNetworkReply *reply = restClient->get(method, query, vendor);
-    setupReply(operationId, reply, std::forward<RestAnswerHandler>(handler));
+    setupReply(operationId, reply, std::move(handler));
     return reply;
 }
 
@@ -107,7 +107,7 @@ QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, RestAnswerH
         return 0;
     }
     QNetworkReply *reply = restClient->post(method, query, body, vendor);
-    setupReply(operationId, reply, std::forward<RestAnswerHandler>(handler));
+    setupReply(operationId, reply, std::move(handler));
     return reply;
 }
 
@@ -122,7 +122,7 @@ QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, RestAnswerH
         return 0;
     }
     QNetworkReply *reply = restClient->post(method, query, multiParts);
-    setupReply(operationId, reply, std::forward<RestAnswerHandler>(handler));
+    setupReply(operationId, reply, std::move(handler));
     return reply;
 }
 
@@ -137,7 +137,7 @@ QNetworkReply *AbstractRestApiPrivate::put(qulonglong &operationId, RestAnswerHa
         return 0;
     }
     QNetworkReply *reply = restClient->put(method, query, body, vendor);
-    setupReply(operationId, reply, std::forward<RestAnswerHandler>(handler));
+    setupReply(operationId, reply, std::move(handler));
     return reply;
 }
 
@@ -152,7 +152,7 @@ QNetworkReply *AbstractRestApiPrivate::patch(qulonglong &operationId, RestAnswer
         return 0;
     }
     QNetworkReply *reply = restClient->patch(method, query, body, vendor);
-    setupReply(operationId, reply, std::forward<RestAnswerHandler>(handler));
+    setupReply(operationId, reply, std::move(handler));
     return reply;
 }
 
@@ -167,7 +167,7 @@ QNetworkReply *AbstractRestApiPrivate::deleteResource(qulonglong &operationId, R
         return 0;
     }
     QNetworkReply *reply = restClient->deleteResource(method, query, vendor);
-    setupReply(operationId, reply, std::forward<RestAnswerHandler>(handler));
+    setupReply(operationId, reply, std::move(handler));
     return reply;
 }
 
