@@ -67,21 +67,21 @@ void AbstractRestApi::onRestClientChanging(const RestClientSP &client)
         return;
 
     auto replyFinishedCaller = [d](QNetworkReply *reply) {
-        if (!d->repliesIds.contains(reply))
+        if (!d->replies.contains(reply))
             return;
-        d->replyFinished(d->repliesIds[reply], reply);
+        d->replyFinished(d->replies[reply].first, reply);
     };
     auto sslErrorsOccurredCaller = [d](QNetworkReply *reply, const QList<QSslError> &errors) {
-        if (!d->repliesIds.contains(reply))
+        if (!d->replies.contains(reply))
             return;
-        d->sslErrorsOccurred(d->repliesIds[reply], reply, errors);
+        d->sslErrorsOccurred(d->replies[reply].first, reply, errors);
     };
 
     d->replyFinishedConnection = QObject::connect(client.data(), &RestClient::finished, this, replyFinishedCaller);
     d->sslErrorsConnection = QObject::connect(client.data(), &RestClient::sslErrors, this, sslErrorsOccurredCaller);
 }
 
-QNetworkReply *AbstractRestApiPrivate::get(qulonglong &operationId, const QString &method, const QUrlQuery &query)
+QNetworkReply *AbstractRestApiPrivate::get(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query)
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
@@ -92,11 +92,11 @@ QNetworkReply *AbstractRestApiPrivate::get(qulonglong &operationId, const QStrin
         return 0;
     }
     QNetworkReply *reply = restClient->get(method, query, vendor);
-    setupReply(operationId, reply);
+    setupReply(operationId, reply, std::forward<RestAnswerHandler>(handler));
     return reply;
 }
 
-QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, const QString &method, const QUrlQuery &query, const QByteArray &body)
+QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
@@ -107,11 +107,11 @@ QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, const QStri
         return 0;
     }
     QNetworkReply *reply = restClient->post(method, query, body, vendor);
-    setupReply(operationId, reply);
+    setupReply(operationId, reply, std::forward<RestAnswerHandler>(handler));
     return reply;
 }
 
-QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts)
+QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts)
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
@@ -122,11 +122,11 @@ QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, const QStri
         return 0;
     }
     QNetworkReply *reply = restClient->post(method, query, multiParts);
-    setupReply(operationId, reply);
+    setupReply(operationId, reply, std::forward<RestAnswerHandler>(handler));
     return reply;
 }
 
-QNetworkReply *AbstractRestApiPrivate::put(qulonglong &operationId, const QString &method, const QUrlQuery &query, const QByteArray &body)
+QNetworkReply *AbstractRestApiPrivate::put(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
@@ -137,11 +137,11 @@ QNetworkReply *AbstractRestApiPrivate::put(qulonglong &operationId, const QStrin
         return 0;
     }
     QNetworkReply *reply = restClient->put(method, query, body, vendor);
-    setupReply(operationId, reply);
+    setupReply(operationId, reply, std::forward<RestAnswerHandler>(handler));
     return reply;
 }
 
-QNetworkReply *AbstractRestApiPrivate::patch(qulonglong &operationId, const QString &method, const QUrlQuery &query, const QByteArray &body)
+QNetworkReply *AbstractRestApiPrivate::patch(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
@@ -152,11 +152,11 @@ QNetworkReply *AbstractRestApiPrivate::patch(qulonglong &operationId, const QStr
         return 0;
     }
     QNetworkReply *reply = restClient->patch(method, query, body, vendor);
-    setupReply(operationId, reply);
+    setupReply(operationId, reply, std::forward<RestAnswerHandler>(handler));
     return reply;
 }
 
-QNetworkReply *AbstractRestApiPrivate::deleteResource(qulonglong &operationId, const QString &method, const QUrlQuery &query)
+QNetworkReply *AbstractRestApiPrivate::deleteResource(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query)
 {
     Q_Q(AbstractRestApi);
     if (QThread::currentThread() != restClient->thread()) {
@@ -167,7 +167,7 @@ QNetworkReply *AbstractRestApiPrivate::deleteResource(qulonglong &operationId, c
         return 0;
     }
     QNetworkReply *reply = restClient->deleteResource(method, query, vendor);
-    setupReply(operationId, reply);
+    setupReply(operationId, reply, std::forward<RestAnswerHandler>(handler));
     return reply;
 }
 
@@ -194,6 +194,11 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
                                                message});
             cleanupReply(operationId, reply);
         }
+    }
+
+    if (replies.contains(reply)) {
+        replies[reply].second(operationId, reply);
+        cleanupReply(operationId, reply);
     }
 }
 
@@ -241,7 +246,8 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
 void AbstractRestApiPrivate::cleanupReply(qulonglong operationId, QNetworkReply *reply)
 {
     Q_UNUSED(operationId);
-    repliesIds.remove(reply);
+    replies.remove(reply);
+    reply->deleteLater();
 }
 
 void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error)
@@ -254,11 +260,11 @@ void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, c
                                        jsonErrorString});
 }
 
-void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *reply)
+void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *reply, RestAnswerHandler &&handler)
 {
     Q_Q(AbstractRestApi);
     operationId = ++lastUsedOperationId;
-    repliesIds[reply] = operationId;
+    replies[reply] = qMakePair(operationId, handler);
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [this, reply, operationId](QNetworkReply::NetworkError) {replyErrorOccurred(operationId, reply);});
 }

@@ -23,6 +23,7 @@ class QTimer;
 class QNetworkReply;
 
 namespace Proof {
+using RestAnswerHandler = std::function<void(qulonglong, QNetworkReply *)>;
 class AbstractRestApi;
 class PROOF_NETWORK_EXPORT AbstractRestApiPrivate : public ProofObjectPrivate
 {
@@ -30,16 +31,16 @@ class PROOF_NETWORK_EXPORT AbstractRestApiPrivate : public ProofObjectPrivate
 public:
     AbstractRestApiPrivate() : ProofObjectPrivate() {}
 
-    QNetworkReply *get(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery());
-    QNetworkReply *post(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery(),
+    QNetworkReply *get(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query = QUrlQuery());
+    QNetworkReply *post(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query = QUrlQuery(),
                         const QByteArray &body = "");
-    QNetworkReply *post(qulonglong &operationId, const QString &method, const QUrlQuery &query,
+    QNetworkReply *post(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query,
                         QHttpMultiPart *multiParts);
-    QNetworkReply *put(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery(),
+    QNetworkReply *put(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query = QUrlQuery(),
                         const QByteArray &body = "");
-    QNetworkReply *patch(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery(),
+    QNetworkReply *patch(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query = QUrlQuery(),
                         const QByteArray &body = "");
-    QNetworkReply *deleteResource(qulonglong &operationId, const QString &method, const QUrlQuery &query = QUrlQuery());
+    QNetworkReply *deleteResource(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query = QUrlQuery());
 
     virtual void replyFinished(qulonglong operationId, QNetworkReply *reply);
     virtual void replyErrorOccurred(qulonglong operationId, QNetworkReply *reply);
@@ -191,7 +192,7 @@ public:
     QStringList serverErrorAttributes;
 
 private:
-    void setupReply(qulonglong &operationId, QNetworkReply *reply);
+    void setupReply(qulonglong &operationId, QNetworkReply *reply, RestAnswerHandler &&handler);
 
     template<class Entity>
     QJsonObject parseEntityObject(QNetworkReply *reply, qulonglong operationId, QString *errorMessage)
@@ -226,7 +227,7 @@ private:
     }
 
     static std::atomic<qulonglong> lastUsedOperationId;
-    QHash<QNetworkReply *, qulonglong> repliesIds;
+    QHash<QNetworkReply *, QPair<qlonglong, RestAnswerHandler>> replies;
 };
 }
 #endif // ABSTRACTRESTAPI_P_H
