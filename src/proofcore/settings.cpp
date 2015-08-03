@@ -139,11 +139,9 @@ void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &
 {
     Q_ASSERT_X(key.count(), Q_FUNC_INFO, "key list can't be empty");
 
-    QStringList groupsToRestore;
-    while (!settings->group().isEmpty()) {
-        groupsToRestore.prepend(settings->group());
+    QString groupToRestore = settings->group();
+    while (!settings->group().isEmpty())
         settings->endGroup();
-    }
 
     for (int i = 0; i < key.count() - 1; ++i)
         settings->beginGroup(key[i]);
@@ -156,6 +154,5 @@ void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &
     for (int i = 0; i < key.count() - 1; ++i)
         settings->endGroup();
 
-    for (const QString &group : groupsToRestore)
-        settings->beginGroup(group);
+    settings->beginGroup(groupToRestore);
 }
