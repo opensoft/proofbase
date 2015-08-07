@@ -17,6 +17,7 @@ protected:
 
     Settings *settings = nullptr;
     QCoreApplication *q_ptr = nullptr;
+    QStringList defaultLoggingRules;
 };
 }
 

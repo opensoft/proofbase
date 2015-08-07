@@ -34,11 +34,11 @@ static QMap<QtMsgType, QString> stringifiedTypes = {
     { QtSystemMsg, "S"}
 };
 
+namespace {
 class DetachedCompresser: public QRunnable
 {
 public:
-    DetachedCompresser(const QString &filePath) :
-        m_filePath(filePath) {}
+    DetachedCompresser(const QString &filePath) : m_filePath(filePath) {}
 
     void run() override
     {
@@ -58,12 +58,9 @@ public:
         }
     }
 
-
 private:
     QString m_filePath;
 };
-
-
 
 void fileHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
@@ -121,8 +118,9 @@ void compressOldFiles()
         }
     }
 }
+}
 
-void Proof::Logs::setup()
+void Proof::Logs::setup(const QStringList &defaultLoggingRules)
 {
 #ifdef Q_OS_WIN
     //Windows already gives us org/app as part of conf location
@@ -136,9 +134,11 @@ void Proof::Logs::setup()
     if (!configPath.isEmpty() && QDir::root().mkpath(configPath)) {
         QFile loggingRulesFile(QDir(configPath).absoluteFilePath(qApp->applicationName() + ".qtlogging.rules"));
         if (!loggingRulesFile.exists()) {
-            QString defaultRules = QStringLiteral("proof.core.cache=false\n"
-                                                  "proof.core.taskchain.extra=false\n"
-                                                  "proof.core.taskchain.stats=false\n");
+            QString defaultRules = QString("proof.core.cache=false\n"
+                                           "proof.core.taskchain.extra=false\n"
+                                           "proof.core.taskchain.stats=false\n"
+                                           "%1\n")
+                    .arg(defaultLoggingRules.join("\n"));
             if (loggingRulesFile.open(QFile::WriteOnly|QFile::Append))
                 loggingRulesFile.write(defaultRules.toLatin1());
             QLoggingCategory::setFilterRules(defaultRules);
@@ -165,9 +165,7 @@ void Proof::Logs::setLogsStoragePath(QString storagePath)
     QDir logsDir = QDir(logsStoragePath);
     logsDir.mkpath(".");
 
-    QObject::connect(&compressTimer, &QTimer::timeout, []() {
-        compressOldFiles();
-    });
+    QObject::connect(&compressTimer, &QTimer::timeout, &compressTimer, [](){compressOldFiles();});
     compressOldFiles();
     compressTimer.setTimerType(Qt::VeryCoarseTimer);
     compressTimer.start(COMPRESS_TIMEOUT);

@@ -128,10 +128,11 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
 
 using namespace Proof;
 
-CoreApplication::CoreApplication(int & argc, char **argv, const QString &orgName, const QString &appName)
+CoreApplication::CoreApplication(int &argc, char **argv, const QString &orgName, const QString &appName, const QStringList &defaultLoggingRules)
     : QCoreApplication(argc, argv), d_ptr(new CoreApplicationPrivate)
 {
     d_ptr->q_ptr = this;
+    d_ptr->defaultLoggingRules = defaultLoggingRules;
     setOrganizationName(orgName);
     setApplicationName(appName);
     d_ptr->initApp();
@@ -149,7 +150,7 @@ Settings *CoreApplication::settings() const
 
 void Proof::CoreApplicationPrivate::initApp()
 {
-    Logs::setup();
+    Logs::setup(defaultLoggingRules);
     settings = new Proof::Settings(q_ptr);
 
     bool daemonized = false;
