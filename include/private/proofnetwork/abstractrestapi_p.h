@@ -213,7 +213,7 @@ private:
                                                jsonErrorString});
             return QJsonObject();
         } else if (doc.object().isEmpty()) {
-            QString jsonErrorString = QString("JSON error: empty entity data").arg(jsonError.errorString());
+            QString jsonErrorString = QStringLiteral("JSON error: empty entity data");
             if (errorMessage) {
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
