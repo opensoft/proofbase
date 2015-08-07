@@ -132,10 +132,9 @@ CoreApplication::CoreApplication(int &argc, char **argv, const QString &orgName,
     : QCoreApplication(argc, argv), d_ptr(new CoreApplicationPrivate)
 {
     d_ptr->q_ptr = this;
-    d_ptr->defaultLoggingRules = defaultLoggingRules;
     setOrganizationName(orgName);
     setApplicationName(appName);
-    d_ptr->initApp();
+    d_ptr->initApp(defaultLoggingRules);
 }
 
 CoreApplication::~CoreApplication()
@@ -148,7 +147,7 @@ Settings *CoreApplication::settings() const
     return d->settings;
 }
 
-void Proof::CoreApplicationPrivate::initApp()
+void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRules)
 {
     Logs::setup(defaultLoggingRules);
     settings = new Proof::Settings(q_ptr);

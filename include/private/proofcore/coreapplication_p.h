@@ -13,11 +13,10 @@ class PROOF_CORE_EXPORT CoreApplicationPrivate
 {
     Q_DECLARE_PUBLIC(CoreApplication)
 protected:
-    void initApp();
+    void initApp(const QStringList &defaultLoggingRules);
 
     Settings *settings = nullptr;
     QCoreApplication *q_ptr = nullptr;
-    QStringList defaultLoggingRules;
 };
 }
 
