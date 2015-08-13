@@ -444,7 +444,7 @@ void RestClientPrivate::requestQuasiOAuth2token(const QString &method)
     handleReply(reply);
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [q, reply](QNetworkReply::NetworkError) {
-        emit q->authenticationErrorOccurred("Can't connect to Scissorhands service.\nPlease check your internet connection.");
+        emit q->authenticationErrorOccurred(QObject::tr("Can't connect to Scissorhands service.\nPlease check your internet connection."));
         reply->deleteLater();
     });
     QObject::connect(reply, &QNetworkReply::finished,
@@ -457,12 +457,12 @@ void RestClientPrivate::requestQuasiOAuth2token(const QString &method)
             int expiresInSeconds = response.value("expires_in").toInt();
             quasiOAuth2TokenExpiredDateTime = expiredTime.addSecs(expiresInSeconds);
             if (quasiOAuth2Token.isEmpty())
-                emit q->authenticationErrorOccurred("Wrong Scissorhands service authentication.\nPlease check your authentication settings.");
+                emit q->authenticationErrorOccurred(QObject::tr("Wrong Scissorhands service authentication.\nPlease check your authentication settings."));
             else
                 emit q->authenticationSucceed();
 
         } else {
-            emit q->authenticationErrorOccurred("Wrong Scissorhands service answer.\nPlease check your host settings.");
+            emit q->authenticationErrorOccurred(QObject::tr("Wrong Scissorhands service answer.\nPlease check your host settings."));
         }
         reply->deleteLater();
     });

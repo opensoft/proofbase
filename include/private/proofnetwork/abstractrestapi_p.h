@@ -81,7 +81,7 @@ public:
         QJsonParseError jsonError;
         QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
-            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
+            QString jsonErrorString = QString(QObject::tr("JSON error: %1")).arg(jsonError.errorString());
             if (errorMessage) {
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
@@ -109,7 +109,7 @@ public:
                     }
                 }
             }
-            QString invalidJson = "Can't create list of entities from server response";
+            QString invalidJson = QObject::tr("Can't create list of entities from server response");
             if (errorMessage) {
                 invalidJson.prepend(*errorMessage);
                 *errorMessage = invalidJson;
@@ -172,7 +172,7 @@ public:
                 }
             }
 
-            QString errorString("Can't create entity from server response");
+            QString errorString(QObject::tr("Can't create entity from server response"));
             if (errorMessage) {
                 errorString.prepend(*errorMessage);
                 *errorMessage = errorString;
@@ -202,7 +202,7 @@ private:
         QJsonParseError jsonError;
         QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
-            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
+            QString jsonErrorString = QString(QObject::tr("JSON error: %1")).arg(jsonError.errorString());
             if (errorMessage) {
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
@@ -213,7 +213,7 @@ private:
                                                jsonErrorString});
             return QJsonObject();
         } else if (doc.object().isEmpty()) {
-            QString jsonErrorString = QStringLiteral("JSON error: empty entity data");
+            QString jsonErrorString = QObject::tr("JSON error: empty entity data");
             if (errorMessage) {
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;

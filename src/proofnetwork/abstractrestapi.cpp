@@ -210,7 +210,7 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
         int errorCode = NETWORK_ERROR_OFFSET + static_cast<int>(reply->error());
         QString errorString = reply->errorString();
         if (reply->error() == QNetworkReply::NetworkError::OperationCanceledError)
-            errorString = "Service is inaccessible. Try again later";
+            errorString = QObject::tr("Service is inaccessible. Try again later");
         qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
                                      << reply->request().url().path()
                                      << reply->request().url().query()
@@ -253,7 +253,7 @@ void AbstractRestApiPrivate::cleanupReply(qulonglong operationId, QNetworkReply 
 void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error)
 {
     Q_Q(AbstractRestApi);
-    QString jsonErrorString = QString("JSON error: %1").arg(error.errorString());
+    QString jsonErrorString = QString(QObject::tr("JSON error: %1")).arg(error.errorString());
     emit q->errorOccurred(operationId,
                           RestApiError{RestApiError::Level::JsonParseError,
                                        error.error,
