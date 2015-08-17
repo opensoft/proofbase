@@ -13,3 +13,5 @@ html
 latex
 *.pyc
 *_behave_tests_temp/
+*.qm
+*_translations.qrc
