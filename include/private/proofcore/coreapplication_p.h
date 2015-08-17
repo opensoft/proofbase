@@ -6,6 +6,8 @@
 
 #include <QtGlobal>
 #include <QCoreApplication>
+#include <QTranslator>
+#include <QSet>
 
 namespace Proof {
 class Settings;
@@ -14,8 +16,13 @@ class PROOF_CORE_EXPORT CoreApplicationPrivate
     Q_DECLARE_PUBLIC(CoreApplication)
 protected:
     void initApp(const QStringList &defaultLoggingRules);
+    void initTranslator();
+
+    void setLanguage(const QString &language);
 
     Settings *settings = nullptr;
+    QTranslator *translator = nullptr;
+    QSet<QString> translationPrefixes;
     QCoreApplication *q_ptr = nullptr;
 };
 }

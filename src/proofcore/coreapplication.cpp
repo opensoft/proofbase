@@ -6,6 +6,8 @@
 #include "settingsgroup.h"
 #include "proofglobal.h"
 
+#include <QDir>
+
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
 #include <unistd.h>
 #include <cxxabi.h>
@@ -126,6 +128,8 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
 }
 #endif
 
+const QString TRANSLATIONS_PATH = ":/translations";
+
 using namespace Proof;
 
 CoreApplication::CoreApplication(int &argc, char **argv, const QString &orgName, const QString &appName, const QStringList &defaultLoggingRules)
@@ -145,6 +149,12 @@ Settings *CoreApplication::settings() const
 {
     Q_D(const CoreApplication);
     return d->settings;
+}
+
+void CoreApplication::setLanguage(const QString &language)
+{
+    Q_D(CoreApplication);
+    d->setLanguage(language);
 }
 
 void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRules)
@@ -190,6 +200,27 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
         qCWarning(proofCoreLoggerLog) << "No abort handler is on your back.";
 #endif
 
+    initTranslator();
+
     //TODO: Qt5.4: use noquote() here instead
     qCDebug(proofCoreMiscLog) << QString("%1 started").arg(q_ptr->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
+}
+
+void CoreApplicationPrivate::initTranslator()
+{
+    translator = new QTranslator(q_ptr);
+    QDir translationsDir(TRANSLATIONS_PATH);
+    for (const QFileInfo &fileInfo : translationsDir.entryInfoList({"*.qm"}, QDir::Files)) {
+        QString fileName = fileInfo.fileName();
+        translationPrefixes.insert(fileName.mid(0, fileName.indexOf('.')));
+    }
+    q_ptr->installTranslator(translator);
+}
+
+void CoreApplicationPrivate::setLanguage(const QString &language)
+{
+    for (const QString &prefix : translationPrefixes) {
+        qCDebug(proofCoreMiscLog) << "Language prefix" << prefix;
+        translator->load(QString("%1.%2").arg(prefix, language), TRANSLATIONS_PATH);
+    }
 }

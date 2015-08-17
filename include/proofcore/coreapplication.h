@@ -23,6 +23,7 @@ public:
     ~CoreApplication();
 
     Settings *settings() const;
+    void setLanguage(const QString &language);
 private:
     QScopedPointer<CoreApplicationPrivate> d_ptr;
 };
