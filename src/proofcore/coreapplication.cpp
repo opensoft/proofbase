@@ -191,5 +191,5 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
 #endif
 
     //TODO: Qt5.4: use noquote() here instead
-    qCDebug(proofCoreMiscLog) << QString("%1 started").arg(q_ptr->applicationName()).toLatin1().constData();
+    qCDebug(proofCoreMiscLog) << QString("%1 started").arg(q_ptr->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
 }
