@@ -155,6 +155,13 @@ void CoreApplication::setLanguage(const QString &language)
 {
     Q_D(CoreApplication);
     d->setLanguage(language);
+    emit languageChanged(language);
+}
+
+QStringList CoreApplication::availableLanguages()
+{
+    Q_D(const CoreApplication);
+    return d->availableLanguages;
 }
 
 void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRules)
@@ -208,19 +215,42 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
 
 void CoreApplicationPrivate::initTranslator()
 {
-    translator = new QTranslator(q_ptr);
+    QSet<QString> languagesSet;
+    languagesSet.insert("en");
     QDir translationsDir(TRANSLATIONS_PATH);
     for (const QFileInfo &fileInfo : translationsDir.entryInfoList({"*.qm"}, QDir::Files)) {
         QString fileName = fileInfo.fileName();
         translationPrefixes.insert(fileName.mid(0, fileName.indexOf('.')));
+        languagesSet.insert(fileName.mid(fileName.indexOf('.') + 1, -3).mid(0, 2));
     }
-    q_ptr->installTranslator(translator);
+    availableLanguages = languagesSet.toList();
+    qSort(availableLanguages.begin(), availableLanguages.end());
+    SettingsGroup *localeGroup = settings->group("locale", Settings::NotFoundPolicy::Add);
+    currentLanguage = localeGroup->value("language", "en", Settings::NotFoundPolicy::Add).toString();
 }
 
 void CoreApplicationPrivate::setLanguage(const QString &language)
 {
+    currentLanguage = language;
+    SettingsGroup *localeGroup = settings->group("locale", Settings::NotFoundPolicy::Add);
+    localeGroup->setValue("language", language);
+
+    for (QTranslator *installedTranslator : installedTranslators) {
+        if (installedTranslator)
+            delete installedTranslator;
+    }
+    installedTranslators.clear();
+
     for (const QString &prefix : translationPrefixes) {
         qCDebug(proofCoreMiscLog) << "Language prefix" << prefix;
+        QTranslator *translator = new QTranslator(q_ptr);
+        installedTranslators.append(translator);
         translator->load(QString("%1.%2").arg(prefix, language), TRANSLATIONS_PATH);
+        q_ptr->installTranslator(translator);
     }
+}
+
+QString CoreApplicationPrivate::language() const
+{
+    return currentLanguage;
 }

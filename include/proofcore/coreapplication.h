@@ -24,6 +24,9 @@ public:
 
     Settings *settings() const;
     void setLanguage(const QString &language);
+    QStringList availableLanguages();
+signals:
+    void languageChanged(const QString &language);
 private:
     QScopedPointer<CoreApplicationPrivate> d_ptr;
 };

@@ -18,11 +18,14 @@ protected:
     void initApp(const QStringList &defaultLoggingRules);
     void initTranslator();
 
-    void setLanguage(const QString &language);
+    void setLanguage(const QString &currentLanguage);
+    QString language() const;
 
     Settings *settings = nullptr;
-    QTranslator *translator = nullptr;
     QSet<QString> translationPrefixes;
+    QStringList availableLanguages;
+    QString currentLanguage = "en";
+    QList<QTranslator *> installedTranslators;
     QCoreApplication *q_ptr = nullptr;
 };
 }
