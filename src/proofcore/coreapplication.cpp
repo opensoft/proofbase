@@ -164,6 +164,12 @@ QStringList CoreApplication::availableLanguages()
     return d->availableLanguages;
 }
 
+QString CoreApplication::language() const
+{
+    Q_D(const CoreApplication);
+    return d->language();
+}
+
 void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRules)
 {
     Logs::setup(defaultLoggingRules);

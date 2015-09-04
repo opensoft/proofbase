@@ -23,8 +23,11 @@ public:
     ~CoreApplication();
 
     Settings *settings() const;
+
     void setLanguage(const QString &language);
     QStringList availableLanguages();
+    QString language() const;
+
 signals:
     void languageChanged(const QString &language);
 private:
