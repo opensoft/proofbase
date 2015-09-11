@@ -1,5 +1,6 @@
 #include "httpparser_p.h"
 
+#include <QObject>
 #include <QRegExp>
 
 static const QRegExp FIRST_LINE_REG_EXP("(.*) (.*) HTTP/1[.][01]\r\n");
