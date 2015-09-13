@@ -31,12 +31,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../httpparser.cpp" line="93"/>
+        <location filename="../httpparser.cpp" line="94"/>
         <source>Can&apos;t convert %1 to unsinged long long for &quot;Content-Length&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../httpparser.cpp" line="104"/>
+        <location filename="../httpparser.cpp" line="105"/>
         <source>Invalid header: %1</source>
         <translation type="unfinished"></translation>
     </message>
