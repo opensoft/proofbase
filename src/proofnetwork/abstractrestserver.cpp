@@ -10,6 +10,9 @@
 #include <QUrlQuery>
 #include <QSet>
 #include <QMutex>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 #include <algorithm>
 
@@ -322,6 +325,19 @@ void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, 
 {
     Q_D(AbstractRestServer);
     d->sendAnswer(socket, body, contentType, headers, returnCode, reason);
+}
+
+void AbstractRestServer::sendErrorCode(QTcpSocket *socket, int returnCode, const QString &reason, int errorCode, const QStringList &args)
+{
+    QJsonObject body;
+    body.insert("error_code", errorCode);
+    if (!args.empty()) {
+        QJsonArray jsonArgs;
+        for (const auto &arg : args)
+            jsonArgs << arg;
+        body.insert("message_args", jsonArgs);
+    }
+    sendAnswer(socket, QJsonDocument(body).toJson(QJsonDocument::Compact), "application/json", returnCode, reason);
 }
 
 bool AbstractRestServer::checkBasicAuth(const QString &encryptedAuth) const

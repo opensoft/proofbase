@@ -6,6 +6,7 @@
 
 #include <QTcpServer>
 #include <QScopedPointer>
+#include <QStringList>
 
 namespace Proof {
 
@@ -52,6 +53,12 @@ protected:
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers,
                     int returnCode = 200, const QString &reason = QString());
+    void sendErrorCode(QTcpSocket *socket, int returnCode, const QString &reason, int errorCode, const QStringList &args = QStringList());
+    template<class Enum>
+    void sendErrorCode(QTcpSocket *socket, int returnCode, const QString &reason, Enum errorCode, const QStringList &args = QStringList())
+    {
+        sendErrorCode(socket, returnCode, reason, static_cast<int>(errorCode), args);
+    }
     void sendNotFound(QTcpSocket *socket, const QString &reason = "Not Found");
     void sendNotAuthorized(QTcpSocket *socket, const QString &reason = "Unauthorized");
     void sendInternalError(QTcpSocket *socket);
