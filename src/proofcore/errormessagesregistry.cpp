@@ -8,7 +8,7 @@ QString ErrorMessagesRegistry::messageForCode(int code, const QStringList &args)
         QString message = m_messages[code];
         if (args.size() > 0) {
             for (int i = 0; i < args.size(); i++)
-                message = message.arg(i);
+                message = message.arg(args[i]);
         }
         return message;
     } else {
