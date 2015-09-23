@@ -4,6 +4,7 @@
 <context>
     <name>QObject</name>
     <message>
+        <location filename="../errormessagesregistry.cpp" line="15"/>
         <source>Unknown error</source>
         <translation type="unfinished"></translation>
     </message>
