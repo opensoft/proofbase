@@ -23,7 +23,7 @@ ProofObject::ProofObject(ProofObjectPrivate &dd, QObject *parent)
 bool ProofObject::isDirty() const
 {
     Q_D(const ProofObject);
-    return d->dirtyFlag;
+    return d->isDirty();
 }
 
 qulonglong ProofObject::nextQueuedCallId() const
