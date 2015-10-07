@@ -177,7 +177,7 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
 
     bool daemonized = false;
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
-    if (q_ptr->arguments().count() == 2 && q_ptr->arguments().last() == "-d") {
+    if (q_ptr->arguments().contains("-d")) {
         daemonized = true;
         daemon(0, 0);
     }

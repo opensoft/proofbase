@@ -7,6 +7,7 @@
 #include <QSharedPointer>
 #include <QStandardPaths>
 #include <QCoreApplication>
+#include <QFileInfo>
 
 namespace Proof {
 class SettingsPrivate : public ProofObjectPrivate
@@ -80,6 +81,15 @@ QString Settings::filePath()
 
 QString SettingsPrivate::filePath()
 {
+    if (qApp->arguments().contains("-c")) {
+        int index = qApp->arguments().indexOf("-c") + 1;
+        if (index < qApp->arguments().count()) {
+            QString configPath = qApp->arguments().at(index);
+            if (QFileInfo(configPath).exists())
+                return configPath;
+        }
+
+    }
 #if defined Q_OS_WIN
     //Windows already gives us org/app as part of conf location
     QString configPath = QString("%1/%2.conf")
