@@ -88,7 +88,6 @@ QString SettingsPrivate::filePath()
             if (QFileInfo(configPath).exists())
                 return configPath;
         }
-
     }
 #if defined Q_OS_WIN
     //Windows already gives us org/app as part of conf location
