@@ -15,3 +15,4 @@ latex
 *_behave_tests_temp/
 *.qm
 *_translations.qrc
+.idea/*
