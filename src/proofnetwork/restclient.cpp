@@ -368,6 +368,8 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         result.setRawHeader("Authorization", "WSSE profile=\"UsernameToken\"");
         break;
     case RestAuthType::Basic:
+        if (!clientName.isEmpty())
+            result.setRawHeader("X-Client-Name", clientName.toLocal8Bit());
         result.setRawHeader("Authorization",
                             QString("Basic %1")
                             .arg(QString(QString("%1:%2")
@@ -395,6 +397,8 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         result.setRawHeader("Authorization", QString("Bearer %1").arg(quasiOAuth2Token).toLatin1());
         break;
     case RestAuthType::NoAuth:
+        if (!clientName.isEmpty())
+            result.setRawHeader("X-Client-Name", clientName.toLocal8Bit());
         break;
     }
 
