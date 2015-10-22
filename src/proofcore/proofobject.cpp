@@ -10,14 +10,14 @@ ProofObject::ProofObject(QObject *parent)
 {
 }
 
-ProofObject::~ProofObject()
-{
-}
-
 ProofObject::ProofObject(ProofObjectPrivate &dd, QObject *parent)
     : QObject(parent), d_ptr(&dd)
 {
     dd.q_ptr = this;
+}
+
+ProofObject::~ProofObject()
+{
 }
 
 bool ProofObject::isDirty() const

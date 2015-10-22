@@ -142,7 +142,10 @@ private:
     invokerForCallee(Callee *callee)
     {
         Q_UNUSED(callee);
-        return new ProofObject(0);
+        ProofObject *obj = new ProofObject(0);
+        if (obj->thread() != callee->thread())
+            obj->moveToThread(callee->thread());
+        return obj;
     }
 
     template <class Callee>
