@@ -5,7 +5,7 @@
     <name>QObject</name>
     <message>
         <source>Unknown error</source>
-        <translation type="unfinished"></translation>
+        <translation>不明なエラー</translation>
     </message>
 </context>
 </TS>

@@ -41,19 +41,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../restclient.cpp" line="447"/>
+        <location filename="../restclient.cpp" line="451"/>
         <source>Can&apos;t connect to Scissorhands service.
 Please check your internet connection.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../restclient.cpp" line="460"/>
+        <location filename="../restclient.cpp" line="464"/>
         <source>Wrong Scissorhands service authentication.
 Please check your authentication settings.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../restclient.cpp" line="465"/>
+        <location filename="../restclient.cpp" line="469"/>
         <source>Wrong Scissorhands service answer.
 Please check your host settings.</source>
         <translation type="unfinished"></translation>

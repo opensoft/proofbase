@@ -6,14 +6,14 @@
     <message>
         <location filename="../abstractrestapi.cpp" line="213"/>
         <source>Service is inaccessible. Try again later</source>
-        <translation type="unfinished"></translation>
+        <translation>サービスは現在使用不可能です。後ほどお試しください</translation>
     </message>
     <message>
         <location filename="../abstractrestapi_p.h" line="84"/>
         <location filename="../abstractrestapi_p.h" line="205"/>
         <location filename="../abstractrestapi.cpp" line="256"/>
         <source>JSON error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>JSONエラー:%1</translation>
     </message>
     <message>
         <location filename="../abstractrestapi_p.h" line="112"/>
@@ -41,22 +41,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../restclient.cpp" line="447"/>
+        <location filename="../restclient.cpp" line="451"/>
         <source>Can&apos;t connect to Scissorhands service.
 Please check your internet connection.</source>
-        <translation type="unfinished"></translation>
+        <translation>シザーハンズにアクセスできません。\nインターネット回線を確認してください</translation>
     </message>
     <message>
-        <location filename="../restclient.cpp" line="460"/>
+        <location filename="../restclient.cpp" line="464"/>
         <source>Wrong Scissorhands service authentication.
 Please check your authentication settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>シザーハンズの承認番号に誤りがあります\n承認設定を確認してください</translation>
     </message>
     <message>
-        <location filename="../restclient.cpp" line="465"/>
+        <location filename="../restclient.cpp" line="469"/>
         <source>Wrong Scissorhands service answer.
 Please check your host settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>シザーハンズサービスへの回答が間違っています\nホストの設定をご確認ください</translation>
     </message>
 </context>
 </TS>
