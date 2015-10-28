@@ -44,19 +44,22 @@
         <location filename="../restclient.cpp" line="451"/>
         <source>Can&apos;t connect to Scissorhands service.
 Please check your internet connection.</source>
-        <translation>シザーハンズにアクセスできません。\nインターネット回線を確認してください</translation>
+        <translation>シザーハンズにアクセスできません。
+インターネット回線を確認してください</translation>
     </message>
     <message>
         <location filename="../restclient.cpp" line="464"/>
         <source>Wrong Scissorhands service authentication.
 Please check your authentication settings.</source>
-        <translation>シザーハンズの承認番号に誤りがあります\n承認設定を確認してください</translation>
+        <translation>シザーハンズの承認番号に誤りがあります
+承認設定を確認してください</translation>
     </message>
     <message>
         <location filename="../restclient.cpp" line="469"/>
         <source>Wrong Scissorhands service answer.
 Please check your host settings.</source>
-        <translation>シザーハンズサービスへの回答が間違っています\nホストの設定をご確認ください</translation>
+        <translation>シザーハンズサービスへの回答が間違っています
+ホストの設定をご確認ください</translation>
     </message>
 </context>
 </TS>
