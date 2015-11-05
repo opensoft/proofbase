@@ -91,7 +91,7 @@ HttpParser::Result HttpParser::headersState(QByteArray &data)
                 m_contentLength = headerRegExp.cap(3).toULongLong(&ok);
                 if (!ok) {
                     result = Result::Error;
-                    m_error = QString(QObject::tr("Can't convert %1 to unsinged long long for \"Content-Length\"")).arg(headerRegExp.cap(3));
+                    m_error = QString("Can't convert %1 to unsinged long long for \"Content-Length\"").arg(headerRegExp.cap(3));
                 }
             }
         } else if (header == "\r\n") {
@@ -102,7 +102,7 @@ HttpParser::Result HttpParser::headersState(QByteArray &data)
                 result = Result::Success;
             }
         } else {
-            m_error = QString(QObject::tr("Invalid header: %1")).arg(header);
+            m_error = QString("Invalid header: %1").arg(header);
             result = Result::Error;
         }
     } else {
