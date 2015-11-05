@@ -31,16 +31,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../httpparser.cpp" line="94"/>
-        <source>Can&apos;t convert %1 to unsinged long long for &quot;Content-Length&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../httpparser.cpp" line="105"/>
-        <source>Invalid header: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../restclient.cpp" line="451"/>
         <source>Can&apos;t connect to Scissorhands service.
 Please check your internet connection.</source>
