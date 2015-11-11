@@ -283,3 +283,16 @@ void RestApiError::reset()
     code = 0;
     message = QString();
 }
+
+bool RestApiError::isNetworkError() const
+{
+    return level == Level::ClientError && code > NETWORK_ERROR_OFFSET;
+}
+
+QNetworkReply::NetworkError RestApiError::toNetworkError() const
+{
+    if (isNetworkError())
+        return (QNetworkReply::NetworkError)(code - NETWORK_ERROR_OFFSET);
+    else
+        return QNetworkReply::UnknownNetworkError;
+}

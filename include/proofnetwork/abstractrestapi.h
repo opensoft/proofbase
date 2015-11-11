@@ -7,6 +7,8 @@
 #include "proofnetwork/proofnetwork_types.h"
 #include "proofnetwork/proofnetwork_global.h"
 
+#include <QNetworkReply>
+
 namespace Proof {
 
 struct PROOF_NETWORK_EXPORT RestApiError
@@ -25,6 +27,8 @@ struct PROOF_NETWORK_EXPORT RestApiError
 
     QString toString() const;
     void reset();
+    bool isNetworkError() const;
+    QNetworkReply::NetworkError toNetworkError() const;
 
     Level level = Level::NoError;
     qlonglong code = 0;
