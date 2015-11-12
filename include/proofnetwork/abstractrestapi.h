@@ -73,12 +73,11 @@ public:
                                        Signal signal, Result &result, Args... args)
     {
         Proof::RestApiError error;
-        quint32 remainingAttempts = attempts <= 0 ? attempts : 1;
         do {
             error = chainedApiCall(taskChain, callee, method, signal, result, args...);
             if (error.isNetworkError() && error.toNetworkError() == QNetworkReply::OperationCanceledError)
                 break;
-        } while(--remainingAttempts > 0);
+        } while(--attempts > 0);
         return error;
     }
 
@@ -104,12 +103,11 @@ public:
                                                     Method method, Signal signal, Args... args)
     {
         Proof::RestApiError error;
-        quint32 remainingAttempts = attempts <= 0 ? attempts : 1;
         do {
             error = chainedApiCallWithoutResult(taskChain, callee, method, signal, args...);
             if (error.isNetworkError() && error.toNetworkError() == QNetworkReply::OperationCanceledError)
                 break;
-        } while(--remainingAttempts > 0);
+        } while(--attempts > 0);
         return error;
     }
 
