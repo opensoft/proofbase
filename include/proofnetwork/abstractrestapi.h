@@ -68,6 +68,20 @@ public:
         return error;
     }
 
+    template <class Callee, class Result, class Method, class Signal, class ...Args>
+    static RestApiError chainedApiCall(int attempts, const TaskChainSP &taskChain, Callee *callee, Method method,
+                                       Signal signal, Result &result, Args... args)
+    {
+        Proof::RestApiError error;
+        quint32 remainingAttempts = attempts <= 0 ? attempts : 1;
+        do {
+            error = chainedApiCall(taskChain, callee, method, signal, result, args...);
+            if (error.isNetworkError() && error.toNetworkError() == QNetworkReply::OperationCanceledError)
+                break;
+        } while(--remainingAttempts > 0);
+        return error;
+    }
+
     template <class Callee, class Method, class Signal, class ...Args>
     static RestApiError chainedApiCallWithoutResult(const TaskChainSP &taskChain, Callee *callee, Method method,
                                                     Signal signal, Args... args)
@@ -82,6 +96,20 @@ public:
         taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
         currentOperationId = (*callee.*method)(args...);
         taskChain->fireSignalWaiters();
+        return error;
+    }
+
+    template <class Callee, class Method, class Signal, class ...Args>
+    static RestApiError chainedApiCallWithoutResult(int attempts, const TaskChainSP &taskChain, Callee *callee,
+                                                    Method method, Signal signal, Args... args)
+    {
+        Proof::RestApiError error;
+        quint32 remainingAttempts = attempts <= 0 ? attempts : 1;
+        do {
+            error = chainedApiCallWithoutResult(taskChain, callee, method, signal, args...);
+            if (error.isNetworkError() && error.toNetworkError() == QNetworkReply::OperationCanceledError)
+                break;
+        } while(--remainingAttempts > 0);
         return error;
     }
 
