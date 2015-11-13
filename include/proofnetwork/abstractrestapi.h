@@ -75,7 +75,7 @@ public:
         Proof::RestApiError error;
         do {
             error = chainedApiCall(taskChain, callee, method, signal, result, args...);
-            if (!error.isNetworkError() || error.toNetworkError() != QNetworkReply::OperationCanceledError)
+            if (error.toNetworkError() != QNetworkReply::OperationCanceledError)
                 break;
         } while(--attempts > 0);
         return error;
@@ -105,7 +105,7 @@ public:
         Proof::RestApiError error;
         do {
             error = chainedApiCallWithoutResult(taskChain, callee, method, signal, args...);
-            if (!error.isNetworkError() || error.toNetworkError() != QNetworkReply::OperationCanceledError)
+            if (error.toNetworkError() != QNetworkReply::OperationCanceledError)
                 break;
         } while(--attempts > 0);
         return error;
