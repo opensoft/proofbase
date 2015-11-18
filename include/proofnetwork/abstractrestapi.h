@@ -33,6 +33,7 @@ struct PROOF_NETWORK_EXPORT RestApiError
     Level level = Level::NoError;
     qlonglong code = 0;
     QString message;
+    bool processed = true;
 };
 
 class AbstractRestApiPrivate;
@@ -68,6 +69,8 @@ public:
             taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
             currentOperationId = (*callee.*method)(args...);
             taskChain->fireSignalWaiters();
+        } else {
+            error.processed = false;
         }
         return error;
     }
@@ -100,6 +103,8 @@ public:
             taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
             currentOperationId = (*callee.*method)(args...);
             taskChain->fireSignalWaiters();
+        } else {
+            error.processed = false;
         }
         return error;
     }
