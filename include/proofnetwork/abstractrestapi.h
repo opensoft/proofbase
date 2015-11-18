@@ -44,6 +44,8 @@ public:
     RestClientSP restClient() const;
     void setRestClient(const RestClientSP &client);
 
+    virtual bool isLoggedOut() const;
+
     using ErrorCallbackType = std::function<bool(qulonglong, const RestApiError &)>;
     static ErrorCallbackType generateErrorCallback(qulonglong &currentOperationId, RestApiError &error);
     static ErrorCallbackType generateErrorCallback(qulonglong &currentOperationId, QString &errorMessage);
@@ -61,10 +63,12 @@ public:
             return true;
         };
         RestApiError error;
-        taskChain->addSignalWaiter(callee, signal, callback);
-        taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
-        currentOperationId = (*callee.*method)(args...);
-        taskChain->fireSignalWaiters();
+        if (!callee->isLoggedOut()) {
+            taskChain->addSignalWaiter(callee, signal, callback);
+            taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
+            currentOperationId = (*callee.*method)(args...);
+            taskChain->fireSignalWaiters();
+        }
         return error;
     }
 
@@ -91,10 +95,12 @@ public:
             return (currentOperationId == operationId);
         };
         RestApiError error;
-        taskChain->addSignalWaiter(callee, signal, callback);
-        taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
-        currentOperationId = (*callee.*method)(args...);
-        taskChain->fireSignalWaiters();
+        if (!callee->isLoggedOut()) {
+            taskChain->addSignalWaiter(callee, signal, callback);
+            taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
+            currentOperationId = (*callee.*method)(args...);
+            taskChain->fireSignalWaiters();
+        }
         return error;
     }
 

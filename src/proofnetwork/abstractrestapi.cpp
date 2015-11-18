@@ -34,6 +34,11 @@ void AbstractRestApi::setRestClient(const RestClientSP &client)
     d->restClient = client;
 }
 
+bool AbstractRestApi::isLoggedOut() const
+{
+    return false;
+}
+
 AbstractRestApi::ErrorCallbackType AbstractRestApi::generateErrorCallback(qulonglong &currentOperationId, RestApiError &error)
 {
     return [&currentOperationId, &error]
@@ -267,6 +272,16 @@ void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *
     replies[reply] = qMakePair(operationId, handler);
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [this, reply, operationId](QNetworkReply::NetworkError) {replyErrorOccurred(operationId, reply);});
+}
+
+void AbstractRestApiPrivate::clearReplies()
+{
+    for(auto reply : replies.keys()) {
+        reply->blockSignals(true);
+        reply->abort();
+        reply->deleteLater();
+    }
+    replies.clear();
 }
 
 
