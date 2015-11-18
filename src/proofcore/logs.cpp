@@ -26,12 +26,12 @@ static QTimer compressTimer;
 static QFile *currentLogFile = nullptr;
 static QDate currentLogFileDate;
 
-static QMap<QtMsgType, QString> stringifiedTypes = {
+static const QMap<QtMsgType, QString> stringifiedTypes = {
     { QtDebugMsg, "D"},
     { QtWarningMsg, "W"},
     { QtCriticalMsg, "C"},
     { QtFatalMsg, "F"},
-    { QtSystemMsg, "S"}
+    { QtInfoMsg, "I"}
 };
 
 namespace {
@@ -84,7 +84,7 @@ void fileHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
 
         QString logLine = QString("[%1][%2][%3][%4@%5:%6] %7\n")
                 .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
-                .arg(stringifiedTypes[type])
+                .arg(stringifiedTypes.value(type, "D"))
                 .arg(context.category)
                 .arg(context.function)
                 .arg(QString(context.file).remove(QRegularExpression("^(\\.\\.[/\\\\])+")))
