@@ -21,8 +21,8 @@ struct PROOF_NETWORK_EXPORT RestApiError
         JsonServerError,
         JsonDataError
     };
-    RestApiError(Level _level = Level::NoError, qlonglong _code = 0, const QString &_message = QString())
-        : level(_level), code(_code), message(_message)
+    RestApiError(Level _level = Level::NoError, qlonglong _code = 0, const QString &_message = QString(), bool _processed = true)
+        : level(_level), code(_code), message(_message), processed(_processed)
     {}
 
     QString toString() const;

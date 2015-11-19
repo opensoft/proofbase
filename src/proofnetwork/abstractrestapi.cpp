@@ -276,10 +276,18 @@ void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *
 
 void AbstractRestApiPrivate::clearReplies()
 {
+    Q_Q(AbstractRestApi);
     for(auto reply : replies.keys()) {
         reply->blockSignals(true);
         reply->abort();
         reply->deleteLater();
+        qlonglong operationId = replies[reply].first;
+        if (operationId)
+            q->errorOccurred(operationId, RestApiError{RestApiError::Level::NoError,
+                                                       0,
+                                                       "",
+                                                       false});
+
     }
     replies.clear();
 }
