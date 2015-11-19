@@ -280,13 +280,10 @@ void AbstractRestApiPrivate::clearReplies()
     for(auto reply : replies.keys()) {
         reply->blockSignals(true);
         reply->abort();
-        reply->deleteLater();
         qlonglong operationId = replies[reply].first;
+        reply->deleteLater();
         if (operationId)
-            q->errorOccurred(operationId, RestApiError{RestApiError::Level::NoError,
-                                                       0,
-                                                       "",
-                                                       false});
+            q->errorOccurred(operationId, RestApiError{RestApiError::Level::NoError, 0, "", false});
 
     }
     replies.clear();
