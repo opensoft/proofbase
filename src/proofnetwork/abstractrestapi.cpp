@@ -271,22 +271,25 @@ void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *
     operationId = ++lastUsedOperationId;
     replies[reply] = qMakePair(operationId, handler);
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-                     q, [this, reply, operationId](QNetworkReply::NetworkError) {replyErrorOccurred(operationId, reply);});
+                     q, [this, reply, operationId](QNetworkReply::NetworkError) {
+        if (!replies.contains(reply))
+            return;
+        replyErrorOccurred(operationId, reply);
+    });
 }
 
 void AbstractRestApiPrivate::clearReplies()
 {
     Q_Q(AbstractRestApi);
-    for(auto reply : replies.keys()) {
-        reply->blockSignals(true);
+    auto networkReplies = replies.keys();
+    for(auto reply : networkReplies) {
+        replies.remove(reply);
         reply->abort();
         qlonglong operationId = replies[reply].first;
         reply->deleteLater();
         if (operationId)
             q->errorOccurred(operationId, RestApiError{RestApiError::Level::NoError, 0, "", false});
-
     }
-    replies.clear();
 }
 
 
