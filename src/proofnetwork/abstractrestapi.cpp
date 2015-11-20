@@ -283,9 +283,9 @@ void AbstractRestApiPrivate::clearReplies()
     Q_Q(AbstractRestApi);
     auto networkReplies = replies.keys();
     for(auto reply : networkReplies) {
+        qlonglong operationId = replies[reply].first;
         replies.remove(reply);
         reply->abort();
-        qlonglong operationId = replies[reply].first;
         reply->deleteLater();
         if (operationId)
             q->errorOccurred(operationId, RestApiError{RestApiError::Level::NoError, 0, "", false});
