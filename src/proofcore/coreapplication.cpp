@@ -215,8 +215,7 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
 
     initTranslator();
 
-    //TODO: Qt5.4: use noquote() here instead
-    qCDebug(proofCoreMiscLog) << QString("%1 started").arg(q_ptr->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
+    qCDebug(proofCoreMiscLog).noquote() << QString("%1 started").arg(q_ptr->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
 }
 
 void CoreApplicationPrivate::initTranslator()

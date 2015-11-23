@@ -16,8 +16,6 @@ class PROOF_NETWORK_EXPORT NetworkDataEntity : public ProofObject
 public:
     bool isFetched() const;
 
-    // Probably should rename function to isJdfWritable
-    // checks if object is not null and is not a default object
     template<class Argument>
     static typename std::enable_if<std::is_base_of<NetworkDataEntity, Argument>::value, bool>::type
     isValidAndNotDefault(const QSharedPointer<Argument> &sp)
