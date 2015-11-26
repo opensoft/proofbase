@@ -343,7 +343,7 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
 
         QString contentTypePattern = vendor.isEmpty() ? QString("application/%1") : QString("application/vnd.%1+%2").arg(vendor);
 
-        //NOTE: We assume that if it is not json then it is xml
+        //We assume that if it is not json then it is xml
         if (error.error == QJsonParseError::NoError)
             result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg("json"));
         else
