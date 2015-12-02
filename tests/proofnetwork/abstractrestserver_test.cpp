@@ -232,7 +232,7 @@ TEST_P(PathPrefixServerMethodsTest, methodsNames)
     int resultCode = std::get<2>(GetParam());
     bool isPost = std::get<3>(GetParam());
 
-    ASSERT_TRUE(restClientWithPrefixUT->isListening());
+    ASSERT_TRUE(restServerWithPathPrefixUT->isListening());
 
     QNetworkReply *reply = isPost ? restClientWithPrefixUT->post(method) : restClientWithPrefixUT->get(method);
 
