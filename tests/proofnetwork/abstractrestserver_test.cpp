@@ -17,8 +17,8 @@ class TestRestServer : public Proof::AbstractRestServer
 {
     Q_OBJECT
 public:
-    TestRestServer()
-        : Proof::AbstractRestServer("username", "password", "api", 9091) {}
+    TestRestServer(const QString &pathPrefix = QString(), int port = 9091)
+        : Proof::AbstractRestServer("username", "password", pathPrefix, port) {}
 
 public slots:
     void rest_get_TestMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
@@ -77,6 +77,14 @@ public slots:
     }
 };
 
+class TestRestServerWithPathPrefix : public TestRestServer
+{
+    Q_OBJECT
+public:
+    TestRestServerWithPathPrefix()
+        : TestRestServer("/api", 9093) {}
+};
+
 class RestServerMethodsTest : public TestWithParam<std::tuple<QString, QString, int, bool>>
 {
 public:
@@ -93,10 +101,15 @@ public:
         restServerWithoutAuthUT = new TestRestServerWithoutAuth();
         restServerWithoutAuthUT->startListen();
         QTest::qWait(300);
+
+        restServerWithPathPrefixUT = new TestRestServerWithPathPrefix();
+        restServerWithPathPrefixUT->startListen();
+        QTest::qWait(300);
     }
 
     static void TearDownTestCase()
     {
+        delete restServerWithPathPrefixUT;
         delete restServerWithoutAuthUT;
         delete restServerUT;
     }
@@ -119,6 +132,15 @@ protected:
         restClientWithoutAuthUT->setPort(9092);
         restClientWithoutAuthUT->setScheme("http");
         restClientWithoutAuthUT->setClientName("Proof-test");
+
+        restClientWithPrefixUT = Proof::RestClientSP::create();
+        restClientWithPrefixUT->setAuthType(Proof::RestAuthType::Basic);
+        restClientWithPrefixUT->setUserName("username");
+        restClientWithPrefixUT->setPassword("password");
+        restClientWithPrefixUT->setHost("127.0.0.1");
+        restClientWithPrefixUT->setPort(9093);
+        restClientWithPrefixUT->setScheme("http");
+        restClientWithPrefixUT->setClientName("Proof-test");
     }
 
 protected:
@@ -126,11 +148,18 @@ protected:
     static TestRestServer *restServerUT;
     Proof::RestClientSP restClientWithoutAuthUT;
     static TestRestServerWithoutAuth *restServerWithoutAuthUT;
+    Proof::RestClientSP restClientWithPrefixUT;
+    static TestRestServerWithPathPrefix *restServerWithPathPrefixUT;
 
 };
 
 TestRestServer *RestServerMethodsTest::restServerUT = nullptr;
 TestRestServerWithoutAuth *RestServerMethodsTest::restServerWithoutAuthUT = nullptr;
+TestRestServerWithPathPrefix *RestServerMethodsTest::restServerWithPathPrefixUT = nullptr;
+
+class PathPrefixServerMethodsTest : public RestServerMethodsTest
+{
+};
 
 class AnotherRestServerMethodsTest : public RestServerMethodsTest
 {
@@ -168,7 +197,7 @@ TEST_P(RestServerMethodsTest, methodsNames)
 
     ASSERT_TRUE(restServerUT->isListening());
 
-    QNetworkReply *reply = isPost ? restClientUT->post(method): restClientUT->get(method);
+    QNetworkReply *reply = isPost ? restClientUT->post(method) : restClientUT->get(method);
 
     QSignalSpy spy(reply, SIGNAL(finished()));
 
@@ -186,6 +215,43 @@ TEST_P(RestServerMethodsTest, methodsNames)
 
 INSTANTIATE_TEST_CASE_P(RestServerMethodsTestInstance,
                         RestServerMethodsTest,
+                        testing::Values(std::tuple<QString, QString, int, bool>("/test-method", "rest_get_TestMethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-met-hod", "",  404, false),
+                                        std::tuple<QString, QString, int, bool>("/tEst-meThoD", "rest_get_TestMethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/testmethod", "rest_get_Testmethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method/sub-method", "rest_get_TestMethod_SubMethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method/sub-method/subsub", "rest_get_TestMethod_SubMethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method",  "rest_post_TestMethod", 200, true),
+                                        std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, false),
+                                        std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, true)));
+
+TEST_P(PathPrefixServerMethodsTest, methodsNames)
+{
+    QString method = QString("%1/%2").arg(restServerWithPathPrefixUT->pathPrefix(), std::get<0>(GetParam()));
+    QString serverMethodName = std::get<1>(GetParam());
+    int resultCode = std::get<2>(GetParam());
+    bool isPost = std::get<3>(GetParam());
+
+    ASSERT_TRUE(restServerUT->isListening());
+
+    QNetworkReply *reply = isPost ? restClientWithPrefixUT->post(method) : restClientWithPrefixUT->get(method);
+
+    QSignalSpy spy(reply, SIGNAL(finished()));
+
+    ASSERT_TRUE(spy.wait());
+    EXPECT_EQ(1, spy.count());
+
+    EXPECT_EQ(resultCode, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+
+    if (resultCode == 200) {
+        QString methodName = QString(reply->readAll()).trimmed();
+        EXPECT_EQ(methodName, serverMethodName);
+    }
+    delete reply;
+}
+
+INSTANTIATE_TEST_CASE_P(PathPrefixServerMethodsTestInstance,
+                        PathPrefixServerMethodsTest,
                         testing::Values(std::tuple<QString, QString, int, bool>("/test-method", "rest_get_TestMethod", 200, false),
                                         std::tuple<QString, QString, int, bool>("/test-met-hod", "",  404, false),
                                         std::tuple<QString, QString, int, bool>("/tEst-meThoD", "rest_get_TestMethod", 200, false),

@@ -114,6 +114,7 @@ private:
     QString userName;
     QString password;
     QString pathPrefix;
+    QStringList splittedPathPrefix;
     QThread *serverThread = nullptr;
     QList<WorkerThreadInfo> threadPool;
     QSet<QTcpSocket *> sockets;
@@ -155,7 +156,7 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     d->port = port;
     d->userName = userName;
     d->password = password;
-    d->pathPrefix = pathPrefix;
+    setPathPrefix(pathPrefix);
     d->authType = authType;
 
     setSuggestedMaxThreadsCount();
@@ -234,6 +235,7 @@ void AbstractRestServer::setPathPrefix(const QString &pathPrefix)
     Q_D(AbstractRestServer);
     if (d->pathPrefix != pathPrefix) {
         d->pathPrefix = pathPrefix;
+        d->splittedPathPrefix = d->pathPrefix.split('/', QString::SkipEmptyParts);
         emit pathPrefixChanged(d->pathPrefix);
     }
 }
@@ -385,6 +387,12 @@ void AbstractRestServer::sendInternalError(QTcpSocket *socket)
 QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const QString &name)
 {
     QStringList splittedName = name.split("/", QString::SkipEmptyParts);
+    bool isStartedWithPrefix = splittedName.size() >= splittedPathPrefix.size() &&
+            std::equal(splittedPathPrefix.cbegin(), splittedPathPrefix.cend(), splittedName.cbegin(),
+                       [](const QString &prefixPart, const QString &namePart) { return prefixPart == namePart.toLower(); });
+    if (isStartedWithPrefix == false)
+        return QStringList();
+    splittedName.erase(splittedName.begin(), splittedName.begin() + splittedPathPrefix.size());
     splittedName.prepend(type.toLower());
     return splittedName;
 }
