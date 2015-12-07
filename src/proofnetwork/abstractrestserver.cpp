@@ -233,8 +233,9 @@ void AbstractRestServer::setPassword(const QString &password)
 void AbstractRestServer::setPathPrefix(const QString &pathPrefix)
 {
     Q_D(AbstractRestServer);
-    if (d->pathPrefix != pathPrefix) {
-        d->pathPrefix = pathPrefix;
+    QString loweredPathPrefix = pathPrefix.toLower();
+    if (d->pathPrefix != loweredPathPrefix) {
+        d->pathPrefix = loweredPathPrefix;
         d->splittedPathPrefix = d->pathPrefix.split('/', QString::SkipEmptyParts);
         emit pathPrefixChanged(d->pathPrefix);
     }
@@ -387,9 +388,9 @@ void AbstractRestServer::sendInternalError(QTcpSocket *socket)
 QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const QString &name)
 {
     QStringList splittedName = name.split("/", QString::SkipEmptyParts);
-    bool isStartedWithPrefix = splittedName.size() >= splittedPathPrefix.size() &&
-            std::equal(splittedPathPrefix.cbegin(), splittedPathPrefix.cend(), splittedName.cbegin(),
-                       [](const QString &prefixPart, const QString &namePart) { return prefixPart == namePart.toLower(); });
+    bool isStartedWithPrefix = splittedName.size() >= splittedPathPrefix.size()
+            && std::equal(splittedPathPrefix.cbegin(), splittedPathPrefix.cend(), splittedName.cbegin(),
+                          [](const QString &prefixPart, const QString &namePart) { return prefixPart == namePart.toLower(); });
     if (isStartedWithPrefix == false)
         return QStringList();
     splittedName.erase(splittedName.begin(), splittedName.begin() + splittedPathPrefix.size());
