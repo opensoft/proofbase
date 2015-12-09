@@ -15,6 +15,7 @@
 #include <QJsonParseError>
 #include <QJsonArray>
 #include <QNetworkReply>
+#include <QMutex>
 
 #include <functional>
 #include <atomic>
@@ -230,6 +231,7 @@ private:
 
     static std::atomic<qulonglong> lastUsedOperationId;
     QHash<QNetworkReply *, QPair<qlonglong, RestAnswerHandler>> replies;
+    QMutex repliesMutex;
 };
 }
 #endif // ABSTRACTRESTAPI_P_H

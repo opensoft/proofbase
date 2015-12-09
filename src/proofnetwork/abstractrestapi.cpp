@@ -72,14 +72,20 @@ void AbstractRestApi::onRestClientChanging(const RestClientSP &client)
         return;
 
     auto replyFinishedCaller = [d](QNetworkReply *reply) {
+        QMutexLocker lock(&d->repliesMutex);
         if (!d->replies.contains(reply))
             return;
-        d->replyFinished(d->replies[reply].first, reply);
+        qlonglong operationId = d->replies[reply].first;
+        lock.unlock();
+        d->replyFinished(operationId, reply);
     };
     auto sslErrorsOccurredCaller = [d](QNetworkReply *reply, const QList<QSslError> &errors) {
+        QMutexLocker lock(&d->repliesMutex);
         if (!d->replies.contains(reply))
             return;
-        d->sslErrorsOccurred(d->replies[reply].first, reply, errors);
+        qlonglong operationId = d->replies[reply].first;
+        lock.unlock();
+        d->sslErrorsOccurred(operationId, reply, errors);
     };
 
     d->replyFinishedConnection = QObject::connect(client.data(), &RestClient::finished, this, replyFinishedCaller);
@@ -201,8 +207,10 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
         }
     }
 
+    QMutexLocker lock(&repliesMutex);
     if (replies.contains(reply)) {
         replies[reply].second(operationId, reply);
+        lock.unlock();
         cleanupReply(operationId, reply);
     }
 }
@@ -251,7 +259,9 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
 void AbstractRestApiPrivate::cleanupReply(qulonglong operationId, QNetworkReply *reply)
 {
     Q_UNUSED(operationId);
+    repliesMutex.lock();
     replies.remove(reply);
+    repliesMutex.unlock();
     reply->deleteLater();
 }
 
@@ -269,11 +279,15 @@ void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *
 {
     Q_Q(AbstractRestApi);
     operationId = ++lastUsedOperationId;
+    repliesMutex.lock();
     replies[reply] = qMakePair(operationId, handler);
+    repliesMutex.unlock();
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [this, reply, operationId](QNetworkReply::NetworkError) {
+        QMutexLocker lock(&repliesMutex);
         if (!replies.contains(reply))
             return;
+        lock.unlock();
         replyErrorOccurred(operationId, reply);
     });
 }
@@ -281,14 +295,21 @@ void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *
 void AbstractRestApiPrivate::clearReplies()
 {
     Q_Q(AbstractRestApi);
+    repliesMutex.lock();
     auto networkReplies = replies.keys();
+    QList<QNetworkReply *> toAbort;
     for(auto reply : networkReplies) {
         qlonglong operationId = replies[reply].first;
         replies.remove(reply);
-        reply->abort();
-        reply->deleteLater();
+        toAbort << reply;
         if (operationId)
             q->errorOccurred(operationId, RestApiError{RestApiError::Level::NoError, 0, "", false});
+    }
+    repliesMutex.unlock();
+
+    for(auto reply : toAbort) {
+        reply->abort();
+        reply->deleteLater();
     }
 }
 
