@@ -132,8 +132,7 @@ public:
         return result;
     }
 
-    template<class Entity,
-             class = typename std::enable_if< ! std::is_same<Entity, QString>::value >::type>
+    template<class Entity>
     bool parseEntitiesList(QList<QSharedPointer<Entity>> &entityList, QNetworkReply *reply,
                            qulonglong operationId, QString *errorMessage = nullptr)
     {
@@ -191,9 +190,7 @@ public:
         return result;
     }
 
-    template<class Entity,
-             class = typename std::enable_if<std::is_same<Entity, QString>::value>::type>
-    bool parseEntitiesList(QList<QString> &entityList, QNetworkReply *reply,
+    bool parseEntitiesList(QStringList &entityList, QNetworkReply *reply,
                            qulonglong operationId, QString *errorMessage = nullptr)
     {
         Q_Q(AbstractRestApi);
