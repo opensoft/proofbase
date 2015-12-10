@@ -247,7 +247,6 @@ public:
         return result;
     }
 
-
     template<class EntityKey, class Entity>
     QSharedPointer<Entity> parseEntity(const QJsonObject &jsonObject, ObjectsCache<EntityKey, Entity> &cache,
                                        std::function<EntityKey(Entity *)> &&cacheKey, qulonglong operationId,
