@@ -132,6 +132,125 @@ public:
         return result;
     }
 
+    template<class Entity,
+             class = typename std::enable_if< ! std::is_same<Entity, QString>::value >::type>
+    bool parseEntitiesList(QList<QSharedPointer<Entity>> &entityList, QNetworkReply *reply,
+                           qulonglong operationId, QString *errorMessage = nullptr)
+    {
+        Q_Q(AbstractRestApi);
+        bool result = true;
+        QByteArray json = reply->readAll();
+        QJsonParseError jsonError;
+        QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
+        if (jsonError.error != QJsonParseError::NoError) {
+            QString jsonErrorString = QString(QObject::tr("JSON error: %1")).arg(jsonError.errorString());
+            if (errorMessage) {
+                jsonErrorString.prepend(*errorMessage);
+                *errorMessage = jsonErrorString;
+            }
+            emit q->errorOccurred(operationId,
+                                  RestApiError{RestApiError::Level::JsonParseError,
+                                               jsonError.error,
+                                               jsonErrorString});
+            result = false;
+        } else if (!doc.isArray()) {
+            if (doc.isObject()) {
+                QJsonObject jsonObject = doc.object();
+                for (const QString &attribute : serverErrorAttributes) {
+                    if (!jsonObject.value(attribute).isUndefined()) {
+                        QString jsonErrorMessage = jsonObject.value(attribute).toString();
+                        if (errorMessage) {
+                            jsonErrorMessage.prepend(*errorMessage);
+                            *errorMessage = jsonErrorMessage;
+                        }
+                        emit q->errorOccurred(operationId,
+                                              RestApiError{RestApiError::Level::JsonServerError,
+                                                           0,
+                                                           jsonErrorMessage});
+                        return false;
+                    }
+                }
+            }
+            QString invalidJson = QObject::tr("Can't create list of entities from server response");
+            if (errorMessage) {
+                invalidJson.prepend(*errorMessage);
+                *errorMessage = invalidJson;
+            }
+            emit q->errorOccurred(operationId,
+                                  RestApiError{RestApiError::Level::JsonDataError, 0, invalidJson});
+            result = false;
+        } else {
+            QJsonArray jsonTypeList = doc.array();
+            for (const QJsonValue &value : jsonTypeList) {
+                auto entity = parseEntity<Entity>(value.toObject(), operationId);
+                if (entity)
+                    entityList.append(entity);
+            }
+            result = true;
+        }
+        return result;
+    }
+
+    template<class Entity,
+             class = typename std::enable_if<std::is_same<Entity, QString>::value>::type>
+    bool parseEntitiesList(QList<QString> &entityList, QNetworkReply *reply,
+                           qulonglong operationId, QString *errorMessage = nullptr)
+    {
+        Q_Q(AbstractRestApi);
+        bool result = true;
+        QByteArray json = reply->readAll();
+        QJsonParseError jsonError;
+        QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
+        if (jsonError.error != QJsonParseError::NoError) {
+            QString jsonErrorString = QString(QObject::tr("JSON error: %1")).arg(jsonError.errorString());
+            if (errorMessage) {
+                jsonErrorString.prepend(*errorMessage);
+                *errorMessage = jsonErrorString;
+            }
+            emit q->errorOccurred(operationId,
+                                  RestApiError{RestApiError::Level::JsonParseError,
+                                               jsonError.error,
+                                               jsonErrorString});
+            result = false;
+        } else if (!doc.isArray()) {
+            if (doc.isObject()) {
+                QJsonObject jsonObject = doc.object();
+                for (const QString &attribute : serverErrorAttributes) {
+                    if (!jsonObject.value(attribute).isUndefined()) {
+                        QString jsonErrorMessage = jsonObject.value(attribute).toString();
+                        if (errorMessage) {
+                            jsonErrorMessage.prepend(*errorMessage);
+                            *errorMessage = jsonErrorMessage;
+                        }
+                        emit q->errorOccurred(operationId,
+                                              RestApiError{RestApiError::Level::JsonServerError,
+                                                           0,
+                                                           jsonErrorMessage});
+                        return false;
+                    }
+                }
+            }
+            QString invalidJson = QObject::tr("Can't create list of entities from server response");
+            if (errorMessage) {
+                invalidJson.prepend(*errorMessage);
+                *errorMessage = invalidJson;
+            }
+            emit q->errorOccurred(operationId,
+                                  RestApiError{RestApiError::Level::JsonDataError, 0, invalidJson});
+            result = false;
+        } else {
+            QJsonArray jsonTypeList = doc.array();
+            for (const QJsonValue &value : jsonTypeList) {
+                QString string = value.toString();
+                if (!string.isEmpty())
+                    entityList.append(string);
+            }
+            result = true;
+        }
+        return result;
+    }
+
+
     template<class EntityKey, class Entity>
     QSharedPointer<Entity> parseEntity(const QJsonObject &jsonObject, ObjectsCache<EntityKey, Entity> &cache,
                                        std::function<EntityKey(Entity *)> &&cacheKey, qulonglong operationId,
@@ -233,5 +352,6 @@ private:
     QHash<QNetworkReply *, QPair<qlonglong, RestAnswerHandler>> replies;
     QMutex repliesMutex;
 };
+
 }
 #endif // ABSTRACTRESTAPI_P_H
