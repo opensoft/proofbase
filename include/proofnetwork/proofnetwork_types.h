@@ -27,7 +27,8 @@ enum class RestAuthType
     NoAuth,
     Basic,
     Wsse,
-    QuasiOAuth2
+    QuasiOAuth2,
+    OAuth2
 };
 
 }

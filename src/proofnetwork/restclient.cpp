@@ -30,6 +30,7 @@ public:
     QString clientName;
     QString host;
     QString quasiOAuth2Token;
+    QString oAuth2Token;
     int port = 443;
     QString scheme = QString("https");
     RestAuthType authType = RestAuthType::NoAuth;
@@ -156,6 +157,21 @@ void RestClient::setScheme(const QString &arg)
     if (d->scheme != arg) {
         d->scheme = arg;
         emit schemeChanged(arg);
+    }
+}
+
+QString RestClient::oAuth2Token() const
+{
+    Q_D(const RestClient);
+    return d->oAuth2Token;
+}
+
+void RestClient::setOAuth2Token(const QString &arg)
+{
+    Q_D(RestClient);
+    if (d->oAuth2Token != arg) {
+        d->oAuth2Token = arg;
+        emit oAuth2TokenChanged(arg);
     }
 }
 
@@ -350,7 +366,7 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
             result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg("xml"));
     } else {
         if (vendor.isEmpty())
-            result.setHeader(QNetworkRequest::ContentTypeHeader, "plain/text");
+            result.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
         else
             result.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/vnd.%1").arg(vendor));
     }
@@ -395,6 +411,9 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
                 qApp->processEvents();
         }
         result.setRawHeader("Authorization", QString("Bearer %1").arg(quasiOAuth2Token).toLatin1());
+        break;
+    case RestAuthType::OAuth2:
+        result.setRawHeader("Authorization", QString("Bearer %1").arg(oAuth2Token).toLatin1());
         break;
     case RestAuthType::NoAuth:
         if (!clientName.isEmpty())

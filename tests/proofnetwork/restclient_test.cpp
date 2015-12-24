@@ -55,17 +55,17 @@ INSTANTIATE_TEST_CASE_P(
         testing::Values(
             // Without vendor, without body
             HttpMethodsTestParam(std::bind(&Proof::RestClient::get, _1, "/", QUrlQuery(), QString()),
-                                 "", "plain/text"),
+                                 "", "text/plain"),
             HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
                                            (const QString &, const QUrlQuery &, const QByteArray &,
                                             const QString &)>(&Proof::RestClient::post), _1, "/", QUrlQuery(), _2, QString()),
-                                 "", "plain/text"),
+                                 "", "text/plain"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::put, _1, "/", QUrlQuery(), _2, QString()),
-                                 "", "plain/text"),
+                                 "", "text/plain"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::patch, _1, "/", QUrlQuery(), _2, QString()),
-                                 "", "plain/text"),
+                                 "", "text/plain"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::deleteResource, _1, "/", QUrlQuery(), QString()),
-                                 "", "plain/text"),
+                                 "", "text/plain"),
             // With vendor, without body
             HttpMethodsTestParam(std::bind(&Proof::RestClient::get, _1, "/", QUrlQuery(), "opensoft"),
                                  "", "application/vnd.opensoft"),
