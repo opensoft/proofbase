@@ -97,7 +97,7 @@ public:
         m_cacheLock.unlock();
     }
 
-    void clear()
+    void clear() override
     {
         m_cacheLock.lockForWrite();
         m_cache.clear();
@@ -107,7 +107,7 @@ public:
         m_cacheLock.unlock();
     }
 
-    bool isEmpty() const
+    bool isEmpty() const override
     {
         m_cacheLock.lockForRead();
         bool result = m_cache.isEmpty();
@@ -317,7 +317,7 @@ public:
         m_cacheLock.unlock();
     }
 
-    void clear()
+    void clear() override
     {
         m_cacheLock.lockForWrite();
         m_cache.clear();
@@ -327,7 +327,7 @@ public:
         m_cacheLock.unlock();
     }
 
-    bool isEmpty() const
+    bool isEmpty() const override
     {
         m_cacheLock.lockForRead();
         bool result = m_cache.isEmpty();
