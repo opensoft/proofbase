@@ -27,6 +27,7 @@ public:
     void setLanguage(const QString &language);
     QStringList availableLanguages();
     QString language() const;
+    int languageIndex() const;
 
 signals:
     void languageChanged(const QString &language);

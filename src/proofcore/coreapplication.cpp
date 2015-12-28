@@ -170,6 +170,12 @@ QString CoreApplication::language() const
     return d->language();
 }
 
+int CoreApplication::languageIndex() const
+{
+    Q_D(const CoreApplication);
+    return d->availableLanguages.indexOf(d->language());
+}
+
 void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRules)
 {
     Logs::setup(defaultLoggingRules);
