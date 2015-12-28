@@ -238,6 +238,7 @@ void CoreApplicationPrivate::initTranslator()
     qSort(availableLanguages.begin(), availableLanguages.end());
     SettingsGroup *localeGroup = settings->group("locale", Settings::NotFoundPolicy::Add);
     currentLanguage = localeGroup->value("language", "en", Settings::NotFoundPolicy::Add).toString();
+    setLanguage(currentLanguage);
 }
 
 void CoreApplicationPrivate::setLanguage(const QString &language)
