@@ -1,13 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="ja_JP">
+<TS version="2.1" language="de_DE">
 <context>
     <name>QObject</name>
-    <message>
-        <location filename="../abstractrestapi.cpp" line="226"/>
-        <source>Service is inaccessible. Try again later</source>
-        <translation>サービスは現在使用不可能です。後ほどお試しください</translation>
-    </message>
     <message>
         <location filename="../abstractrestapi_p.h" line="87"/>
         <location filename="../abstractrestapi_p.h" line="145"/>
@@ -15,7 +10,7 @@
         <location filename="../abstractrestapi_p.h" line="323"/>
         <location filename="../abstractrestapi.cpp" line="271"/>
         <source>JSON error: %1</source>
-        <translation>JSONエラー:%1</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../abstractrestapi_p.h" line="115"/>
@@ -38,22 +33,27 @@
         <location filename="../restclient.cpp" line="470"/>
         <source>Can&apos;t connect to Scissorhands service.
 Please check your internet connection.</source>
-        <translation>シザーハンズにアクセスできません。
-インターネット回線を確認してください</translation>
+        <translation>Verbindung zum Scissorhands Service nicht moeglich. 
+Bitte pruefen Sie Ihre Internetverbindung.</translation>
     </message>
     <message>
         <location filename="../restclient.cpp" line="483"/>
         <source>Wrong Scissorhands service authentication.
 Please check your authentication settings.</source>
-        <translation>シザーハンズの承認番号に誤りがあります
-承認設定を確認してください</translation>
+        <translation>Falsche Scissorhands-Service-Authentifizierung. 
+Bitte pruefen Sie Ihre Einstellungen fuer die Benutzerauthentifizierung.</translation>
     </message>
     <message>
         <location filename="../restclient.cpp" line="488"/>
         <source>Wrong Scissorhands service answer.
 Please check your host settings.</source>
-        <translation>シザーハンズサービスへの回答が間違っています
-ホストの設定をご確認ください</translation>
+        <translation>Falsche Rueckmeldung vom Scissorhands-Service.
+Bitte pruefen Sie Ihre Host-Einstellungen.</translation>
+    </message>
+    <message>
+        <location filename="../abstractrestapi.cpp" line="226"/>
+        <source>Service is inaccessible. Try again later</source>
+        <translation>Service unzugaenglich. Versuchen Sie es spaeter nochmals.</translation>
     </message>
 </context>
 </TS>
