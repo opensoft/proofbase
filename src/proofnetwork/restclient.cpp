@@ -267,7 +267,7 @@ QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query, co
 QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << method << query.toString() << body;
+    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << body;
     QNetworkReply *reply = d->qnam->post(d->createNetworkRequest(method, query, body, vendor), body);
     d->handleReply(reply);
     return reply;
