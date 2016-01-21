@@ -1,6 +1,9 @@
-LIBS *= -L$$(PROOF_PATH)/lib
-INCLUDEPATH *= $$(PROOF_PATH)/include
+include(proof.prf)
 
-LIBS *= -lqamqp
+win32 {
+    LIBS *= -lqamqp$${PROOF_VERSION_MAJOR}
+} else {
+    LIBS *= -lqamqp
+}
 
 android:ANDROID_EXTRA_LIBS *= $$(PROOF_PATH)/lib/libqamqp.so

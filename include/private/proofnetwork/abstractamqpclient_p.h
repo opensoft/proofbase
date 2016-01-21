@@ -2,6 +2,7 @@
 #define QABSTRACTAMQPCLIENT_P_H
 
 #include "proofcore/proofobject_p.h"
+#include "proofnetwork/proofnetwork_global.h"
 #include "abstractamqpclient.h"
 #include "proofnetwork/3rdparty/qamqp/qamqpclient.h"
 #include "proofnetwork/3rdparty/qamqp/qamqpqueue.h"
@@ -9,7 +10,7 @@
 
 namespace Proof {
 
-class AbstractAmqpClientPrivate : public ProofObjectPrivate
+class PROOF_NETWORK_EXPORT AbstractAmqpClientPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(AbstractAmqpClient)
 
