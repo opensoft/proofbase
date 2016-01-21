@@ -1,3 +1,4 @@
+include(qamqp.prf)
 include(proofcore.prf)
 
 QT *= network

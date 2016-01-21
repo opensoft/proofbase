@@ -1,0 +1,8 @@
+include(proof_common.prf)
+
+LIBS *= -L$$(PROOF_PATH)/lib
+INCLUDEPATH *= $$(PROOF_PATH)/include
+
+LIBS *= -lqamqp
+
+android:ANDROID_EXTRA_LIBS *= $$(PROOF_PATH)/lib/libqamqp.so
