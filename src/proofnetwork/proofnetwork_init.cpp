@@ -4,6 +4,7 @@
 #include "3rdparty/qamqp/qamqpglobal.h"
 
 Q_LOGGING_CATEGORY(proofNetworkMiscLog, "proof.network.misc")
+Q_LOGGING_CATEGORY(proofNetworkAmqpLog, "proof.network.amqp")
 
 __attribute__((constructor))
 static void libraryInit()

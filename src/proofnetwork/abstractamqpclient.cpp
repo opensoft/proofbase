@@ -160,31 +160,37 @@ void AbstractAmqpClient::connectToHost()
 
     QObject::connect(d->m_rabbitClient, static_cast<void(QAmqpClient::*)(QAMQP::Error)>(&QAmqpClient::error), this, [this](QAMQP::Error error) {
         emit errorOccurred(QString("Client Error: %1").arg(error));
-        qCDebug(proofNetworkMiscLog) << "Client Error:" << error;
+        qCDebug(proofNetworkAmqpLog) << "Client Error:" << error;
     });
 
     QObject::connect(d->m_rabbitClient, static_cast<void(QAmqpClient::*)(QAbstractSocket::SocketError)>(&QAmqpClient::socketError), this, [this](QAbstractSocket::SocketError error) {
         emit errorOccurred("Can't connect to qamqp server (Socket)");
-        qCDebug(proofNetworkMiscLog) << "Socket error" << error;
+        qCDebug(proofNetworkAmqpLog) << "Socket error" << error;
     });
 
-    QObject::connect(d->m_rabbitClient, &QAmqpClient::sslErrors, this, [this](const QList<QSslError> &) {
+    QObject::connect(d->m_rabbitClient, &QAmqpClient::sslErrors, this, [this](const QList<QSslError> &errors) {
         emit errorOccurred("Can't connect to qamqp server (SSL)");
+
+        QString errorsString;
+        for(const auto &error : errors)
+            errorsString += QString("%1,\n").arg(error.errorString());
+        errorsString.chop(3);
+        qCDebug(proofNetworkAmqpLog) << "SSL Socket errors:" << errorsString;
     });
 
     QObject::connect(d->m_rabbitClient, &QAmqpClient::connected, this, [this, d]() {
-        qCDebug(proofNetworkMiscLog) << "Connected";
+        qCDebug(proofNetworkAmqpLog) << "Connected";
         if (d->m_queue)
             d->m_queue->deleteLater();
         d->m_queue = d->m_rabbitClient->createQueue(d->m_queueName);
-        qCDebug(proofNetworkMiscLog) << "Create queue:" << d->m_queueName;
+        qCDebug(proofNetworkAmqpLog) << "Create queue:" << d->m_queueName;
         QObject::connect(d->m_queue, static_cast<void(QAmqpQueue::*)(QAMQP::Error)>(&QAmqpQueue::error), this, [this](QAMQP::Error error) {
             emit errorOccurred(QString("Queue Error: %1").arg(error));
-            qCDebug(proofNetworkMiscLog) << "Queue Error:" << error;
+            qCDebug(proofNetworkAmqpLog) << "Queue Error:" << error;
         });
 
         QObject::connect(d->m_queue, &QAmqpQueue::opened, this, [this, d]() {
-            qCDebug(proofNetworkMiscLog) << "Queue opened";
+            qCDebug(proofNetworkAmqpLog) << "Queue opened";
             QObject::connect(d->m_queue, &QAmqpQueue::messageReceived, this, [this, d]() {d->amqpMessageReceived();});
             d->m_queue->consume(QAmqpQueue::coNoAck);
             emit connected();

@@ -1,5 +1,3 @@
-include(proof_common.prf)
-
 LIBS *= -L$$(PROOF_PATH)/lib
 INCLUDEPATH *= $$(PROOF_PATH)/include
 
