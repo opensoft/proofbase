@@ -174,7 +174,7 @@ void AbstractAmqpClient::connectToHost()
         QString errorsString;
         for(const auto &error : errors)
             errorsString += QString("%1,\n").arg(error.errorString());
-        errorsString.chop(3);
+        errorsString.chop(2);
         qCDebug(proofNetworkAmqpLog) << "SSL Socket errors:" << errorsString;
     });
 
