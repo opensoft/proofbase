@@ -191,8 +191,6 @@ void AbstractAmqpClient::connectToHost()
         });
 
     });
-
-    qCDebug(proofNetworkMiscLog) << "!!!! Yoo! I'm in!" << d->m_rabbitClient->host();
     d->m_rabbitClient->connectToHost();
 }
 
