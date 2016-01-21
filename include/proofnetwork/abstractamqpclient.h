@@ -25,8 +25,8 @@ public:
     QString virtualHost() const;
     void setVirtualHost(const QString &virtualHost);
 
-    QString username() const;
-    void setUsername(const QString &username);
+    QString userName() const;
+    void setUserName(const QString &userName);
 
     QString password() const;
     void setPassword(const QString &password);

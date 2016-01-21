@@ -52,13 +52,13 @@ void AbstractAmqpClient::setVirtualHost(const QString &virtualHost)
     d->m_rabbitClient->setVirtualHost(virtualHost);
 }
 
-QString AbstractAmqpClient::username() const
+QString AbstractAmqpClient::userName() const
 {
     Q_D(const AbstractAmqpClient);
     return d->m_rabbitClient->username();
 }
 
-void AbstractAmqpClient::setUsername(const QString &username)
+void AbstractAmqpClient::setUserName(const QString &username)
 {
     Q_D(AbstractAmqpClient);
     d->m_rabbitClient->setUsername(username);
