@@ -2,6 +2,8 @@
 
 #include "proofservicerestapi_p.h"
 
+#include "proofnetwork_types.h"
+
 #include <QJsonDocument>
 #include <QJsonObject>
 
@@ -32,14 +34,15 @@ void ProofServiceRestApiPrivate::replyFinished(qulonglong operationId, QNetworkR
                 QStringList args;
                 for (const auto &arg : jsonArgs)
                     args << arg.toString();
-                QString errorMessage = errorsRegistry->messageForCode(serviceErrorCode.toInt(), args);
+                ErrorInfo errorInfo = errorsRegistry->infoForCode(serviceErrorCode.toInt(), args);
                 qCDebug(proofNetworkMiscLog) << "Error in JSON parsing occurred for" << operationId
                                              << reply->request().url().path()
                                              << reply->request().url().query()
-                                             << ": " << errorCode << errorMessage;
-                emit q->errorOccurred(operationId, RestApiError{RestApiError::Level::ServerError,
-                                                                errorCode,
-                                                                errorMessage});
+                                             << ": " << errorCode
+                                             << errorInfo.proofModuleCode << errorInfo.proofErrorCode << errorInfo.message;
+                emit q->errorOccurred(operationId, RestApiError{RestApiError::Level::ServerError, errorCode,
+                                                                errorInfo.proofModuleCode, errorInfo.proofErrorCode,
+                                                                errorInfo.message, errorInfo.userFriendly});
                 cleanupReply(operationId, reply);
                 return;
             }

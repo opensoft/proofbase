@@ -84,14 +84,14 @@ public:
         QJsonParseError jsonError;
         QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
-            QString jsonErrorString = QString(QObject::tr("JSON error: %1")).arg(jsonError.errorString());
+            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
             if (errorMessage) {
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
             }
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonParseError,
-                                               jsonError.error,
+                                  RestApiError{RestApiError::Level::JsonParseError, jsonError.error,
+                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                jsonErrorString});
             result = false;
         } else if (!doc.isArray()) {
@@ -105,20 +105,22 @@ public:
                             *errorMessage = jsonErrorMessage;
                         }
                         emit q->errorOccurred(operationId,
-                                              RestApiError{RestApiError::Level::JsonServerError,
-                                                           0,
+                                              RestApiError{RestApiError::Level::JsonServerError, 0,
+                                                           NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                            jsonErrorMessage});
                         return false;
                     }
                 }
             }
-            QString invalidJson = QObject::tr("Can't create list of entities from server response");
+            QString invalidJson = "Can't create list of entities from server response";
             if (errorMessage) {
                 invalidJson.prepend(*errorMessage);
                 *errorMessage = invalidJson;
             }
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonDataError, 0, invalidJson});
+                                  RestApiError{RestApiError::Level::JsonDataError, 0,
+                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
+                                               invalidJson});
             result = false;
         } else {
             QJsonArray jsonTypeList = doc.array();
@@ -142,14 +144,14 @@ public:
         QJsonParseError jsonError;
         QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
-            QString jsonErrorString = QString(QObject::tr("JSON error: %1")).arg(jsonError.errorString());
+            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
             if (errorMessage) {
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
             }
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonParseError,
-                                               jsonError.error,
+                                  RestApiError{RestApiError::Level::JsonParseError, jsonError.error,
+                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                jsonErrorString});
             result = false;
         } else if (!doc.isArray()) {
@@ -163,20 +165,22 @@ public:
                             *errorMessage = jsonErrorMessage;
                         }
                         emit q->errorOccurred(operationId,
-                                              RestApiError{RestApiError::Level::JsonServerError,
-                                                           0,
+                                              RestApiError{RestApiError::Level::JsonServerError, 0,
+                                                           NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                            jsonErrorMessage});
                         return false;
                     }
                 }
             }
-            QString invalidJson = QObject::tr("Can't create list of entities from server response");
+            QString invalidJson = "Can't create list of entities from server response";
             if (errorMessage) {
                 invalidJson.prepend(*errorMessage);
                 *errorMessage = invalidJson;
             }
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonDataError, 0, invalidJson});
+                                  RestApiError{RestApiError::Level::JsonDataError, 0,
+                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
+                                               invalidJson});
             result = false;
         } else {
             QJsonArray jsonTypeList = doc.array();
@@ -199,14 +203,14 @@ public:
         QJsonParseError jsonError;
         QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
-            QString jsonErrorString = QString(QObject::tr("JSON error: %1")).arg(jsonError.errorString());
+            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
             if (errorMessage) {
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
             }
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonParseError,
-                                               jsonError.error,
+                                  RestApiError{RestApiError::Level::JsonParseError, jsonError.error,
+                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                jsonErrorString});
             result = false;
         } else if (!doc.isArray()) {
@@ -220,20 +224,22 @@ public:
                             *errorMessage = jsonErrorMessage;
                         }
                         emit q->errorOccurred(operationId,
-                                              RestApiError{RestApiError::Level::JsonServerError,
-                                                           0,
+                                              RestApiError{RestApiError::Level::JsonServerError, 0,
+                                                           NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                            jsonErrorMessage});
                         return false;
                     }
                 }
             }
-            QString invalidJson = QObject::tr("Can't create list of entities from server response");
+            QString invalidJson = "Can't create list of entities from server response";
             if (errorMessage) {
                 invalidJson.prepend(*errorMessage);
                 *errorMessage = invalidJson;
             }
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonDataError, 0, invalidJson});
+                                  RestApiError{RestApiError::Level::JsonDataError, 0,
+                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
+                                               invalidJson});
             result = false;
         } else {
             QJsonArray jsonTypeList = doc.array();
@@ -283,21 +289,21 @@ public:
                         *errorMessage = jsonErrorMessage;
                     }
                     emit q->errorOccurred(operationId,
-                                          RestApiError{RestApiError::Level::JsonServerError,
-                                                       0,
+                                          RestApiError{RestApiError::Level::JsonServerError, 0,
+                                                       NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                        jsonErrorMessage});
                     return entity;
                 }
             }
 
-            QString errorString(QObject::tr("Can't create entity from server response"));
+            QString errorString("Can't create entity from server response");
             if (errorMessage) {
                 errorString.prepend(*errorMessage);
                 *errorMessage = errorString;
             }
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonDataError,
-                                               0,
+                                  RestApiError{RestApiError::Level::JsonDataError, 0,
+                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                errorString});
         }
         return entity;
@@ -320,25 +326,25 @@ private:
         QJsonParseError jsonError;
         QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
-            QString jsonErrorString = QString(QObject::tr("JSON error: %1")).arg(jsonError.errorString());
+            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
             if (errorMessage) {
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
             }
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonParseError,
-                                               jsonError.error,
+                                  RestApiError{RestApiError::Level::JsonParseError, jsonError.error,
+                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                jsonErrorString});
             return QJsonObject();
         } else if (doc.object().isEmpty()) {
-            QString jsonErrorString = QObject::tr("JSON error: empty entity data");
+            QString jsonErrorString = "JSON error: empty entity data";
             if (errorMessage) {
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
             }
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonParseError,
-                                               0,
+                                  RestApiError{RestApiError::Level::JsonParseError, 0,
+                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                jsonErrorString});
         }
         return doc.object();

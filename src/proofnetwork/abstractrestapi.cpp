@@ -200,8 +200,8 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
                                          << ": " << errorCode
                                          << message;
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::ServerError,
-                                               errorCode,
+                                  RestApiError{RestApiError::Level::ServerError, errorCode,
+                                               NETWORK_MODULE_CODE, NetworkErrorCode::ServerError,
                                                message});
             cleanupReply(operationId, reply);
         }
@@ -222,15 +222,18 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
             && (reply->error() < 100 || (reply->error() % 100) == 99)) {
         int errorCode = NETWORK_ERROR_OFFSET + static_cast<int>(reply->error());
         QString errorString = reply->errorString();
-        if (reply->error() == QNetworkReply::NetworkError::OperationCanceledError)
-            errorString = QObject::tr("Service is inaccessible. Try again later");
+        long proofErrorCode = NetworkErrorCode::ServerError;
+        if (reply->error() == QNetworkReply::NetworkError::OperationCanceledError) {
+            errorString = "Service is inaccessible. Try again later";
+            proofErrorCode = NetworkErrorCode::InaccessibleService;
+        }
         qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
                                      << reply->request().url().path()
                                      << reply->request().url().query()
                                      << ": " << errorCode << errorString;
         emit q->errorOccurred(operationId,
-                              RestApiError{RestApiError::Level::ClientError,
-                                           errorCode,
+                              RestApiError{RestApiError::Level::ClientError, errorCode,
+                                           NETWORK_MODULE_CODE, proofErrorCode,
                                            errorString});
         cleanupReply(operationId, reply);
     }
@@ -248,8 +251,8 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
                                          << reply->request().url().query()
                                          << ": " << errorCode << error.errorString();
             emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::ClientError,
-                                               errorCode,
+                                  RestApiError{RestApiError::Level::ClientError, errorCode,
+                                               NETWORK_MODULE_CODE, NetworkErrorCode::SslError,
                                                error.errorString()});
             cleanupReply(operationId, reply);
         }
@@ -268,11 +271,10 @@ void AbstractRestApiPrivate::cleanupReply(qulonglong operationId, QNetworkReply 
 void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error)
 {
     Q_Q(AbstractRestApi);
-    QString jsonErrorString = QString(QObject::tr("JSON error: %1")).arg(error.errorString());
     emit q->errorOccurred(operationId,
-                          RestApiError{RestApiError::Level::JsonParseError,
-                                       error.error,
-                                       jsonErrorString});
+                          RestApiError{RestApiError::Level::JsonParseError, error.error,
+                                       NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
+                                       QString("JSON error: %1").arg(error.errorString())});
 }
 
 void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *reply, RestAnswerHandler &&handler)
@@ -303,7 +305,7 @@ void AbstractRestApiPrivate::clearReplies()
         replies.remove(reply);
         toAbort << reply;
         if (operationId)
-            q->errorOccurred(operationId, RestApiError{RestApiError::Level::NoError, 0, "", false});
+            q->errorOccurred(operationId, RestApiError());
     }
     repliesMutex.unlock();
 
@@ -312,7 +314,6 @@ void AbstractRestApiPrivate::clearReplies()
         reply->deleteLater();
     }
 }
-
 
 QString RestApiError::toString() const
 {

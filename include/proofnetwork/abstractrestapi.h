@@ -21,8 +21,10 @@ struct PROOF_NETWORK_EXPORT RestApiError
         JsonServerError,
         JsonDataError
     };
-    RestApiError(Level _level = Level::NoError, qlonglong _code = 0, const QString &_message = QString(), bool _processed = true)
-        : level(_level), code(_code), message(_message), processed(_processed)
+    RestApiError(Level _level = Level::NoError, qlonglong _code = 0,
+                 long _proofModuleCode = NETWORK_MODULE_CODE, long _proofErrorCode = 0,
+                 const QString &_message = QString(), bool _userFriendly = false)
+        : level(_level), code(_code), proofModuleCode(_proofModuleCode), proofErrorCode(_proofErrorCode), message(_message), userFriendly(_userFriendly)
     {}
 
     QString toString() const;
@@ -32,8 +34,10 @@ struct PROOF_NETWORK_EXPORT RestApiError
 
     Level level = Level::NoError;
     qlonglong code = 0;
+    long proofModuleCode = NETWORK_MODULE_CODE;
+    long proofErrorCode = 0;
     QString message;
-    bool processed = true;
+    bool userFriendly = false;
 };
 
 class AbstractRestApiPrivate;
@@ -69,8 +73,6 @@ public:
             taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
             currentOperationId = (*callee.*method)(args...);
             taskChain->fireSignalWaiters();
-        } else {
-            error.processed = false;
         }
         return error;
     }
@@ -103,8 +105,6 @@ public:
             taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
             currentOperationId = (*callee.*method)(args...);
             taskChain->fireSignalWaiters();
-        } else {
-            error.processed = false;
         }
         return error;
     }
