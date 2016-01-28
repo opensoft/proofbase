@@ -13,6 +13,7 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
     : ProofObject(dd, parent)
 {
     Q_D(AbstractAmqpClient);
+    //TODO: Make lazy init for QAmqpClient for correct work in client network thread
     d->m_rabbitClient = new QAmqpClient();
 }
 
