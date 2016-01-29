@@ -54,7 +54,7 @@ public:
     void connectToHost();
 
 signals:
-    void errorOccurred(const QString &message);
+    void errorOccurred(long moduleCode, long errorCode, const QString &errorMessage, bool userFriendly);
     void connected();
 
 protected:

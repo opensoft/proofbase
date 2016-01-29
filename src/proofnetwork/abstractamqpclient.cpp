@@ -160,17 +160,17 @@ void AbstractAmqpClient::connectToHost()
     Q_D(AbstractAmqpClient);
 
     QObject::connect(d->m_rabbitClient, static_cast<void(QAmqpClient::*)(QAMQP::Error)>(&QAmqpClient::error), this, [this](QAMQP::Error error) {
-        emit errorOccurred(QString("Client Error: %1").arg(error));
+        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Client Error: %1").arg(error), false);
         qCDebug(proofNetworkAmqpLog) << "Client Error:" << error;
     });
 
     QObject::connect(d->m_rabbitClient, static_cast<void(QAmqpClient::*)(QAbstractSocket::SocketError)>(&QAmqpClient::socketError), this, [this](QAbstractSocket::SocketError error) {
-        emit errorOccurred("Can't connect to qamqp server (Socket)");
+        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InaccessibleService, "Can't connect to qamqp server (Socket)", false);
         qCDebug(proofNetworkAmqpLog) << "Socket error" << error;
     });
 
     QObject::connect(d->m_rabbitClient, &QAmqpClient::sslErrors, this, [this](const QList<QSslError> &errors) {
-        emit errorOccurred("Can't connect to qamqp server (SSL)");
+        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::SslError, "Can't connect to qamqp server (SSL)", false);
 
         QString errorsString;
         for(const auto &error : errors)
@@ -186,7 +186,7 @@ void AbstractAmqpClient::connectToHost()
         d->m_queue = d->m_rabbitClient->createQueue(d->m_queueName);
         qCDebug(proofNetworkAmqpLog) << "Create queue:" << d->m_queueName;
         QObject::connect(d->m_queue, static_cast<void(QAmqpQueue::*)(QAMQP::Error)>(&QAmqpQueue::error), this, [this](QAMQP::Error error) {
-            emit errorOccurred(QString("Queue Error: %1").arg(error));
+            emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Queue Error: %1").arg(error), false);
             qCDebug(proofNetworkAmqpLog) << "Queue Error:" << error;
         });
 
