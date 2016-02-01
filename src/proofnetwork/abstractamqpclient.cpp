@@ -165,7 +165,7 @@ void AbstractAmqpClient::connectToHost()
     });
 
     QObject::connect(d->m_rabbitClient, static_cast<void(QAmqpClient::*)(QAbstractSocket::SocketError)>(&QAmqpClient::socketError), this, [this](QAbstractSocket::SocketError error) {
-        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InaccessibleService, "Can't connect to qamqp server (Socket)", false);
+        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable, "Can't connect to qamqp server (Socket)", false);
         qCDebug(proofNetworkAmqpLog) << "Socket error" << error;
     });
 

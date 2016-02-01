@@ -224,8 +224,8 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
         QString errorString = reply->errorString();
         long proofErrorCode = NetworkErrorCode::ServerError;
         if (reply->error() == QNetworkReply::NetworkError::OperationCanceledError) {
-            errorString = "Service is inaccessible. Try again later";
-            proofErrorCode = NetworkErrorCode::InaccessibleService;
+            errorString = "Service is unavailable. Try again later";
+            proofErrorCode = NetworkErrorCode::ServiceUnavailable;
         }
         qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
                                      << reply->request().url().path()
