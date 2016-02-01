@@ -17,7 +17,7 @@ namespace Proof {
 namespace NetworkErrorCode {
 enum Code {
     ServerError = 1,
-    InaccessibleService = 2,
+    ServiceUnavailable = 2,
     SslError = 3,
     InvalidReply = 4,
     InvalidRequest = 5,
