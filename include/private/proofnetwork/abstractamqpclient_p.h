@@ -19,6 +19,7 @@ public:
     QAmqpClient *m_rabbitClient = nullptr;
     QAmqpQueue *m_queue = nullptr;
     QString m_queueName;
+    int m_autoReconnectionTries = 0;
 
     virtual void amqpMessageReceived() = 0;
 };

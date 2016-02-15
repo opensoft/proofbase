@@ -9,12 +9,71 @@
 
 using namespace Proof;
 
+static const int AUTO_RECONNECTION_TRIES = 3;
+
 AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *parent)
     : ProofObject(dd, parent)
 {
     Q_D(AbstractAmqpClient);
     //TODO: Make lazy init for QAmqpClient for correct work in client network thread
     d->m_rabbitClient = new QAmqpClient();
+
+    QObject::connect(d->m_rabbitClient, static_cast<void(QAmqpClient::*)(QAMQP::Error)>(&QAmqpClient::error), this, [this, d](QAMQP::Error error) {
+        if (d->m_rabbitClient->autoReconnect() && d->m_autoReconnectionTries) {
+            --d->m_autoReconnectionTries;
+            qCDebug(proofNetworkAmqpLog) << "Client Connection Error:" << error << "Reconnection tries count:" << d->m_autoReconnectionTries;
+            return;
+        }
+
+        d->m_rabbitClient->disconnectFromHost();
+        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Client Error: %1").arg(error), false);
+        qCDebug(proofNetworkAmqpLog) << "Client Error:" << error;
+    });
+
+    QObject::connect(d->m_rabbitClient, static_cast<void(QAmqpClient::*)(QAbstractSocket::SocketError)>(&QAmqpClient::socketError), this, [this, d](QAbstractSocket::SocketError error) {
+        if (d->m_rabbitClient->autoReconnect() && d->m_autoReconnectionTries) {
+            --d->m_autoReconnectionTries;
+            qCDebug(proofNetworkAmqpLog) << "Client Connection Error:" << error << "Reconnection tries count:" << d->m_autoReconnectionTries;
+            return;
+        }
+
+        d->m_rabbitClient->disconnectFromHost();
+        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable, "Can't connect to qamqp server (Socket)", false);
+        qCDebug(proofNetworkAmqpLog) << "Socket error" << error;
+    });
+
+    QObject::connect(d->m_rabbitClient, &QAmqpClient::sslErrors, this, [this](const QList<QSslError> &errors) {
+        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::SslError, "Can't connect to qamqp server (SSL)", false);
+
+        QString errorsString;
+        for(const auto &error : errors)
+            errorsString += QString("%1,\n").arg(error.errorString());
+        errorsString.chop(2);
+        qCDebug(proofNetworkAmqpLog) << "SSL Socket errors:" << errorsString;
+    });
+
+    QObject::connect(d->m_rabbitClient, &QAmqpClient::connected, this, [this, d]() {
+        qCDebug(proofNetworkAmqpLog) << "Connected";
+        d->m_autoReconnectionTries = AUTO_RECONNECTION_TRIES;
+
+        auto queue = d->m_rabbitClient->createQueue(d->m_queueName);
+        if (d->m_queue != queue){
+            d->m_queue = queue;
+            qCDebug(proofNetworkAmqpLog) << "Create queue:" << d->m_queueName;
+            QObject::connect(d->m_queue, static_cast<void(QAmqpQueue::*)(QAMQP::Error)>(&QAmqpQueue::error), this, [this](QAMQP::Error error) {
+                emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Queue Error: %1").arg(error), false);
+                qCDebug(proofNetworkAmqpLog) << "Queue Error:" << error;
+            });
+
+            QObject::connect(d->m_queue, &QAmqpQueue::opened, this, [this, d]() {
+                qCDebug(proofNetworkAmqpLog) << "Queue opened" << sender();
+                QObject::connect(d->m_queue, &QAmqpQueue::messageReceived, this, [this, d]() {d->amqpMessageReceived();});
+                d->m_queue->consume(QAmqpQueue::coNoAck);
+                emit connected();
+            });
+        }
+
+    });
 }
 
 quint16 AbstractAmqpClient::port() const
@@ -159,46 +218,8 @@ void AbstractAmqpClient::connectToHost()
 {
     Q_D(AbstractAmqpClient);
 
-    QObject::connect(d->m_rabbitClient, static_cast<void(QAmqpClient::*)(QAMQP::Error)>(&QAmqpClient::error), this, [this](QAMQP::Error error) {
-        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Client Error: %1").arg(error), false);
-        qCDebug(proofNetworkAmqpLog) << "Client Error:" << error;
-    });
-
-    QObject::connect(d->m_rabbitClient, static_cast<void(QAmqpClient::*)(QAbstractSocket::SocketError)>(&QAmqpClient::socketError), this, [this](QAbstractSocket::SocketError error) {
-        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable, "Can't connect to qamqp server (Socket)", false);
-        qCDebug(proofNetworkAmqpLog) << "Socket error" << error;
-    });
-
-    QObject::connect(d->m_rabbitClient, &QAmqpClient::sslErrors, this, [this](const QList<QSslError> &errors) {
-        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::SslError, "Can't connect to qamqp server (SSL)", false);
-
-        QString errorsString;
-        for(const auto &error : errors)
-            errorsString += QString("%1,\n").arg(error.errorString());
-        errorsString.chop(2);
-        qCDebug(proofNetworkAmqpLog) << "SSL Socket errors:" << errorsString;
-    });
-
-    QObject::connect(d->m_rabbitClient, &QAmqpClient::connected, this, [this, d]() {
-        qCDebug(proofNetworkAmqpLog) << "Connected";
-        if (d->m_queue)
-            d->m_queue->deleteLater();
-        d->m_queue = d->m_rabbitClient->createQueue(d->m_queueName);
-        qCDebug(proofNetworkAmqpLog) << "Create queue:" << d->m_queueName;
-        QObject::connect(d->m_queue, static_cast<void(QAmqpQueue::*)(QAMQP::Error)>(&QAmqpQueue::error), this, [this](QAMQP::Error error) {
-            emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Queue Error: %1").arg(error), false);
-            qCDebug(proofNetworkAmqpLog) << "Queue Error:" << error;
-        });
-
-        QObject::connect(d->m_queue, &QAmqpQueue::opened, this, [this, d]() {
-            qCDebug(proofNetworkAmqpLog) << "Queue opened";
-            QObject::connect(d->m_queue, &QAmqpQueue::messageReceived, this, [this, d]() {d->amqpMessageReceived();});
-            d->m_queue->consume(QAmqpQueue::coNoAck);
-            emit connected();
-        });
-
-    });
-    d->m_rabbitClient->connectToHost();
+    if (!isConnected())
+        d->m_rabbitClient->connectToHost();
 }
 
 AbstractAmqpClientPrivate::AbstractAmqpClientPrivate() : ProofObjectPrivate()
