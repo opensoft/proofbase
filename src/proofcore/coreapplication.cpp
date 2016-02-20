@@ -248,8 +248,10 @@ void CoreApplicationPrivate::setLanguage(const QString &language)
     localeGroup->setValue("language", language);
 
     for (QTranslator *installedTranslator : installedTranslators) {
-        if (installedTranslator)
+        if (installedTranslator) {
+            q_ptr->removeTranslator(installedTranslator);
             delete installedTranslator;
+        }
     }
     installedTranslators.clear();
 
