@@ -192,12 +192,13 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
     bool consoleOutputEnabled = true;
     QString logsStoragePath = "";
     QString logFileName = q_ptr->applicationName();
+    Settings::NotFoundPolicy policy = Proof::proofUsesSettings() ? Settings::NotFoundPolicy::Add : Settings::NotFoundPolicy::DoNothing;
 
-    if (Proof::proofUsesSettings()) {
-        SettingsGroup *logGroup = settings->group("logs", Settings::NotFoundPolicy::Add);
-        consoleOutputEnabled = !daemonized && logGroup->value("console", consoleOutputEnabled, Settings::NotFoundPolicy::Add).toBool();
-        logsStoragePath = logGroup->value("custom_storage_path", logsStoragePath, Settings::NotFoundPolicy::Add).toString();
-        logFileName = logGroup->value("filename", logFileName, Settings::NotFoundPolicy::Add).toString();
+    SettingsGroup *logGroup = settings->group("logs", policy);
+    if (logGroup) {
+        consoleOutputEnabled = !daemonized && logGroup->value("console", consoleOutputEnabled, policy).toBool();
+        logsStoragePath = logGroup->value("custom_storage_path", logsStoragePath, policy).toString();
+        logFileName = logGroup->value("filename", logFileName, policy).toString();
     }
 
     Logs::setConsoleOutputEnabled(consoleOutputEnabled);

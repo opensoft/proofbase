@@ -41,7 +41,7 @@ QStringList SettingsGroup::values() const
 SettingsGroup *SettingsGroup::group(const QString &groupName, Settings::NotFoundPolicy notFoundPolicy)
 {
     Q_D(SettingsGroup);
-    SettingsGroup *result = d->groups.value(groupName, 0);
+    SettingsGroup *result = d->groups.value(groupName, nullptr);
     if (!result && notFoundPolicy == Settings::NotFoundPolicy::Add)
         result = addGroup(groupName);
     return result;
@@ -61,7 +61,7 @@ QVariant SettingsGroup::value(const QString &key, const QVariant &defaultValue, 
 SettingsGroup *SettingsGroup::addGroup(const QString &groupName)
 {
     Q_D(SettingsGroup);
-    SettingsGroup *newGroup = d->groups.value(groupName, 0);
+    SettingsGroup *newGroup = d->groups.value(groupName, nullptr);
     if (!newGroup) {
         newGroup = new SettingsGroup(groupName, this);
         d->groups[groupName] = newGroup;
