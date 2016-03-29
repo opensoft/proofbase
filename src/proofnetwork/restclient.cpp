@@ -20,12 +20,31 @@ static const qlonglong DEFAULT_REPLY_TIMEOUT = 5 * 60 * 1000; //5 minutes
 static const qlonglong OAUTH_TOKEN_REFRESH_TIMEOUT = 1000 * 60 * 60;//1 hour
 
 static const qlonglong OAUTH_TOKEN_RETRY_TIMEOUT = 1000 * 2;//2 seconds
+static const QSet<QNetworkReply::NetworkError> RETRIABLE_NETWORK_ERRORS = {QNetworkReply::ConnectionRefusedError,
+                                                                           QNetworkReply::RemoteHostClosedError,
+                                                                           QNetworkReply::HostNotFoundError,
+                                                                           QNetworkReply::SslHandshakeFailedError,
+                                                                           QNetworkReply::TemporaryNetworkFailureError,
+                                                                           QNetworkReply::NetworkSessionFailedError,
+                                                                           QNetworkReply::ProxyConnectionRefusedError,
+                                                                           QNetworkReply::ProxyConnectionClosedError,
+                                                                           QNetworkReply::UnknownNetworkError,
+                                                                           QNetworkReply::UnknownProxyError,
+                                                                           QNetworkReply::ProxyNotFoundError};
 
 namespace Proof {
 class RestClientPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(RestClient)
 public:
+    QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query,
+                                         const QByteArray &body, const QString &vendor);
+    QByteArray generateWsseToken() const;
+    void requestQuasiOAuth2token(int retries = 4, const QString &method = QString("/oauth2/token"));
+
+    void handleReply(QNetworkReply *reply);
+    void cleanupReplyHandler(QNetworkReply *reply);
+
     QNetworkAccessManager *qnam;
     QString userName;
     QString password;
@@ -43,14 +62,6 @@ public:
     QTimer *quasiOAuth2TokenCheckTimer = nullptr;
     QDateTime quasiOAuth2TokenExpiredDateTime;
     bool ignoreSslErrors = false;
-
-    QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query,
-                                         const QByteArray &body, const QString &vendor);
-    QByteArray generateWsseToken() const;
-    void requestQuasiOAuth2token(int retries = 4, const QString &method = QString("/oauth2/token"));
-
-    void handleReply(QNetworkReply *reply);
-    void cleanupReplyHandler(QNetworkReply *reply);
 };
 }
 
@@ -469,12 +480,7 @@ void RestClientPrivate::requestQuasiOAuth2token(int retries, const QString &meth
     handleReply(reply);
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [this, q, reply, retries, method](QNetworkReply::NetworkError code) {
-        if ((code == QNetworkReply::ConnectionRefusedError || code == QNetworkReply::RemoteHostClosedError
-             || code == QNetworkReply::HostNotFoundError || code == QNetworkReply::SslHandshakeFailedError
-             || code == QNetworkReply::TemporaryNetworkFailureError || code == QNetworkReply::NetworkSessionFailedError
-             || code == QNetworkReply::ProxyConnectionRefusedError || code == QNetworkReply::ProxyConnectionClosedError
-             || code == QNetworkReply::UnknownNetworkError || code == QNetworkReply::UnknownProxyError
-             || code == QNetworkReply::ProxyNotFoundError) && retries > 0) {
+        if (RETRIABLE_NETWORK_ERRORS.contains(code) && retries > 0) {
             qCDebug(proofNetworkMiscLog) << "Network request to" << reply->request().url().toString() << "failed." << retries << " more attempts will be done";
             QTimer::singleShot(OAUTH_TOKEN_RETRY_TIMEOUT, [this, retries, method](){requestQuasiOAuth2token(retries - 1, method);});
         } else {
