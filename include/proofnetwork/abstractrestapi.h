@@ -15,6 +15,7 @@ struct PROOF_NETWORK_EXPORT RestApiError
 {
     enum class Level {
         NoError,
+        AuthCredentialsError,
         ClientError,
         ServerError,
         JsonParseError,
@@ -73,6 +74,13 @@ public:
             taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
             currentOperationId = (*callee.*method)(args...);
             taskChain->fireSignalWaiters();
+        } else {
+            error.level = RestApiError::Level::AuthCredentialsError;
+            error.code = 0;
+            error.proofModuleCode = NETWORK_MODULE_CODE;
+            error.proofErrorCode = NetworkErrorCode::AuthCredentialsError;
+            error.message = "API is not logged in";
+            error.userFriendly = false;
         }
         return error;
     }
@@ -105,6 +113,13 @@ public:
             taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
             currentOperationId = (*callee.*method)(args...);
             taskChain->fireSignalWaiters();
+        } else {
+            error.level = RestApiError::Level::AuthCredentialsError;
+            error.code = 0;
+            error.proofModuleCode = NETWORK_MODULE_CODE;
+            error.proofErrorCode = NetworkErrorCode::AuthCredentialsError;
+            error.message = "API is not logged in";
+            error.userFriendly = false;
         }
         return error;
     }

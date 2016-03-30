@@ -23,6 +23,7 @@ enum Code {
     InvalidRequest = 5,
     InvalidUrl = 6,
     InternalError = 7,
+    AuthCredentialsError = 8,
     MinCustomError = 100
 };
 }
