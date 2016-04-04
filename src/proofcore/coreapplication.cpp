@@ -30,7 +30,8 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
     handlerAlreadyCalled = true;
 
     alarm(10);
-    QString crashFileName = QString("/tmp/proof_crash_%1").arg(time(0));
+    char *homeDir = getenv("HOME");
+    QString crashFileName = QString("%1/proof_crash_%2").arg(homeDir ? homeDir : "/tmp").arg(time(0));
     int crashFileDescriptor = open(crashFileName.toLatin1().constData(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
     ucontext_t *uc = (ucontext_t *)context;
 # ifdef Q_OS_LINUX
@@ -43,9 +44,9 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
     if (crashFileDescriptor != -1) {
         write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
         write(crashFileDescriptor, "\n", 1);
-        write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
-        write(STDOUT_FILENO, "\n", 1);
     }
+    write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
+    write(STDOUT_FILENO, "\n", 1);
     toLog = QString("signal %1 (%2), address is 0x%3 from 0x%4")
             .arg(sig)
             .arg(strsignal(sig))
@@ -54,9 +55,9 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
     if (crashFileDescriptor != -1) {
         write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
         write(crashFileDescriptor, "\n", 1);
-        write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
-        write(STDOUT_FILENO, "\n", 1);
     }
+    write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
+    write(STDOUT_FILENO, "\n", 1);
 
     void *backtraceInfo[BACKTRACE_MAX_SIZE];
     int size = backtrace(backtraceInfo, BACKTRACE_MAX_SIZE);
@@ -86,15 +87,15 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
             if (crashFileDescriptor != -1) {
                 write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
                 write(crashFileDescriptor, "\n", 1);
-                write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
-                write(STDOUT_FILENO, "\n", 1);
             }
+            write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
+            write(STDOUT_FILENO, "\n", 1);
         } else {
 # ifdef Q_OS_LINUX
             QString mangledName = re.cap(2).trimmed();
-#else
+# else
             QString mangledName = re.cap(3).trimmed();
-#endif
+# endif
             char *name = abi::__cxa_demangle(mangledName.toLatin1().constData(), 0, 0, 0);
 # ifdef Q_OS_LINUX
             toLog = QString("[trace] #%1) %2 : %3+%4 (%5)")
@@ -103,20 +104,20 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
                     .arg(name ? name : mangledName) //name
                     .arg(re.cap(3).trimmed()) //offset
                     .arg(re.cap(4).trimmed()); //address
-#else
+# else
             toLog = QString("[trace] #%1) %2 : %3+%4 (%5)")
                     .arg(i)
                     .arg(re.cap(1).trimmed()) //scope
                     .arg(name ? name : mangledName) //name
                     .arg(re.cap(4).trimmed()) //offset
                     .arg(re.cap(2).trimmed()); //address
-#endif
+# endif
             if (crashFileDescriptor != -1) {
                 write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
                 write(crashFileDescriptor, "\n", 1);
-                write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
-                write(STDOUT_FILENO, "\n", 1);
             }
+            write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
+            write(STDOUT_FILENO, "\n", 1);
             free(name);
         }
     }
