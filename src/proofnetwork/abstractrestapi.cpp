@@ -39,6 +39,16 @@ bool AbstractRestApi::isLoggedOut() const
     return false;
 }
 
+qlonglong AbstractRestApi::clientNetworkErrorOffset()
+{
+    return NETWORK_ERROR_OFFSET;
+}
+
+qlonglong AbstractRestApi::clientSslErrorOffset()
+{
+    return NETWORK_SSL_ERROR_OFFSET;
+}
+
 AbstractRestApi::ErrorCallbackType AbstractRestApi::generateErrorCallback(qulonglong &currentOperationId, RestApiError &error)
 {
     return [&currentOperationId, &error]
@@ -219,7 +229,7 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
 {
     Q_Q(AbstractRestApi);
     if (reply->error() != QNetworkReply::NetworkError::NoError
-            && (reply->error() < 100 || (reply->error() % 100) == 99)) {
+            && (reply->error() < 200 || (reply->error() % 100) == 99)) {
         int errorCode = NETWORK_ERROR_OFFSET + static_cast<int>(reply->error());
         QString errorString = reply->errorString();
         long proofErrorCode = NetworkErrorCode::ServerError;

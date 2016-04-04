@@ -52,6 +52,9 @@ public:
 
     virtual bool isLoggedOut() const;
 
+    static qlonglong clientNetworkErrorOffset();
+    static qlonglong clientSslErrorOffset();
+
     using ErrorCallbackType = std::function<bool(qulonglong, const RestApiError &)>;
     static ErrorCallbackType generateErrorCallback(qulonglong &currentOperationId, RestApiError &error);
     static ErrorCallbackType generateErrorCallback(qulonglong &currentOperationId, QString &errorMessage);
