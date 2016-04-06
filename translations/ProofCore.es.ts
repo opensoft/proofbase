@@ -4,7 +4,7 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../errormessagesregistry.cpp" line="15"/>
+        <location filename="../errormessagesregistry.cpp" line="23"/>
         <source>Unknown error</source>
         <translation>Error Desconocido</translation>
     </message>
