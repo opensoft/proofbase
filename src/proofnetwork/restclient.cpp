@@ -78,8 +78,13 @@ RestClient::RestClient(bool ignoreSslErrors)
     connect(d->qnam, &QNetworkAccessManager::finished, this, &RestClient::finished);
     connect(d->qnam, &QNetworkAccessManager::networkAccessibleChanged, this, &RestClient::networkAccessibleChanged);
     connect(d->qnam, &QNetworkAccessManager::proxyAuthenticationRequired, this, &RestClient::proxyAuthenticationRequired);
-    if (!ignoreSslErrors)
-        connect(d->qnam, &QNetworkAccessManager::sslErrors, this, &RestClient::sslErrors);
+    if (!ignoreSslErrors) {
+        connect(d->qnam, &QNetworkAccessManager::sslErrors, this,
+                [this, d](QNetworkReply *reply, const QList<QSslError> &errors) {
+            d->cleanupReplyHandler(reply);
+            emit sslErrors(reply, errors);
+        });
+    }
 }
 
 QString RestClient::userName() const
@@ -87,7 +92,6 @@ QString RestClient::userName() const
     Q_D(const RestClient);
     return d->userName;
 }
-
 
 void RestClient::setUserName(const QString &arg)
 {

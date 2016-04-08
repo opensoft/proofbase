@@ -253,6 +253,7 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
 void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkReply *reply, const QList<QSslError> &errors)
 {
     Q_Q(AbstractRestApi);
+    bool firstError = true;
     for (const QSslError &error : errors) {
         if (error.error() != QSslError::SslError::NoError) {
             int errorCode = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
@@ -260,10 +261,13 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
                                          << reply->request().url().path()
                                          << reply->request().url().query()
                                          << ": " << errorCode << error.errorString();
+            if (!firstError)
+                continue;
+            firstError = false;
             emit q->errorOccurred(operationId,
                                   RestApiError{RestApiError::Level::ClientError, errorCode,
                                                NETWORK_MODULE_CODE, NetworkErrorCode::SslError,
-                                               error.errorString()});
+                                               error.errorString(), false});
             cleanupReply(operationId, reply);
         }
     }
