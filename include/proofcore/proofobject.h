@@ -77,24 +77,20 @@ private:
         std::atomic_bool done(false);
 
         auto f = std::bind([](qulonglong queuedCallId, ResultPtr resultPtr, std::atomic_bool *done,
-                      Callee *callee, ProofObject *invoker,
-                      QSharedPointer<QMetaObject::Connection> conn,
-                      qulonglong currentId, Method method, Args... args) {
+                           Callee *callee, qulonglong currentId, Method method, Args... args) {
                 if (currentId != queuedCallId)
                     return;
                 doTheCall(resultPtr, callee, method, args...);
-                cleanupAfterCall(callee, invoker, conn);
                 *done = true;
-        }, std::placeholders::_1, resultPtr, &done, callee, invoker, conn, currentId, method, args...);
+        }, std::placeholders::_1, resultPtr, &done, callee, currentId, method, args...);
 
         *conn = connect(invoker, &ProofObject::queuedCallRequested,
                         callee, f, callType == Proof::Call::BlockEvents ? Qt::BlockingQueuedConnection : Qt::QueuedConnection);
         emit invoker->queuedCallRequested(currentId, QPrivateSignal{});
 
-        if (callType == Proof::Call::Block) {
-            while (!done)
-                QCoreApplication::processEvents();
-        }
+        while (!done)
+            QCoreApplication::processEvents();
+        cleanupAfterCall(callee, invoker, conn);
         return true;
     }
 
@@ -109,9 +105,9 @@ private:
         auto conn = QSharedPointer<QMetaObject::Connection>::create();
 
         auto f = std::bind([](qulonglong queuedCallId,
-                      Callee *callee, ProofObject *invoker,
-                      QSharedPointer<QMetaObject::Connection> conn,
-                      qulonglong currentId, Method method, Args... args) {
+                           Callee *callee, ProofObject *invoker,
+                           QSharedPointer<QMetaObject::Connection> conn,
+                           qulonglong currentId, Method method, Args... args) {
                 if (currentId != queuedCallId)
                     return;
                 doTheCall(nullptr, callee, method, args...);
