@@ -122,9 +122,13 @@ void compressOldFiles()
 
 void Proof::Logs::setup(const QStringList &defaultLoggingRules)
 {
-#ifdef Q_OS_WIN
+#if defined Q_OS_WIN
     //Windows already gives us org/app as part of conf location
     QString configPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
+#elif defined Q_OS_ANDROID
+    QString configPath = QString("%1/%2")
+            .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
+            .arg(qApp->organizationName());
 #else
     QString configPath = QString("%1/%2")
             .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
