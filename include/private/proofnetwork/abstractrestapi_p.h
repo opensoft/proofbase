@@ -74,186 +74,6 @@ public:
     }
 
     template<class EntityKey, class Entity>
-    bool parseEntitiesList(QList<QSharedPointer<Entity>> &entityList, QNetworkReply *reply,
-                           ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&cacheKey,
-                           qulonglong operationId, QString *errorMessage = nullptr)
-    {
-        Q_Q(AbstractRestApi);
-        bool result = true;
-        QByteArray json = reply->readAll();
-        QJsonParseError jsonError;
-        QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
-        if (jsonError.error != QJsonParseError::NoError) {
-            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
-            if (errorMessage) {
-                jsonErrorString.prepend(*errorMessage);
-                *errorMessage = jsonErrorString;
-            }
-            emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonParseError, jsonError.error,
-                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                                               jsonErrorString});
-            result = false;
-        } else if (!doc.isArray()) {
-            if (doc.isObject()) {
-                QJsonObject jsonObject = doc.object();
-                for (const QString &attribute : serverErrorAttributes) {
-                    if (!jsonObject.value(attribute).isUndefined()) {
-                        QString jsonErrorMessage = jsonObject.value(attribute).toString();
-                        if (errorMessage) {
-                            jsonErrorMessage.prepend(*errorMessage);
-                            *errorMessage = jsonErrorMessage;
-                        }
-                        emit q->errorOccurred(operationId,
-                                              RestApiError{RestApiError::Level::JsonServerError, 0,
-                                                           NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                                                           jsonErrorMessage});
-                        return false;
-                    }
-                }
-            }
-            QString invalidJson = "Can't create list of entities from server response";
-            if (errorMessage) {
-                invalidJson.prepend(*errorMessage);
-                *errorMessage = invalidJson;
-            }
-            emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonDataError, 0,
-                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                                               invalidJson});
-            result = false;
-        } else {
-            QJsonArray jsonTypeList = doc.array();
-            for (const QJsonValue &value : jsonTypeList) {
-                auto entity = parseEntity<EntityKey, Entity>(value.toObject(), cache, std::move(cacheKey), operationId);
-                if (entity)
-                    entityList.append(entity);
-            }
-            result = true;
-        }
-        return result;
-    }
-
-    template<class Entity>
-    bool parseEntitiesList(QList<QSharedPointer<Entity>> &entityList, QNetworkReply *reply,
-                           qulonglong operationId, QString *errorMessage = nullptr)
-    {
-        Q_Q(AbstractRestApi);
-        bool result = true;
-        QByteArray json = reply->readAll();
-        QJsonParseError jsonError;
-        QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
-        if (jsonError.error != QJsonParseError::NoError) {
-            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
-            if (errorMessage) {
-                jsonErrorString.prepend(*errorMessage);
-                *errorMessage = jsonErrorString;
-            }
-            emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonParseError, jsonError.error,
-                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                                               jsonErrorString});
-            result = false;
-        } else if (!doc.isArray()) {
-            if (doc.isObject()) {
-                QJsonObject jsonObject = doc.object();
-                for (const QString &attribute : serverErrorAttributes) {
-                    if (!jsonObject.value(attribute).isUndefined()) {
-                        QString jsonErrorMessage = jsonObject.value(attribute).toString();
-                        if (errorMessage) {
-                            jsonErrorMessage.prepend(*errorMessage);
-                            *errorMessage = jsonErrorMessage;
-                        }
-                        emit q->errorOccurred(operationId,
-                                              RestApiError{RestApiError::Level::JsonServerError, 0,
-                                                           NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                                                           jsonErrorMessage});
-                        return false;
-                    }
-                }
-            }
-            QString invalidJson = "Can't create list of entities from server response";
-            if (errorMessage) {
-                invalidJson.prepend(*errorMessage);
-                *errorMessage = invalidJson;
-            }
-            emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonDataError, 0,
-                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                                               invalidJson});
-            result = false;
-        } else {
-            QJsonArray jsonTypeList = doc.array();
-            for (const QJsonValue &value : jsonTypeList) {
-                auto entity = parseEntity<Entity>(value.toObject(), operationId);
-                if (entity)
-                    entityList.append(entity);
-            }
-            result = true;
-        }
-        return result;
-    }
-
-    bool parseEntitiesList(QStringList &entityList, QNetworkReply *reply,
-                           qulonglong operationId, QString *errorMessage = nullptr)
-    {
-        Q_Q(AbstractRestApi);
-        bool result = true;
-        QByteArray json = reply->readAll();
-        QJsonParseError jsonError;
-        QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
-        if (jsonError.error != QJsonParseError::NoError) {
-            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
-            if (errorMessage) {
-                jsonErrorString.prepend(*errorMessage);
-                *errorMessage = jsonErrorString;
-            }
-            emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonParseError, jsonError.error,
-                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                                               jsonErrorString});
-            result = false;
-        } else if (!doc.isArray()) {
-            if (doc.isObject()) {
-                QJsonObject jsonObject = doc.object();
-                for (const QString &attribute : serverErrorAttributes) {
-                    if (!jsonObject.value(attribute).isUndefined()) {
-                        QString jsonErrorMessage = jsonObject.value(attribute).toString();
-                        if (errorMessage) {
-                            jsonErrorMessage.prepend(*errorMessage);
-                            *errorMessage = jsonErrorMessage;
-                        }
-                        emit q->errorOccurred(operationId,
-                                              RestApiError{RestApiError::Level::JsonServerError, 0,
-                                                           NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                                                           jsonErrorMessage});
-                        return false;
-                    }
-                }
-            }
-            QString invalidJson = "Can't create list of entities from server response";
-            if (errorMessage) {
-                invalidJson.prepend(*errorMessage);
-                *errorMessage = invalidJson;
-            }
-            emit q->errorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::JsonDataError, 0,
-                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                                               invalidJson});
-            result = false;
-        } else {
-            QJsonArray jsonTypeList = doc.array();
-            for (const QJsonValue &value : jsonTypeList) {
-                QString string = value.toString();
-                if (!string.isEmpty())
-                    entityList.append(string);
-            }
-            result = true;
-        }
-        return result;
-    }
-
-    template<class EntityKey, class Entity>
     QSharedPointer<Entity> parseEntity(const QJsonObject &jsonObject, ObjectsCache<EntityKey, Entity> &cache,
                                        std::function<EntityKey(Entity *)> &&cacheKey, qulonglong operationId,
                                        QString *errorMessage = nullptr)
@@ -309,6 +129,71 @@ public:
         return entity;
     }
 
+    template<class EntityKey, class Entity>
+    bool parseEntitiesList(QList<QSharedPointer<Entity>> &entityList, QNetworkReply *reply,
+                           ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&cacheKey,
+                           qulonglong operationId, const QString &attributeName = QString(), QString *errorMessage = nullptr)
+    {
+        auto jsonParser = [this, &entityList, &cache, &cacheKey, operationId](const QJsonArray &jsonArray) -> bool {
+            return parseEntitiesList<EntityKey, Entity>(entityList, jsonArray, cache, std::move(cacheKey), operationId);
+        };
+        return parseEntitiesListPrivate(reply, jsonParser, operationId, attributeName, errorMessage);
+    }
+
+    template<class Entity>
+    bool parseEntitiesList(QList<QSharedPointer<Entity>> &entityList, QNetworkReply *reply,
+                           qulonglong operationId, const QString &attributeName = QString(), QString *errorMessage = nullptr)
+    {
+        auto jsonParser = [this, &entityList, operationId](const QJsonArray &jsonArray) -> bool {
+            return parseEntitiesList<Entity>(entityList, jsonArray, operationId);
+        };
+        return parseEntitiesListPrivate(reply, jsonParser, operationId, attributeName, errorMessage);
+    }
+
+    bool parseEntitiesList(QStringList &entityList, QNetworkReply *reply,
+                           qulonglong operationId, const QString &attributeName = QString(), QString *errorMessage = nullptr)
+    {
+        auto jsonParser = [this, &entityList, operationId](const QJsonArray &jsonArray) -> bool {
+            return parseEntitiesList(entityList, jsonArray, operationId);
+        };
+        return parseEntitiesListPrivate(reply, jsonParser, operationId, attributeName, errorMessage);
+    }
+
+    template<class Entity>
+    bool parseEntitiesList(QList<QSharedPointer<Entity>> &entityList, const QJsonArray &jsonArray, qulonglong operationId)
+    {
+        for (const QJsonValue &value : jsonArray) {
+            auto entity = parseEntity<Entity>(value.toObject(), operationId);
+            if (entity)
+                entityList.append(entity);
+        }
+        return true;
+    }
+
+    template<class EntityKey, class Entity>
+    bool parseEntitiesList(QList<QSharedPointer<Entity>> &entityList, const QJsonArray &jsonArray,
+                           ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&cacheKey,
+                           qulonglong operationId)
+    {
+        for (const QJsonValue &value : jsonArray) {
+            auto entity = parseEntity<EntityKey, Entity>(value.toObject(), cache, std::move(cacheKey), operationId);
+            if (entity)
+                entityList.append(entity);
+        }
+        return true;
+    }
+
+    bool parseEntitiesList(QStringList &entityList, const QJsonArray &jsonArray, qulonglong operationId)
+    {
+        Q_UNUSED(operationId)
+        for (const QJsonValue &value : jsonArray) {
+            QString string = value.toString();
+            if (!string.isEmpty())
+                entityList.append(string);
+        }
+        return true;
+    }
+
     QMetaObject::Connection replyFinishedConnection;
     QMetaObject::Connection sslErrorsConnection;
     RestClientSP restClient;
@@ -348,6 +233,64 @@ private:
                                                jsonErrorString});
         }
         return doc.object();
+    }
+
+    bool parseEntitiesListPrivate(QNetworkReply *reply, std::function<bool(const QJsonArray &)> &&jsonParser,
+                           qulonglong operationId, const QString &attributeName, QString *errorMessage)
+    {
+        Q_Q(AbstractRestApi);
+        bool result = true;
+        QByteArray json = reply->readAll();
+        QJsonParseError jsonError;
+        QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
+        if (jsonError.error != QJsonParseError::NoError) {
+            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
+            if (errorMessage) {
+                jsonErrorString.prepend(*errorMessage);
+                *errorMessage = jsonErrorString;
+            }
+            emit q->errorOccurred(operationId,
+                                  RestApiError{RestApiError::Level::JsonParseError, jsonError.error,
+                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
+                                               jsonErrorString});
+            result = false;
+        } else if (!doc.isArray()) {
+            if (doc.isObject()) {
+                QJsonObject jsonObject = doc.object();
+                if (!jsonObject.value(attributeName).isUndefined() && jsonObject.value(attributeName).isArray()) {
+                    result = jsonParser(jsonObject.value(attributeName).toArray());
+                } else {
+                    for (const QString &attribute : serverErrorAttributes) {
+                        if (!jsonObject.value(attribute).isUndefined()) {
+                            QString jsonErrorMessage = jsonObject.value(attribute).toString();
+                            if (errorMessage) {
+                                jsonErrorMessage.prepend(*errorMessage);
+                                *errorMessage = jsonErrorMessage;
+                            }
+                            emit q->errorOccurred(operationId,
+                                                  RestApiError{RestApiError::Level::JsonServerError, 0,
+                                                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
+                                                               jsonErrorMessage});
+                            return false;
+                        }
+                    }
+                }
+            } else {
+                QString invalidJson = "Can't create list of entities from server response";
+                if (errorMessage) {
+                    invalidJson.prepend(*errorMessage);
+                    *errorMessage = invalidJson;
+                }
+                emit q->errorOccurred(operationId,
+                                      RestApiError{RestApiError::Level::JsonDataError, 0,
+                                                   NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
+                                                   invalidJson});
+                result = false;
+            }
+        } else {
+            result = jsonParser(doc.array());
+        }
+        return result;
     }
 
     static std::atomic<qulonglong> lastUsedOperationId;
