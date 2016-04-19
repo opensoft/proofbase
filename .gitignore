@@ -15,5 +15,10 @@ latex
 *_behave_tests_temp/
 *.qm
 *_translations.qrc
-.idea/*
+.directory
 
+# Idea files
+*.iml
+.gradle/*
+.idea/*
+local.properties
