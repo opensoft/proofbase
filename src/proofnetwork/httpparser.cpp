@@ -86,7 +86,7 @@ HttpParser::Result HttpParser::headersState(QByteArray &data)
         if (headerRegExp.indexIn(header) != -1) {
             result = Result::NeedMore;
             m_headers << headerRegExp.cap(1);
-            if (headerRegExp.cap(2) == "Content-Length") {
+            if (headerRegExp.cap(2).compare("Content-Length", Qt::CaseInsensitive) == 0) {
                 bool ok = false;
                 m_contentLength = headerRegExp.cap(3).toULongLong(&ok);
                 if (!ok) {

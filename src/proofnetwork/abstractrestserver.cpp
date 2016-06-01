@@ -477,7 +477,7 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
         if (authType == RestAuthType::Basic) {
             QString encryptedAuth;
             for (int i = 0; i < headers.count(); ++i) {
-                if (headers.at(i).startsWith("Authorization")) {
+                if (headers.at(i).startsWith("Authorization", Qt::CaseInsensitive)) {
                     encryptedAuth = q->parseAuth(socket, headers.at(i));
                     break;
                 }
