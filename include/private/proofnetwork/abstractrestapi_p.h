@@ -200,6 +200,9 @@ public:
     QString vendor;
     QStringList serverErrorAttributes;
 
+protected:
+    void runReplyHandler(qulonglong operationId, QNetworkReply *reply);
+
 private:
     void setupReply(qulonglong &operationId, QNetworkReply *reply, RestAnswerHandler &&handler);
 
@@ -294,8 +297,6 @@ private:
     }
 
     static std::atomic<qulonglong> lastUsedOperationId;
-
-protected:
     QHash<QNetworkReply *, QPair<qlonglong, RestAnswerHandler>> replies;
     QMutex repliesMutex;
 };

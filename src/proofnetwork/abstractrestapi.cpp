@@ -217,7 +217,11 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
         }
     }
 
-    //TODO: place replies handling in separate method
+    runReplyHandler(operationId, reply);
+}
+
+void AbstractRestApiPrivate::runReplyHandler(qulonglong operationId, QNetworkReply *reply)
+{
     QMutexLocker lock(&repliesMutex);
     if (replies.contains(reply)) {
         replies[reply].second(operationId, reply);
