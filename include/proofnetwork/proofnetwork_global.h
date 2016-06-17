@@ -9,7 +9,6 @@
 
 #include <QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(proofNetworkLog)
 Q_DECLARE_LOGGING_CATEGORY(proofNetworkMiscLog)
 Q_DECLARE_LOGGING_CATEGORY(proofNetworkAmqpLog)
 
