@@ -294,6 +294,8 @@ private:
     }
 
     static std::atomic<qulonglong> lastUsedOperationId;
+
+protected:
     QHash<QNetworkReply *, QPair<qlonglong, RestAnswerHandler>> replies;
     QMutex repliesMutex;
 };
