@@ -370,6 +370,11 @@ QString AbstractRestServer::parseAuth(QTcpSocket *socket, const QString &header)
     return auth;
 }
 
+void AbstractRestServer::sendBadRequest(QTcpSocket *socket, const QString &reason)
+{
+    sendAnswer(socket, "", "text/plain; charset=utf-8", 400, reason);
+}
+
 void AbstractRestServer::sendNotFound(QTcpSocket *socket, const QString &reason)
 {
     sendAnswer(socket, "", "text/plain; charset=utf-8", 404, reason);
