@@ -16,10 +16,10 @@
 #include <QBuffer>
 #include <QHttpMultiPart>
 
-static const qlonglong DEFAULT_REPLY_TIMEOUT = 5 * 60 * 1000; //5 minutes
-static const qlonglong OAUTH_TOKEN_REFRESH_TIMEOUT = 1000 * 60 * 60;//1 hour
+static const int DEFAULT_REPLY_TIMEOUT = 5 * 60 * 1000; //5 minutes
+static const int OAUTH_TOKEN_REFRESH_TIMEOUT = 1000 * 60 * 60;//1 hour
 
-static const qlonglong OAUTH_TOKEN_RETRY_TIMEOUT = 1000 * 2;//2 seconds
+static const int OAUTH_TOKEN_RETRY_TIMEOUT = 1000 * 2;//2 seconds
 static const QSet<QNetworkReply::NetworkError> RETRIABLE_NETWORK_ERRORS = {QNetworkReply::ConnectionRefusedError,
                                                                            QNetworkReply::RemoteHostClosedError,
                                                                            QNetworkReply::HostNotFoundError,
@@ -56,7 +56,7 @@ public:
     QString scheme = QString("https");
     RestAuthType authType = RestAuthType::NoAuth;
     QHash<QNetworkReply *, QTimer *> replyTimeouts;
-    qlonglong msecsForTimeout = DEFAULT_REPLY_TIMEOUT;
+    int msecsForTimeout = DEFAULT_REPLY_TIMEOUT;
     QHash<QByteArray, QByteArray> customHeaders;
     QHash<QString, QNetworkCookie> cookies;
     QTimer *quasiOAuth2TokenCheckTimer = nullptr;
@@ -352,7 +352,6 @@ void RestClient::authenticate()
         }
     }
 }
-
 
 QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, const QUrlQuery &query,
                                                         const QByteArray &body, const QString &vendor)

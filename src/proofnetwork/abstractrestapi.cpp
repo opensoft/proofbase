@@ -6,8 +6,8 @@
 #include <QNetworkReply>
 #include <QThread>
 
-static const qlonglong NETWORK_SSL_ERROR_OFFSET = 1500;
-static const qlonglong NETWORK_ERROR_OFFSET = 1000;
+static const int NETWORK_SSL_ERROR_OFFSET = 1500;
+static const int NETWORK_ERROR_OFFSET = 1000;
 
 std::atomic<qulonglong> Proof::AbstractRestApiPrivate::lastUsedOperationId {0};
 
