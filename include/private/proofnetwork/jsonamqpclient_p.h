@@ -6,7 +6,7 @@
 
 namespace Proof {
 
-class JsonAmqpClientPrivate : public AbstractAmqpClientPrivate
+class PROOF_NETWORK_EXPORT JsonAmqpClientPrivate : public AbstractAmqpClientPrivate
 {
     Q_DECLARE_PUBLIC(JsonAmqpClient)
 
