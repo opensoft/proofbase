@@ -15,7 +15,7 @@ class PROOF_NETWORK_EXPORT ProofServiceRestApiPrivate : public AbstractRestApiPr
 public:
     ProofServiceRestApiPrivate(const QSharedPointer<ErrorMessagesRegistry> & errorsRegistry);
 
-    void replyFinished(qulonglong operationId, QNetworkReply *reply) override;
+    void replyFinished(qulonglong operationId, QNetworkReply *reply, bool forceUserFriendly = false) override;
 
     QSharedPointer<ErrorMessagesRegistry> errorsRegistry;
 };

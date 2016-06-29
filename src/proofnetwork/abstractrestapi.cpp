@@ -192,7 +192,7 @@ QNetworkReply *AbstractRestApiPrivate::deleteResource(qulonglong &operationId, R
     return reply;
 }
 
-void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply *reply)
+void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply *reply, bool forceUserFriendly)
 {
     Q_Q(AbstractRestApi);
     if (reply->error() == QNetworkReply::NetworkError::NoError
@@ -212,7 +212,7 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
             emit q->errorOccurred(operationId,
                                   RestApiError{RestApiError::Level::ServerError, errorCode,
                                                NETWORK_MODULE_CODE, NetworkErrorCode::ServerError,
-                                               message});
+                                               message, forceUserFriendly});
             cleanupReply(operationId, reply);
         }
     }
@@ -230,7 +230,7 @@ void AbstractRestApiPrivate::runReplyHandler(qulonglong operationId, QNetworkRep
     }
 }
 
-void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetworkReply *reply)
+void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetworkReply *reply, bool forceUserFriendly)
 {
     Q_Q(AbstractRestApi);
     if (reply->error() != QNetworkReply::NetworkError::NoError
@@ -249,13 +249,13 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
         emit q->errorOccurred(operationId,
                               RestApiError{RestApiError::Level::ClientError, errorCode,
                                            NETWORK_MODULE_CODE, proofErrorCode,
-                                           errorString});
+                                           errorString, forceUserFriendly});
         cleanupReply(operationId, reply);
     }
 }
 
 
-void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkReply *reply, const QList<QSslError> &errors)
+void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkReply *reply, const QList<QSslError> &errors, bool forceUserFriendly)
 {
     Q_Q(AbstractRestApi);
     bool firstError = true;
@@ -272,7 +272,7 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
             emit q->errorOccurred(operationId,
                                   RestApiError{RestApiError::Level::ClientError, errorCode,
                                                NETWORK_MODULE_CODE, NetworkErrorCode::SslError,
-                                               error.errorString(), false});
+                                               error.errorString(), forceUserFriendly});
             cleanupReply(operationId, reply);
         }
     }

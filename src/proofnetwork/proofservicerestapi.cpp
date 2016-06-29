@@ -20,7 +20,7 @@ ProofServiceRestApiPrivate::ProofServiceRestApiPrivate(const QSharedPointer<Erro
 {
 }
 
-void ProofServiceRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply *reply)
+void ProofServiceRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply *reply, bool forceUserFriendly)
 {
     Q_Q(ProofServiceRestApi);
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -42,13 +42,13 @@ void ProofServiceRestApiPrivate::replyFinished(qulonglong operationId, QNetworkR
                                              << errorInfo.proofModuleCode << errorInfo.proofErrorCode << errorInfo.message;
                 emit q->errorOccurred(operationId, RestApiError{RestApiError::Level::ServerError, errorCode,
                                                                 errorInfo.proofModuleCode, errorInfo.proofErrorCode,
-                                                                errorInfo.message, errorInfo.userFriendly});
+                                                                errorInfo.message, forceUserFriendly ? true : errorInfo.userFriendly});
                 cleanupReply(operationId, reply);
                 return;
             }
         }
     }
-    AbstractRestApiPrivate::replyFinished(operationId, reply);
+    AbstractRestApiPrivate::replyFinished(operationId, reply, forceUserFriendly);
 }
 
 } // namespace NetworkServices

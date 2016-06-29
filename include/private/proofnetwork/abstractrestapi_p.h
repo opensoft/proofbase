@@ -43,9 +43,9 @@ public:
                         const QByteArray &body = "");
     QNetworkReply *deleteResource(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query = QUrlQuery());
 
-    virtual void replyFinished(qulonglong operationId, QNetworkReply *reply);
-    virtual void replyErrorOccurred(qulonglong operationId, QNetworkReply *reply);
-    virtual void sslErrorsOccurred(qulonglong operationId, QNetworkReply *reply, const QList<QSslError> &errors);
+    virtual void replyFinished(qulonglong operationId, QNetworkReply *reply, bool forceUserFriendly = false);
+    virtual void replyErrorOccurred(qulonglong operationId, QNetworkReply *reply, bool forceUserFriendly = false);
+    virtual void sslErrorsOccurred(qulonglong operationId, QNetworkReply *reply, const QList<QSslError> &errors, bool forceUserFriendly = false);
     virtual void cleanupReply(qulonglong operationId, QNetworkReply *reply);
 
     void notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error);
