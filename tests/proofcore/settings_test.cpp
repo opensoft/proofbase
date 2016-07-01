@@ -61,18 +61,41 @@ TEST_F(SettingsTest, read)
     SettingsGroup *mainGroup = settings.mainGroup();
     SettingsGroup *firstGroup = settings.group("first_group");
     SettingsGroup *secondGroup = settings.group("second_group");
+    SettingsGroup *nestedGroup = settings.group("nested");
 
-    EXPECT_NE(nullptr, mainGroup);
-    EXPECT_NE(nullptr, firstGroup);
-    EXPECT_NE(nullptr, secondGroup);
+    ASSERT_NE(nullptr, mainGroup);
+    ASSERT_NE(nullptr, firstGroup);
+    ASSERT_NE(nullptr, secondGroup);
+    ASSERT_NE(nullptr, nestedGroup);
 
-    EXPECT_EQ(2, mainGroup->groups().count());
+    SettingsGroup *nestedNestedGroup = nestedGroup->group("nested");
+    SettingsGroup *nestedAnotherGroup = nestedGroup->group("another");
+    ASSERT_NE(nullptr, nestedNestedGroup);
+    ASSERT_NE(nullptr, nestedAnotherGroup);
+    SettingsGroup *nestedNestedMoreNestedGroup = nestedNestedGroup->group("more_nested");
+    ASSERT_NE(nullptr, nestedNestedMoreNestedGroup);
+    SettingsGroup *nestedNestedMoreNestedOneMoreLevelGroup = nestedNestedMoreNestedGroup->group("one_more_level");
+    ASSERT_NE(nullptr, nestedNestedMoreNestedOneMoreLevelGroup);
+
+    EXPECT_EQ(3, mainGroup->groups().count());
     EXPECT_EQ(0, firstGroup->groups().count());
     EXPECT_EQ(0, secondGroup->groups().count());
 
     EXPECT_EQ(1, mainGroup->values().count());
     EXPECT_EQ(2, firstGroup->values().count());
     EXPECT_EQ(2, secondGroup->values().count());
+
+    EXPECT_EQ(2, nestedGroup->groups().count());
+    EXPECT_EQ(0, nestedAnotherGroup->groups().count());
+    EXPECT_EQ(1, nestedNestedGroup->groups().count());
+    EXPECT_EQ(1, nestedNestedMoreNestedGroup->groups().count());
+    EXPECT_EQ(0, nestedNestedMoreNestedOneMoreLevelGroup->groups().count());
+
+    EXPECT_EQ(1, nestedGroup->values().count());
+    EXPECT_EQ(1, nestedNestedGroup->values().count());
+    EXPECT_EQ(1, nestedAnotherGroup->values().count());
+    EXPECT_EQ(1, nestedNestedMoreNestedGroup->values().count());
+    EXPECT_EQ(1, nestedNestedMoreNestedOneMoreLevelGroup->values().count());
 
     EXPECT_EQ(42, mainGroup->value("main_group_attribute").toInt());
     EXPECT_EQ("abc", firstGroup->value("first_group_attribute").toString());
@@ -82,6 +105,12 @@ TEST_F(SettingsTest, read)
 
     EXPECT_EQ(QVariant(), mainGroup->value("non_existent_attribute"));
     EXPECT_EQ(QVariant(42), mainGroup->value("non_existent_attribute", 42));
+
+    EXPECT_EQ(123, nestedNestedGroup->value("param").toInt());
+    EXPECT_EQ(321, nestedAnotherGroup->value("param").toInt());
+    EXPECT_EQ(456, nestedNestedMoreNestedGroup->value("param").toInt());
+    EXPECT_EQ(654, nestedNestedMoreNestedOneMoreLevelGroup->value("param").toInt());
+    EXPECT_EQ(987, nestedGroup->value("param").toInt());
 }
 
 TEST_F(SettingsTest, valueNotFoundPolicy)
