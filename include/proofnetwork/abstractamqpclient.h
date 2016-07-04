@@ -52,10 +52,12 @@ public:
     bool isConnected() const;
 
     void connectToHost();
+    void disconnectFromHost();
 
 signals:
     void errorOccurred(long moduleCode, long errorCode, const QString &errorMessage, bool userFriendly);
     void connected();
+    void disconnected();
 
 protected:
     AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *parent = 0);

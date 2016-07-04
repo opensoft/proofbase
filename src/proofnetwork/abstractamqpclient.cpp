@@ -74,6 +74,8 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
         }
 
     });
+
+    QObject::connect(d->rabbitClient, &QAmqpClient::disconnected, this, &AbstractAmqpClient::disconnected);
 }
 
 quint16 AbstractAmqpClient::port() const
@@ -220,6 +222,14 @@ void AbstractAmqpClient::connectToHost()
 
     if (!isConnected())
         d->rabbitClient->connectToHost();
+}
+
+void AbstractAmqpClient::disconnectFromHost()
+{
+    Q_D(AbstractAmqpClient);
+
+    if (isConnected())
+        d->rabbitClient->disconnectFromHost();
 }
 
 AbstractAmqpClientPrivate::AbstractAmqpClientPrivate() : ProofObjectPrivate()
