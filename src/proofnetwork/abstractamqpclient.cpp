@@ -15,8 +15,7 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
     : ProofObject(dd, parent)
 {
     Q_D(AbstractAmqpClient);
-    //TODO: Make lazy init for QAmqpClient for correct work in client network thread
-    d->rabbitClient = new QAmqpClient();
+    d->rabbitClient = new QAmqpClient(this);
 
     QObject::connect(d->rabbitClient, static_cast<void(QAmqpClient::*)(QAMQP::Error)>(&QAmqpClient::error), this, [this, d](QAMQP::Error error) {
         if (d->rabbitClient->autoReconnect() && d->autoReconnectionTries) {
