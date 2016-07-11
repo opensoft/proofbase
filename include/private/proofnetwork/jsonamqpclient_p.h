@@ -11,6 +11,7 @@ class PROOF_NETWORK_EXPORT JsonAmqpClientPrivate : public AbstractAmqpClientPriv
     Q_DECLARE_PUBLIC(JsonAmqpClient)
 
     void amqpMessageReceived() override;
+    virtual void handleJsonMessage(const QJsonDocument &json);
 };
 
 }

@@ -32,5 +32,12 @@ void JsonAmqpClientPrivate::amqpMessageReceived()
     QJsonDocument messageDocument = QJsonDocument::fromJson(message.payload());
     qCDebug(proofNetworkAmqpLog) << "Queue message: " << messageDocument;
     emit q->messageReceived(messageDocument);
+    handleJsonMessage(messageDocument);
+}
+
+void JsonAmqpClientPrivate::handleJsonMessage(const QJsonDocument &json)
+{
+    Q_UNUSED(json);
+    //Nothing there
 }
 
