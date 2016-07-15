@@ -219,8 +219,10 @@ void AbstractAmqpClient::connectToHost()
 {
     Q_D(AbstractAmqpClient);
 
-    if (!isConnected())
-        d->rabbitClient->connectToHost();
+    if (!call(this, &AbstractAmqpClient::connectToHost, Call::Block)) {
+        if (!isConnected())
+            d->rabbitClient->connectToHost();
+    }
 }
 
 void AbstractAmqpClient::disconnectFromHost()

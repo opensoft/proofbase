@@ -24,7 +24,6 @@ JsonAmqpClient::JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent)
 void JsonAmqpClientPrivate::amqpMessageReceived()
 {
     Q_Q(JsonAmqpClient);
-    qCDebug(proofNetworkAmqpLog) << "AQMP message received";
     //HACK: Workaround for bug in QAQMP, sometimes after qamqp reconnect, signal messageReceived has been emitted, but queue actually is empty, so we check it here.
     if (queue->isEmpty())
         return;
