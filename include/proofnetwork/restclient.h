@@ -36,6 +36,9 @@ public:
     QString host() const;
     void setHost(const QString &arg);
 
+    QString postfix() const;
+    void setPostfix(const QString &arg);
+
     int port() const;
     void setPort(int arg);
 
@@ -79,6 +82,7 @@ signals:
     void passwordChanged(const QString &arg);
     void clientNameChanged(const QString &arg);
     void hostChanged(const QString &arg);
+    void postfixChanged(const QString &arg);
     void portChanged(int arg);
     void schemeChanged(const QString &arg);
     void oAuth2TokenChanged(const QString &arg);

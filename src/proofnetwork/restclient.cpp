@@ -44,12 +44,14 @@ public:
 
     void handleReply(QNetworkReply *reply);
     void cleanupReplyHandler(QNetworkReply *reply);
+    QPair<QString, QString> parseHost(const QString &host);
 
     QNetworkAccessManager *qnam;
     QString userName;
     QString password;
     QString clientName;
     QString host;
+    QString postfix;
     QString quasiOAuth2Token;
     QString oAuth2Token;
     int port = 443;
@@ -141,9 +143,26 @@ QString RestClient::host() const
 void RestClient::setHost(const QString &arg)
 {
     Q_D(RestClient);
-    if (d->host != arg) {
-        d->host = arg;
-        emit hostChanged(arg);
+    QPair<QString, QString> result = d->parseHost(arg);
+    if (d->host != result.first) {
+        d->host = result.first;
+        emit hostChanged(result.first);
+    }
+    setPostfix(result.second);
+}
+
+QString RestClient::postfix() const
+{
+    Q_D(const RestClient);
+    return d->postfix;
+}
+
+void RestClient::setPostfix(const QString &arg)
+{
+    Q_D(RestClient);
+    if (d->postfix != arg) {
+        d->postfix = arg;
+        emit postfixChanged(arg);
     }
 }
 
@@ -364,7 +383,14 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
     url.setScheme(scheme);
     url.setHost(host);
     url.setPort(port);
-    url.setPath(method);
+    if (postfix.isEmpty()) {
+        url.setPath(method);
+    } else {
+        if (method.startsWith('/'))
+            url.setPath(postfix + method);
+        else
+            url.setPath(postfix + '/' + method);
+    }
     url.setQuery(query);
 
     result.setUrl(url);
@@ -552,4 +578,21 @@ void RestClientPrivate::cleanupReplyHandler(QNetworkReply *reply)
         connectionTimer->stop();
         connectionTimer->deleteLater();
     }
+}
+
+QPair<QString, QString> RestClientPrivate::parseHost(const QString &host)
+{
+    QStringList parts = host.split('/', QString::SkipEmptyParts);
+    if (parts.isEmpty())
+        return {host, QString()};
+
+    int hostIndex = parts[0].endsWith(':') ? 1 : 0;
+    QString newHost = parts[hostIndex];
+
+    parts.removeFirst();
+    if (hostIndex > 0)
+        parts.removeFirst();
+
+    QString postfix = '/' + parts.join('/');
+    return {newHost, postfix};
 }
