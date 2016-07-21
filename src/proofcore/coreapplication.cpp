@@ -5,6 +5,7 @@
 #include "settings.h"
 #include "settingsgroup.h"
 #include "proofglobal.h"
+#include "expirator.h"
 
 #include <QDir>
 
@@ -222,6 +223,8 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
 #endif
 
     initTranslator();
+
+    Expirator::instance();
 
     qCDebug(proofCoreMiscLog).noquote() << QString("%1 started").arg(q_ptr->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
 }
