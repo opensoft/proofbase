@@ -64,6 +64,7 @@ public:
     QTimer *quasiOAuth2TokenCheckTimer = nullptr;
     QDateTime quasiOAuth2TokenExpiredDateTime;
     bool ignoreSslErrors = false;
+    bool followRedirects = true;
 };
 }
 
@@ -243,6 +244,21 @@ void RestClient::setMsecsForTimeout(qlonglong arg)
     }
 }
 
+bool RestClient::followRedirects() const
+{
+    Q_D(const RestClient);
+    return d->followRedirects;
+}
+
+void RestClient::setFollowRedirects(bool arg)
+{
+    Q_D(RestClient);
+    if (d->followRedirects != arg) {
+        d->followRedirects = arg;
+        emit followRedirectsChanged(arg);
+    }
+}
+
 void RestClient::setCustomHeader(const QByteArray &header, const QByteArray &value)
 {
     Q_D(RestClient);
@@ -394,6 +410,7 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
     url.setQuery(query);
 
     result.setUrl(url);
+    result.setAttribute(QNetworkRequest::FollowRedirectsAttribute, followRedirects);
 
     if (!body.isEmpty()) {
         QJsonParseError error;

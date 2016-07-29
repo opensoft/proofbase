@@ -54,6 +54,9 @@ public:
     qlonglong msecsForTimeout() const;
     void setMsecsForTimeout(qlonglong arg);
 
+    bool followRedirects() const;
+    void setFollowRedirects(bool arg);
+
     void setCustomHeader(const QByteArray &header, const QByteArray &value);
     QByteArray customHeader(const QByteArray &header) const;
     bool containsCustomHeader(const QByteArray &header) const;
@@ -88,6 +91,7 @@ signals:
     void oAuth2TokenChanged(const QString &arg);
     void authTypeChanged(Proof::RestAuthType arg);
     void msecsForTimeoutChanged(qlonglong arg);
+    void followRedirectsChanged(bool arg);
 
     void authenticationRequired(QNetworkReply *reply, QAuthenticator *authenticator);
     void encrypted(QNetworkReply *reply);
