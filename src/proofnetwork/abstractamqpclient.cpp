@@ -229,8 +229,10 @@ void AbstractAmqpClient::disconnectFromHost()
 {
     Q_D(AbstractAmqpClient);
 
-    if (isConnected())
-        d->rabbitClient->disconnectFromHost();
+    if (!call(this, &AbstractAmqpClient::disconnectFromHost, Call::Block)) {
+        if (isConnected())
+            d->rabbitClient->disconnectFromHost();
+    }
 }
 
 AbstractAmqpClientPrivate::AbstractAmqpClientPrivate() : ProofObjectPrivate()
