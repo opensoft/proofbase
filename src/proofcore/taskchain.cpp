@@ -40,7 +40,7 @@ std::atomic_llong TaskChainPrivate::chainsCounter {0};
 using namespace Proof;
 
 TaskChain::TaskChain()
-    : QThread(0), d_ptr(new TaskChainPrivate())
+    : QThread(0), d_ptr(new TaskChainPrivate)
 {
     Q_D(TaskChain);
     d->q_ptr = this;

@@ -418,11 +418,14 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
 
         QString contentTypePattern = vendor.isEmpty() ? QString("application/%1") : QString("application/vnd.%1+%2").arg(vendor);
 
-        //We assume that if it is not json then it is xml
+        //We assume that if it is not json and not xml it's url encoded data
         if (error.error == QJsonParseError::NoError)
             result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg("json"));
-        else
+        else if (body.startsWith("<?xml"))
             result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg("xml"));
+        else
+            result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg("x-www-form-urlencoded"));
+
     } else {
         if (vendor.isEmpty())
             result.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
