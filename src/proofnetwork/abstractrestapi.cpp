@@ -224,8 +224,9 @@ void AbstractRestApiPrivate::runReplyHandler(qulonglong operationId, QNetworkRep
 {
     QMutexLocker lock(&repliesMutex);
     if (replies.contains(reply)) {
-        replies[reply].second(operationId, reply);
+        auto handler = replies.take(reply).second;
         lock.unlock();
+        handler(operationId, reply);
         cleanupReply(operationId, reply);
     }
 }
