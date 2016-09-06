@@ -55,22 +55,39 @@ public:
     static qlonglong clientNetworkErrorOffset();
     static qlonglong clientSslErrorOffset();
 
+    template<class Result>
+    static std::function<bool(qulonglong, Result)> generateSuccessCallback(qulonglong &currentOperationId, Result &result)
+    {
+        return std::function<bool(qulonglong, Result)>(
+                [&result, &currentOperationId] (qulonglong operationId, Result received) {
+            if (currentOperationId != operationId)
+                return false;
+            result = received;
+            return true;
+        });
+    }
+    template<class... Args>
+    static std::function<bool(qulonglong, Args...)> generateSuccessCallback(qulonglong &currentOperationId, std::tuple<Args &...> results)
+    {
+        return std::function<bool(qulonglong, Args...)>(
+                [results, &currentOperationId] (qulonglong operationId, Args... received) mutable {
+            if (currentOperationId != operationId)
+                return false;
+            results = std::tie(received...);
+            return true;
+        });
+    }
+
     using ErrorCallbackType = std::function<bool(qulonglong, const RestApiError &)>;
     static ErrorCallbackType generateErrorCallback(qulonglong &currentOperationId, RestApiError &error);
     static ErrorCallbackType generateErrorCallback(qulonglong &currentOperationId, QString &errorMessage);
 
     template <class Callee, class Result, class Method, class Signal, class ...Args>
     static RestApiError chainedApiCall(const TaskChainSP &taskChain, Callee *callee, Method method,
-                                       Signal signal, Result &result, Args... args)
+                                       Signal signal, Result &&result, Args... args)
     {
         qulonglong currentOperationId = 0;
-        std::function<bool(qulonglong, Result)> callback
-                = [&result, &currentOperationId] (qulonglong operationId, Result received) {
-            if (currentOperationId != operationId)
-                return false;
-            result = received;
-            return true;
-        };
+        auto callback = generateSuccessCallback(currentOperationId, std::forward<Result>(result));
         RestApiError error;
         if (!callee->isLoggedOut()) {
             taskChain->addSignalWaiter(callee, signal, callback);
@@ -90,11 +107,11 @@ public:
 
     template <class Callee, class Result, class Method, class Signal, class ...Args>
     static RestApiError chainedApiCall(int attempts, const TaskChainSP &taskChain, Callee *callee, Method method,
-                                       Signal signal, Result &result, Args... args)
+                                       Signal signal, Result &&result, Args... args)
     {
         Proof::RestApiError error;
         do {
-            error = chainedApiCall(taskChain, callee, method, signal, result, args...);
+            error = chainedApiCall(taskChain, callee, method, signal, std::forward<Result>(result), args...);
             if (error.toNetworkError() != QNetworkReply::OperationCanceledError)
                 break;
         } while(--attempts > 0);
