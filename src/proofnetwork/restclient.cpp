@@ -55,6 +55,7 @@ public:
     QString quasiOAuth2Token;
     QString oAuth2Token;
     int port = 443;
+    bool explicitPort = false;
     QString scheme = QString("https");
     RestAuthType authType = RestAuthType::NoAuth;
     QHash<QNetworkReply *, QTimer *> replyTimeouts;
@@ -176,6 +177,7 @@ int RestClient::port() const
 void RestClient::setPort(int arg)
 {
     Q_D(RestClient);
+    d->explicitPort = true;
     if (d->port != arg) {
         d->port = arg;
         emit portChanged(arg);
@@ -398,7 +400,8 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
     QUrl url;
     url.setScheme(scheme);
     url.setHost(host);
-    url.setPort(port);
+    if (explicitPort)
+        url.setPort(port);
     if (postfix.isEmpty()) {
         url.setPath(method);
     } else {
@@ -586,7 +589,7 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
     });
     QObject::connect(reply, &QNetworkReply::finished,
                      q, [this, reply]() {
-        qCDebug(proofNetworkMiscLog) << "Finished:" << reply->request().url().path() << reply->request().url().query();
+        qCDebug(proofNetworkMiscLog) << "Finished:" << reply->request().url().path() << reply->request().url().query() << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
         cleanupReplyHandler(reply);
     });
 }
