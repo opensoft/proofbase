@@ -134,12 +134,15 @@ const QString TRANSLATIONS_PATH = ":/translations";
 
 using namespace Proof;
 
-CoreApplication::CoreApplication(int &argc, char **argv, const QString &orgName, const QString &appName, const QStringList &defaultLoggingRules)
+CoreApplication::CoreApplication(int &argc, char **argv,
+                                 const QString &orgName, const QString &appName, const QString &version,
+                                 const QStringList &defaultLoggingRules)
     : QCoreApplication(argc, argv), d_ptr(new CoreApplicationPrivate)
 {
     d_ptr->q_ptr = this;
     setOrganizationName(orgName);
     setApplicationName(appName);
+    setApplicationVersion(version);
     d_ptr->initApp(defaultLoggingRules);
 }
 
@@ -178,8 +181,32 @@ int CoreApplication::languageIndex() const
     return d->availableLanguages.indexOf(d->language());
 }
 
+QString CoreApplication::prettifiedApplicationName() const
+{
+    Q_D(const CoreApplication);
+    return d->prettifiedApplicationName;
+}
+
 void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRules)
 {
+    qApp->applicationName();
+    QString appType = "Station";
+    QString appName = q_ptr->applicationName();
+    if (appName.startsWith("proofservice")) {
+        appName.remove("proofservice-");
+        appType = "Service";
+    } else {
+        appName.remove("proofstation-");
+    }
+
+    if (!appName.isEmpty())
+        appName[0] = appName[0].toUpper();
+    for (int i = 0; i + 1 < appName.length(); ++i) {
+        if (appName[i] == QChar('-'))
+            appName[i + 1] = appName[i + 1].toUpper();
+    }
+    prettifiedApplicationName = QString("%1-%2").arg(appName).arg(appType);
+
     Logs::setup(defaultLoggingRules);
     settings = new Proof::Settings(q_ptr);
 

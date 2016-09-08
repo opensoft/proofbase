@@ -21,6 +21,7 @@ protected:
     void setLanguage(const QString &currentLanguage);
     QString language() const;
 
+    QString prettifiedApplicationName;
     Settings *settings = nullptr;
     QSet<QString> translationPrefixes;
     QStringList availableLanguages;

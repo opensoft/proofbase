@@ -124,8 +124,6 @@ private:
     MethodNode methodsTreeRoot;
     int suggestedMaxThreadsCount;
     RestAuthType authType;
-    QString serviceName;
-    QString serviceVersion = "0.0.0.0";
     QHash<QString, QString> customHeaders;
 };
 
@@ -169,17 +167,6 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     moveToThread(d->serverThread);
     d->serverThread->moveToThread(d->serverThread);
     d->serverThread->start();
-
-    d->serviceName = qApp->applicationName();
-    d->serviceName.remove("proofservice-");
-
-    if (!d->serviceName.isEmpty())
-        d->serviceName[0] = d->serviceName[0].toUpper();
-    for (int i = 0; i + 1 < d->serviceName.length(); ++i) {
-        if (d->serviceName[i] == QChar('-'))
-            d->serviceName[i + 1] = d->serviceName[i + 1].toUpper();
-    }
-    d->serviceName += "-Service";
 }
 
 AbstractRestServer::~AbstractRestServer()
@@ -226,12 +213,6 @@ RestAuthType AbstractRestServer::authType() const
 {
     Q_D(const AbstractRestServer);
     return d->authType;
-}
-
-QString Proof::AbstractRestServer::serviceVersion() const
-{
-    Q_D(const AbstractRestServer);
-    return d->serviceVersion;
 }
 
 void AbstractRestServer::setUserName(const QString &userName)
@@ -292,15 +273,6 @@ void AbstractRestServer::setAuthType(RestAuthType authType)
     if (d->authType != authType) {
         d->authType = authType;
         emit authTypeChanged(d->authType);
-    }
-}
-
-void AbstractRestServer::setServiceVersion(const QString &version)
-{
-    Q_D(AbstractRestServer);
-    if (d->serviceVersion != version) {
-        d->serviceVersion = version;
-        emit serviceVersionChanged(d->serviceVersion);
     }
 }
 
@@ -678,9 +650,9 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
 
     if (sockets.contains(socket) && socket->state() == QTcpSocket::ConnectedState) {
         QStringList additionalHeadersList;
-        additionalHeadersList << QString("Proof-Application: %1").arg(serverD->serviceName);
-        additionalHeadersList << QString("Proof-%1-Version: %2").arg(serverD->serviceName, serverD->serviceVersion);
-        additionalHeadersList << QString("Proof-%1-Framework-Version: %2").arg(serverD->serviceName, Proof::proofVersion());
+        additionalHeadersList << QString("Proof-Application: %1").arg(qApp->prettifiedApplicationName());
+        additionalHeadersList << QString("Proof-%1-Version: %2").arg(qApp->prettifiedApplicationName(), qApp->applicationVersion());
+        additionalHeadersList << QString("Proof-%1-Framework-Version: %2").arg(qApp->prettifiedApplicationName(), Proof::proofVersion());
         for (const auto &key : serverD->customHeaders.keys())
             additionalHeadersList << QString("%1: %2").arg(key, serverD->customHeaders[key]);
         for (const auto &key : headers.keys())

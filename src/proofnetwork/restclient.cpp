@@ -52,8 +52,6 @@ public:
     QString userName;
     QString password;
     QString clientName;
-    QString appName;
-    QString appVersion = QString("0.0.0.0");
     QString host;
     QString postfix;
     QString quasiOAuth2Token;
@@ -93,23 +91,6 @@ RestClient::RestClient(bool ignoreSslErrors)
             emit sslErrors(reply, errors);
         });
     }
-
-    d->appName = qApp->applicationName();
-    QString appType = "Station";
-    if (d->appName.startsWith("proofservice")) {
-        d->appName.remove("proofservice-");
-        appType = "Service";
-    } else {
-        d->appName.remove("proofstation-");
-    }
-
-    if (!d->appName.isEmpty())
-        d->appName[0] = d->appName[0].toUpper();
-    for (int i = 0; i + 1 < d->appName.length(); ++i) {
-        if (d->appName[i] == QChar('-'))
-            d->appName[i + 1] = d->appName[i + 1].toUpper();
-    }
-    d->appName = QString("%1-%2").arg(d->appName).arg(appType);
 }
 
 QString RestClient::userName() const
@@ -154,21 +135,6 @@ void RestClient::setClientName(const QString &arg)
     if (d->clientName != arg) {
         d->clientName = arg;
         emit clientNameChanged(arg);
-    }
-}
-
-QString RestClient::appVersion() const
-{
-    Q_D(const RestClient);
-    return d->appVersion;
-}
-
-void RestClient::setAppVersion(const QString &arg)
-{
-    Q_D(RestClient);
-    if (d->appVersion != arg) {
-        d->appVersion = arg;
-        emit appVersionChanged(arg);
     }
 }
 
@@ -478,9 +444,9 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
     for (const QByteArray &header : customHeaders.keys())
         result.setRawHeader(header, customHeaders[header]);
 
-    result.setRawHeader("Proof-Application", appName.toLatin1());
-    result.setRawHeader(QString("Proof-%1-Version").arg(appName).toLatin1(), appVersion.toLatin1());
-    result.setRawHeader(QString("Proof-%1-Framework-Version").arg(appName).toLatin1(), Proof::proofVersion().toLatin1());
+    result.setRawHeader("Proof-Application", qApp->prettifiedApplicationName().toLatin1());
+    result.setRawHeader(QString("Proof-%1-Version").arg(qApp->prettifiedApplicationName()).toLatin1(), qApp->applicationVersion().toLatin1());
+    result.setRawHeader(QString("Proof-%1-Framework-Version").arg(qApp->prettifiedApplicationName()).toLatin1(), Proof::proofVersion().toLatin1());
 
     switch (authType) {
     case RestAuthType::Wsse:

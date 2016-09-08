@@ -29,7 +29,6 @@ public:
     QString pathPrefix() const;
     int port() const;
     RestAuthType authType() const;
-    QString serviceVersion() const;
 
     void setUserName(const QString &userName);
     void setPassword(const QString &password);
@@ -37,7 +36,6 @@ public:
     void setPort(int port);
     void setSuggestedMaxThreadsCount(int count = -1);
     void setAuthType(RestAuthType authType);
-    void setServiceVersion(const QString &version);
 
     void setCustomHeader(const QString &header, const QString &value);
     QString customHeader(const QString &header) const;
@@ -53,7 +51,6 @@ signals:
     void pathPrefixChanged(const QString &arg);
     void portChanged(int arg);
     void authTypeChanged(Proof::RestAuthType arg);
-    void serviceVersionChanged(const QString &version);
 
 protected:
     void incomingConnection(qintptr socketDescriptor) override;
