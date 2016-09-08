@@ -1,7 +1,9 @@
 #include "restclient.h"
 
+#include "proofcore/proofglobal.h"
 #include "proofcore/proofobject_p.h"
 #include "proofcore/taskchain.h"
+#include "proofcore/coreapplication.h"
 
 #include <QAuthenticator>
 #include <QNetworkRequest>
@@ -50,6 +52,8 @@ public:
     QString userName;
     QString password;
     QString clientName;
+    QString appName;
+    QString appVersion = QString("0.0.0.0");
     QString host;
     QString postfix;
     QString quasiOAuth2Token;
@@ -89,6 +93,23 @@ RestClient::RestClient(bool ignoreSslErrors)
             emit sslErrors(reply, errors);
         });
     }
+
+    d->appName = qApp->applicationName();
+    QString appType = "Station";
+    if (d->appName.startsWith("proofservice")) {
+        d->appName.remove("proofservice-");
+        appType = "Service";
+    } else {
+        d->appName.remove("proofstation-");
+    }
+
+    if (!d->appName.isEmpty())
+        d->appName[0] = d->appName[0].toUpper();
+    for (int i = 0; i + 1 < d->appName.length(); ++i) {
+        if (d->appName[i] == QChar('-'))
+            d->appName[i + 1] = d->appName[i + 1].toUpper();
+    }
+    d->appName = QString("%1-%2").arg(d->appName).arg(appType);
 }
 
 QString RestClient::userName() const
@@ -133,6 +154,21 @@ void RestClient::setClientName(const QString &arg)
     if (d->clientName != arg) {
         d->clientName = arg;
         emit clientNameChanged(arg);
+    }
+}
+
+QString RestClient::appVersion() const
+{
+    Q_D(const RestClient);
+    return d->appVersion;
+}
+
+void RestClient::setAppVersion(const QString &arg)
+{
+    Q_D(RestClient);
+    if (d->appVersion != arg) {
+        d->appVersion = arg;
+        emit appVersionChanged(arg);
     }
 }
 
@@ -442,6 +478,10 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
     for (const QByteArray &header : customHeaders.keys())
         result.setRawHeader(header, customHeaders[header]);
 
+    result.setRawHeader("Proof-Application", appName.toLatin1());
+    result.setRawHeader(QString("Proof-%1-Version").arg(appName).toLatin1(), appVersion.toLatin1());
+    result.setRawHeader(QString("Proof-%1-Framework-Version").arg(appName).toLatin1(), Proof::proofVersion().toLatin1());
+
     switch (authType) {
     case RestAuthType::Wsse:
         result.setRawHeader("X-WSSE", generateWsseToken());
@@ -584,12 +624,12 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
 
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [this, reply](QNetworkReply::NetworkError) {
-        qCDebug(proofNetworkMiscLog) << "Error occured:" << reply->request().url().path() << reply->request().url().query();
+        qCDebug(proofNetworkMiscLog) << "Error occurred:" << reply->request().url().path() << reply->request().url().query();
         cleanupReplyHandler(reply);
     });
     QObject::connect(reply, &QNetworkReply::finished,
                      q, [this, reply]() {
-        qCDebug(proofNetworkMiscLog) << "Finished:" << reply->request().url().path() << reply->request().url().query() << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+        qCDebug(proofNetworkMiscLog) << "Finished:" << reply->request().url().path() << reply->request().url().query() << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         cleanupReplyHandler(reply);
     });
 }

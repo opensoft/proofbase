@@ -33,6 +33,9 @@ public:
     QString clientName() const;
     void setClientName(const QString &arg);
 
+    QString appVersion() const;
+    void setAppVersion(const QString &arg);
+
     QString host() const;
     void setHost(const QString &arg);
 
@@ -84,6 +87,7 @@ signals:
     void userNameChanged(const QString &arg);
     void passwordChanged(const QString &arg);
     void clientNameChanged(const QString &arg);
+    void appVersionChanged(const QString &arg);
     void hostChanged(const QString &arg);
     void postfixChanged(const QString &arg);
     void portChanged(int arg);

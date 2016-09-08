@@ -22,8 +22,7 @@ class UrlQueryBuilder;
 typedef QSharedPointer<UrlQueryBuilder> UrlQueryBuilderSP;
 typedef QWeakPointer<UrlQueryBuilder> UrlQueryBuilderWP;
 
-enum class RestAuthType
-{
+enum class RestAuthType {
     NoAuth,
     Basic,
     Wsse,
