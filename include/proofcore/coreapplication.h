@@ -11,6 +11,7 @@
 #define qApp (static_cast<Proof::CoreApplication *>(QCoreApplication::instance()))
 
 namespace Proof {
+class UpdateManager;
 class Settings;
 class CoreApplicationPrivate;
 class PROOF_CORE_EXPORT CoreApplication : public QCoreApplication
@@ -25,6 +26,7 @@ public:
     ~CoreApplication();
 
     Settings *settings() const;
+    UpdateManager *updateManager() const;
 
     void setLanguage(const QString &language);
     QStringList availableLanguages();
@@ -32,6 +34,8 @@ public:
     int languageIndex() const;
 
     QString prettifiedApplicationName() const;
+
+    void postInit();
 
 signals:
     void languageChanged(const QString &language);

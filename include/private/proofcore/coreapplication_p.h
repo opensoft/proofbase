@@ -11,6 +11,7 @@
 
 namespace Proof {
 class Settings;
+class UpdateManager;
 class PROOF_CORE_EXPORT CoreApplicationPrivate
 {
     Q_DECLARE_PUBLIC(CoreApplication)
@@ -23,6 +24,7 @@ protected:
 
     QString prettifiedApplicationName;
     Settings *settings = nullptr;
+    UpdateManager *updateManager = nullptr;
     QSet<QString> translationPrefixes;
     QStringList availableLanguages;
     QString currentLanguage = "en";

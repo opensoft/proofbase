@@ -3,6 +3,7 @@
 
 #include "logs.h"
 #include "settings.h"
+#include "updatemanager.h"
 #include "settingsgroup.h"
 #include "proofglobal.h"
 #include "expirator.h"
@@ -156,6 +157,12 @@ Settings *CoreApplication::settings() const
     return d->settings;
 }
 
+UpdateManager *CoreApplication::updateManager() const
+{
+    Q_D(const CoreApplication);
+    return d->updateManager;
+}
+
 void CoreApplication::setLanguage(const QString &language)
 {
     Q_D(CoreApplication);
@@ -185,6 +192,12 @@ QString CoreApplication::prettifiedApplicationName() const
 {
     Q_D(const CoreApplication);
     return d->prettifiedApplicationName;
+}
+
+void CoreApplication::postInit()
+{
+    Q_D(CoreApplication);
+    d->updateManager->start();
 }
 
 void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRules)
@@ -252,6 +265,8 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
     initTranslator();
 
     Expirator::instance();
+
+    updateManager = new UpdateManager(q_ptr);
 
     qCDebug(proofCoreMiscLog).noquote() << QString("%1 started").arg(q_ptr->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
 }
