@@ -323,7 +323,7 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
     QString package = isUpdate ? packageNameValue : QString("%1=%2").arg(packageNameValue, version);
     auto successSignal = isUpdate ? &UpdateManager::updateSucceeded : &UpdateManager::installationSucceeded;
     auto failSignal = isUpdate ? &UpdateManager::updateFailed : &UpdateManager::installationFailed;
-    updater->start(QString("sudo -S -k apt-get --quiet --assume-yes --allow-downgrades --allow-unauthenticated install %1").arg(package));
+    updater->start(QString("sudo -S -k apt-get --quiet --assume-yes --force-yes --allow-unauthenticated install %1").arg(package));
     updater->waitForStarted();
     if (updater->error() == QProcess::UnknownError) {
         if (!updater->waitForReadyRead()) {
