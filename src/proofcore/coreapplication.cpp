@@ -268,6 +268,15 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
 
     updateManager = new UpdateManager(q_ptr);
 
+#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
+    SettingsGroup *updatesGroup = settings->group("updates", Settings::NotFoundPolicy::Add);
+    updateManager->setAutoUpdateEnabled(updatesGroup->value("auto_update", true, Settings::NotFoundPolicy::Add).toBool());
+    updateManager->setAptSourcesListFilePath(updatesGroup->value("sources_list_file", "", Settings::NotFoundPolicy::Add).toString());
+
+    updateManager->setCurrentVersion(q_ptr->applicationVersion());
+    updateManager->setPackageName(q_ptr->applicationName());
+#endif
+
     qCDebug(proofCoreMiscLog).noquote() << QString("%1 started").arg(q_ptr->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
 }
 

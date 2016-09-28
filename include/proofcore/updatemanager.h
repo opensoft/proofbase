@@ -15,9 +15,9 @@ class PROOF_CORE_EXPORT UpdateManager : public ProofObject
     Q_PROPERTY(bool supported READ supported CONSTANT)
     Q_PROPERTY(bool autoUpdateEnabled READ autoUpdateEnabled WRITE setAutoUpdateEnabled NOTIFY autoUpdateEnabledChanged)
     Q_PROPERTY(int timeout READ timeout WRITE setTimeout NOTIFY timeoutChanged)
+    Q_PROPERTY(QString aptSourcesListFilePath READ aptSourcesListFilePath WRITE setAptSourcesListFilePath NOTIFY aptSourcesListFilePathChanged)
     Q_PROPERTY(QString currentVersion READ currentVersion WRITE setCurrentVersion NOTIFY currentVersionChanged)
     Q_PROPERTY(QString packageName READ packageName WRITE setPackageName NOTIFY packageNameChanged)
-    Q_PROPERTY(QStringList rollbackVersions READ rollbackVersions NOTIFY rollbackVersionsChanged)
     Q_PROPERTY(QString newVersion READ newVersion NOTIFY newVersionChanged)
     Q_PROPERTY(bool newVersionInstallable READ newVersionInstallable NOTIFY newVersionInstallableChanged)
     Q_DECLARE_PRIVATE(UpdateManager)
@@ -35,14 +35,16 @@ public:
     bool supported() const;
     bool autoUpdateEnabled() const;
     int timeout() const;
+    QString aptSourcesListFilePath() const;
     QString currentVersion() const;
     QString packageName() const;
-    QStringList rollbackVersions() const;
     QString newVersion() const;
     bool newVersionInstallable() const;
 
+
     void setAutoUpdateEnabled(bool arg);
     void setTimeout(int arg);
+    void setAptSourcesListFilePath(const QString &arg);
     void setCurrentVersion(const QString &arg);
     void setPackageName(const QString &arg);
 
@@ -51,7 +53,6 @@ signals:
     void timeoutChanged(int timeout);
     void currentVersionChanged(const QString &currentVersion);
     void packageNameChanged(const QString &packageName);
-    void rollbackVersionsChanged(const QStringList &rollbackVersions);
     void newVersionChanged(const QString &newVersion);
     void newVersionInstallableChanged(bool newVersionInstallable);
     void updateSucceeded();
@@ -59,6 +60,7 @@ signals:
     void installationSucceeded();
     void installationFailed();
     void passwordChecked(bool isCorrect);
+    void aptSourcesListFilePathChanged(QString aptSourcesListFilePath);
 };
 
 } // namespace Proof

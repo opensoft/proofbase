@@ -44,21 +44,20 @@ class UpdateManagerPrivate : public ProofObjectPrivate
     void checkPassword(const QString &password);
     void checkForUpdates();
     void installVersion(QString version, const QString &password);
-    void fetchRollbackVersions();
 
     bool autoUpdateEnabled() const;
     int timeout() const;
+    QString aptSourcesListFilePath() const;
     QString currentVersion() const;
     QString packageName() const;
-    QStringList rollbackVersions() const;
     QString newVersion() const;
     bool newVersionInstallable() const;
 
     void setAutoUpdateEnabled(bool arg);
     void setTimeout(int arg);
+    void setAptSourcesListFilePath(const QString &arg);
     void setCurrentVersion(const QString &arg);
     void setPackageName(const QString &arg);
-    void setRollbackVersions(const QStringList &arg);
     void setNewVersion(const QString &arg);
     void setNewVersionInstallable(bool arg);
 
@@ -68,11 +67,11 @@ class UpdateManagerPrivate : public ProofObjectPrivate
     static quint64 versionFromString(const QString &version);
     static QString versionToString(quint64 version);
 
+    QString aptSourcesListFilePathValue;
     QString packageNameValue;
     quint64 currentVersionValue = 0x0;
     int currentVersionMajor = 0;
     bool autoUpdateEnabledValue = true;
-    QStringList rollbackVersionsValue;
     QString newVersionValue;
     bool newVersionInstallableValue = false;
     WorkerThread *thread = nullptr;
@@ -96,9 +95,6 @@ UpdateManager::UpdateManager(QObject *parent)
     d->timer->setInterval(30 * 60 * 1000); // 30 minutes
     connect(d->timer, &QTimer::timeout, d->timer, [d] {d->checkForUpdates();});
     d->thread->start();
-
-    setCurrentVersion(qApp->applicationVersion());
-    setPackageName(qApp->applicationName());
 }
 
 UpdateManager::~UpdateManager()
@@ -155,6 +151,12 @@ int UpdateManager::timeout() const
     return d->thread->callUpdaterWithResult(&UpdateManagerPrivate::timeout);
 }
 
+QString UpdateManager::aptSourcesListFilePath() const
+{
+    Q_D(const UpdateManager);
+    return d->thread->callUpdaterWithResult(&UpdateManagerPrivate::aptSourcesListFilePath);
+}
+
 QString UpdateManager::currentVersion() const
 {
     Q_D(const UpdateManager);
@@ -165,12 +167,6 @@ QString UpdateManager::packageName() const
 {
     Q_D(const UpdateManager);
     return d->thread->callUpdaterWithResult(&UpdateManagerPrivate::packageName);
-}
-
-QStringList UpdateManager::rollbackVersions() const
-{
-    Q_D(const UpdateManager);
-    return d->thread->callUpdaterWithResult(&UpdateManagerPrivate::rollbackVersions);
 }
 
 QString UpdateManager::newVersion() const
@@ -195,6 +191,12 @@ void UpdateManager::setTimeout(int arg)
 {
     Q_D(UpdateManager);
     d->thread->callUpdaterWithResult(&UpdateManagerPrivate::setTimeout, arg);
+}
+
+void UpdateManager::setAptSourcesListFilePath(const QString &arg)
+{
+    Q_D(UpdateManager);
+    d->thread->callUpdaterWithResult(&UpdateManagerPrivate::setAptSourcesListFilePath, arg);
 }
 
 void UpdateManager::setCurrentVersion(const QString &arg)
@@ -275,6 +277,25 @@ void UpdateManagerPrivate::checkPassword(const QString &password)
 void UpdateManagerPrivate::checkForUpdates()
 {
 #ifdef Q_OS_LINUX
+    QScopedPointer<QProcess> updater(new QProcess);
+    updater->setProcessChannelMode(QProcess::MergedChannels);
+    if (aptSourcesListFilePathValue.isEmpty())
+        updater->start("sudo apt-get update");
+    else
+        updater->start(QString("sudo apt-get update -o Dir::Etc::sourcelist=\"%1\"").arg(aptSourcesListFilePathValue));
+    updater->waitForStarted();
+    if (updater->error() == QProcess::UnknownError) {
+        if (updater->waitForReadyRead()) {
+            QByteArray data = updater->readAll().trimmed();
+            if (data.contains("[sudo]") || data.contains("password for"))
+                updater->kill();
+        }
+        updater->waitForFinished(-1);
+        qCDebug(proofCoreUpdatesLog) << "apt-get update process finished with code =" << updater->exitCode();
+    } else {
+        qCDebug(proofCoreUpdatesLog) << "apt-get update process couldn't be started" << updater->error() << updater->errorString();
+    }
+
     QScopedPointer<QProcess> checker(new QProcess);
     checker->start(QString("apt-cache --no-all-versions show %1").arg(packageNameValue));
     checker->waitForStarted();
@@ -309,7 +330,6 @@ void UpdateManagerPrivate::checkForUpdates()
     } else {
         qCDebug(proofCoreUpdatesLog) << "process couldn't be started" << checker->error() << checker->errorString();
     }
-    fetchRollbackVersions();
 #endif
 }
 
@@ -383,50 +403,6 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
 #endif
 }
 
-void UpdateManagerPrivate::fetchRollbackVersions()
-{
-#ifdef Q_OS_LINUX
-    if (packageNameValue.isEmpty()) {
-        setRollbackVersions(QStringList{});
-        return;
-    }
-
-    QScopedPointer<QProcess> checker(new QProcess);
-    checker->start(QString("apt-cache showpkg %1").arg(packageNameValue));
-    checker->waitForStarted();
-    if (checker->error() == QProcess::UnknownError) {
-        if (checker->waitForFinished()) {
-            if (checker->exitStatus() == QProcess::NormalExit && checker->exitCode() == 0) {
-                QString output = checker->readAll().trimmed();
-                QRegExp versionRegExp("\\n(\\d?\\d\\.\\d?\\d\\.\\d?\\d\\.\\d?\\d)");
-                QSet<QString> versions;
-                int position = 0;
-                while ((position = versionRegExp.indexIn(output, position)) != -1) {
-                    QString version = versionRegExp.cap(1);
-                    if (currentVersionValue > versionFromString(version.split('.')))
-                        versions << version;
-                    position += versionRegExp.matchedLength();
-                }
-                QStringList result = versions.values();
-                std::sort(result.begin(), result.end());
-                setRollbackVersions(result);
-            } else {
-                qCDebug(proofCoreUpdatesLog) << "Process failed" << checker->error() << checker->errorString();
-                setRollbackVersions(QStringList{});
-            }
-        } else {
-            qCDebug(proofCoreUpdatesLog) << "Process timed out";
-            setRollbackVersions(QStringList{});
-        }
-    } else {
-        qCDebug(proofCoreUpdatesLog) << "Process couldn't be started" << checker->error() << checker->errorString();
-        setRollbackVersions(QStringList{});
-    }
-#else
-    setRollbackVersions(QStringList{});
-#endif
-}
-
 bool UpdateManagerPrivate::autoUpdateEnabled() const
 {
     return autoUpdateEnabledValue;
@@ -437,6 +413,11 @@ int UpdateManagerPrivate::timeout() const
     return timer->interval();
 }
 
+QString UpdateManagerPrivate::aptSourcesListFilePath() const
+{
+    return aptSourcesListFilePathValue;
+}
+
 QString UpdateManagerPrivate::currentVersion() const
 {
     return versionToString(currentVersionValue);
@@ -445,11 +426,6 @@ QString UpdateManagerPrivate::currentVersion() const
 QString UpdateManagerPrivate::packageName() const
 {
     return packageNameValue;
-}
-
-QStringList UpdateManagerPrivate::rollbackVersions() const
-{
-    return rollbackVersionsValue;
 }
 
 QString UpdateManagerPrivate::newVersion() const
@@ -480,6 +456,15 @@ void UpdateManagerPrivate::setTimeout(int arg)
     }
 }
 
+void UpdateManagerPrivate::setAptSourcesListFilePath(const QString &arg)
+{
+    Q_Q(UpdateManager);
+    if (aptSourcesListFilePathValue != arg) {
+        aptSourcesListFilePathValue = arg;
+        emit q->aptSourcesListFilePathChanged(aptSourcesListFilePathValue);
+    }
+}
+
 void UpdateManagerPrivate::setCurrentVersion(const QString &arg)
 {
     Q_Q(UpdateManager);
@@ -503,15 +488,6 @@ void UpdateManagerPrivate::setPackageName(const QString &arg)
         packageNameValue = arg;
         emit q->packageNameChanged(packageNameValue);
         updateTimerState();
-    }
-}
-
-void UpdateManagerPrivate::setRollbackVersions(const QStringList &arg)
-{
-    Q_Q(UpdateManager);
-    if (rollbackVersionsValue != arg) {
-        rollbackVersionsValue = arg;
-        emit q->rollbackVersionsChanged(rollbackVersionsValue);
     }
 }
 
