@@ -282,7 +282,7 @@ void UpdateManagerPrivate::checkForUpdates()
     if (aptSourcesListFilePathValue.isEmpty())
         updater->start("sudo apt-get update");
     else
-        updater->start(QString("sudo apt-get update -o Dir::Etc::sourcelist=\"%1\"").arg(aptSourcesListFilePathValue));
+        updater->start(QString("sudo apt-get update -o Dir::Etc::sourcelist=\"%1\" -o Dir::Etc::sourceparts=\"-\"").arg(aptSourcesListFilePathValue));
     updater->waitForStarted();
     if (updater->error() == QProcess::UnknownError) {
         if (updater->waitForReadyRead()) {
