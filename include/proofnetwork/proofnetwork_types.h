@@ -22,6 +22,10 @@ class UrlQueryBuilder;
 typedef QSharedPointer<UrlQueryBuilder> UrlQueryBuilderSP;
 typedef QWeakPointer<UrlQueryBuilder> UrlQueryBuilderWP;
 
+class SmtpClient;
+typedef QSharedPointer<SmtpClient> SmtpClientSP;
+typedef QWeakPointer<SmtpClient> SmtpClientWP;
+
 enum class RestAuthType {
     NoAuth,
     Basic,

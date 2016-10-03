@@ -7,18 +7,19 @@
 #include "settingsgroup.h"
 #include "proofglobal.h"
 #include "expirator.h"
+#include "notifier.h"
 
 #include <QDir>
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
-#include <unistd.h>
-#include <cxxabi.h>
-#include <execinfo.h>
-#include <signal.h>
-#include <sys/ucontext.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <ctime>
+# include <unistd.h>
+# include <cxxabi.h>
+# include <execinfo.h>
+# include <signal.h>
+# include <sys/ucontext.h>
+# include <stdio.h>
+# include <fcntl.h>
+# include <ctime>
 #endif
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
@@ -202,6 +203,7 @@ void CoreApplication::postInit()
 
 void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRules)
 {
+    Notifier::instance();
     qApp->applicationName();
     QString appType = "Station";
     QString appName = q_ptr->applicationName();

@@ -1,8 +1,13 @@
 #include "abstractrestserver.h"
 
 #include "proofnetwork/httpparser_p.h"
+#include "proofnetwork/emailnotificationhandler.h"
+#include "proofnetwork/smtpclient.h"
 #include "proofcore/proofglobal.h"
 #include "proofcore/coreapplication.h"
+#include "proofcore/settings.h"
+#include "proofcore/settingsgroup.h"
+#include "proofcore/notifier.h"
 #include "proofcore/proofobject.h"
 
 #include <QDir>
@@ -167,6 +172,30 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     moveToThread(d->serverThread);
     d->serverThread->moveToThread(d->serverThread);
     d->serverThread->start();
+
+    //TODO: 1.0: move it away from here to some common place for stations and services
+    SettingsGroup *notifierGroup = qApp->settings()->group("email_notifier", Proof::Settings::NotFoundPolicy::Add);
+    QStringList to;
+    QString toString = notifierGroup->value("to", "", Proof::Settings::NotFoundPolicy::Add).toString();
+    for (const auto &address : toString.split("|", QString::SkipEmptyParts)) {
+        QString trimmed = address.trimmed();
+        if (!trimmed.isEmpty())
+            to << trimmed;
+    }
+
+    auto smtpClient = Proof::SmtpClientSP::create();
+
+    smtpClient->setHost(notifierGroup->value("host", "", Proof::Settings::NotFoundPolicy::Add).toString());
+    smtpClient->setPort(notifierGroup->value("port", 25, Proof::Settings::NotFoundPolicy::Add).toInt());
+    smtpClient->setConnectionType(notifierGroup->value("use_ssl", true, Proof::Settings::NotFoundPolicy::Add).toBool()
+                                  ? SmtpClient::ConnectionType::Ssl : SmtpClient::ConnectionType::Plain);
+    smtpClient->setUserName(notifierGroup->value("username", "", Proof::Settings::NotFoundPolicy::Add).toString());
+    smtpClient->setPassword(notifierGroup->value("password", "", Proof::Settings::NotFoundPolicy::Add).toString());
+
+    Notifier::instance()->registerHandler(new EmailNotificationHandler(smtpClient,
+                                              notifierGroup->value("from", "", Proof::Settings::NotFoundPolicy::Add).toString(),
+                                              to,
+                                              notifierGroup->value("app_id", "", Proof::Settings::NotFoundPolicy::Add).toString()));
 }
 
 AbstractRestServer::~AbstractRestServer()
