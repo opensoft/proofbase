@@ -2,7 +2,8 @@
 #define PROOF_EMAILNOTIFICATIONHANDLER_H
 
 #include "proofcore/abstractnotificationhandler.h"
-#include "proofnetwork_types.h"
+#include "proofnetwork/proofnetwork_global.h"
+#include "proofnetwork/proofnetwork_types.h"
 
 #include <QString>
 #include <QStringList>
@@ -10,7 +11,7 @@
 namespace Proof {
 
 class EmailNotificationHandlerPrivate;
-class EmailNotificationHandler : public AbstractNotificationHandler
+class PROOF_NETWORK_EXPORT EmailNotificationHandler : public AbstractNotificationHandler
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(EmailNotificationHandler)
