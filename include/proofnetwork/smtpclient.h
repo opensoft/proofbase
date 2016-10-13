@@ -18,8 +18,8 @@ class PROOF_NETWORK_EXPORT SmtpClient : public ProofObject
 public:
     enum class ConnectionType {
         Plain,
-        Ssl
-        //TODO: add StartTls support
+        Ssl,
+        StartTls
     };
 
     explicit SmtpClient();

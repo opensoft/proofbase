@@ -187,8 +187,15 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
 
     smtpClient->setHost(notifierGroup->value("host", "", Proof::Settings::NotFoundPolicy::Add).toString());
     smtpClient->setPort(notifierGroup->value("port", 25, Proof::Settings::NotFoundPolicy::Add).toInt());
-    smtpClient->setConnectionType(notifierGroup->value("use_ssl", true, Proof::Settings::NotFoundPolicy::Add).toBool()
-                                  ? SmtpClient::ConnectionType::Ssl : SmtpClient::ConnectionType::Plain);
+    QString connectionType = notifierGroup->value("type", "ssl", Proof::Settings::NotFoundPolicy::Add).toString().toLower().trimmed();
+    if (connectionType == "ssl") {
+        smtpClient->setConnectionType(SmtpClient::ConnectionType::Ssl);
+    } else if (connectionType == "starttls") {
+        smtpClient->setConnectionType(SmtpClient::ConnectionType::StartTls);
+    } else {
+        smtpClient->setConnectionType(SmtpClient::ConnectionType::Plain);
+        notifierGroup->setValue("type", "plain");
+    }
     smtpClient->setUserName(notifierGroup->value("username", "", Proof::Settings::NotFoundPolicy::Add).toString());
     smtpClient->setPassword(notifierGroup->value("password", "", Proof::Settings::NotFoundPolicy::Add).toString());
 

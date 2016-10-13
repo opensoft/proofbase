@@ -155,13 +155,13 @@ bool SmtpClient::sendMail(const TaskChainSP &taskChain, const QString &subject, 
     message.replace("\n", "\r\n");
     message.replace("\r\n.\r\n", "\r\n..\r\n");
 
-    enum class SmtpStates {Init, Auth, User, Pass, Mail, Rcpt, Data, Body, Quit, Close};
+    enum class SmtpStates {Init, Tls, Auth, User, Pass, Mail, Rcpt, Data, Body, Quit, Close};
 
     SmtpStates state = SmtpStates::Init;
     bool result = false;
 
-    QTcpSocket *socket = (d->connectionType == ConnectionType::Ssl) ? new QSslSocket : new QTcpSocket;
-    std::function<bool()> readyReadCallback = [this, &socket, &state, message, senderEmail, domain, userNameBase64, passwordBase64, &mutableTo, &result]() {
+    QTcpSocket *socket = (d->connectionType == ConnectionType::Plain) ? new QTcpSocket : new QSslSocket;
+    std::function<bool()> readyReadCallback = [this, d, &socket, &state, message, senderEmail, domain, userNameBase64, passwordBase64, &mutableTo, &result]() {
         QString reply = socket->readAll();
         int stateReply = reply.left(3).toInt();
         QByteArray toSend;
@@ -170,8 +170,16 @@ bool SmtpClient::sendMail(const TaskChainSP &taskChain, const QString &subject, 
             toSend = QString("EHLO " + domain).toUtf8();
             state = SmtpStates::Auth;
         } else if (state == SmtpStates::Auth && stateReply == 250) {
-            toSend = "AUTH LOGIN";
-            state = SmtpStates::User;
+            if (reply.contains("STARTTLS") && d->connectionType == ConnectionType::StartTls) {
+                toSend = "STARTTLS";
+                state = SmtpStates::Tls;
+            } else {
+                toSend = "AUTH LOGIN";
+                state = SmtpStates::User;
+            }
+        } else if (state == SmtpStates::Tls && stateReply == 220) {
+            static_cast<QSslSocket *>(socket)->startClientEncryption();
+            return true;
         } else if (state == SmtpStates::User && stateReply == 334) {
             toSend = userNameBase64;
             state = SmtpStates::Pass;
@@ -199,10 +207,12 @@ bool SmtpClient::sendMail(const TaskChainSP &taskChain, const QString &subject, 
             toSend = "QUIT";
             state = SmtpStates::Close;
         } else if (state == SmtpStates::Close) {
+            qCDebug(proofNetworkMiscLog) << "Email successfully sent";
             result = true;
             socket->close();
             return true;
         } else {
+            qCDebug(proofNetworkMiscLog) << "Unknown state happened during email sending:" << static_cast<int>(state) << ". Server reply:" << reply;
             state = SmtpStates::Close;
             socket->close();
             return true;
@@ -213,7 +223,16 @@ bool SmtpClient::sendMail(const TaskChainSP &taskChain, const QString &subject, 
     };
 
     std::function<bool()> errorCallback = [this, &socket]() {
+        qCDebug(proofNetworkMiscLog) << "Error occurred during email sending:" << socket->error() << socket->errorString();
         socket->close();
+        return true;
+    };
+
+
+    std::function<bool()> startTlsEncryptedCallback = [this, &socket, &state, domain]() {
+        state = SmtpStates::Auth;
+        socket->write(QString("EHLO " + domain).toUtf8());
+        socket->write("\r\n");
         return true;
     };
 
@@ -223,6 +242,7 @@ bool SmtpClient::sendMail(const TaskChainSP &taskChain, const QString &subject, 
     case ConnectionType::Ssl:
         static_cast<QSslSocket *>(socket)->connectToHostEncrypted(d->host, d->port);
         break;
+    case ConnectionType::StartTls:
     case ConnectionType::Plain:
         socket->connectToHost(d->host, d->port);
         break;
@@ -230,6 +250,8 @@ bool SmtpClient::sendMail(const TaskChainSP &taskChain, const QString &subject, 
     taskChain->fireSignalWaiters();
     while (socket->isOpen()) {
         taskChain->addSignalWaiter(socket, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), errorCallback);
+        if (d->connectionType == ConnectionType::StartTls && state == SmtpStates::Tls)
+            taskChain->addSignalWaiter(static_cast<QSslSocket *>(socket), &QSslSocket::encrypted, startTlsEncryptedCallback);
         taskChain->addSignalWaiter(socket, &QTcpSocket::readyRead, readyReadCallback);
         taskChain->fireSignalWaiters();
     }
