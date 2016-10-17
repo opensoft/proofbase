@@ -203,6 +203,8 @@ void CoreApplication::postInit()
 
 void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRules)
 {
+    qcaInit.reset(new QCA::Initializer);
+    QCA::scanForPlugins();
     Notifier::instance();
     qApp->applicationName();
     QString appType = "Station";

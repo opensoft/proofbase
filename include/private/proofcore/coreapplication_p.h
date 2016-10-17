@@ -9,6 +9,8 @@
 #include <QTranslator>
 #include <QSet>
 
+#include <QtCrypto>
+
 namespace Proof {
 class Settings;
 class UpdateManager;
@@ -29,6 +31,8 @@ protected:
     QStringList availableLanguages;
     QString currentLanguage = "en";
     QList<QTranslator *> installedTranslators;
+    QScopedPointer<QCA::Initializer> qcaInit;
+
     QCoreApplication *q_ptr = nullptr;
 };
 }
