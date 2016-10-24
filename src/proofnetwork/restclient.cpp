@@ -314,7 +314,7 @@ void RestClient::unsetCookie(const QString &name)
 QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query, const QString &vendor)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << method << query.toString();
+    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
     QNetworkReply *reply = d->qnam->get(d->createNetworkRequest(method, query, "", vendor));
     d->handleReply(reply);
     return reply;
@@ -323,7 +323,7 @@ QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query, co
 QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << body;
+    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
     QNetworkReply *reply = d->qnam->post(d->createNetworkRequest(method, query, body, vendor), body);
     d->handleReply(reply);
     return reply;
@@ -332,7 +332,7 @@ QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, c
 QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << method << query.toString() << multiParts;
+    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
     QNetworkRequest request = d->createNetworkRequest(method, query, "", "");
     request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
                       QString("multipart/form-data; boundary=%1").arg(QString(multiParts->boundary())));
@@ -346,7 +346,7 @@ QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, Q
 QNetworkReply *RestClient::put(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << method << query.toString() << body;
+    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
     QNetworkReply *reply = d->qnam->put(d->createNetworkRequest(method, query, body, vendor), body);
     d->handleReply(reply);
     return reply;
@@ -357,7 +357,7 @@ QNetworkReply *RestClient::patch(const QString &method, const QUrlQuery &query, 
     Q_D(RestClient);
     QBuffer *bodyBuffer = new QBuffer;
     bodyBuffer->setData(body);
-    qCDebug(proofNetworkMiscLog) << method << query.toString() << body;
+    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
     QNetworkReply *reply = d->qnam->sendCustomRequest(d->createNetworkRequest(method, query, body, vendor), "PATCH", bodyBuffer);
     d->handleReply(reply);
     bodyBuffer->setParent(reply);
@@ -367,7 +367,7 @@ QNetworkReply *RestClient::patch(const QString &method, const QUrlQuery &query, 
 QNetworkReply *RestClient::deleteResource(const QString &method, const QUrlQuery &query, const QString &vendor)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << method << query.toString();
+    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
     QNetworkReply *reply = d->qnam->deleteResource(d->createNetworkRequest(method, query, QByteArray(), vendor));
     d->handleReply(reply);
     return reply;
