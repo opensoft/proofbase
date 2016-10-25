@@ -101,10 +101,14 @@ QUrlQuery UrlQueryBuilder::toUrlQuery() const
 {
     Q_D(const UrlQueryBuilder);
     QUrlQuery urlQuery;
-    for (const QString &param : d->params.keys()) {
-        QString value = d->params[param];
-        value.replace("+", "%2B");
-        urlQuery.addQueryItem(param, value);
+    for (const QString &key : d->params.keys()) {
+        if (urlQuery.hasQueryItem(key))
+            continue;
+        QStringList values = d->params.values(key);
+        for (auto value : values) {
+            value.replace("+", "%2B");
+            urlQuery.addQueryItem(key, value);
+        }
     }
     return urlQuery;
 }
