@@ -9,9 +9,7 @@
 #include <QTranslator>
 #include <QSet>
 
-#ifndef Q_OS_ANDROID
 # include <QtCrypto>
-#endif
 
 namespace Proof {
 class Settings;
@@ -33,9 +31,7 @@ protected:
     QStringList availableLanguages;
     QString currentLanguage = "en";
     QList<QTranslator *> installedTranslators;
-#ifndef Q_OS_ANDROID
     QScopedPointer<QCA::Initializer> qcaInit;
-#endif
     QCoreApplication *q_ptr = nullptr;
 };
 }
