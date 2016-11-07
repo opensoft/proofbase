@@ -16,12 +16,11 @@ class PROOF_NETWORK_EXPORT AbstractAmqpClientPrivate : public ProofObjectPrivate
 
 public:
     AbstractAmqpClientPrivate();
-    QAmqpClient *rabbitClient = nullptr;
-    QAmqpQueue *queue = nullptr;
-    QString queueName;
-    int autoReconnectionTries = 0;
 
-    virtual void amqpMessageReceived() = 0;
+    virtual void connected() = 0;
+
+    QAmqpClient *rabbitClient = nullptr;
+    int autoReconnectionTries = 0;
 };
 
 }

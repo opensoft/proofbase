@@ -1,12 +1,12 @@
 #ifndef JSONAMQPCLIENT_P_H
 #define JSONAMQPCLIENT_P_H
 
-#include "jsonamqpclient.h"
-#include "abstractamqpclient_p.h"
+#include "proofnetwork/jsonamqpclient.h"
+#include "proofnetwork/abstractamqpreceiver_p.h"
 
 namespace Proof {
 
-class PROOF_NETWORK_EXPORT JsonAmqpClientPrivate : public AbstractAmqpClientPrivate
+class PROOF_NETWORK_EXPORT JsonAmqpClientPrivate : public AbstractAmqpReceiverPrivate
 {
     Q_DECLARE_PUBLIC(JsonAmqpClient)
 

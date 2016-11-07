@@ -54,24 +54,7 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
     QObject::connect(d->rabbitClient, &QAmqpClient::connected, this, [this, d]() {
         qCDebug(proofNetworkAmqpLog) << "Connected";
         d->autoReconnectionTries = AUTO_RECONNECTION_TRIES;
-
-        auto queue = d->rabbitClient->createQueue(d->queueName);
-        if (d->queue != queue){
-            d->queue = queue;
-            qCDebug(proofNetworkAmqpLog) << "Create queue:" << d->queueName;
-            QObject::connect(d->queue, static_cast<void(QAmqpQueue::*)(QAMQP::Error)>(&QAmqpQueue::error), this, [this](QAMQP::Error error) {
-                emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Queue Error: %1").arg(error), false);
-                qCDebug(proofNetworkAmqpLog) << "Queue Error:" << error;
-            });
-
-            QObject::connect(d->queue, &QAmqpQueue::opened, this, [this, d]() {
-                qCDebug(proofNetworkAmqpLog) << "Queue opened" << sender();
-                QObject::connect(d->queue, &QAmqpQueue::messageReceived, this, [this, d]() {d->amqpMessageReceived();});
-                d->queue->consume(QAmqpQueue::coNoAck);
-                emit connected();
-            });
-        }
-
+        d->connected();
     });
 
     QObject::connect(d->rabbitClient, &QAmqpClient::disconnected, this, &AbstractAmqpClient::disconnected);
@@ -195,18 +178,6 @@ void AbstractAmqpClient::setSslConfiguration(const QSslConfiguration &config)
 {
     Q_D(AbstractAmqpClient);
     d->rabbitClient->setSslConfiguration(config);
-}
-
-QString AbstractAmqpClient::queueName() const
-{
-    Q_D(const AbstractAmqpClient);
-    return d->queueName;
-}
-
-void AbstractAmqpClient::setQueueName(const QString &queueName)
-{
-    Q_D(AbstractAmqpClient);
-    d->queueName = queueName;
 }
 
 bool AbstractAmqpClient::isConnected() const

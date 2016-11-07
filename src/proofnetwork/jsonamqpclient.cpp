@@ -16,7 +16,7 @@ JsonAmqpClient::JsonAmqpClient(QObject *parent)
 }
 
 JsonAmqpClient::JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent)
-    : AbstractAmqpClient(dd, parent)
+    : AbstractAmqpReceiver(dd, parent)
 {
 
 }

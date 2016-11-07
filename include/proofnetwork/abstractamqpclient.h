@@ -14,7 +14,6 @@ class PROOF_NETWORK_EXPORT AbstractAmqpClient : public ProofObject
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(AbstractAmqpClient)
-
 public:
     quint16 port() const;
     void setPort(quint16 port);
@@ -46,9 +45,6 @@ public:
     QSslConfiguration sslConfiguration() const;
     void setSslConfiguration(const QSslConfiguration &config);
 
-    QString queueName() const;
-    void setQueueName(const QString &queueName);
-
     bool isConnected() const;
 
     void connectToHost();
@@ -60,7 +56,7 @@ signals:
     void disconnected();
 
 protected:
-    AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *parent = 0);
+    AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *parent = nullptr);
 
 };
 
