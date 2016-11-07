@@ -19,7 +19,6 @@ public:
     QString queueName() const;
     void setQueueName(const QString &queueName);
 
-
 protected:
     AbstractAmqpReceiver(AbstractAmqpReceiverPrivate &dd, QObject *parent = nullptr);
 };
