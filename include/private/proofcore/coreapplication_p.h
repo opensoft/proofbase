@@ -9,7 +9,9 @@
 #include <QTranslator>
 #include <QSet>
 
+#ifndef QCA_DISABLED
 # include <QtCrypto>
+#endif
 
 namespace Proof {
 class Settings;
@@ -31,7 +33,9 @@ protected:
     QStringList availableLanguages;
     QString currentLanguage = "en";
     QList<QTranslator *> installedTranslators;
+#ifndef QCA_DISABLED
     QScopedPointer<QCA::Initializer> qcaInit;
+#endif
     QCoreApplication *q_ptr = nullptr;
 };
 }
