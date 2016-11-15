@@ -482,8 +482,12 @@ QString AbstractRestServerPrivate::findMethod(const QStringList &splittedMethod,
 
     QString methodName = (*currentNode);
 
-    if (!methodName.isEmpty())
-        methodVariableParts = splittedMethod.mid(i);
+    if (!methodName.isEmpty()) {
+        QStringList partsForDecode = splittedMethod.mid(i);
+        for (QString &part : partsForDecode)
+            part = QString(QByteArray::fromPercentEncoding(part.toUtf8()));
+        methodVariableParts = partsForDecode;
+    }
 
     return methodName;
 }
