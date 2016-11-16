@@ -58,7 +58,7 @@ public:
                                        std::function<EntityKey(Entity *)> &&cacheKey, qulonglong operationId,
                                        QString *errorMessage = nullptr)
     {
-        QJsonObject obj = parseEntityObject<Entity>(reply, operationId, errorMessage);
+        QJsonObject obj = parseEntityObject(reply, operationId, errorMessage);
         if (obj.isEmpty())
             return QSharedPointer<Entity>();
         return parseEntity<EntityKey, Entity>(obj, cache, std::move(cacheKey), operationId, errorMessage);
@@ -67,7 +67,7 @@ public:
     template<class Entity>
     QSharedPointer<Entity> parseEntity(QNetworkReply *reply, qulonglong operationId, QString *errorMessage = nullptr)
     {
-        QJsonObject obj = parseEntityObject<Entity>(reply, operationId, errorMessage);
+        QJsonObject obj = parseEntityObject(reply, operationId, errorMessage);
         if (obj.isEmpty())
             return QSharedPointer<Entity>();
         return parseEntity<Entity>(obj, operationId, errorMessage);
@@ -194,19 +194,6 @@ public:
         return true;
     }
 
-    QMetaObject::Connection replyFinishedConnection;
-    QMetaObject::Connection sslErrorsConnection;
-    RestClientSP restClient;
-    QString vendor;
-    QStringList serverErrorAttributes;
-
-protected:
-    void runReplyHandler(qulonglong operationId, QNetworkReply *reply);
-
-private:
-    void setupReply(qulonglong &operationId, QNetworkReply *reply, RestAnswerHandler &&handler);
-
-    template<class Entity>
     QJsonObject parseEntityObject(QNetworkReply *reply, qulonglong operationId, QString *errorMessage)
     {
         Q_Q(AbstractRestApi);
@@ -237,6 +224,18 @@ private:
         }
         return doc.object();
     }
+
+    QMetaObject::Connection replyFinishedConnection;
+    QMetaObject::Connection sslErrorsConnection;
+    RestClientSP restClient;
+    QString vendor;
+    QStringList serverErrorAttributes;
+
+protected:
+    void runReplyHandler(qulonglong operationId, QNetworkReply *reply);
+
+private:
+    void setupReply(qulonglong &operationId, QNetworkReply *reply, RestAnswerHandler &&handler);
 
     bool parseEntitiesListPrivate(QNetworkReply *reply, std::function<bool(const QJsonArray &)> &&jsonParser,
                            qulonglong operationId, const QString &attributeName, QString *errorMessage)
