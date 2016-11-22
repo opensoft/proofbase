@@ -10,6 +10,7 @@
 #include "notifier.h"
 
 #include <QDir>
+#include <QNetworkProxy>
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
 # include <unistd.h>
@@ -282,6 +283,40 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
     updateManager->setCurrentVersion(q_ptr->applicationVersion());
     updateManager->setPackageName(q_ptr->applicationName());
 #endif
+
+    SettingsGroup *networkProxyGroup = settings->group("network_proxy", Settings::NotFoundPolicy::Add);
+    QString networkProxyHost = networkProxyGroup->value("host", "", Settings::NotFoundPolicy::Add).toString();
+    int networkProxyPort = networkProxyGroup->value("port", 8080, Settings::NotFoundPolicy::Add).toInt();
+    QString networkProxyUserName = networkProxyGroup->value("username", "", Settings::NotFoundPolicy::Add).toString();
+    QString networkProxyPassword = networkProxyGroup->value("password", "", Settings::NotFoundPolicy::Add).toString();
+    QString networkProxyType = networkProxyGroup->value("type", "", Settings::NotFoundPolicy::Add).toString().trimmed();
+    if (!networkProxyHost.isEmpty()) {
+        QNetworkProxy proxy;
+        proxy.setHostName(networkProxyHost);
+        proxy.setPort(networkProxyPort);
+        if (!networkProxyUserName.isEmpty())
+            proxy.setUser(networkProxyUserName);
+        if (!networkProxyPassword.isEmpty())
+            proxy.setPassword(networkProxyPassword);
+
+        QNetworkProxy::ProxyType proxyType = QNetworkProxy::ProxyType::NoProxy;
+        if (networkProxyType == "socks5")
+            proxyType = QNetworkProxy::ProxyType::Socks5Proxy;
+        else if (networkProxyType == "http")
+            proxyType = QNetworkProxy::ProxyType::HttpProxy;
+        else if (networkProxyType == "caching http")
+            proxyType = QNetworkProxy::ProxyType::HttpCachingProxy;
+        else if (networkProxyType == "caching ftp")
+            proxyType = QNetworkProxy::ProxyType::FtpCachingProxy;
+
+        if (proxyType == QNetworkProxy::ProxyType::NoProxy) {
+            proxyType = QNetworkProxy::ProxyType::HttpProxy;
+            networkProxyGroup->setValue("type", "http");
+        }
+        proxy.setType(proxyType);
+
+        QNetworkProxy::setApplicationProxy(proxy);
+    }
 
     qCDebug(proofCoreMiscLog).noquote() << QString("%1 started").arg(q_ptr->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
 }
