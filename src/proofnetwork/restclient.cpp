@@ -526,7 +526,8 @@ void RestClientPrivate::requestQuasiOAuth2token(int retries, const QString &meth
     QUrl url;
     url.setScheme(scheme);
     url.setHost(host);
-    url.setPort(port);
+    if (explicitPort)
+        url.setPort(port);
     url.setPath(method);
     QString quasiOAuth2TokenRequestData = QString("grant_type=password&username=%1&password=%2")
             .arg(userName)
