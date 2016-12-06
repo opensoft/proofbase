@@ -64,6 +64,9 @@ private:
 
 void fileHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
+    if (isConsoleOutputEnabled && defaultHandler)
+        defaultHandler(type, context, message);
+
     if (!logFileNameBase.isEmpty()) {
         QMutexLocker writeLocker(&logFileWriteMutex);
         if (currentLogFile
@@ -94,9 +97,6 @@ void fileHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
         currentLogFile->write(logLine.toLocal8Bit());
         currentLogFile->flush();
     }
-
-    if (isConsoleOutputEnabled && defaultHandler)
-        defaultHandler(type, context, message);
 }
 
 void consoleHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
