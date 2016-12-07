@@ -10,8 +10,6 @@
 #include "notifier.h"
 
 #include <QDir>
-#include <QNetworkProxy>
-#include <QNetworkProxyFactory>
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
 # include <unistd.h>
@@ -135,20 +133,6 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
 #endif
 
 const QString TRANSLATIONS_PATH = ":/translations";
-
-namespace Proof {
-class ProxyFactory : public QNetworkProxyFactory
-{
-public:
-    ProxyFactory(const QNetworkProxy &mainProxy, const QStringList &excludes);
-    QList<QNetworkProxy> queryProxy(const QNetworkProxyQuery &query) override;
-
-private:
-    QNetworkProxy m_mainProxy;
-    QNetworkProxy m_emptyProxy;
-    QStringList m_excludes;
-};
-}
 
 using namespace Proof;
 
@@ -299,50 +283,6 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
     updateManager->setPackageName(q_ptr->applicationName());
 #endif
 
-    SettingsGroup *networkProxyGroup = settings->group("network_proxy", Settings::NotFoundPolicy::Add);
-    QString networkProxyHost = networkProxyGroup->value("host", "", Settings::NotFoundPolicy::Add).toString();
-    quint16 networkProxyPort = networkProxyGroup->value("port", 8080, Settings::NotFoundPolicy::Add).toUInt();
-    QString networkProxyUserName = networkProxyGroup->value("username", "", Settings::NotFoundPolicy::Add).toString();
-    QString networkProxyPassword = networkProxyGroup->value("password", "", Settings::NotFoundPolicy::Add).toString();
-    QString networkProxyType = networkProxyGroup->value("type", "", Settings::NotFoundPolicy::Add).toString().trimmed();
-    QStringList excludes = networkProxyGroup->value("excludes", "", Settings::NotFoundPolicy::Add).toString().split("|");
-    if (!networkProxyHost.isEmpty()) {
-        QNetworkProxy proxy;
-        proxy.setHostName(networkProxyHost);
-        proxy.setPort(networkProxyPort);
-        if (!networkProxyUserName.isEmpty())
-            proxy.setUser(networkProxyUserName);
-        if (!networkProxyPassword.isEmpty())
-            proxy.setPassword(networkProxyPassword);
-
-        QNetworkProxy::ProxyType proxyType = QNetworkProxy::ProxyType::NoProxy;
-        if (networkProxyType == "socks5")
-            proxyType = QNetworkProxy::ProxyType::Socks5Proxy;
-        else if (networkProxyType == "http")
-            proxyType = QNetworkProxy::ProxyType::HttpProxy;
-        else if (networkProxyType == "caching http")
-            proxyType = QNetworkProxy::ProxyType::HttpCachingProxy;
-        else if (networkProxyType == "caching ftp")
-            proxyType = QNetworkProxy::ProxyType::FtpCachingProxy;
-
-        if (proxyType == QNetworkProxy::ProxyType::NoProxy) {
-            proxyType = QNetworkProxy::ProxyType::HttpProxy;
-            networkProxyGroup->setValue("type", "http");
-        }
-        proxy.setType(proxyType);
-
-        QStringList trimmedExcludes;
-        for (auto exclude : excludes) {
-            exclude = exclude.trimmed();
-            if (!exclude.isEmpty())
-                trimmedExcludes << exclude;
-        }
-
-        QNetworkProxyFactory::setApplicationProxyFactory(new ProxyFactory(proxy, trimmedExcludes));
-    } else {
-        QNetworkProxyFactory::setUseSystemConfiguration(true);
-    }
-
     qCDebug(proofCoreMiscLog).noquote() << QString("%1 started").arg(q_ptr->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
 }
 
@@ -389,23 +329,5 @@ void CoreApplicationPrivate::setLanguage(const QString &language)
 QString CoreApplicationPrivate::language() const
 {
     return currentLanguage;
-}
-
-ProxyFactory::ProxyFactory(const QNetworkProxy &mainProxy, const QStringList &excludes)
-    : QNetworkProxyFactory(), m_mainProxy(mainProxy), m_excludes(excludes)
-{
-    m_emptyProxy.setType(QNetworkProxy::ProxyType::NoProxy);
-}
-
-QList<QNetworkProxy> ProxyFactory::queryProxy(const QNetworkProxyQuery &query)
-{
-    if (QHostAddress(query.peerHostName()).isLoopback())
-        return {m_emptyProxy};
-    for (const auto &exclude : m_excludes) {
-        QRegExp rx(exclude, Qt::CaseInsensitive, QRegExp::PatternSyntax::WildcardUnix);
-        if (rx.exactMatch(query.peerHostName()))
-            return {m_emptyProxy};
-    }
-    return {m_mainProxy};
 }
 
