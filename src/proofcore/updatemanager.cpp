@@ -46,20 +46,12 @@ class UpdateManagerPrivate : public ProofObjectPrivate
     void checkForUpdates();
     void installVersion(QString version, const QString &password);
 
-    bool autoUpdateEnabled() const;
-    int timeout() const;
-    QString aptSourcesListFilePath() const;
-    QString currentVersion() const;
-    QString packageName() const;
-    QString newVersion() const;
-    bool newVersionInstallable() const;
-
     void setAutoUpdateEnabled(bool arg);
     void setTimeout(int arg);
     void setAptSourcesListFilePath(const QString &arg);
     void setCurrentVersion(const QString &arg);
     void setPackageName(const QString &arg);
-    void setNewVersion(const QString &arg);
+    void setNewVersion(quint64 arg);
     void setNewVersionInstallable(bool arg);
 
     void updateTimerState();
@@ -68,13 +60,13 @@ class UpdateManagerPrivate : public ProofObjectPrivate
     static quint64 versionFromString(const QString &version);
     static QString versionToString(quint64 version);
 
-    QString aptSourcesListFilePathValue;
-    QString packageNameValue;
-    quint64 currentVersionValue = 0x0;
+    QString aptSourcesListFilePath;
+    QString packageName;
+    quint64 currentVersion = 0x0;
     int currentVersionMajor = 0;
-    bool autoUpdateEnabledValue = true;
-    QString newVersionValue;
-    bool newVersionInstallableValue = false;
+    bool autoUpdateEnabled = true;
+    quint64 newVersion = 0x0;
+    bool newVersionInstallable = false;
     WorkerThread *thread = nullptr;
     QTimer *timer = nullptr;
 
@@ -143,43 +135,43 @@ bool UpdateManager::supported() const
 bool UpdateManager::autoUpdateEnabled() const
 {
     Q_D(const UpdateManager);
-    return d->thread->callUpdaterWithResult(&UpdateManagerPrivate::autoUpdateEnabled);
+    return d->autoUpdateEnabled;
 }
 
 int UpdateManager::timeout() const
 {
     Q_D(const UpdateManager);
-    return d->thread->callUpdaterWithResult(&UpdateManagerPrivate::timeout);
+    return d->timer->interval();
 }
 
 QString UpdateManager::aptSourcesListFilePath() const
 {
     Q_D(const UpdateManager);
-    return d->thread->callUpdaterWithResult(&UpdateManagerPrivate::aptSourcesListFilePath);
+    return d->aptSourcesListFilePath;
 }
 
 QString UpdateManager::currentVersion() const
 {
     Q_D(const UpdateManager);
-    return d->thread->callUpdaterWithResult(&UpdateManagerPrivate::currentVersion);
+    return d->versionToString(d->currentVersion);
 }
 
 QString UpdateManager::packageName() const
 {
     Q_D(const UpdateManager);
-    return d->thread->callUpdaterWithResult(&UpdateManagerPrivate::packageName);
+    return d->packageName;
 }
 
 QString UpdateManager::newVersion() const
 {
     Q_D(const UpdateManager);
-    return d->thread->callUpdaterWithResult(&UpdateManagerPrivate::newVersion);
+    return d->versionToString(d->newVersion);
 }
 
 bool UpdateManager::newVersionInstallable() const
 {
     Q_D(const UpdateManager);
-    return d->thread->callUpdaterWithResult(&UpdateManagerPrivate::newVersionInstallable);
+    return d->newVersionInstallable;
 }
 
 void UpdateManager::setAutoUpdateEnabled(bool arg)
@@ -280,10 +272,10 @@ void UpdateManagerPrivate::checkForUpdates()
 #ifdef Q_OS_LINUX
     QScopedPointer<QProcess> updater(new QProcess);
     updater->setProcessChannelMode(QProcess::MergedChannels);
-    if (aptSourcesListFilePathValue.isEmpty())
+    if (aptSourcesListFilePath.isEmpty())
         updater->start("sudo apt-get update");
     else
-        updater->start(QString("sudo apt-get update -o Dir::Etc::sourcelist=\"%1\" -o Dir::Etc::sourceparts=\"-\"").arg(aptSourcesListFilePathValue));
+        updater->start(QString("sudo apt-get update -o Dir::Etc::sourcelist=\"%1\" -o Dir::Etc::sourceparts=\"-\"").arg(aptSourcesListFilePath));
     updater->waitForStarted();
     if (updater->error() == QProcess::UnknownError) {
         bool errorSent = false;
@@ -309,7 +301,7 @@ void UpdateManagerPrivate::checkForUpdates()
     }
 
     QScopedPointer<QProcess> checker(new QProcess);
-    checker->start(QString("apt-cache --no-all-versions show %1").arg(packageNameValue));
+    checker->start(QString("apt-cache --no-all-versions show %1").arg(packageName));
     checker->waitForStarted();
     if (checker->error() == QProcess::UnknownError) {
         checker->waitForFinished();
@@ -333,15 +325,15 @@ void UpdateManagerPrivate::checkForUpdates()
         int foundVersionMajor = splittedVersion[0].toInt();
         quint64 foundVersion = versionFromString(splittedVersion);
         qCDebug(proofCoreUpdatesLog) << "Version found:" << QString("0x%1").arg(foundVersion, 16, 16, QLatin1Char('0'))
-                                     << "; Current version is:" << QString("0x%1").arg(currentVersionValue, 16, 16, QLatin1Char('0'));
-        if (foundVersion > currentVersionValue) {
+                                     << "; Current version is:" << QString("0x%1").arg(currentVersion, 16, 16, QLatin1Char('0'));
+        if (foundVersion > currentVersion) {
             if (foundVersionMajor > currentVersionMajor)
                 qCDebug(proofCoreUpdatesLog) << "Manual update needed because of different major version";
             else
                 qCDebug(proofCoreUpdatesLog) << "Update from app is possible";
             setNewVersionInstallable(foundVersionMajor <= currentVersionMajor);
-            setNewVersion(versionToString(foundVersion));
-            if (autoUpdateEnabledValue)
+            setNewVersion(foundVersion);
+            if (autoUpdateEnabled)
                 installVersion("", "");
         }
     } else {
@@ -359,7 +351,7 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
     QScopedPointer<QProcess> updater(new QProcess);
     updater->setProcessChannelMode(QProcess::MergedChannels);
     bool isUpdate = version.isEmpty();
-    QString package = isUpdate ? packageNameValue : QString("%1=%2").arg(packageNameValue, version);
+    QString package = isUpdate ? packageName : QString("%1=%2").arg(packageName, version);
     auto successSignal = isUpdate ? &UpdateManager::updateSucceeded : &UpdateManager::installationSucceeded;
     auto failSignal = isUpdate ? &UpdateManager::updateFailed : &UpdateManager::installationFailed;
     updater->start(QString("sudo -S -k apt-get --quiet --assume-yes --force-yes --allow-unauthenticated install %1").arg(package));
@@ -412,9 +404,9 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
         } else {
             emit (q->*successSignal)();
             if (version.isEmpty())
-                version = newVersionValue;
-            if (versionFromString(version) >= versionFromString(newVersionValue))
-                setNewVersion("");
+                version = versionToString(newVersion);
+            if (versionFromString(version) >= newVersion)
+                setNewVersion(0);
             setCurrentVersion(version);
         }
     } else {
@@ -430,47 +422,12 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
 #endif
 }
 
-bool UpdateManagerPrivate::autoUpdateEnabled() const
-{
-    return autoUpdateEnabledValue;
-}
-
-int UpdateManagerPrivate::timeout() const
-{
-    return timer->interval();
-}
-
-QString UpdateManagerPrivate::aptSourcesListFilePath() const
-{
-    return aptSourcesListFilePathValue;
-}
-
-QString UpdateManagerPrivate::currentVersion() const
-{
-    return versionToString(currentVersionValue);
-}
-
-QString UpdateManagerPrivate::packageName() const
-{
-    return packageNameValue;
-}
-
-QString UpdateManagerPrivate::newVersion() const
-{
-    return newVersionValue;
-}
-
-bool UpdateManagerPrivate::newVersionInstallable() const
-{
-    return newVersionInstallableValue;
-}
-
 void UpdateManagerPrivate::setAutoUpdateEnabled(bool arg)
 {
     Q_Q(UpdateManager);
-    if (autoUpdateEnabledValue != arg) {
-        autoUpdateEnabledValue = arg;
-        emit q->autoUpdateEnabledChanged(autoUpdateEnabledValue);
+    if (autoUpdateEnabled != arg) {
+        autoUpdateEnabled = arg;
+        emit q->autoUpdateEnabledChanged(autoUpdateEnabled);
     }
 }
 
@@ -486,9 +443,9 @@ void UpdateManagerPrivate::setTimeout(int arg)
 void UpdateManagerPrivate::setAptSourcesListFilePath(const QString &arg)
 {
     Q_Q(UpdateManager);
-    if (aptSourcesListFilePathValue != arg) {
-        aptSourcesListFilePathValue = arg;
-        emit q->aptSourcesListFilePathChanged(aptSourcesListFilePathValue);
+    if (aptSourcesListFilePath != arg) {
+        aptSourcesListFilePath = arg;
+        emit q->aptSourcesListFilePathChanged(aptSourcesListFilePath);
     }
 }
 
@@ -499,11 +456,11 @@ void UpdateManagerPrivate::setCurrentVersion(const QString &arg)
     if (splittedVersion.count() < 4)
         return;
     quint64 version = versionFromString(splittedVersion);
-    if (currentVersionValue != version) {
+    if (currentVersion != version) {
         currentVersionMajor = splittedVersion[0].toInt();
-        currentVersionValue = version;
-        qCDebug(proofCoreUpdatesLog) << "Current version:" << QString("0x%1").arg(currentVersionValue, 16, 16, QLatin1Char('0'));
-        emit q->currentVersionChanged(currentVersion());
+        currentVersion = version;
+        qCDebug(proofCoreUpdatesLog) << "Current version:" << QString("0x%1").arg(currentVersion, 16, 16, QLatin1Char('0'));
+        emit q->currentVersionChanged(q->currentVersion());
         updateTimerState();
     }
 }
@@ -511,34 +468,34 @@ void UpdateManagerPrivate::setCurrentVersion(const QString &arg)
 void UpdateManagerPrivate::setPackageName(const QString &arg)
 {
     Q_Q(UpdateManager);
-    if (packageNameValue != arg) {
-        packageNameValue = arg;
-        emit q->packageNameChanged(packageNameValue);
+    if (packageName != arg) {
+        packageName = arg;
+        emit q->packageNameChanged(packageName);
         updateTimerState();
     }
 }
 
-void UpdateManagerPrivate::setNewVersion(const QString &arg)
+void UpdateManagerPrivate::setNewVersion(quint64 arg)
 {
     Q_Q(UpdateManager);
-    if (newVersionValue != arg) {
-        newVersionValue = arg;
-        emit q->newVersionChanged(newVersionValue);
+    if (newVersion != arg) {
+        newVersion = arg;
+        emit q->newVersionChanged(q->newVersion());
     }
 }
 
 void UpdateManagerPrivate::setNewVersionInstallable(bool arg)
 {
     Q_Q(UpdateManager);
-    if (newVersionInstallableValue != arg) {
-        newVersionInstallableValue = arg;
-        emit q->newVersionInstallableChanged(newVersionInstallableValue);
+    if (newVersionInstallable != arg) {
+        newVersionInstallable = arg;
+        emit q->newVersionInstallableChanged(newVersionInstallable);
     }
 }
 
 void UpdateManagerPrivate::updateTimerState()
 {
-    if (started && currentVersionValue != 0 && !packageNameValue.isEmpty()) {
+    if (started && currentVersion != 0 && !packageName.isEmpty()) {
         if (!timer->isActive()) {
             QTimer::singleShot(1, thread, [this](){checkForUpdates();});
             timer->start();
@@ -565,6 +522,8 @@ quint64 UpdateManagerPrivate::versionFromString(const QString &version)
 
 QString UpdateManagerPrivate::versionToString(quint64 version)
 {
+    if (!version)
+        return "";
     return QString("%1.%2.%3.%4")
             .arg(version >> 48)
             .arg((version >> 32) & 0xFFFF)
