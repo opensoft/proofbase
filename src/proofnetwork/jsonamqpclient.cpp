@@ -34,6 +34,12 @@ void JsonAmqpClientPrivate::amqpMessageReceived()
     handleJsonMessage(messageDocument);
 }
 
+void JsonAmqpClientPrivate::queueDeclared(QAmqpQueue *queue)
+{
+    Q_UNUSED(queue);
+    //Nothing there
+}
+
 void JsonAmqpClientPrivate::handleJsonMessage(const QJsonDocument &json)
 {
     Q_UNUSED(json);

@@ -6,7 +6,6 @@ using namespace Proof;
 AbstractAmqpReceiver::AbstractAmqpReceiver(AbstractAmqpReceiverPrivate &dd, QObject *parent)
     : AbstractAmqpClient(dd, parent)
 {
-
 }
 
 QString AbstractAmqpReceiver::queueName() const
@@ -21,29 +20,74 @@ void AbstractAmqpReceiver::setQueueName(const QString &queueName)
     d->queueName = queueName;
 }
 
+bool AbstractAmqpReceiver::createQueueIfNotExists() const
+{
+    Q_D(const AbstractAmqpReceiver);
+    return d->createdQueueIfNotExists;
+}
+
+QAmqpQueue::QueueOptions AbstractAmqpReceiver::queueOptions() const
+{
+    Q_D(const AbstractAmqpReceiver);
+    return d->queueOptions;
+}
+
+void AbstractAmqpReceiver::setCreateQueueIfNotExists(bool createQueueIfNotExists, QAmqpQueue::QueueOptions options)
+{
+    Q_D(AbstractAmqpReceiver);
+    d->createdQueueIfNotExists = createQueueIfNotExists;
+    d->queueOptions = options;
+}
+
 AbstractAmqpReceiverPrivate::AbstractAmqpReceiverPrivate()
     : AbstractAmqpClientPrivate()
 {
+}
 
+bool AbstractAmqpReceiverPrivate::startConsuming(QAmqpQueue *queue)
+{
+    Q_Q(AbstractAmqpReceiver);
+    QObject::connect(queue, &QAmqpQueue::messageReceived, q, [this]() { amqpMessageReceived(); });
+    bool consumeStarted = queue->consume(QAmqpQueue::coNoAck);
+    if (consumeStarted) {
+        queueState = QueueState::ConsumingState;
+        emit q->connected();
+    }
+    return consumeStarted;
 }
 
 void AbstractAmqpReceiverPrivate::connected()
 {
     Q_Q(AbstractAmqpReceiver);
     auto newQueue = rabbitClient->createQueue(queueName);
-    if (newQueue != queue){
+    if (newQueue != queue) {
+        qCDebug(proofNetworkAmqpLog) << "Create queue: " << queueName;
         queue = newQueue;
-        qCDebug(proofNetworkAmqpLog) << "Create queue:" << queueName;
-        QObject::connect(queue, static_cast<void(QAmqpQueue::*)(QAMQP::Error)>(&QAmqpQueue::error), q, [this, q](QAMQP::Error error) {
-            emit q->errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Queue Error: %1").arg(error), false);
-            qCDebug(proofNetworkAmqpLog) << "Queue Error:" << error;
+        queueState = QueueState::OpeningState;
+        QObject::connect(queue, static_cast<void (QAmqpQueue::*)(QAMQP::Error)>(&QAmqpQueue::error), q, [this, q](QAMQP::Error error) {
+            if ((queueState == QueueState::DeclaredState) && (error == QAMQP::PreconditionFailedError) && createdQueueIfNotExists) {
+                queueState = QueueState::ReopeningState;
+                queue->reset();
+                queue->reopen();
+            } else {
+                emit q->errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Queue Error: %1").arg(error), false);
+                qCDebug(proofNetworkAmqpLog) << "Queue Error:" << error;
+            }
+        });
+
+        QObject::connect(queue, &QAmqpQueue::declared, q, [this, q]() {
+            queueState = QueueState::DeclaredState;
+            queueDeclared(queue);
         });
 
         QObject::connect(queue, &QAmqpQueue::opened, q, [this, q]() {
-            qCDebug(proofNetworkAmqpLog) << "Queue opened" << q->sender();
-            QObject::connect(queue, &QAmqpQueue::messageReceived, q, [this]() {amqpMessageReceived();});
-            queue->consume(QAmqpQueue::coNoAck);
-            emit q->connected();
+            qCDebug(proofNetworkAmqpLog) << "Queue opened " << q->sender();
+            if (createdQueueIfNotExists && queueState == QueueState::OpeningState) {
+                queueState = QueueState::DeclaredState;
+                queue->declare(queueOptions);
+            } else {
+                startConsuming(queue);
+            }
         });
     }
 }
