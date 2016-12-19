@@ -55,27 +55,26 @@ public:
     static qlonglong clientNetworkErrorOffset();
     static qlonglong clientSslErrorOffset();
 
-    template<class Result>
-    static std::function<bool(qulonglong, Result)> generateSuccessCallback(qulonglong &currentOperationId, Result &result)
+    template<class Result, class Signal>
+    static std::function<bool(qulonglong, Result)> generateSuccessCallback(qulonglong &currentOperationId, Result &result, Signal)
     {
-        return std::function<bool(qulonglong, Result)>(
-                [&result, &currentOperationId] (qulonglong operationId, Result received) {
+        return [&result, &currentOperationId] (qulonglong operationId, Result received) {
             if (currentOperationId != operationId)
                 return false;
             result = received;
             return true;
-        });
+        };
     }
-    template<class... Args>
-    static std::function<bool(qulonglong, Args...)> generateSuccessCallback(qulonglong &currentOperationId, std::tuple<Args &...> results)
+    template<class... Types, class T, class... Args>
+    static std::function<bool(qulonglong, typename std::decay<Args>::type...)>
+    generateSuccessCallback(qulonglong &currentOperationId, std::tuple<Types &...> results, void (T::*)(qulonglong, Args...))
     {
-        return std::function<bool(qulonglong, Args...)>(
-                [results, &currentOperationId] (qulonglong operationId, Args... received) mutable {
+        return [results, &currentOperationId] (qulonglong operationId, typename std::decay<Args>::type... received) mutable {
             if (currentOperationId != operationId)
                 return false;
             results = std::tie(received...);
             return true;
-        });
+        };
     }
 
     using ErrorCallbackType = std::function<bool(qulonglong, const RestApiError &)>;
@@ -87,7 +86,7 @@ public:
                                        Signal signal, Result &&result, Args... args)
     {
         qulonglong currentOperationId = 0;
-        auto callback = generateSuccessCallback(currentOperationId, std::forward<Result>(result));
+        auto callback = generateSuccessCallback(currentOperationId, std::forward<Result>(result), signal);
         RestApiError error;
         if (!callee->isLoggedOut()) {
             taskChain->addSignalWaiter(callee, signal, callback);
