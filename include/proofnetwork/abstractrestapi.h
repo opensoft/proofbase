@@ -92,7 +92,16 @@ public:
             taskChain->addSignalWaiter(callee, signal, callback);
             taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
             currentOperationId = (*callee.*method)(args...);
-            taskChain->fireSignalWaiters();
+            if (!currentOperationId) {
+                error.level = RestApiError::Level::ClientError;
+                error.code = 0;
+                error.proofModuleCode = NETWORK_MODULE_CODE;
+                error.proofErrorCode = NetworkErrorCode::InvalidRequest;
+                error.message = "Invalid arguments";
+                error.userFriendly = false;
+            } else {
+                taskChain->fireSignalWaiters();
+            }
         } else {
             error.level = RestApiError::Level::AuthCredentialsError;
             error.code = 0;
@@ -131,7 +140,16 @@ public:
             taskChain->addSignalWaiter(callee, signal, callback);
             taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
             currentOperationId = (*callee.*method)(args...);
-            taskChain->fireSignalWaiters();
+            if (!currentOperationId) {
+                error.level = RestApiError::Level::ClientError;
+                error.code = 0;
+                error.proofModuleCode = NETWORK_MODULE_CODE;
+                error.proofErrorCode = NetworkErrorCode::InvalidRequest;
+                error.message = "Invalid arguments";
+                error.userFriendly = false;
+            } else {
+                taskChain->fireSignalWaiters();
+            }
         } else {
             error.level = RestApiError::Level::AuthCredentialsError;
             error.code = 0;
