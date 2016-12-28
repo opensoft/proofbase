@@ -60,18 +60,19 @@ void AbstractAmqpReceiverPrivate::connected()
 {
     Q_Q(AbstractAmqpReceiver);
     auto newQueue = rabbitClient->createQueue(queueName);
+    queueState = QueueState::OpeningState;
+
     if (newQueue != queue) {
         qCDebug(proofNetworkAmqpLog) << "Create queue: " << queueName;
         queue = newQueue;
-        queueState = QueueState::OpeningState;
         QObject::connect(queue, static_cast<void (QAmqpQueue::*)(QAMQP::Error)>(&QAmqpQueue::error), q, [this, q](QAMQP::Error error) {
             if ((queueState == QueueState::DeclaredState) && (error == QAMQP::PreconditionFailedError) && createdQueueIfNotExists) {
                 queueState = QueueState::ReopeningState;
                 queue->reset();
                 queue->reopen();
             } else {
-                emit q->errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Queue Error: %1").arg(error), false);
                 qCDebug(proofNetworkAmqpLog) << "Queue Error:" << error;
+                emit q->errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Queue Error: %1").arg(error), false);
             }
         });
 
