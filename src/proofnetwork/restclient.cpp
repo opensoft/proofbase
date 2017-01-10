@@ -427,7 +427,7 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         if (error.error == QJsonParseError::NoError)
             result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg("json"));
         else if (body.startsWith("<?xml"))
-            result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg("xml"));
+            result.setHeader(QNetworkRequest::ContentTypeHeader, vendor.isEmpty() ? "text/xml" : contentTypePattern.arg("xml"));
         else
             result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg("x-www-form-urlencoded"));
 

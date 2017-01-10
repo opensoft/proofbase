@@ -92,11 +92,11 @@ INSTANTIATE_TEST_CASE_P(
             HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
                                            (const QString &, const QUrlQuery &, const QByteArray &,
                                             const QString &)>(&Proof::RestClient::post), _1, "/", QUrlQuery(), _2, QString()),
-                                 ":/data/vendor_test_body.xml", "application/xml"),
+                                 ":/data/vendor_test_body.xml", "text/xml"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::put, _1, "/", QUrlQuery(), _2, QString()),
-                                 ":/data/vendor_test_body.xml", "application/xml"),
+                                 ":/data/vendor_test_body.xml", "text/xml"),
             HttpMethodsTestParam(std::bind(&Proof::RestClient::patch, _1, "/", QUrlQuery(), _2, QString()),
-                                 ":/data/vendor_test_body.xml", "application/xml"),
+                                 ":/data/vendor_test_body.xml", "text/xml"),
             // With vendor, with json body
             HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
                                            (const QString &, const QUrlQuery &, const QByteArray &,
