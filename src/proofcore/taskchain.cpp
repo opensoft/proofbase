@@ -29,10 +29,12 @@ class TaskChainPrivate
     bool wasStarted = false;
     std::atomic_llong lastUsedId {0};
 
+    static thread_local bool currentEventLoopStarted;
     static thread_local QSharedPointer<QEventLoop> signalWaitersEventLoop;
     static std::atomic_llong chainsCounter;
 };
 
+thread_local bool TaskChainPrivate::currentEventLoopStarted = false;
 thread_local QSharedPointer<QEventLoop> TaskChainPrivate::signalWaitersEventLoop;
 std::atomic_llong TaskChainPrivate::chainsCounter {0};
 }
@@ -76,8 +78,9 @@ void TaskChain::fireSignalWaiters()
     qApp->processEvents();
     if (!d->signalWaitersEventLoop)
         return;
+    d->currentEventLoopStarted = true;
     d->signalWaitersEventLoop->exec();
-    d->signalWaitersEventLoop.clear();
+    clearEventLoop();
     qCDebug(proofCoreTaskChainExtraLog) << "Chain:" << this << " signal waiters fired";
 }
 
@@ -114,9 +117,8 @@ bool TaskChain::touchTask(qlonglong taskId)
 void TaskChain::clearEventLoop()
 {
     Q_D(TaskChain);
-    if (!d->signalWaitersEventLoop)
-        return;
     d->signalWaitersEventLoop.clear();
+    d->currentEventLoopStarted = false;
 }
 
 void TaskChain::run()
@@ -162,9 +164,17 @@ qlonglong TaskChain::addTaskPrivate(std::future<void> &&taskFuture)
 void TaskChain::addSignalWaiterPrivate(std::function<void (const QSharedPointer<QEventLoop> &)> &&connector)
 {
     Q_D(TaskChain);
-    if (!d->signalWaitersEventLoop)
+    if (!d->signalWaitersEventLoop) {
+        d->currentEventLoopStarted = false;
         d->signalWaitersEventLoop.reset(new QEventLoop);
+    }
     connector(d->signalWaitersEventLoop);
+}
+
+bool TaskChain::eventLoopStarted() const
+{
+    Q_D(const TaskChain);
+    return d->currentEventLoopStarted;
 }
 
 void TaskChainPrivate::acquireFutures(qlonglong spinSleepTimeInMsecs)

@@ -60,7 +60,7 @@ public:
                         if (!callback(args...))
                             return;
                         QObject::disconnect(*connection);
-                        if (!eventLoop->isRunning())
+                        if (!eventLoopStarted())
                             clearEventLoop();
                         else
                             eventLoop->quit();
@@ -90,6 +90,7 @@ private:
 
     qlonglong addTaskPrivate(std::future<void> &&taskFuture);
     void addSignalWaiterPrivate(std::function<void (const QSharedPointer<QEventLoop> &)> &&connector);
+    bool eventLoopStarted() const;
     void clearEventLoop();
 
     QScopedPointer<TaskChainPrivate> d_ptr;
