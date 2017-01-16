@@ -238,7 +238,7 @@ private:
     void setupReply(qulonglong &operationId, QNetworkReply *reply, RestAnswerHandler &&handler);
 
     bool parseEntitiesListPrivate(QNetworkReply *reply, std::function<bool(const QJsonArray &)> &&jsonParser,
-                           qulonglong operationId, const QString &attributeName, QString *errorMessage)
+                                  qulonglong operationId, const QString &attributeName, QString *errorMessage)
     {
         Q_Q(AbstractRestApi);
         bool result = true;
