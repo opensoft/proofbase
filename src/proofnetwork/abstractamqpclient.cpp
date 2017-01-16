@@ -10,6 +10,7 @@
 using namespace Proof;
 
 static const int AUTO_RECONNECTION_TRIES = 3;
+static const int DISCONNECT_WAITING_TIMEOUT = 5000;
 
 AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *parent)
     : ProofObject(dd, parent)
@@ -18,27 +19,35 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
     d->rabbitClient = new QAmqpClient(this);
 
     QObject::connect(d->rabbitClient, static_cast<void(QAmqpClient::*)(QAMQP::Error)>(&QAmqpClient::error), this, [this, d](QAMQP::Error error) {
-        if (d->rabbitClient->autoReconnect() && d->autoReconnectionTries) {
-            --d->autoReconnectionTries;
-            qCDebug(proofNetworkAmqpLog) << "Client Connection Error:" << error << "Reconnection tries count:" << d->autoReconnectionTries;
-            return;
+        if (d->rabbitClient->autoReconnect()) {
+            qCDebug(proofNetworkAmqpLog) << "Client Connection Error:" << error << "Reconnection tries before error emit:" << d->autoReconnectionTries;
+            if (d->autoReconnectionTries > 0) {
+                --d->autoReconnectionTries;
+            } else {
+                emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Client Error: %1").arg(error), false);
+                d->autoReconnectionTries = AUTO_RECONNECTION_TRIES;
+            }
+        } else {
+            d->rabbitClient->disconnectFromHost();
+            emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Client Error: %1").arg(error), false);
+            qCDebug(proofNetworkAmqpLog) << "Client Error:" << error;
         }
-
-        d->rabbitClient->disconnectFromHost();
-        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Client Error: %1").arg(error), false);
-        qCDebug(proofNetworkAmqpLog) << "Client Error:" << error;
     });
 
     QObject::connect(d->rabbitClient, static_cast<void(QAmqpClient::*)(QAbstractSocket::SocketError)>(&QAmqpClient::socketError), this, [this, d](QAbstractSocket::SocketError error) {
-        if (d->rabbitClient->autoReconnect() && d->autoReconnectionTries) {
-            --d->autoReconnectionTries;
-            qCDebug(proofNetworkAmqpLog) << "Client Connection Error:" << error << "Reconnection tries count:" << d->autoReconnectionTries;
-            return;
+        if (d->rabbitClient->autoReconnect()) {
+            qCDebug(proofNetworkAmqpLog) << "Client Connection Error:" << error << "Reconnection tries before error emit:" << d->autoReconnectionTries;
+            if (d->autoReconnectionTries > 0) {
+                --d->autoReconnectionTries;
+            } else {
+                emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable, "Can't connect to qamqp server (Socket)", false);
+                d->autoReconnectionTries = AUTO_RECONNECTION_TRIES;
+            }
+        } else {
+            d->rabbitClient->disconnectFromHost();
+            emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable, "Can't connect to qamqp server (Socket)", false);
+            qCDebug(proofNetworkAmqpLog) << "Socket Error:" << error;
         }
-
-        d->rabbitClient->disconnectFromHost();
-        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable, "Can't connect to qamqp server (Socket)", false);
-        qCDebug(proofNetworkAmqpLog) << "Socket error" << error;
     });
 
     QObject::connect(d->rabbitClient, &QAmqpClient::sslErrors, this, [this](const QList<QSslError> &errors) {
@@ -201,8 +210,17 @@ void AbstractAmqpClient::disconnectFromHost()
     Q_D(AbstractAmqpClient);
 
     if (!call(this, &AbstractAmqpClient::disconnectFromHost, Call::Block)) {
-        if (isConnected())
+        if (isConnected()) {
             d->rabbitClient->disconnectFromHost();
+            QTime timer;
+            timer.start();
+            while (isConnected() && timer.elapsed() < DISCONNECT_WAITING_TIMEOUT) {
+                QThread::yieldCurrentThread();
+                qApp->processEvents();
+            }
+        }
+        //Just to make sure that everything is ok
+        d->rabbitClient->abort();
     }
 }
 
