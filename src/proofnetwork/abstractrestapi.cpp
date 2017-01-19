@@ -255,7 +255,6 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
     }
 }
 
-
 void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkReply *reply, const QList<QSslError> &errors, bool forceUserFriendly)
 {
     Q_Q(AbstractRestApi);

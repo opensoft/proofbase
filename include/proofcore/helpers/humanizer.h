@@ -30,5 +30,4 @@ PROOF_CORE_EXPORT QString humanizeBytesSize(qlonglong bytes);
 
 }
 
-
 #endif // HUMANIZER_H

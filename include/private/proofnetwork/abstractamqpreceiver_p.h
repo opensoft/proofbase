@@ -14,7 +14,6 @@ class PROOF_NETWORK_EXPORT AbstractAmqpReceiverPrivate : public AbstractAmqpClie
 public:
     AbstractAmqpReceiverPrivate();
 
-
     void connected() override;
     virtual void queueDeclared(QAmqpQueue *queue) = 0;
     virtual void amqpMessageReceived() = 0;

@@ -32,7 +32,6 @@ qulonglong ProofObject::nextQueuedCallId() const
     return ++d->nextDelayedCallId;
 }
 
-
 bool ProofObjectPrivate::isDirty() const
 {
     return dirtyFlag || std::any_of(childrenDirtyCheckers.begin(), childrenDirtyCheckers.end(),

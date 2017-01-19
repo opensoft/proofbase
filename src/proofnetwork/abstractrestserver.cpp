@@ -527,7 +527,6 @@ void AbstractRestServerPrivate::addMethodToTree(const QString &realMethod)
     }
     currentNode->setValue(realMethod);
 
-
 }
 
 void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body)

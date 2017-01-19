@@ -71,7 +71,6 @@ protected:
     bool checkBasicAuth(const QString &encryptedAuth) const;
     QString parseAuth(QTcpSocket *socket, const QString &header);
 
-
     AbstractRestServer(AbstractRestServerPrivate &dd, const QString &userName, const QString &password,
                        const QString &pathPrefix, int port, RestAuthType authType, QObject *parent = 0);
     QScopedPointer<AbstractRestServerPrivate> d_ptr;

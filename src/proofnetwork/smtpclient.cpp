@@ -228,7 +228,6 @@ bool SmtpClient::sendMail(const TaskChainSP &taskChain, const QString &subject, 
         return true;
     };
 
-
     std::function<bool()> startTlsEncryptedCallback = [this, &socket, &state, domain]() {
         state = SmtpStates::Auth;
         socket->write(QString("EHLO " + domain).toUtf8());
@@ -258,5 +257,4 @@ bool SmtpClient::sendMail(const TaskChainSP &taskChain, const QString &subject, 
 
     return result;
 }
-
 

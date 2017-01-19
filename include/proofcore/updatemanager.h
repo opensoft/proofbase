@@ -41,7 +41,6 @@ public:
     QString newVersion() const;
     bool newVersionInstallable() const;
 
-
     void setAutoUpdateEnabled(bool arg);
     void setTimeout(int arg);
     void setAptSourcesListFilePath(const QString &arg);
