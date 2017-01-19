@@ -5,6 +5,7 @@
 
 #include <QtGlobal>
 
+#include <atomic>
 #include <tuple>
 #include <functional>
 #include <algorithm>
@@ -65,7 +66,7 @@ private:
     }
 
     QList<std::function<bool ()>> childrenDirtyCheckers;
-    mutable QAtomicInteger<qulonglong> nextDelayedCallId {0};
+    mutable std::atomic<qulonglong> nextDelayedCallId {0};
     bool dirtyFlag = false;
 };
 }

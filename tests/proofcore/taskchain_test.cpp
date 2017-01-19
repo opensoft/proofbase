@@ -93,7 +93,8 @@ TEST(TaskChainTest, stepsPerforming)
             while (!flag) {}
             firstTaskThreadId = std::this_thread::get_id();
             ++counter;
-            chain->addTask(*secondTask);
+            qlonglong secondId = chain->addTask(*secondTask);
+            chain->waitForTask(secondId);
         };
         *secondTask = [&counter, &secondTaskThreadId]() {
             secondTaskThreadId = std::this_thread::get_id();
@@ -270,9 +271,9 @@ TEST(TaskChainTest, tasksTree)
     EXPECT_TRUE(finished1);
     EXPECT_TRUE(result2);
     EXPECT_TRUE(finished2);
-    EXPECT_NE(0ull, evLoopThread1);
-    EXPECT_NE(0ull, evLoopThread2);
-    EXPECT_NE(evLoopThread1, evLoopThread2);
+    EXPECT_NE(0ull, (unsigned long long)evLoopThread1);
+    EXPECT_NE(0ull, (unsigned long long)evLoopThread2);
+    EXPECT_NE((unsigned long long)evLoopThread1, (unsigned long long)evLoopThread2);
     EXPECT_TRUE(chainWeak.isNull());
 }
 
@@ -316,8 +317,8 @@ TEST(TaskChainTest, tasksTreeWaiting)
     chain->waitForTask(rootTaskId);
     thread.quit();
     thread.wait(100);
-    EXPECT_GT(rootTaskEndedTime, child1TaskEndedTime);
-    EXPECT_GT(rootTaskEndedTime, child2TaskEndedTime);
+    EXPECT_GT((unsigned long long)rootTaskEndedTime, (unsigned long long)child1TaskEndedTime);
+    EXPECT_GT((unsigned long long)rootTaskEndedTime, (unsigned long long)child2TaskEndedTime);
 }
 
 TEST(TaskChainTest, tasksTreeWaitingTimeout)
@@ -361,7 +362,7 @@ TEST(TaskChainTest, tasksTreeWaitingTimeout)
     while (!chain->waitForTask(rootTaskId, 1)) {++rootCounter;}
     thread.quit();
     thread.wait(100);
-    EXPECT_GT(rootTaskEndedTime, child1TaskEndedTime);
-    EXPECT_GT(rootTaskEndedTime, child2TaskEndedTime);
-    EXPECT_GT(rootCounter, 0ull);
+    EXPECT_GT((unsigned long long)rootTaskEndedTime, (unsigned long long)child1TaskEndedTime);
+    EXPECT_GT((unsigned long long)rootTaskEndedTime, (unsigned long long)child2TaskEndedTime);
+    EXPECT_GT((unsigned long long)rootCounter, 0ull);
 }

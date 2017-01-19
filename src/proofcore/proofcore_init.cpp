@@ -1,5 +1,6 @@
 #include "proofcore_global.h"
 #include "logs.h"
+#include "proofcore/proofglobal.h"
 
 Q_LOGGING_CATEGORY(proofCoreSettingsLog, "proof.core.settings")
 Q_LOGGING_CATEGORY(proofCoreCrashLog, "proof.core.crash")
@@ -10,7 +11,6 @@ Q_LOGGING_CATEGORY(proofCoreTaskChainExtraLog, "proof.core.taskchain.extra")
 Q_LOGGING_CATEGORY(proofCoreTaskChainStatsLog, "proof.core.taskchain.stats")
 Q_LOGGING_CATEGORY(proofCoreCacheLog, "proof.core.cache")
 
-__attribute__((constructor))
-static void libraryInit()
+PROOF_LIBRARY_INITIALIZER(libraryInit)
 {
 }

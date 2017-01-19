@@ -3,12 +3,12 @@
 #include "proofnetwork_types.h"
 #include "proofservicerestapi.h"
 #include "3rdparty/qamqp/qamqpglobal.h"
+#include "proofcore/proofglobal.h"
 
 Q_LOGGING_CATEGORY(proofNetworkMiscLog, "proof.network.misc")
 Q_LOGGING_CATEGORY(proofNetworkAmqpLog, "proof.network.amqp")
 
-__attribute__((constructor))
-static void libraryInit()
+PROOF_LIBRARY_INITIALIZER(libraryInit)
 {
     qRegisterMetaType<Proof::RestApiError>("Proof::RestApiError");
     qRegisterMetaType<Proof::RestAuthType>("Proof::RestAuthType");
