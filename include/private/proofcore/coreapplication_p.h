@@ -8,6 +8,7 @@
 #include <QCoreApplication>
 #include <QTranslator>
 #include <QSet>
+#include <QDateTime>
 
 #ifndef QCA_DISABLED
 # include <QtCrypto>
@@ -27,6 +28,7 @@ protected:
     QString language() const;
 
     QString prettifiedApplicationName;
+    QDateTime startedAt = QDateTime::currentDateTimeUtc();
     Settings *settings = nullptr;
     UpdateManager *updateManager = nullptr;
     QSet<QString> translationPrefixes;

@@ -40,7 +40,8 @@ public:
              typename std::enable_if<std::is_base_of<AbstractNotificationHandler, Handler>::value, int>::type = 0>
     Handler *handler()
     {
-        return handler(Handler::id());
+        return static_cast<Handler *>(handler(Handler::id()));
+        //Handler handler HANDLER HaNdLeR
     }
 
 private:

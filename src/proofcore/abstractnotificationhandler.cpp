@@ -3,12 +3,16 @@
 
 using namespace Proof;
 
-AbstractNotificationHandler::AbstractNotificationHandler()
-    : AbstractNotificationHandler(*new AbstractNotificationHandlerPrivate)
-{
-}
-
-AbstractNotificationHandler::AbstractNotificationHandler(AbstractNotificationHandlerPrivate &dd)
+AbstractNotificationHandler::AbstractNotificationHandler(AbstractNotificationHandlerPrivate &dd, const QString &appId)
     : ProofObject(dd)
 {
+    Q_D(AbstractNotificationHandler);
+    d->appId = appId;
 }
+
+QString AbstractNotificationHandler::appId() const
+{
+    Q_D(const AbstractNotificationHandler);
+    return d->appId;
+}
+

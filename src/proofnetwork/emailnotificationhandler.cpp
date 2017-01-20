@@ -17,7 +17,6 @@ class EmailNotificationHandlerPrivate : public AbstractNotificationHandlerPrivat
 
     QString from;
     QStringList to;
-    QString appId;
 };
 
 } // namespace Proof
@@ -25,13 +24,12 @@ class EmailNotificationHandlerPrivate : public AbstractNotificationHandlerPrivat
 using namespace Proof;
 
 EmailNotificationHandler::EmailNotificationHandler(const SmtpClientSP &smtpClient, const QString &from, const QStringList &to, const QString &appId)
-    : AbstractNotificationHandler(*new EmailNotificationHandlerPrivate)
+    : AbstractNotificationHandler(*new EmailNotificationHandlerPrivate, appId)
 {
     Q_D(EmailNotificationHandler);
     d->smtpClient = smtpClient;
     d->from = QString("%1<%2>").arg(qApp->applicationName()).arg(from);
     d->to = to;
-    d->appId = appId;
 }
 
 void EmailNotificationHandler::notify(const QString &message)

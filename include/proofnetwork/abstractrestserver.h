@@ -7,11 +7,15 @@
 #include <QTcpServer>
 #include <QScopedPointer>
 #include <QStringList>
+#include <QUrlQuery>
+
+#ifndef Q_MOC_RUN
+# define NO_AUTH_REQUIRED
+#endif
 
 namespace Proof {
 
 class AbstractRestServerPrivate;
-
 class PROOF_NETWORK_EXPORT AbstractRestServer : public QTcpServer
 {
     Q_OBJECT
@@ -52,7 +56,15 @@ signals:
     void portChanged(int arg);
     void authTypeChanged(Proof::RestAuthType arg);
 
+protected slots:
+    NO_AUTH_REQUIRED void rest_get_System_Status(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
+                                                 const QUrlQuery &query, const QByteArray &body);
+    NO_AUTH_REQUIRED void rest_get_System_RecentErrors(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
+                                                       const QUrlQuery &query, const QByteArray &body);
+
 protected:
+    virtual QMap<QString, QPair<QDateTime, QVariant>> healthStatus() const;
+
     void incomingConnection(qintptr socketDescriptor) override;
 
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());

@@ -195,6 +195,12 @@ QString CoreApplication::prettifiedApplicationName() const
     return d->prettifiedApplicationName;
 }
 
+QDateTime CoreApplication::startedAt() const
+{
+    Q_D(const CoreApplication);
+    return d->startedAt;
+}
+
 void CoreApplication::postInit()
 {
     Q_D(CoreApplication);

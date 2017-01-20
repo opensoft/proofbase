@@ -9,6 +9,9 @@ class AbstractNotificationHandler;
 class PROOF_CORE_EXPORT AbstractNotificationHandlerPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(AbstractNotificationHandler)
+
+protected:
+    QString appId;
 };
 }
 #endif // ABSTRACTNOTIFICATIONHANDLER_P_H

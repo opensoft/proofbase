@@ -6,7 +6,7 @@
 #include <QCoreApplication>
 
 #if defined(qApp)
-#undef qApp
+# undef qApp
 #endif
 #define qApp (static_cast<Proof::CoreApplication *>(QCoreApplication::instance()))
 
@@ -34,6 +34,8 @@ public:
     int languageIndex() const;
 
     QString prettifiedApplicationName() const;
+
+    QDateTime startedAt() const;
 
     void postInit();
 

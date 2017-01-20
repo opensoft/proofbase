@@ -2,6 +2,7 @@
 
 #include "proofnetwork/httpparser_p.h"
 #include "proofnetwork/emailnotificationhandler.h"
+#include "proofnetwork/memorystoragenotificationhandler.h"
 #include "proofnetwork/smtpclient.h"
 #include "proofcore/proofglobal.h"
 #include "proofcore/coreapplication.h"
@@ -20,10 +21,13 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QNetworkInterface>
+#include <QSysInfo>
 
 #include <algorithm>
 
 static const QString REST_METHOD_PREFIX = QString("rest_");
+static const QString NO_AUTH_TAG = QString("NO_AUTH_REQUIRED");
 static const int MIN_THREADS_COUNT = 5;
 
 namespace {
@@ -38,11 +42,15 @@ public:
     operator QString();
     MethodNode &operator [](const QString &name);
     const MethodNode operator [](const QString &name) const;
-    void setValue(const QString &_value);
+    void setValue(const QString &value);
+
+    QString tag() const;
+    void setTag(const QString &tag);
 
 private:
-    QHash<QString, MethodNode> nodes;
-    QString value = "";
+    QHash<QString, MethodNode> m_nodes;
+    QString m_value = "";
+    QString m_tag;
 };
 
 struct WorkerThreadInfo
@@ -107,9 +115,9 @@ private:
 
     void tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body);
     QStringList makeMethodName(const QString &type, const QString &name);
-    QString findMethod(const QStringList &splittedMethod, QStringList &methodVariableParts);
+    MethodNode *findMethod(const QStringList &splittedMethod, QStringList &methodVariableParts);
     void fillMethods();
-    void addMethodToTree(const QString &realMethod);
+    void addMethodToTree(const QString &realMethod, const QString &tag);
 
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers,
                     int returnCode = 200, const QString &reason = QString());
@@ -174,35 +182,42 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     d->serverThread->start();
 
     //TODO: 1.0: move it away from here to some common place for stations and services
-    SettingsGroup *notifierGroup = qApp->settings()->group("email_notifier", Proof::Settings::NotFoundPolicy::Add);
-    QStringList to;
-    QString toString = notifierGroup->value("to", "", Proof::Settings::NotFoundPolicy::Add).toString();
-    for (const auto &address : toString.split("|", QString::SkipEmptyParts)) {
-        QString trimmed = address.trimmed();
-        if (!trimmed.isEmpty())
-            to << trimmed;
-    }
+    SettingsGroup *notifierGroup = qApp->settings()->group("errors_notifier", Proof::Settings::NotFoundPolicy::Add);
 
+    QString appId = notifierGroup->value("app_id", "", Proof::Settings::NotFoundPolicy::Add).toString();
+
+    SettingsGroup *emailNotifierGroup = notifierGroup->group("email", Proof::Settings::NotFoundPolicy::Add);
     auto smtpClient = Proof::SmtpClientSP::create();
 
-    smtpClient->setHost(notifierGroup->value("host", "", Proof::Settings::NotFoundPolicy::Add).toString());
-    smtpClient->setPort(notifierGroup->value("port", 25, Proof::Settings::NotFoundPolicy::Add).toInt());
-    QString connectionType = notifierGroup->value("type", "ssl", Proof::Settings::NotFoundPolicy::Add).toString().toLower().trimmed();
+    QString from = emailNotifierGroup->value("from", "", Proof::Settings::NotFoundPolicy::Add).toString();
+    QString toString = emailNotifierGroup->value("to", "", Proof::Settings::NotFoundPolicy::Add).toString();
+
+    smtpClient->setHost(emailNotifierGroup->value("host", "", Proof::Settings::NotFoundPolicy::Add).toString());
+    smtpClient->setPort(emailNotifierGroup->value("port", 25, Proof::Settings::NotFoundPolicy::Add).toInt());
+    QString connectionType = emailNotifierGroup->value("type", "ssl", Proof::Settings::NotFoundPolicy::Add).toString().toLower().trimmed();
     if (connectionType == "ssl") {
         smtpClient->setConnectionType(SmtpClient::ConnectionType::Ssl);
     } else if (connectionType == "starttls") {
         smtpClient->setConnectionType(SmtpClient::ConnectionType::StartTls);
     } else {
         smtpClient->setConnectionType(SmtpClient::ConnectionType::Plain);
-        notifierGroup->setValue("type", "plain");
+        emailNotifierGroup->setValue("type", "plain");
     }
-    smtpClient->setUserName(notifierGroup->value("username", "", Proof::Settings::NotFoundPolicy::Add).toString());
-    smtpClient->setPassword(notifierGroup->value("password", "", Proof::Settings::NotFoundPolicy::Add).toString());
+    smtpClient->setUserName(emailNotifierGroup->value("username", "", Proof::Settings::NotFoundPolicy::Add).toString());
+    smtpClient->setPassword(emailNotifierGroup->value("password", "", Proof::Settings::NotFoundPolicy::Add).toString());
 
-    Notifier::instance()->registerHandler(new EmailNotificationHandler(smtpClient,
-                                              notifierGroup->value("from", "", Proof::Settings::NotFoundPolicy::Add).toString(),
-                                              to,
-                                              notifierGroup->value("app_id", "", Proof::Settings::NotFoundPolicy::Add).toString()));
+
+    if (emailNotifierGroup->value("enabled", false, Proof::Settings::NotFoundPolicy::Add).toBool()) {
+        QStringList to;
+        for (const auto &address : toString.split("|", QString::SkipEmptyParts)) {
+            QString trimmed = address.trimmed();
+            if (!trimmed.isEmpty())
+                to << trimmed;
+        }
+        Notifier::instance()->registerHandler(new EmailNotificationHandler(smtpClient, from, to, appId));
+    }
+
+    Notifier::instance()->registerHandler(new MemoryStorageNotificationHandler(appId));
 }
 
 AbstractRestServer::~AbstractRestServer()
@@ -353,6 +368,96 @@ void AbstractRestServer::stopListen()
         close();
 }
 
+void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &, const QByteArray &)
+{
+    QStringList ipsList;
+    for (const auto &interface : QNetworkInterface::allInterfaces()) {
+        for (const auto &address : interface.addressEntries()) {
+            if (!address.ip().isLoopback())
+                ipsList << QString("%1 (%2)").arg(address.ip().toString(), interface.humanReadableName());
+        }
+    }
+
+    QString lastCrashAt("N/A");
+#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
+    QByteArray homePath = qgetenv("HOME");
+    QDir homeDir(homePath.isEmpty() ? "/tmp" : homePath);
+    QFileInfoList crashes = homeDir.entryInfoList({"proof_crash_*"}, QDir::Files);
+    if (!crashes.isEmpty()) {
+        QDateTime mostRecentCrash = crashes.first().lastModified();
+        for (const auto &crash : crashes) {
+            if (crash.lastModified() > mostRecentCrash)
+                mostRecentCrash = crash.lastModified();
+        }
+        lastCrashAt = mostRecentCrash.toUTC().toString(Qt::ISODate);
+    }
+#endif
+
+    QJsonObject statusObj {
+        {"app_type", qApp->applicationName()},
+        {"app_version", qApp->applicationVersion()},
+        {"proof_version", Proof::proofVersion()},
+        {"started_at", qApp->startedAt().toString(Qt::ISODate)},
+        {"last_crash_at", lastCrashAt},
+        {"os", QSysInfo::prettyProductName()},
+        {"network_addresses", QJsonArray::fromStringList(ipsList)}
+    };
+
+    auto notificationsMemoryStorage = Notifier::instance()->handler<MemoryStorageNotificationHandler>();
+    QPair<QDateTime, QString> lastError;
+    if (notificationsMemoryStorage) {
+        statusObj["app_id"] = notificationsMemoryStorage->appId();
+        lastError = notificationsMemoryStorage->lastMessage();
+    } else {
+        lastError = qMakePair(QDateTime::currentDateTimeUtc(), QString("Memory storage error handler not set"));
+    }
+
+    statusObj["last_error"] = lastError.first.isValid()
+            ? QJsonObject {{"timestamp", lastError.first.toString(Qt::ISODate)}, {"message", lastError.second}}
+            : QJsonValue();
+
+    QJsonArray healthArray;
+    auto currentHealthStatus = healthStatus();
+    for (const auto &name : currentHealthStatus.keys()) {
+        for (const auto &value : currentHealthStatus.values(name)) {
+            healthArray.append(QJsonObject {{"name", name},
+                                            {"value", QJsonValue::fromVariant(value.second)},
+                                            {"updated_at", value.first.toString(Qt::ISODate)}});
+        }
+    }
+    statusObj["health"] = healthArray;
+
+    statusObj["generated_at"] = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+
+    sendAnswer(socket, QJsonDocument(statusObj).toJson(), "text/json");
+}
+
+void AbstractRestServer::rest_get_System_RecentErrors(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &, const QByteArray &)
+{
+    auto notificationsMemoryStorage = Notifier::instance()->handler<MemoryStorageNotificationHandler>();
+    auto lastErrors = notificationsMemoryStorage
+            ? notificationsMemoryStorage->messages()
+            : QMultiMap<QDateTime, QString>{{QDateTime::currentDateTimeUtc(), QString("Memory storage error handler not set")}};
+
+    auto errorObjectBuilder = [](const QDateTime &time, const QString &error) ->QJsonObject {
+        return QJsonObject {{"timestamp", time.toString(Qt::ISODate)}, {"message", error}};
+    };
+
+    QJsonArray recentErrorsArray;
+    QList<QDateTime> uniqueErrorsKeys = lastErrors.uniqueKeys();
+    std::reverse(uniqueErrorsKeys.begin(), uniqueErrorsKeys.end());
+    for (const auto &time : uniqueErrorsKeys) {
+        for (const auto &message : lastErrors.values(time))
+            recentErrorsArray.append(errorObjectBuilder(time, message));
+    }
+    sendAnswer(socket, QJsonDocument(recentErrorsArray).toJson(), "text/json");
+}
+
+QMap<QString, QPair<QDateTime, QVariant>> AbstractRestServer::healthStatus() const
+{
+    return {};
+}
+
 void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
 {
     Q_D(AbstractRestServer);
@@ -466,10 +571,10 @@ QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const
     return splittedName;
 }
 
-QString AbstractRestServerPrivate::findMethod(const QStringList &splittedMethod, QStringList &methodVariableParts)
+MethodNode *AbstractRestServerPrivate::findMethod(const QStringList &splittedMethod, QStringList &methodVariableParts)
 {
     if (splittedMethod.count() < 2)
-        return QString();
+        return nullptr;
 
     MethodNode *currentNode = &methodsTreeRoot;
     int i = 0;
@@ -487,9 +592,10 @@ QString AbstractRestServerPrivate::findMethod(const QStringList &splittedMethod,
         for (QString &part : partsForDecode)
             part = QString(QByteArray::fromPercentEncoding(part.toUtf8()));
         methodVariableParts = partsForDecode;
+        return currentNode;
     }
 
-    return methodName;
+    return nullptr;
 }
 
 void AbstractRestServerPrivate::fillMethods()
@@ -497,15 +603,16 @@ void AbstractRestServerPrivate::fillMethods()
     Q_Q(AbstractRestServer);
     methodsTreeRoot.clear();
     for (int i = 0; i < q->metaObject()->methodCount(); ++i) {
-        if (q->metaObject()->method(i).methodType() == QMetaMethod::Slot) {
-            QString currentMethod = QString(q->metaObject()->method(i).name());
+        QMetaMethod method = q->metaObject()->method(i);
+        if (method.methodType() == QMetaMethod::Slot) {
+            QString currentMethod = QString(method.name());
             if (currentMethod.startsWith(REST_METHOD_PREFIX))
-                addMethodToTree(currentMethod);
+                addMethodToTree(currentMethod, method.tag());
         }
     }
 }
 
-void AbstractRestServerPrivate::addMethodToTree(const QString &realMethod)
+void AbstractRestServerPrivate::addMethodToTree(const QString &realMethod, const QString &tag)
 {
     QString method = realMethod.mid(QString(REST_METHOD_PREFIX).length());
     for (int i = 0; i < method.length(); ++i) {
@@ -526,7 +633,7 @@ void AbstractRestServerPrivate::addMethodToTree(const QString &realMethod)
         currentNode = &(*currentNode)[splittedMethod[i]];
     }
     currentNode->setValue(realMethod);
-
+    currentNode->setTag(tag);
 }
 
 void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body)
@@ -540,12 +647,13 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
     if (splittedByParamsMethod.count() > 1)
         queryParams = QUrlQuery(splittedByParamsMethod.at(1));
 
-    QString methodName = findMethod(makeMethodName(type, splittedByParamsMethod.at(0)), methodVariableParts);
+    MethodNode *methodNode = findMethod(makeMethodName(type, splittedByParamsMethod.at(0)), methodVariableParts);
+    QString methodName = methodNode ? (*methodNode) : QString();
     qCDebug(proofNetworkMiscLog) << "Request for" << method << "associated with" << methodName << "at socket" << socket;
 
-    if (!methodName.isEmpty()) {
+    if (methodNode) {
         bool isAuthenticationSuccessful = true;
-        if (authType == RestAuthType::Basic) {
+        if (authType == RestAuthType::Basic && methodNode->tag() != NO_AUTH_TAG) {
             QString encryptedAuth;
             for (int i = 0; i < headers.count(); ++i) {
                 if (headers.at(i).startsWith("Authorization", Qt::CaseInsensitive)) {
@@ -728,32 +836,42 @@ MethodNode::MethodNode()
 
 bool MethodNode::contains(const QString &name) const
 {
-    return nodes.contains(name);
+    return m_nodes.contains(name);
 }
 
 void MethodNode::clear()
 {
-    nodes.clear();
+    m_nodes.clear();
 }
 
 MethodNode::operator QString()
 {
-    return value;
+    return m_value;
 }
 
 MethodNode &MethodNode::operator [](const QString &name)
 {
-    return nodes[name];
+    return m_nodes[name];
 }
 
 const MethodNode MethodNode::operator [](const QString &name) const
 {
-    return nodes[name];
+    return m_nodes[name];
 }
 
-void MethodNode::setValue(const QString &_value)
+void MethodNode::setValue(const QString &value)
 {
-    value = _value;
+    m_value = value;
+}
+
+QString MethodNode::tag() const
+{
+    return m_tag;
+}
+
+void MethodNode::setTag(const QString &tag)
+{
+    m_tag = tag;
 }
 
 #include "abstractrestserver.moc"

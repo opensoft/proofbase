@@ -13,16 +13,14 @@ class PROOF_CORE_EXPORT AbstractNotificationHandler : public ProofObject
     Q_OBJECT
     Q_DECLARE_PRIVATE(AbstractNotificationHandler)
 public:
-    AbstractNotificationHandler();
-    virtual void notify(const QString &message) = 0;
+    QString appId() const;
 
+    virtual void notify(const QString &message) = 0;
     //All subclasses should have static QString id() method which should return unique name for this handler
 
 protected:
-    AbstractNotificationHandler(AbstractNotificationHandlerPrivate &dd);
-
+    AbstractNotificationHandler(AbstractNotificationHandlerPrivate &dd, const QString &appId);
 };
-
 } // namespace Proof
 
 #endif // PROOF_ABSTRACTNOTIFICATIONHANDLER_H
