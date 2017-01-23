@@ -319,12 +319,17 @@ void AbstractRestApiPrivate::clearReplies()
     repliesMutex.lock();
     auto networkReplies = replies.keys();
     QList<QNetworkReply *> toAbort;
+
+    RestApiError error = RestApiError{RestApiError::Level::ClientError,
+            NETWORK_ERROR_OFFSET + static_cast<int>(QNetworkReply::NetworkError::OperationCanceledError),
+            NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable,
+            "Service is unavailable. Try again later", false};
     for(auto reply : networkReplies) {
         qlonglong operationId = replies[reply].first;
         replies.remove(reply);
         toAbort << reply;
         if (operationId)
-            q->errorOccurred(operationId, RestApiError());
+            q->errorOccurred(operationId, error);
     }
     repliesMutex.unlock();
 

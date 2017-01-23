@@ -590,8 +590,8 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
     timer->start(msecsForTimeout);
 
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-                     q, [this, reply](QNetworkReply::NetworkError) {
-        qCDebug(proofNetworkMiscLog) << "Error occurred:" << reply->request().url().path() << reply->request().url().query();
+                     q, [this, reply](QNetworkReply::NetworkError e) {
+        qCDebug(proofNetworkMiscLog) << "Error occurred:" << reply->request().url().path() << reply->request().url().query() << e;
         cleanupReplyHandler(reply);
     });
     QObject::connect(reply, &QNetworkReply::finished,
