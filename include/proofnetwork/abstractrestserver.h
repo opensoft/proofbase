@@ -63,7 +63,7 @@ protected slots:
                                                        const QUrlQuery &query, const QByteArray &body);
 
 protected:
-    virtual QMap<QString, QPair<QDateTime, QVariant>> healthStatus() const;
+    virtual QMap<QString, QPair<QDateTime, QVariant>> healthStatus(bool quick) const;
 
     void incomingConnection(qintptr socketDescriptor) override;
 

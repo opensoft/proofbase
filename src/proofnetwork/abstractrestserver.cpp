@@ -368,7 +368,7 @@ void AbstractRestServer::stopListen()
         close();
 }
 
-void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &, const QByteArray &)
+void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &query, const QByteArray &)
 {
     QStringList ipsList;
     for (const auto &interface : QNetworkInterface::allInterfaces()) {
@@ -377,6 +377,8 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
                 ipsList << QString("%1 (%2)").arg(address.ip().toString(), interface.humanReadableName());
         }
     }
+
+    bool quick = query.hasQueryItem("quick");
 
     QString lastCrashAt("N/A");
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
@@ -417,7 +419,7 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
             : QJsonValue();
 
     QJsonArray healthArray;
-    auto currentHealthStatus = healthStatus();
+    auto currentHealthStatus = healthStatus(quick);
     for (const auto &name : currentHealthStatus.keys()) {
         for (const auto &value : currentHealthStatus.values(name)) {
             healthArray.append(QJsonObject {{"name", name},
@@ -453,7 +455,7 @@ void AbstractRestServer::rest_get_System_RecentErrors(QTcpSocket *socket, const 
     sendAnswer(socket, QJsonDocument(recentErrorsArray).toJson(), "text/json");
 }
 
-QMap<QString, QPair<QDateTime, QVariant>> AbstractRestServer::healthStatus() const
+QMap<QString, QPair<QDateTime, QVariant>> AbstractRestServer::healthStatus(bool) const
 {
     return {};
 }

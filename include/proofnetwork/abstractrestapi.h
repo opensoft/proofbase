@@ -50,6 +50,8 @@ public:
     RestClientSP restClient() const;
     void setRestClient(const RestClientSP &client);
 
+    void abortRequest(qulonglong operationId);
+
     virtual bool isLoggedOut() const;
 
     static qlonglong clientNetworkErrorOffset();

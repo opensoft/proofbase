@@ -34,6 +34,33 @@ void AbstractRestApi::setRestClient(const RestClientSP &client)
     d->restClient = client;
 }
 
+void AbstractRestApi::abortRequest(qulonglong operationId)
+{
+    Q_D(AbstractRestApi);
+    d->repliesMutex.lock();
+    auto networkReplies = d->replies.keys();
+    QNetworkReply *toAbort = nullptr;
+
+    RestApiError error = RestApiError{RestApiError::Level::ClientError,
+            NETWORK_ERROR_OFFSET + static_cast<int>(QNetworkReply::NetworkError::OperationCanceledError),
+            NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable,
+            "Request canceled", false};
+    for(auto reply : networkReplies) {
+        if (operationId != d->replies[reply].first)
+            continue;
+        d->replies.remove(reply);
+        toAbort = reply;
+        break;
+    }
+    d->repliesMutex.unlock();
+
+    if (toAbort && toAbort->isRunning()) {
+        errorOccurred(operationId, error);
+        toAbort->abort();
+        toAbort->deleteLater();
+    }
+}
+
 bool AbstractRestApi::isLoggedOut() const
 {
     return false;
@@ -85,7 +112,7 @@ void AbstractRestApi::onRestClientChanging(const RestClientSP &client)
         QMutexLocker lock(&d->repliesMutex);
         if (!d->replies.contains(reply))
             return;
-        qlonglong operationId = d->replies[reply].first;
+        qulonglong operationId = d->replies[reply].first;
         lock.unlock();
         d->replyFinished(operationId, reply);
     };
@@ -93,7 +120,7 @@ void AbstractRestApi::onRestClientChanging(const RestClientSP &client)
         QMutexLocker lock(&d->repliesMutex);
         if (!d->replies.contains(reply))
             return;
-        qlonglong operationId = d->replies[reply].first;
+        qulonglong operationId = d->replies[reply].first;
         lock.unlock();
         d->sslErrorsOccurred(operationId, reply, errors);
     };
@@ -323,9 +350,9 @@ void AbstractRestApiPrivate::clearReplies()
     RestApiError error = RestApiError{RestApiError::Level::ClientError,
             NETWORK_ERROR_OFFSET + static_cast<int>(QNetworkReply::NetworkError::OperationCanceledError),
             NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable,
-            "Service is unavailable. Try again later", false};
+            "Request canceled", false};
     for(auto reply : networkReplies) {
-        qlonglong operationId = replies[reply].first;
+        qulonglong operationId = replies[reply].first;
         replies.remove(reply);
         toAbort << reply;
         if (operationId)
