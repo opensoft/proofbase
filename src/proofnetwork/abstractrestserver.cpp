@@ -206,7 +206,6 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     smtpClient->setUserName(emailNotifierGroup->value("username", "", Proof::Settings::NotFoundPolicy::Add).toString());
     smtpClient->setPassword(emailNotifierGroup->value("password", "", Proof::Settings::NotFoundPolicy::Add).toString());
 
-
     if (emailNotifierGroup->value("enabled", false, Proof::Settings::NotFoundPolicy::Add).toBool()) {
         QStringList to;
         for (const auto &address : toString.split("|", QString::SkipEmptyParts)) {
