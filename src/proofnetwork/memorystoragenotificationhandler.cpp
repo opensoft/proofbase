@@ -34,7 +34,7 @@ MemoryStorageNotificationHandler::MemoryStorageNotificationHandler(const QString
     connect(d->cleanupTimer, &QTimer::timeout, this, [this, d]() {
         QDateTime limiter = QDateTime::currentDateTimeUtc().addMSecs(-MSECS_TO_KEEP);
         d->mutex.lock();
-        while (d->messages.firstKey() < limiter)
+        while (!d->messages.isEmpty() && d->messages.firstKey() < limiter)
             d->messages.remove(d->messages.firstKey());
         d->mutex.unlock();
     });
