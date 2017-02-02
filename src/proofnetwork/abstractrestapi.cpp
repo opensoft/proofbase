@@ -9,6 +9,8 @@
 static const int NETWORK_SSL_ERROR_OFFSET = 1500;
 static const int NETWORK_ERROR_OFFSET = 1000;
 
+static const QSet<int> ALLOWED_HTTP_STATUSES = {200, 201, 203, 204, 205, 206};
+
 std::atomic<qulonglong> Proof::AbstractRestApiPrivate::lastUsedOperationId {0};
 
 using namespace Proof;
@@ -225,7 +227,7 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
     if (reply->error() == QNetworkReply::NetworkError::NoError
             || (reply->error() >= 100 && (reply->error() % 100) != 99)) {
         int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if (errorCode < 200 || 299 < errorCode) {
+        if (!ALLOWED_HTTP_STATUSES.contains(errorCode)) {
             QString message = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed();
             QString mimeType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
             if (message.isEmpty() && mimeType == "text/plain")
