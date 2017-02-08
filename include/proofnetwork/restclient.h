@@ -45,8 +45,8 @@ public:
     QString scheme() const;
     void setScheme(const QString &arg);
 
-    QString oAuth2Token() const;
-    void setOAuth2Token(const QString &arg);
+    QString token() const;
+    void setToken(const QString &arg);
 
     RestAuthType authType() const;
     void setAuthType(RestAuthType arg);
@@ -88,7 +88,7 @@ signals:
     void postfixChanged(const QString &arg);
     void portChanged(int arg);
     void schemeChanged(const QString &arg);
-    void oAuth2TokenChanged(const QString &arg);
+    void tokenChanged(const QString &arg);
     void authTypeChanged(Proof::RestAuthType arg);
     void msecsForTimeoutChanged(qlonglong arg);
     void followRedirectsChanged(bool arg);

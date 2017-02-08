@@ -55,7 +55,7 @@ public:
     QString host;
     QString postfix;
     QString quasiOAuth2Token;
-    QString oAuth2Token;
+    QString token;
     int port = 443;
     bool explicitPort = false;
     QString scheme = QString("https");
@@ -201,18 +201,18 @@ void RestClient::setScheme(const QString &arg)
     }
 }
 
-QString RestClient::oAuth2Token() const
+QString RestClient::token() const
 {
     Q_D(const RestClient);
-    return d->oAuth2Token;
+    return d->token;
 }
 
-void RestClient::setOAuth2Token(const QString &arg)
+void RestClient::setToken(const QString &arg)
 {
     Q_D(RestClient);
-    if (d->oAuth2Token != arg) {
-        d->oAuth2Token = arg;
-        emit oAuth2TokenChanged(arg);
+    if (d->token != arg) {
+        d->token = arg;
+        emit tokenChanged(arg);
     }
 }
 
@@ -484,7 +484,8 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         result.setRawHeader("Authorization", QString("Bearer %1").arg(quasiOAuth2Token).toLatin1());
         break;
     case RestAuthType::OAuth2:
-        result.setRawHeader("Authorization", QString("Bearer %1").arg(oAuth2Token).toLatin1());
+    case RestAuthType::BearerToken:
+        result.setRawHeader("Authorization", QString("Bearer %1").arg(token).toLatin1());
         break;
     case RestAuthType::NoAuth:
         if (!clientName.isEmpty())
