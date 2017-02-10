@@ -133,7 +133,7 @@ TEST_P(RestClientTest, vendorTest)
 
     ASSERT_NE(nullptr, reply);
 
-    QSignalSpy spy(reply.data(), SIGNAL(finished()));
+    QSignalSpy spy(reply.data(), &QNetworkReply::finished);
 
     ASSERT_TRUE(spy.wait());
     EXPECT_EQ(1, spy.count());

@@ -132,8 +132,8 @@ TEST_F(SettingsTest, write)
     Settings settings;
     SettingsGroup *mainGroup = settings.mainGroup();
 
-    QSignalSpy *mainGroupValueChangedSpy = new QSignalSpy(mainGroup, SIGNAL(valueChanged(QStringList,QVariant)));
-    QSignalSpy *mainGroupGroupAddedSpy = new QSignalSpy(mainGroup, SIGNAL(groupAdded(QString)));
+    QSignalSpy *mainGroupValueChangedSpy = new QSignalSpy(mainGroup, &Proof::SettingsGroup::valueChanged);
+    QSignalSpy *mainGroupGroupAddedSpy = new QSignalSpy(mainGroup, &Proof::SettingsGroup::groupAdded);
 
     mainGroup->setValue("main_first_attribute", true);
     EXPECT_EQ(1, mainGroupValueChangedSpy->count());
@@ -144,7 +144,7 @@ TEST_F(SettingsTest, write)
     SettingsGroup *group = settings.addGroup("another");
     EXPECT_EQ(1, mainGroupGroupAddedSpy->count());
 
-    QSignalSpy *anotherGroupValueChangedSpy = new QSignalSpy(group, SIGNAL(valueChanged(QStringList,QVariant)));
+    QSignalSpy *anotherGroupValueChangedSpy = new QSignalSpy(group, &Proof::SettingsGroup::valueChanged);
 
     group->setValue("another_first_attribute", "abc");
     EXPECT_EQ(1, anotherGroupValueChangedSpy->count());

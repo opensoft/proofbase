@@ -175,7 +175,7 @@ TEST_F(RestServerMethodsTest, withoutAuth)
 
     QNetworkReply *reply = restClientWithoutAuthUT->get("/test-method");
 
-    QSignalSpy spy(reply, SIGNAL(finished()));
+    QSignalSpy spy(reply, &QNetworkReply::finished);
 
     ASSERT_TRUE(spy.wait());
     EXPECT_EQ(1, spy.count());
@@ -199,7 +199,7 @@ TEST_P(RestServerMethodsTest, methodsNames)
 
     QNetworkReply *reply = isPost ? restClientUT->post(method) : restClientUT->get(method);
 
-    QSignalSpy spy(reply, SIGNAL(finished()));
+    QSignalSpy spy(reply, &QNetworkReply::finished);
 
     ASSERT_TRUE(spy.wait());
     EXPECT_EQ(1, spy.count());
@@ -236,7 +236,7 @@ TEST_P(PathPrefixServerMethodsTest, methodsNames)
 
     QNetworkReply *reply = isPost ? restClientWithPrefixUT->post(method) : restClientWithPrefixUT->get(method);
 
-    QSignalSpy spy(reply, SIGNAL(finished()));
+    QSignalSpy spy(reply, &QNetworkReply::finished);
 
     ASSERT_TRUE(spy.wait());
     EXPECT_EQ(1, spy.count());
@@ -275,7 +275,7 @@ TEST_P(AnotherRestServerMethodsTest, methodsParams)
 
     QNetworkReply *reply = isPost ? restClientUT->post(method, query): restClientUT->get(method, query);
 
-    QSignalSpy spy(reply, SIGNAL(finished()));
+    QSignalSpy spy(reply, &QNetworkReply::finished);
 
     ASSERT_TRUE(spy.wait());
     EXPECT_EQ(1, spy.count());
@@ -311,7 +311,7 @@ TEST_P(SomeMoreRestServerMethodsTest, methodsVariableParts)
 
     QNetworkReply *reply = isPost ? restClientUT->post(method): restClientUT->get(method);
 
-    QSignalSpy spy(reply, SIGNAL(finished()));
+    QSignalSpy spy(reply, &QNetworkReply::finished);
 
     ASSERT_TRUE(spy.wait());
     EXPECT_EQ(1, spy.count());
