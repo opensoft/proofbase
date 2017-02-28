@@ -273,13 +273,13 @@ void UpdateManagerPrivate::checkForUpdates()
     QScopedPointer<QProcess> updater(new QProcess);
     updater->setProcessChannelMode(QProcess::MergedChannels);
     if (aptSourcesListFilePath.isEmpty())
-        updater->start("sudo apt-get update");
+        updater->start("sudo -S apt-get update");
     else
-        updater->start(QString("sudo apt-get update -o Dir::Etc::sourcelist=\"%1\" -o Dir::Etc::sourceparts=\"-\"").arg(aptSourcesListFilePath));
+        updater->start(QString("sudo -S apt-get update -o Dir::Etc::sourcelist=\"%1\" -o Dir::Etc::sourceparts=\"-\"").arg(aptSourcesListFilePath));
     updater->waitForStarted();
     if (updater->error() == QProcess::UnknownError) {
         bool errorSent = false;
-        if (updater->waitForReadyRead()) {
+        if (updater->bytesAvailable() || updater->waitForReadyRead()) {
             QByteArray data = updater->readAll().trimmed();
             if (data.contains("sudo") || data.contains("password for")) {
                 qCDebug(proofCoreUpdatesLog) << "apt-get update process asked for sudo password";
