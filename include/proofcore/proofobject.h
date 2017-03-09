@@ -32,25 +32,25 @@ public:
 
     bool isDirty() const;
 
-    template <class Callee, class Result, class MethodCallee, class... MethodArgs, class... Args>
-    static typename std::enable_if<std::is_base_of<MethodCallee, Callee>::value && sizeof...(MethodArgs) == sizeof...(Args), bool>::type
-    call(Callee *callee, Result (MethodCallee:: *method)(MethodArgs...), Proof::Call callType, Result &result, Args... args)
+    template <class Callee, class Result, class Method, class... Args>
+    static auto call(Callee *callee, Method method, Proof::Call callType, Result &result, Args &&... args)
+        -> decltype((void)(result = (callee->*method)(std::forward<Args>(args)...)), bool{})
     {
-        return callPrivate(callee, method, callType, &result, args...);
+        return callPrivate(callee, method, callType, &result, std::forward<Args>(args)...);
     }
 
-    template <class Callee, class Result, class MethodCallee, class... MethodArgs, class... Args>
-    static typename std::enable_if<std::is_base_of<MethodCallee, Callee>::value && sizeof...(MethodArgs) == sizeof...(Args), bool>::type
-    call(Callee *callee, Result (MethodCallee:: *method)(MethodArgs...), Proof::Call callType, Args... args)
+    template <class Callee, class Method, class... Args>
+    static auto call(Callee *callee, Method method, Proof::Call callType, Args &&... args)
+        -> decltype((void)(callee->*method)(std::forward<Args>(args)...), bool{})
     {
-        return callPrivate(callee, method, callType, nullptr, args...);
+        return callPrivate(callee, method, callType, nullptr, std::forward<Args>(args)...);
     }
 
-    template <class Callee, class Result, class MethodCallee, class... MethodArgs, class... Args>
-    static typename std::enable_if<std::is_base_of<MethodCallee, Callee>::value && sizeof...(MethodArgs) == sizeof...(Args), bool>::type
-    call(Callee *callee, Result (MethodCallee:: *method)(MethodArgs...), Args... args)
+    template <class Callee, class Method, class... Args>
+    static auto call(Callee *callee, Method method, Args &&... args)
+        -> decltype((void)(callee->*method)(std::forward<Args>(args)...), bool{})
     {
-        return callPrivate(callee, method, args...);
+        return callPrivate(callee, method, std::forward<Args>(args)...);
     }
 
 signals:
@@ -66,7 +66,7 @@ private:
     qulonglong nextQueuedCallId() const;
 
     template <class Callee, class ResultPtr, class Method, class... Args>
-    static bool callPrivate(Callee *callee, Method method, Proof::Call callType, ResultPtr resultPtr, Args... args)
+    static bool callPrivate(Callee *callee, Method method, Proof::Call callType, ResultPtr resultPtr, Args &&... args)
     {
         if (QThread::currentThread() == callee->thread())
             return false;
@@ -77,12 +77,13 @@ private:
         std::atomic_bool done(false);
 
         auto f = std::bind([](qulonglong queuedCallId, ResultPtr resultPtr, std::atomic_bool *done,
-                           Callee *callee, qulonglong currentId, Method method, Args... args) {
+                           Callee *callee, qulonglong currentId, Method method,
+                           typename std::decay<Args>::type &... args) {
                 if (currentId != queuedCallId)
                     return;
-                doTheCall(resultPtr, callee, method, args...);
+                doTheCall(resultPtr, callee, method, std::forward<Args>(args)...);
                 *done = true;
-        }, std::placeholders::_1, resultPtr, &done, callee, currentId, method, args...);
+        }, std::placeholders::_1, resultPtr, &done, callee, currentId, method, std::forward<Args>(args)...);
 
         *conn = connect(invoker, &ProofObject::queuedCallRequested,
                         callee, f, callType == Proof::Call::BlockEvents ? Qt::BlockingQueuedConnection : Qt::QueuedConnection);
@@ -95,7 +96,7 @@ private:
     }
 
     template <class Callee, class Method, class... Args>
-    static bool callPrivate(Callee *callee, Method method, Args... args)
+    static bool callPrivate(Callee *callee, Method method, Args &&... args)
     {
         if (QThread::currentThread() == callee->thread())
             return false;
@@ -107,12 +108,13 @@ private:
         auto f = std::bind([](qulonglong queuedCallId,
                            Callee *callee, ProofObject *invoker,
                            QSharedPointer<QMetaObject::Connection> conn,
-                           qulonglong currentId, Method method, Args... args) {
+                           qulonglong currentId, Method method,
+                           typename std::decay<Args>::type &... args) {
                 if (currentId != queuedCallId)
                     return;
-                doTheCall(nullptr, callee, method, args...);
+                doTheCall(nullptr, callee, method, std::forward<Args>(args)...);
                 cleanupAfterCall(callee, invoker, conn);
-        }, std::placeholders::_1, callee, invoker, conn, currentId, method, args...);
+        }, std::placeholders::_1, callee, invoker, conn, currentId, method, std::forward<Args>(args)...);
         *conn = connect(invoker, &ProofObject::queuedCallRequested,
                         callee, f, Qt::QueuedConnection);
         emit invoker->queuedCallRequested(currentId, QPrivateSignal{});
@@ -121,16 +123,16 @@ private:
     }
 
     template <class Callee, class Result, class Method, class... Args>
-    static void doTheCall(Result *result, Callee* callee, Method method, Args... args)
+    static void doTheCall(Result *result, Callee* callee, Method method, Args &&... args)
     {
-        *result = (*callee.*method)(args...);
+        *result = (*callee.*method)(std::forward<Args>(args)...);
     }
 
     template <class Callee, class Method, class... Args>
-    static void doTheCall(void *result, Callee* callee, Method method, Args... args)
+    static void doTheCall(void *result, Callee* callee, Method method, Args &&... args)
     {
         Q_UNUSED(result);
-        (*callee.*method)(args...);
+        (*callee.*method)(std::forward<Args>(args)...);
     }
 
     template <class Callee>
