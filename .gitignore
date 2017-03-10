@@ -16,9 +16,20 @@ latex
 *.qm
 *_translations.qrc
 .directory
+*.o
 
 # Idea files
 *.iml
 .gradle/*
 .idea/*
 local.properties
+
+# MSVC files
+Debug
+Release
+.vs
+*.vcxproj*
+*.sln
+*_resource.rc
+ts_files.list
+*.VC.*
