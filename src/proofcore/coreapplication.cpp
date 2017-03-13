@@ -10,6 +10,7 @@
 #include "notifier.h"
 
 #include <QDir>
+#include <QLocale>
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
 # include <unistd.h>
@@ -21,6 +22,8 @@
 # include <fcntl.h>
 # include <ctime>
 #endif
+
+Proof::CoreApplication *Proof::CoreApplicationPrivate::instance = nullptr;
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
 constexpr int BACKTRACE_MAX_SIZE = 50;
@@ -139,29 +142,67 @@ using namespace Proof;
 CoreApplication::CoreApplication(int &argc, char **argv,
                                  const QString &orgName, const QString &appName, const QString &version,
                                  const QStringList &defaultLoggingRules)
-    : QCoreApplication(argc, argv), d_ptr(new CoreApplicationPrivate)
+    : CoreApplication(new QCoreApplication(argc, argv), orgName, appName, version, defaultLoggingRules)
 {
-    d_ptr->q_ptr = this;
-    setOrganizationName(orgName);
-    setApplicationName(appName);
-    setApplicationVersion(version);
-    d_ptr->initApp(defaultLoggingRules);
+}
+
+CoreApplication::CoreApplication(QCoreApplication *app,
+                                 const QString &orgName, const QString &appName, const QString &version,
+                                 const QStringList &defaultLoggingRules)
+    : CoreApplication(*new CoreApplicationPrivate, app, orgName, appName, version, defaultLoggingRules)
+{
+}
+
+CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *app,
+                                 const QString &orgName, const QString &appName, const QString &version,
+                                 const QStringList &defaultLoggingRules)
+    : ProofObject(dd)
+{
+    Q_D(CoreApplication);
+    d->initCrashHandler();
+
+    Q_ASSERT(CoreApplicationPrivate::instance == nullptr);
+    CoreApplicationPrivate::instance = this;
+
+    app->setOrganizationName(orgName);
+    app->setApplicationName(appName);
+    app->setApplicationVersion(version);
+
+    Logs::setup(defaultLoggingRules);
+
+    bool daemonized = d->daemonizeIfNeeded();
+    d->updatePrettifiedName();
+    Expirator::instance();
+    Notifier::instance();
+    d->settings = new Proof::Settings(this);
+    d->initLogs(daemonized);
+    d->initQca();
+    d->initTranslator();
+    d->initUpdateManager();
+
+    qCDebug(proofCoreMiscLog).noquote() << QString("%1 started").arg(qApp->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
 }
 
 CoreApplication::~CoreApplication()
 {
 }
 
-Settings *CoreApplication::settings() const
+QString CoreApplication::prettifiedApplicationName() const
 {
     Q_D(const CoreApplication);
-    return d->settings;
+    return d->prettifiedApplicationName;
 }
 
-UpdateManager *CoreApplication::updateManager() const
+QStringList CoreApplication::availableLanguages()
 {
     Q_D(const CoreApplication);
-    return d->updateManager;
+    return d->availableLanguages;
+}
+
+QVariantMap CoreApplication::fullLanguageNames()
+{
+    Q_D(const CoreApplication);
+    return d->fullLanguageNames;
 }
 
 void CoreApplication::setLanguage(const QString &language)
@@ -171,28 +212,27 @@ void CoreApplication::setLanguage(const QString &language)
     emit languageChanged(language);
 }
 
-QStringList CoreApplication::availableLanguages()
-{
-    Q_D(const CoreApplication);
-    return d->availableLanguages;
-}
-
 QString CoreApplication::language() const
 {
     Q_D(const CoreApplication);
-    return d->language();
+    return d->currentLanguage;
 }
 
 int CoreApplication::languageIndex() const
 {
     Q_D(const CoreApplication);
-    return d->availableLanguages.indexOf(d->language());
+    return d->availableLanguages.indexOf(d->currentLanguage);
 }
 
-QString CoreApplication::prettifiedApplicationName() const
+QString CoreApplication::emptyString() const
+{
+    return QStringLiteral("");
+}
+
+UpdateManager *CoreApplication::updateManager() const
 {
     Q_D(const CoreApplication);
-    return d->prettifiedApplicationName;
+    return d->updateManager;
 }
 
 QDateTime CoreApplication::startedAt() const
@@ -201,22 +241,49 @@ QDateTime CoreApplication::startedAt() const
     return d->startedAt;
 }
 
+Settings *CoreApplication::settings() const
+{
+    Q_D(const CoreApplication);
+    return d->settings;
+}
+
 void CoreApplication::postInit()
 {
     Q_D(CoreApplication);
     d->updateManager->start();
 }
 
-void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRules)
+int CoreApplication::exec()
 {
-#ifndef QCA_DISABLED
-    qcaInit.reset(new QCA::Initializer);
-    QCA::scanForPlugins();
+    return qApp->exec();
+}
+
+CoreApplication *CoreApplication::instance()
+{
+    return CoreApplicationPrivate::instance;
+}
+
+void CoreApplicationPrivate::initCrashHandler()
+{
+#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
+    static struct sigaction sigSegvAction;
+    sigSegvAction.sa_sigaction = signalHandler;
+    sigSegvAction.sa_flags = SA_SIGINFO;
+    static struct sigaction sigAbrtAction;
+    sigAbrtAction.sa_sigaction = signalHandler;
+    sigAbrtAction.sa_flags = SA_SIGINFO;
+
+    if (sigaction(SIGSEGV, &sigSegvAction, (struct sigaction *)NULL) != 0)
+        qCWarning(proofCoreLoggerLog) << "No segfault handler is on your back.";
+    if (sigaction(SIGABRT, &sigAbrtAction, (struct sigaction *)NULL) != 0)
+        qCWarning(proofCoreLoggerLog) << "No abort handler is on your back.";
 #endif
-    Notifier::instance();
-    qApp->applicationName();
+}
+
+void CoreApplicationPrivate::updatePrettifiedName()
+{
     QString appType = "Station";
-    QString appName = q_ptr->applicationName();
+    QString appName = qApp->applicationName();
     if (appName.startsWith("proofservice")) {
         appName.remove("proofservice-");
         appType = "Service";
@@ -231,21 +298,24 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
             appName[i + 1] = appName[i + 1].toUpper();
     }
     prettifiedApplicationName = QString("%1-%2").arg(appName).arg(appType);
+}
 
-    Logs::setup(defaultLoggingRules);
-    settings = new Proof::Settings(q_ptr);
-
-    bool daemonized = false;
+bool CoreApplicationPrivate::daemonizeIfNeeded()
+{
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
-    if (q_ptr->arguments().contains("-d")) {
-        daemonized = true;
+    if (qApp->arguments().contains("-d")) {
         daemon(0, 0);
+        return true;
     }
 #endif
+    return false;
+}
 
+void CoreApplicationPrivate::initLogs(bool daemonized)
+{
     bool consoleOutputEnabled = true;
     QString logsStoragePath = "";
-    QString logFileName = q_ptr->applicationName();
+    QString logFileName = qApp->applicationName();
     Settings::NotFoundPolicy policy = Proof::proofUsesSettings() ? Settings::NotFoundPolicy::Add : Settings::NotFoundPolicy::DoNothing;
 
     SettingsGroup *logGroup = settings->group("logs", policy);
@@ -259,37 +329,15 @@ void Proof::CoreApplicationPrivate::initApp(const QStringList &defaultLoggingRul
     Logs::setLogsStoragePath(logsStoragePath);
     if (!logFileName.isEmpty())
         Logs::installFileHandler(logFileName);
+}
 
-#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
-    static struct sigaction sigSegvAction;
-    sigSegvAction.sa_sigaction = signalHandler;
-    sigSegvAction.sa_flags = SA_SIGINFO;
-    static struct sigaction sigAbrtAction;
-    sigAbrtAction.sa_sigaction = signalHandler;
-    sigAbrtAction.sa_flags = SA_SIGINFO;
 
-    if (sigaction(SIGSEGV, &sigSegvAction, (struct sigaction *)NULL) != 0)
-        qCWarning(proofCoreLoggerLog) << "No segfault handler is on your back.";
-    if (sigaction(SIGABRT, &sigAbrtAction, (struct sigaction *)NULL) != 0)
-        qCWarning(proofCoreLoggerLog) << "No abort handler is on your back.";
+void CoreApplicationPrivate::initQca()
+{
+#ifndef QCA_DISABLED
+    qcaInit.reset(new QCA::Initializer);
+    QCA::scanForPlugins();
 #endif
-
-    initTranslator();
-
-    Expirator::instance();
-
-    updateManager = new UpdateManager(q_ptr);
-
-#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
-    SettingsGroup *updatesGroup = settings->group("updates", Settings::NotFoundPolicy::Add);
-    updateManager->setAutoUpdateEnabled(updatesGroup->value("auto_update", true, Settings::NotFoundPolicy::Add).toBool());
-    updateManager->setAptSourcesListFilePath(updatesGroup->value("sources_list_file", "", Settings::NotFoundPolicy::Add).toString());
-
-    updateManager->setCurrentVersion(q_ptr->applicationVersion());
-    updateManager->setPackageName(q_ptr->applicationName());
-#endif
-
-    qCDebug(proofCoreMiscLog).noquote() << QString("%1 started").arg(q_ptr->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
 }
 
 void CoreApplicationPrivate::initTranslator()
@@ -303,21 +351,41 @@ void CoreApplicationPrivate::initTranslator()
         languagesSet.insert(fileName.mid(fileName.indexOf('.') + 1, -3).mid(0, 2));
     }
     availableLanguages = languagesSet.toList();
-    qSort(availableLanguages.begin(), availableLanguages.end());
+    std::sort(availableLanguages.begin(), availableLanguages.end());
     SettingsGroup *localeGroup = settings->group("locale", Settings::NotFoundPolicy::Add);
     currentLanguage = localeGroup->value("language", "en", Settings::NotFoundPolicy::Add).toString();
     setLanguage(currentLanguage);
+
+    for (const QString &lang : availableLanguages) {
+        QLocale locale(lang);
+        fullLanguageNames[lang] = QLocale::languageToString(locale.language());
+    }
+}
+
+void CoreApplicationPrivate::initUpdateManager()
+{
+    Q_Q(CoreApplication);
+    updateManager = new UpdateManager(q);
+#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
+    SettingsGroup *updatesGroup = settings->group("updates", Settings::NotFoundPolicy::Add);
+    updateManager->setAutoUpdateEnabled(updatesGroup->value("auto_update", true, Settings::NotFoundPolicy::Add).toBool());
+    updateManager->setAptSourcesListFilePath(updatesGroup->value("sources_list_file", "", Settings::NotFoundPolicy::Add).toString());
+
+    updateManager->setCurrentVersion(qApp->applicationVersion());
+    updateManager->setPackageName(qApp->applicationName());
+#endif
 }
 
 void CoreApplicationPrivate::setLanguage(const QString &language)
 {
+    Q_Q(CoreApplication);
     currentLanguage = language;
     SettingsGroup *localeGroup = settings->group("locale", Settings::NotFoundPolicy::Add);
     localeGroup->setValue("language", language);
 
     for (QTranslator *installedTranslator : installedTranslators) {
         if (installedTranslator) {
-            q_ptr->removeTranslator(installedTranslator);
+            qApp->removeTranslator(installedTranslator);
             delete installedTranslator;
         }
     }
@@ -325,15 +393,9 @@ void CoreApplicationPrivate::setLanguage(const QString &language)
 
     for (const QString &prefix : translationPrefixes) {
         qCDebug(proofCoreMiscLog) << "Language prefix" << prefix;
-        QTranslator *translator = new QTranslator(q_ptr);
+        QTranslator *translator = new QTranslator(q);
         installedTranslators.append(translator);
         translator->load(QString("%1.%2").arg(prefix, language), TRANSLATIONS_PATH);
-        q_ptr->installTranslator(translator);
+        qApp->installTranslator(translator);
     }
 }
-
-QString CoreApplicationPrivate::language() const
-{
-    return currentLanguage;
-}
-

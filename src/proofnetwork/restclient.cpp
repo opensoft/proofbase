@@ -444,9 +444,9 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
     for (const QByteArray &header : customHeaders.keys())
         result.setRawHeader(header, customHeaders[header]);
 
-    result.setRawHeader("Proof-Application", qApp->prettifiedApplicationName().toLatin1());
-    result.setRawHeader(QString("Proof-%1-Version").arg(qApp->prettifiedApplicationName()).toLatin1(), qApp->applicationVersion().toLatin1());
-    result.setRawHeader(QString("Proof-%1-Framework-Version").arg(qApp->prettifiedApplicationName()).toLatin1(), Proof::proofVersion().toLatin1());
+    result.setRawHeader("Proof-Application", proofApp->prettifiedApplicationName().toLatin1());
+    result.setRawHeader(QString("Proof-%1-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(), qApp->applicationVersion().toLatin1());
+    result.setRawHeader(QString("Proof-%1-Framework-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(), Proof::proofVersion().toLatin1());
 
     switch (authType) {
     case RestAuthType::Wsse:

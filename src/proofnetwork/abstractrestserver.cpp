@@ -182,7 +182,7 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     d->serverThread->start();
 
     //TODO: 1.0: move it away from here to some common place for stations and services
-    SettingsGroup *notifierGroup = qApp->settings()->group("errors_notifier", Proof::Settings::NotFoundPolicy::Add);
+    SettingsGroup *notifierGroup = proofApp->settings()->group("errors_notifier", Proof::Settings::NotFoundPolicy::Add);
 
     QString appId = notifierGroup->value("app_id", "", Proof::Settings::NotFoundPolicy::Add).toString();
 
@@ -398,7 +398,7 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
         {"app_type", qApp->applicationName()},
         {"app_version", qApp->applicationVersion()},
         {"proof_version", Proof::proofVersion()},
-        {"started_at", qApp->startedAt().toString(Qt::ISODate)},
+        {"started_at", proofApp->startedAt().toString(Qt::ISODate)},
         {"last_crash_at", lastCrashAt},
         {"os", QSysInfo::prettyProductName()},
         {"network_addresses", QJsonArray::fromStringList(ipsList)}
@@ -798,9 +798,9 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
 
     if (sockets.contains(socket) && socket->state() == QTcpSocket::ConnectedState) {
         QStringList additionalHeadersList;
-        additionalHeadersList << QString("Proof-Application: %1").arg(qApp->prettifiedApplicationName());
-        additionalHeadersList << QString("Proof-%1-Version: %2").arg(qApp->prettifiedApplicationName(), qApp->applicationVersion());
-        additionalHeadersList << QString("Proof-%1-Framework-Version: %2").arg(qApp->prettifiedApplicationName(), Proof::proofVersion());
+        additionalHeadersList << QString("Proof-Application: %1").arg(proofApp->prettifiedApplicationName());
+        additionalHeadersList << QString("Proof-%1-Version: %2").arg(proofApp->prettifiedApplicationName(), qApp->applicationVersion());
+        additionalHeadersList << QString("Proof-%1-Framework-Version: %2").arg(proofApp->prettifiedApplicationName(), Proof::proofVersion());
         for (const auto &key : serverD->customHeaders.keys())
             additionalHeadersList << QString("%1: %2").arg(key, serverD->customHeaders[key]);
         for (const auto &key : headers.keys())

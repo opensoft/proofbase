@@ -1,7 +1,7 @@
 #ifndef COREAPPLICATION_P_H
 #define COREAPPLICATION_P_H
 
-#include "coreapplication.h"
+#include "proofobject_p.h"
 #include "proofcore_global.h"
 
 #include <QtGlobal>
@@ -17,15 +17,20 @@
 namespace Proof {
 class Settings;
 class UpdateManager;
-class PROOF_CORE_EXPORT CoreApplicationPrivate
+class CoreApplication;
+class PROOF_CORE_EXPORT CoreApplicationPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(CoreApplication)
 protected:
-    void initApp(const QStringList &defaultLoggingRules);
+    void initCrashHandler();
+    void updatePrettifiedName();
+    bool daemonizeIfNeeded();
+    void initLogs(bool daemonized);
+    void initQca();
     void initTranslator();
+    void initUpdateManager();
 
     void setLanguage(const QString &currentLanguage);
-    QString language() const;
 
     QString prettifiedApplicationName;
     QDateTime startedAt = QDateTime::currentDateTimeUtc();
@@ -33,12 +38,14 @@ protected:
     UpdateManager *updateManager = nullptr;
     QSet<QString> translationPrefixes;
     QStringList availableLanguages;
+    QVariantMap fullLanguageNames;
     QString currentLanguage = "en";
     QList<QTranslator *> installedTranslators;
 #ifndef QCA_DISABLED
     QScopedPointer<QCA::Initializer> qcaInit;
 #endif
-    QCoreApplication *q_ptr = nullptr;
+
+    static CoreApplication *instance;
 };
 }
 
