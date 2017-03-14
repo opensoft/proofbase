@@ -7,24 +7,24 @@
 namespace Proof {
 
 class NetworkDataEntity;
-typedef QSharedPointer<NetworkDataEntity> NetworkDataEntitySP;
-typedef QWeakPointer<NetworkDataEntity> NetworkDataEntityWP;
+using NetworkDataEntitySP = QSharedPointer<NetworkDataEntity>;
+using NetworkDataEntityWP = QWeakPointer<NetworkDataEntity>;
 
 class User;
-typedef QSharedPointer<User> UserSP;
-typedef QWeakPointer<User> UserWP;
+using UserSP = QSharedPointer<User>;
+using UserWP = QWeakPointer<User>;
 
 class RestClient;
-typedef QSharedPointer<RestClient> RestClientSP;
-typedef QWeakPointer<RestClient> RestClientWP;
+using RestClientSP = QSharedPointer<RestClient>;
+using RestClientWP = QWeakPointer<RestClient>;
 
 class UrlQueryBuilder;
-typedef QSharedPointer<UrlQueryBuilder> UrlQueryBuilderSP;
-typedef QWeakPointer<UrlQueryBuilder> UrlQueryBuilderWP;
+using UrlQueryBuilderSP = QSharedPointer<UrlQueryBuilder>;
+using UrlQueryBuilderWP = QWeakPointer<UrlQueryBuilder>;
 
 class SmtpClient;
-typedef QSharedPointer<SmtpClient> SmtpClientSP;
-typedef QWeakPointer<SmtpClient> SmtpClientWP;
+using SmtpClientSP = QSharedPointer<SmtpClient>;
+using SmtpClientWP = QWeakPointer<SmtpClient>;
 
 enum class RestAuthType {
     NoAuth,

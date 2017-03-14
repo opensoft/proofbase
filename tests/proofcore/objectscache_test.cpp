@@ -7,8 +7,8 @@ using namespace Proof;
 using testing::Test;
 
 class DummyData;
-typedef QSharedPointer<DummyData> DummyDataSP;
-typedef QWeakPointer<DummyData> DummyDataWP;
+using DummyDataSP = QSharedPointer<DummyData>;
+using DummyDataWP = QWeakPointer<DummyData>;
 class DummyData : public ProofObject
 {
 public:

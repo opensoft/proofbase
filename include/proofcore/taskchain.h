@@ -17,8 +17,8 @@
 namespace Proof {
 
 class TaskChain;
-typedef QSharedPointer<TaskChain> TaskChainSP;
-typedef QWeakPointer<TaskChain> TaskChainWP;
+using TaskChainSP = QSharedPointer<TaskChain>;
+using TaskChainWP = QWeakPointer<TaskChain>;
 
 class TaskChainPrivate;
 class PROOF_CORE_EXPORT TaskChain : public QThread
