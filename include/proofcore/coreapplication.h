@@ -57,6 +57,8 @@ public:
 
     static CoreApplication *instance();
 
+    static void addInitializer(const std::function<void()> &initializer);
+
 signals:
     void languageChanged(const QString &language);
 

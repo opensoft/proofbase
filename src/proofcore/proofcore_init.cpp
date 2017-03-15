@@ -1,6 +1,6 @@
 #include "proofcore_global.h"
 #include "logs.h"
-#include "proofcore/proofglobal.h"
+#include "proofglobal.h"
 
 Q_LOGGING_CATEGORY(proofCoreSettingsLog, "proof.core.settings")
 Q_LOGGING_CATEGORY(proofCoreCrashLog, "proof.core.crash")

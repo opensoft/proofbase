@@ -2,8 +2,7 @@
 #define PROOF_MEMORYSTORAGENOTIFICATIONHANDLER_H
 
 #include "proofcore/abstractnotificationhandler.h"
-#include "proofnetwork/proofnetwork_global.h"
-#include "proofnetwork/proofnetwork_types.h"
+#include "proofcore/proofcore_global.h"
 
 #include <QString>
 #include <QDateTime>
@@ -11,7 +10,7 @@
 
 namespace Proof {
 class MemoryStorageNotificationHandlerPrivate;
-class PROOF_NETWORK_EXPORT MemoryStorageNotificationHandler : public AbstractNotificationHandler
+class PROOF_CORE_EXPORT MemoryStorageNotificationHandler : public AbstractNotificationHandler
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(MemoryStorageNotificationHandler)

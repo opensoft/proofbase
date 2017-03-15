@@ -41,11 +41,13 @@ protected:
     QVariantMap fullLanguageNames;
     QString currentLanguage = "en";
     QList<QTranslator *> installedTranslators;
+    bool initialized = false;
 #ifndef QCA_DISABLED
     QScopedPointer<QCA::Initializer> qcaInit;
 #endif
 
     static CoreApplication *instance;
+    static QList<std::function<void ()>> initializers;
 };
 }
 

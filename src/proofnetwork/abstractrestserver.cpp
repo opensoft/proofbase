@@ -1,13 +1,9 @@
 #include "abstractrestserver.h"
 
 #include "proofnetwork/httpparser_p.h"
-#include "proofnetwork/emailnotificationhandler.h"
-#include "proofnetwork/memorystoragenotificationhandler.h"
-#include "proofnetwork/smtpclient.h"
+#include "proofcore/memorystoragenotificationhandler.h"
 #include "proofcore/proofglobal.h"
 #include "proofcore/coreapplication.h"
-#include "proofcore/settings.h"
-#include "proofcore/settingsgroup.h"
 #include "proofcore/notifier.h"
 #include "proofcore/proofobject.h"
 
@@ -180,43 +176,6 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     moveToThread(d->serverThread);
     d->serverThread->moveToThread(d->serverThread);
     d->serverThread->start();
-
-    //TODO: 1.0: move it away from here to some common place for stations and services
-    SettingsGroup *notifierGroup = proofApp->settings()->group("errors_notifier", Proof::Settings::NotFoundPolicy::Add);
-
-    QString appId = notifierGroup->value("app_id", "", Proof::Settings::NotFoundPolicy::Add).toString();
-
-    SettingsGroup *emailNotifierGroup = notifierGroup->group("email", Proof::Settings::NotFoundPolicy::Add);
-    auto smtpClient = Proof::SmtpClientSP::create();
-
-    QString from = emailNotifierGroup->value("from", "", Proof::Settings::NotFoundPolicy::Add).toString();
-    QString toString = emailNotifierGroup->value("to", "", Proof::Settings::NotFoundPolicy::Add).toString();
-
-    smtpClient->setHost(emailNotifierGroup->value("host", "", Proof::Settings::NotFoundPolicy::Add).toString());
-    smtpClient->setPort(emailNotifierGroup->value("port", 25, Proof::Settings::NotFoundPolicy::Add).toInt());
-    QString connectionType = emailNotifierGroup->value("type", "ssl", Proof::Settings::NotFoundPolicy::Add).toString().toLower().trimmed();
-    if (connectionType == "ssl") {
-        smtpClient->setConnectionType(SmtpClient::ConnectionType::Ssl);
-    } else if (connectionType == "starttls") {
-        smtpClient->setConnectionType(SmtpClient::ConnectionType::StartTls);
-    } else {
-        smtpClient->setConnectionType(SmtpClient::ConnectionType::Plain);
-        emailNotifierGroup->setValue("type", "plain");
-    }
-    smtpClient->setUserName(emailNotifierGroup->value("username", "", Proof::Settings::NotFoundPolicy::Add).toString());
-    smtpClient->setPassword(emailNotifierGroup->value("password", "", Proof::Settings::NotFoundPolicy::Add).toString());
-
-    if (emailNotifierGroup->value("enabled", false, Proof::Settings::NotFoundPolicy::Add).toBool()) {
-        QStringList to;
-        for (const auto &address : toString.split("|", QString::SkipEmptyParts)) {
-            QString trimmed = address.trimmed();
-            if (!trimmed.isEmpty())
-                to << trimmed;
-        }
-        Notifier::instance()->registerHandler(new EmailNotificationHandler(smtpClient, from, to, appId));
-    }
-
-    Notifier::instance()->registerHandler(new MemoryStorageNotificationHandler(appId));
 }
 
 AbstractRestServer::~AbstractRestServer()

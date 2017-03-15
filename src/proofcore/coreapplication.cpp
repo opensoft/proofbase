@@ -8,6 +8,7 @@
 #include "proofglobal.h"
 #include "expirator.h"
 #include "notifier.h"
+#include "memorystoragenotificationhandler.h"
 
 #include <QDir>
 #include <QLocale>
@@ -24,6 +25,7 @@
 #endif
 
 Proof::CoreApplication *Proof::CoreApplicationPrivate::instance = nullptr;
+QList<std::function<void()>> Proof::CoreApplicationPrivate::initializers = {};
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
 constexpr int BACKTRACE_MAX_SIZE = 50;
@@ -251,6 +253,16 @@ void CoreApplication::postInit()
 {
     Q_D(CoreApplication);
     d->updateManager->start();
+
+    //We can't add core-related initializers in core init, so we just do it here directly
+    Proof::SettingsGroup *notifierGroup = proofApp->settings()->group("errors_notifier", Proof::Settings::NotFoundPolicy::Add);
+    QString appId = notifierGroup->value("app_id", "", Proof::Settings::NotFoundPolicy::Add).toString();
+    Proof::Notifier::instance()->registerHandler(new Proof::MemoryStorageNotificationHandler(appId));
+
+    for (const auto &initializer : CoreApplicationPrivate::initializers)
+        initializer();
+    CoreApplicationPrivate::initializers.clear();
+    d->initialized = true;
 }
 
 int CoreApplication::exec()
@@ -261,6 +273,14 @@ int CoreApplication::exec()
 CoreApplication *CoreApplication::instance()
 {
     return CoreApplicationPrivate::instance;
+}
+
+void CoreApplication::addInitializer(const std::function<void()> &initializer)
+{
+    if (instance() && instance()->d_func()->initialized)
+        initializer();
+    else
+        CoreApplicationPrivate::initializers << initializer;
 }
 
 void CoreApplicationPrivate::initCrashHandler()
