@@ -21,15 +21,13 @@ class PROOF_NETWORK_EXPORT AbstractRestServer : public QTcpServer
     Q_OBJECT
     Q_DECLARE_PRIVATE(AbstractRestServer)
 public:
-    explicit AbstractRestServer(QObject *parent = 0);
-    explicit AbstractRestServer(const QString &pathPrefix, int port, RestAuthType authType, QObject *parent = 0);
-    AbstractRestServer(const QString &userName, const QString &password, const QString &pathPrefix = QString(),
-                       int port = 80, QObject *parent = 0);
+    explicit AbstractRestServer(QObject *parent = nullptr);
+    explicit AbstractRestServer(int port, QObject *parent = nullptr);
+    explicit AbstractRestServer(const QString &pathPrefix, int port, QObject *parent = nullptr);
     ~AbstractRestServer();
 
     QString userName() const;
     QString password() const;
-    //TODO: 1.0: it is not used now. Remove or make it usable
     QString pathPrefix() const;
     int port() const;
     RestAuthType authType() const;
@@ -46,8 +44,8 @@ public:
     bool containsCustomHeader(const QString &header) const;
     void unsetCustomHeader(const QString &header);
 
-    Q_INVOKABLE void startListen();
-    Q_INVOKABLE void stopListen();
+    void startListen();
+    void stopListen();
 
 signals:
     void userNameChanged(const QString &arg);
@@ -83,8 +81,7 @@ protected:
     bool checkBasicAuth(const QString &encryptedAuth) const;
     QString parseAuth(QTcpSocket *socket, const QString &header);
 
-    AbstractRestServer(AbstractRestServerPrivate &dd, const QString &userName, const QString &password,
-                       const QString &pathPrefix, int port, RestAuthType authType, QObject *parent = 0);
+    AbstractRestServer(AbstractRestServerPrivate &dd, const QString &pathPrefix, int port, QObject *parent = nullptr);
     QScopedPointer<AbstractRestServerPrivate> d_ptr;
 };
 

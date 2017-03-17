@@ -18,9 +18,22 @@ class TestRestServer : public Proof::AbstractRestServer
     Q_OBJECT
 public:
     TestRestServer(const QString &pathPrefix = QString(), int port = 9091)
-        : Proof::AbstractRestServer("username", "password", pathPrefix, port) {}
+        : Proof::AbstractRestServer(pathPrefix, port)
+    {
+        setAuthType(Proof::RestAuthType::Basic);
+        setUserName("username");
+        setPassword("password");
+    }
 
 public slots:
+    NO_AUTH_REQUIRED void rest_get_TestPublicMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
+                                                    const QUrlQuery &queryParams, const QByteArray &body)
+    {
+        Q_UNUSED(headers)
+        Q_UNUSED(body)
+        sendAnswer(socket, __func__, "text/plain", 200, methodVariableParts.join('/') + "|" + queryParams.toString());
+    }
+
     void rest_get_TestMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
                              const QUrlQuery &queryParams, const QByteArray &body)
     {
@@ -63,7 +76,7 @@ class TestRestServerWithoutAuth : public Proof::AbstractRestServer
     Q_OBJECT
 public:
     TestRestServerWithoutAuth()
-        : Proof::AbstractRestServer("", 9092, Proof::RestAuthType::NoAuth) {}
+        : Proof::AbstractRestServer(9092) {}
 
 public slots:
     void rest_get_TestMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
@@ -126,6 +139,13 @@ protected:
         restClientUT->setScheme("http");
         restClientUT->setClientName("Proof-test");
 
+        restClientForNoAuthTagUT = Proof::RestClientSP::create();
+        restClientForNoAuthTagUT->setAuthType(Proof::RestAuthType::NoAuth);
+        restClientForNoAuthTagUT->setHost("127.0.0.1");
+        restClientForNoAuthTagUT->setPort(9091);
+        restClientForNoAuthTagUT->setScheme("http");
+        restClientForNoAuthTagUT->setClientName("Proof-test");
+
         restClientWithoutAuthUT = Proof::RestClientSP::create();
         restClientWithoutAuthUT->setAuthType(Proof::RestAuthType::NoAuth);
         restClientWithoutAuthUT->setHost("127.0.0.1");
@@ -144,6 +164,7 @@ protected:
     }
 
 protected:
+    Proof::RestClientSP restClientForNoAuthTagUT;
     Proof::RestClientSP restClientUT;
     static TestRestServer *restServerUT;
     Proof::RestClientSP restClientWithoutAuthUT;
@@ -188,6 +209,41 @@ TEST_F(RestServerMethodsTest, withoutAuth)
     delete reply;
 }
 
+TEST_F(RestServerMethodsTest, noAuthTag)
+{
+    ASSERT_TRUE(restServerUT->isListening());
+
+    QNetworkReply *reply = restClientForNoAuthTagUT->get("/test-public-method");
+
+    QSignalSpy spy(reply, &QNetworkReply::finished);
+
+    ASSERT_TRUE(spy.wait());
+    EXPECT_EQ(1, spy.count());
+
+    EXPECT_EQ(200, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+
+    const QString answer = QString(reply->readAll()).trimmed();
+    EXPECT_EQ("rest_get_TestPublicMethod", answer);
+
+    delete reply;
+}
+
+TEST_F(RestServerMethodsTest, noAuthTagNegative)
+{
+    ASSERT_TRUE(restServerUT->isListening());
+
+    QNetworkReply *reply = restClientForNoAuthTagUT->get("/test-method");
+
+    QSignalSpy spy(reply, &QNetworkReply::finished);
+
+    ASSERT_TRUE(spy.wait());
+    EXPECT_EQ(1, spy.count());
+
+    EXPECT_EQ(401, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+
+    delete reply;
+}
+
 TEST_P(RestServerMethodsTest, methodsNames)
 {
     QString method = std::get<0>(GetParam());
@@ -221,13 +277,15 @@ INSTANTIATE_TEST_CASE_P(RestServerMethodsTestInstance,
                                         std::tuple<QString, QString, int, bool>("/testmethod", "rest_get_Testmethod", 200, false),
                                         std::tuple<QString, QString, int, bool>("/test-method/sub-method", "rest_get_TestMethod_SubMethod", 200, false),
                                         std::tuple<QString, QString, int, bool>("/test-method/sub-method/subsub", "rest_get_TestMethod_SubMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method",  "rest_post_TestMethod", 200, true),
+                                        std::tuple<QString, QString, int, bool>("/test-method", "rest_post_TestMethod", 200, true),
+                                        std::tuple<QString, QString, int, bool>("/a/test-method", "", 404, true),
+                                        std::tuple<QString, QString, int, bool>("/a/test-method", "", 404, false),
                                         std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, false),
                                         std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, true)));
 
 TEST_P(PathPrefixServerMethodsTest, methodsNames)
 {
-    QString method = QString("%1/%2").arg(restServerWithPathPrefixUT->pathPrefix(), std::get<0>(GetParam()));
+    QString method = std::get<0>(GetParam());
     QString serverMethodName = std::get<1>(GetParam());
     int resultCode = std::get<2>(GetParam());
     bool isPost = std::get<3>(GetParam());
@@ -252,15 +310,17 @@ TEST_P(PathPrefixServerMethodsTest, methodsNames)
 
 INSTANTIATE_TEST_CASE_P(PathPrefixServerMethodsTestInstance,
                         PathPrefixServerMethodsTest,
-                        testing::Values(std::tuple<QString, QString, int, bool>("/test-method", "rest_get_TestMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-met-hod", "",  404, false),
-                                        std::tuple<QString, QString, int, bool>("/tEst-meThoD", "rest_get_TestMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/testmethod", "rest_get_Testmethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method/sub-method", "rest_get_TestMethod_SubMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method/sub-method/subsub", "rest_get_TestMethod_SubMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method",  "rest_post_TestMethod", 200, true),
-                                        std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, false),
-                                        std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, true)));
+                        testing::Values(std::tuple<QString, QString, int, bool>("/api/test-method", "rest_get_TestMethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/api/test-met-hod", "",  404, false),
+                                        std::tuple<QString, QString, int, bool>("/api/tEst-meThoD", "rest_get_TestMethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/api/testmethod", "rest_get_Testmethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/api/test-method/sub-method", "rest_get_TestMethod_SubMethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/api/test-method/sub-method/subsub", "rest_get_TestMethod_SubMethod", 200, false),
+                                        std::tuple<QString, QString, int, bool>("/api/test-method",  "rest_post_TestMethod", 200, true),
+                                        std::tuple<QString, QString, int, bool>("/api/wrong-method", "", 404, false),
+                                        std::tuple<QString, QString, int, bool>("/api/wrong-method", "", 404, true),
+                                        std::tuple<QString, QString, int, bool>("/test-method", "", 404, false),
+                                        std::tuple<QString, QString, int, bool>("/test-method", "", 404, true)));
 
 TEST_P(AnotherRestServerMethodsTest, methodsParams)
 {

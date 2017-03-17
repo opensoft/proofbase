@@ -45,7 +45,7 @@ public:
 
 private:
     QHash<QString, MethodNode> m_nodes;
-    QString m_value = "";
+    QString m_value;
     QString m_tag;
 };
 
@@ -56,8 +56,8 @@ struct WorkerThreadInfo
     {
     }
 
-    WorkerThread *thread;
-    quint32 socketCount;
+    WorkerThread *thread = nullptr;
+    quint32 socketCount = 0;
 };
 
 struct SocketInfo
@@ -131,8 +131,8 @@ private:
     QSet<QTcpSocket *> sockets;
     QMutex socketsMutex;
     MethodNode methodsTreeRoot;
-    int suggestedMaxThreadsCount;
-    RestAuthType authType;
+    int suggestedMaxThreadsCount = MIN_THREADS_COUNT;
+    RestAuthType authType = RestAuthType::NoAuth;
     QHash<QString, QString> customHeaders;
 };
 
@@ -141,23 +141,21 @@ private:
 using namespace Proof;
 
 AbstractRestServer::AbstractRestServer(QObject *parent)
-    : AbstractRestServer(*new AbstractRestServerPrivate, "", "", "", 80, RestAuthType::NoAuth, parent)
+    : AbstractRestServer(*new AbstractRestServerPrivate, "", 80, parent)
 {
 }
 
-AbstractRestServer::AbstractRestServer(const QString &pathPrefix, int port, RestAuthType authType, QObject *parent)
-    : AbstractRestServer(*new AbstractRestServerPrivate, "", "", pathPrefix, port, authType, parent)
+AbstractRestServer::AbstractRestServer(int port, QObject *parent)
+    : AbstractRestServer(*new AbstractRestServerPrivate, "", port, parent)
 {
 }
 
-AbstractRestServer::AbstractRestServer(const QString &userName, const QString &password, const QString &pathPrefix, int port,
-                                       QObject *parent)
-    : AbstractRestServer(*new AbstractRestServerPrivate, userName, password, pathPrefix, port, RestAuthType::Basic, parent)
+AbstractRestServer::AbstractRestServer(const QString &pathPrefix, int port, QObject *parent)
+    : AbstractRestServer(*new AbstractRestServerPrivate, pathPrefix, port, parent)
 {
 }
 
-AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QString &userName, const QString &password,
-                                       const QString &pathPrefix, int port, RestAuthType authType, QObject *parent)
+AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QString &pathPrefix, int port, QObject *parent)
     : QTcpServer(parent),
       d_ptr(&dd)
 {
@@ -166,10 +164,7 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
 
     d->serverThread = new QThread(this);
     d->port = port;
-    d->userName = userName;
-    d->password = password;
     setPathPrefix(pathPrefix);
-    d->authType = authType;
 
     setSuggestedMaxThreadsCount();
 
