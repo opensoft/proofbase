@@ -19,7 +19,7 @@ public:
         Add
     };
 
-    explicit Settings(QObject *parent = 0);
+    explicit Settings(QObject *parent = nullptr);
     ~Settings();
 
     void sync();

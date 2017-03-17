@@ -16,7 +16,7 @@ class PROOF_CORE_EXPORT SettingsGroup : public ProofObject
     Q_OBJECT
     Q_DECLARE_PRIVATE(SettingsGroup)
 public:
-    explicit SettingsGroup(const QString &name, QObject *parent = 0);
+    explicit SettingsGroup(const QString &name, QObject *parent = nullptr);
 
     QStringList groups() const;
     QStringList values() const;

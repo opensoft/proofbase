@@ -30,7 +30,7 @@ public:
         childrenDirtyCheckers << [childrenPointers, this]() { return isDirty<0>(childrenPointers); };
     }
 
-    ProofObject *q_ptr = 0;
+    ProofObject *q_ptr = nullptr;
 
 private:
     ProofObjectPrivate(const ProofObjectPrivate &other) = delete;

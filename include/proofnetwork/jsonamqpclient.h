@@ -18,7 +18,7 @@ signals:
     void messageReceived(const QJsonDocument &jsonMessage);
 
 protected:
-    JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent = 0);
+    JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent = nullptr);
 
 };
 

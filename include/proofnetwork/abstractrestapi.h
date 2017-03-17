@@ -180,7 +180,7 @@ signals:
     void errorOccurred(qulonglong operationId, const Proof::RestApiError &error);
 
 protected:
-    AbstractRestApi(const RestClientSP &restClient, AbstractRestApiPrivate &dd, QObject *parent = 0);
+    AbstractRestApi(const RestClientSP &restClient, AbstractRestApiPrivate &dd, QObject *parent = nullptr);
     //Called before actual set is done
     virtual void onRestClientChanging(const RestClientSP &client);
 };

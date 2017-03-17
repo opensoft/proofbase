@@ -18,7 +18,7 @@ public:
     QString fullName() const;
     QString email() const;
 
-    UserQmlWrapper *toQmlWrapper(QObject *parent = 0) const override;
+    UserQmlWrapper *toQmlWrapper(QObject *parent = nullptr) const override;
 
     static UserSP create(const QString &userName);
     static UserSP defaultObject();
@@ -30,7 +30,7 @@ signals:
 
 protected:
     explicit User(const QString &userName);
-    User(UserPrivate &dd, QObject *parent = 0);
+    User(UserPrivate &dd, QObject *parent = nullptr);
 };
 }
 

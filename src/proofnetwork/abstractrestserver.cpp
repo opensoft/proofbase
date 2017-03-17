@@ -120,7 +120,7 @@ private:
     void registerSocket(QTcpSocket *socket);
     void deleteSocket(QTcpSocket *socket, WorkerThread *worker);
 
-    AbstractRestServer *q_ptr = 0;
+    AbstractRestServer *q_ptr = nullptr;
     int port = 0;
     QString userName;
     QString password;

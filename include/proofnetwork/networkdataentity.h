@@ -24,14 +24,14 @@ public:
     }
 
     void updateFrom(const Proof::NetworkDataEntitySP &other);
-    virtual NetworkDataEntityQmlWrapper *toQmlWrapper(QObject *parent = 0) const = 0;
+    virtual NetworkDataEntityQmlWrapper *toQmlWrapper(QObject *parent = nullptr) const = 0;
 
 signals:
     void isFetchedChanged(bool arg);
 
 protected:
     NetworkDataEntity() = delete;
-    NetworkDataEntity(NetworkDataEntityPrivate &dd, QObject *parent = 0);
+    NetworkDataEntity(NetworkDataEntityPrivate &dd, QObject *parent = nullptr);
     void setFetched(bool fetched);
 
     static void initSelfWeakPtr(const NetworkDataEntitySP &entity);

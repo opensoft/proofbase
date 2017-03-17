@@ -44,13 +44,13 @@ protected:
     ObjectsCache &operator=(const ObjectsCache &&other) = delete;
 
     template<typename U = T>
-    QString valueTypeName(typename std::enable_if<!std::is_base_of<QObject, U>::value>::type * = 0) const
+    QString valueTypeName(typename std::enable_if<!std::is_base_of<QObject, U>::value>::type * = nullptr) const
     {
         return QString();
     }
 
     template<typename U = T>
-    QString valueTypeName(typename std::enable_if<std::is_base_of<QObject, U>::value>::type * = 0) const
+    QString valueTypeName(typename std::enable_if<std::is_base_of<QObject, U>::value>::type * = nullptr) const
     {
         return U::staticMetaObject.className();
     }

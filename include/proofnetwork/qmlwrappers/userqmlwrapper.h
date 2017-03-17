@@ -15,7 +15,7 @@ class PROOF_NETWORK_EXPORT UserQmlWrapper : public NetworkDataEntityQmlWrapper
     Q_PROPERTY(QString email READ email NOTIFY emailChanged)
     Q_DECLARE_PRIVATE(UserQmlWrapper)
 public:
-    explicit UserQmlWrapper(const UserSP &user, QObject *parent = 0);
+    explicit UserQmlWrapper(const UserSP &user, QObject *parent = nullptr);
     PROOF_NDE_WRAPPER_TOOLS(User)
 
     QString userName() const;
@@ -28,7 +28,7 @@ signals:
     void emailChanged(const QString &email);
 
 protected:
-    explicit UserQmlWrapper(const UserSP &user, UserQmlWrapperPrivate &dd, QObject *parent = 0);
+    explicit UserQmlWrapper(const UserSP &user, UserQmlWrapperPrivate &dd, QObject *parent = nullptr);
     void setupEntity(const QSharedPointer<NetworkDataEntity> &old = QSharedPointer<NetworkDataEntity>()) override;
 };
 }

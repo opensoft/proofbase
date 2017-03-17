@@ -19,7 +19,7 @@ public:
         StopAtWeeks
     };
 
-    Humanizer(QObject *parent = 0);
+    Humanizer(QObject *parent = nullptr);
 
     Q_INVOKABLE QString humanizeTime(qlonglong seconds, Humanizer::TimeCategory stopAt = Humanizer::TimeCategory::StopAtSeconds);
     Q_INVOKABLE QString humanizeBytesSize(qlonglong bytes);

@@ -23,7 +23,7 @@ signals:
     void versionFetched(Proof::NetworkServices::VersionedEntityType type, const QString &name, const QString &version);
 
 protected:
-    ProofServiceRestApi(const RestClientSP &restClient, ProofServiceRestApiPrivate &dd, QObject *parent = 0);
+    ProofServiceRestApi(const RestClientSP &restClient, ProofServiceRestApiPrivate &dd, QObject *parent = nullptr);
 };
 
 } // namespace NetworkServices

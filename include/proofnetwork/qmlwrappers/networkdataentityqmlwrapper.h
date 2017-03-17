@@ -75,7 +75,7 @@ signals:
 protected:
     NetworkDataEntityQmlWrapper() = delete;
     explicit NetworkDataEntityQmlWrapper(const QSharedPointer<NetworkDataEntity> &networkDataEntity,
-                                         NetworkDataEntityQmlWrapperPrivate &dd, QObject *parent = 0);
+                                         NetworkDataEntityQmlWrapperPrivate &dd, QObject *parent = nullptr);
 
     virtual void setupEntity(const QSharedPointer<NetworkDataEntity> &old = QSharedPointer<NetworkDataEntity>()) = 0;
 };

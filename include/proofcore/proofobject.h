@@ -57,7 +57,7 @@ signals:
     void queuedCallRequested(qulonglong queuedCallId, QPrivateSignal);
 
 protected:
-    ProofObject(ProofObjectPrivate &dd, QObject *parent = 0);
+    ProofObject(ProofObjectPrivate &dd, QObject *parent = nullptr);
     ProofObjectPrivatePointer d_ptr;
 
 private:
