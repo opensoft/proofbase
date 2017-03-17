@@ -31,7 +31,6 @@ enum class RestAuthType {
     Basic,
     Wsse,
     QuasiOAuth2, //TODO: Remove quasi support when production will moved on SH3
-    OAuth2, //TODO: 1.0 Deprecated, use BearerToken instead
     BearerToken
 };
 }

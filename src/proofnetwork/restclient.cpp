@@ -483,7 +483,6 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         }
         result.setRawHeader("Authorization", QString("Bearer %1").arg(quasiOAuth2Token).toLatin1());
         break;
-    case RestAuthType::OAuth2:
     case RestAuthType::BearerToken:
         result.setRawHeader("Authorization", QString("Bearer %1").arg(token).toLatin1());
         break;
