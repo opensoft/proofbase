@@ -1,3 +1,9 @@
+*.vcxproj*
+*ts_files.list
+*.sln
+*.db
+*.suo
+
 *.pro.user*
 *.txt.user*
 moc_*.cpp
