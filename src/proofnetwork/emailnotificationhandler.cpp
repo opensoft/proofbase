@@ -61,7 +61,7 @@ void EmailNotificationHandler::notify(const QString &message)
                  ipsList.join("; "),
                  QDateTime::currentDateTime().toString(Qt::ISODate),
                  message);
-    d->smtpClient->sendMail(subject, fullMessage, d->from, d->to);
+    d->smtpClient->sendTextMail(subject, fullMessage, d->from, d->to);
 }
 
 QString EmailNotificationHandler::id()

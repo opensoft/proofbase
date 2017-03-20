@@ -39,10 +39,8 @@ public:
     ConnectionType connectionType() const;
     void setConnectionType(ConnectionType arg);
 
-    //TODO: 1.0: add cc, bcc, attachments, content type
-    void sendMail(const QString &subject, const QString &body, const QString &from, const QStringList &to);
-    bool sendMailSync(const QString &subject, const QString &body, const QString &from, const QStringList &to);
-    bool sendMail(const Proof::TaskChainSP &taskChain, const QString &subject, const QString &body, const QString &from, const QStringList &to);
+    void sendTextMail(const QString &subject, const QString &body, const QString &from, const QStringList &to,
+                      const QStringList &cc = QStringList(), const QStringList &bcc = QStringList());
 
 signals:
     void userNameChanged(const QString &arg);
