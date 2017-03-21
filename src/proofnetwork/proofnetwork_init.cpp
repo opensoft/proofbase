@@ -16,11 +16,14 @@ Q_LOGGING_CATEGORY(proofNetworkAmqpLog, "proof.network.amqp")
 
 PROOF_LIBRARY_INITIALIZER(libraryInit)
 {
+    //clang-format off
     qRegisterMetaType<Proof::RestApiError>("Proof::RestApiError");
     qRegisterMetaType<Proof::RestAuthType>("Proof::RestAuthType");
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType<QAMQP::Error>("QAMQP::Error");
     qRegisterMetaType<Proof::NetworkServices::VersionedEntityType>("Proof::NetworkServices::ApplicationType");
+    //clang-format on
+
     Proof::CoreApplication::addInitializer([]() {
         Proof::SettingsGroup *notifierGroup = proofApp->settings()->group("errors_notifier", Proof::Settings::NotFoundPolicy::Add);
 

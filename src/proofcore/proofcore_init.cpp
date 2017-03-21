@@ -13,4 +13,6 @@ Q_LOGGING_CATEGORY(proofCoreCacheLog, "proof.core.cache")
 
 PROOF_LIBRARY_INITIALIZER(libraryInit)
 {
+    //clang-format off
+    //clang-format on
 }
