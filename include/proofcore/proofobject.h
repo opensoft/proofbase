@@ -131,7 +131,7 @@ private:
     template <class Callee, class Method, class... Args>
     static void doTheCall(void *result, Callee* callee, Method method, Args &&... args)
     {
-        Q_UNUSED(result);
+        Q_UNUSED(result)
         (*callee.*method)(std::forward<Args>(args)...);
     }
 
@@ -139,7 +139,7 @@ private:
     static typename std::enable_if<!std::is_base_of<ProofObject, Callee>::value && std::is_base_of<QObject, Callee>::value, ProofObject *>::type
     invokerForCallee(Callee *callee)
     {
-        Q_UNUSED(callee);
+        Q_UNUSED(callee)
         ProofObject *obj = new ProofObject(0);
         if (obj->thread() != callee->thread())
             obj->moveToThread(callee->thread());
@@ -157,8 +157,8 @@ private:
     static typename std::enable_if<!std::is_base_of<ProofObject, Callee>::value && std::is_base_of<QObject, Callee>::value, bool>::type
     cleanupAfterCall(Callee *callee, ProofObject *delayer, QSharedPointer<QMetaObject::Connection> conn)
     {
-        Q_UNUSED(callee);
-        Q_UNUSED(conn);
+        Q_UNUSED(callee)
+        Q_UNUSED(conn)
         delayer->deleteLater();
         return true;
     }
@@ -167,8 +167,8 @@ private:
     static typename std::enable_if<std::is_base_of<ProofObject, Callee>::value, bool>::type
     cleanupAfterCall(Callee *callee, ProofObject *delayer, QSharedPointer<QMetaObject::Connection> conn)
     {
-        Q_UNUSED(callee);
-        Q_UNUSED(delayer);
+        Q_UNUSED(callee)
+        Q_UNUSED(delayer)
         disconnect(*conn);
         return true;
     }

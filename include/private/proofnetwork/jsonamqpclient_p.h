@@ -12,7 +12,7 @@ class PROOF_NETWORK_EXPORT JsonAmqpClientPrivate : public AbstractAmqpReceiverPr
 
     void amqpMessageReceived() override;
     void queueDeclared(QAmqpQueue *queue) override;
-    virtual void handleJsonMessage(const QJsonDocument &json);
+    virtual void handleJsonMessage(const QJsonDocument &json, const QString &routingKey, const QHash<QString, QVariant> &headers);
 };
 
 }

@@ -23,26 +23,28 @@ JsonAmqpClient::JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent)
 
 void JsonAmqpClientPrivate::amqpMessageReceived()
 {
-    Q_Q(JsonAmqpClient);
     //HACK: Workaround for bug in QAQMP, sometimes after qamqp reconnect, signal messageReceived has been emitted, but queue actually is empty, so we check it here.
     if (queue->isEmpty())
         return;
     QAmqpMessage message = queue->dequeue();
-    QJsonDocument messageDocument = QJsonDocument::fromJson(message.payload());
-    qCDebug(proofNetworkAmqpLog) << "Queue message: " << messageDocument;
-    emit q->messageReceived(messageDocument);
-    handleJsonMessage(messageDocument);
+    if (message.isValid()) {
+        QJsonDocument messageDocument = QJsonDocument::fromJson(message.payload());
+        qCDebug(proofNetworkAmqpLog) << "Queue message: " << messageDocument;
+        handleJsonMessage(messageDocument, message.routingKey(), message.headers());
+    }
 }
 
 void JsonAmqpClientPrivate::queueDeclared(QAmqpQueue *queue)
 {
-    Q_UNUSED(queue);
+    Q_UNUSED(queue)
     //Nothing there
 }
 
-void JsonAmqpClientPrivate::handleJsonMessage(const QJsonDocument &json)
+void JsonAmqpClientPrivate::handleJsonMessage(const QJsonDocument &json, const QString &routingKey, const QHash<QString, QVariant> &headers)
 {
-    Q_UNUSED(json);
+    Q_UNUSED(routingKey)
+    Q_UNUSED(headers)
+    Q_UNUSED(json)
     //Nothing there
 }
 

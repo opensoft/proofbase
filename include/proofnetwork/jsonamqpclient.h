@@ -14,9 +14,6 @@ class PROOF_NETWORK_EXPORT JsonAmqpClient : public AbstractAmqpReceiver
 public:
     explicit JsonAmqpClient(QObject *parent = nullptr);
 
-signals:
-    void messageReceived(const QJsonDocument &jsonMessage);
-
 protected:
     JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent = nullptr);
 

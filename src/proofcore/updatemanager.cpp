@@ -261,7 +261,7 @@ void UpdateManagerPrivate::checkPassword(const QString &password)
         qCDebug(proofCoreUpdatesLog) << "Process couldn't be started" << checker->error() << checker->errorString();
     }
 #else
-    Q_UNUSED(password);
+    Q_UNUSED(password)
     qCDebug(proofCoreUpdatesLog) << "Password check is not supported for this platform";
     emit q->passwordChecked(false);
 #endif
@@ -415,8 +415,8 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
         qCDebug(proofCoreUpdatesLog) << "process couldn't be started" << updater->error() << updater->errorString();
     }
 #else
-    Q_UNUSED(version);
-    Q_UNUSED(password);
+    Q_UNUSED(version)
+    Q_UNUSED(password)
     qCDebug(proofCoreUpdatesLog) << "Update is not supported for this platform";
     emit q->updateFailed();
 #endif

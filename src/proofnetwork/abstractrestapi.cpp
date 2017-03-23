@@ -309,7 +309,7 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
 
 void AbstractRestApiPrivate::cleanupReply(qulonglong operationId, QNetworkReply *reply)
 {
-    Q_UNUSED(operationId);
+    Q_UNUSED(operationId)
     repliesMutex.lock();
     replies.remove(reply);
     repliesMutex.unlock();
