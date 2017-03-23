@@ -8,6 +8,8 @@
 #include <QNetworkInterface>
 #include <QSysInfo>
 
+const static int SAME_PACK_TIMEOUT = 1000 * 60 * 60; //1 hour
+
 namespace Proof {
 
 class EmailNotificationHandlerPrivate : public AbstractNotificationHandlerPrivate
@@ -17,6 +19,8 @@ class EmailNotificationHandlerPrivate : public AbstractNotificationHandlerPrivat
 
     QString from;
     QStringList to;
+
+    QHash<QString, QDateTime> packTimestamps;
 };
 
 } // namespace Proof
@@ -32,10 +36,32 @@ EmailNotificationHandler::EmailNotificationHandler(const SmtpClientSP &smtpClien
     d->to = to;
 }
 
-void EmailNotificationHandler::notify(const QString &message)
+void EmailNotificationHandler::notify(const QString &message, ErrorNotifier::Severity severity, const QString &packId)
 {
     Q_D(EmailNotificationHandler);
-    QString subject = QString("Issue at %1").arg(qApp->applicationName());
+
+    if (severity == ErrorNotifier::Severity::Warning)
+        return;
+    if (!packId.isEmpty()) {
+        if (d->packTimestamps.contains(packId) && d->packTimestamps[packId].msecsTo(QDateTime::currentDateTime()) < SAME_PACK_TIMEOUT)
+            return;
+        d->packTimestamps[packId] = QDateTime::currentDateTime();
+    }
+
+    QString severityName;
+    switch(severity) {
+    case ErrorNotifier::Severity::Error:
+        severityName = "Error";
+        break;
+    case ErrorNotifier::Severity::Critical:
+        severityName = "Critical error";
+        break;
+    case ErrorNotifier::Severity::Warning: //will never be used, added to supress warning
+        severityName = "Warning";
+        break;
+    }
+
+    QString subject = QString("%1 at %2").arg(severityName, qApp->applicationName());
     if (!d->appId.isEmpty())
         subject += QString(" (%1)").arg(d->appId);
     QStringList ipsList;
@@ -48,6 +74,7 @@ void EmailNotificationHandler::notify(const QString &message)
             ipsList << QString("%1 (%2)").arg(ip.toString(), interface.humanReadableName());
         }
     }
+
     QString fullMessage = QString("Application: %1 (%2)\n"
                                   "Version: %3\n"
                                   "Proof version: %4\n"
@@ -55,8 +82,10 @@ void EmailNotificationHandler::notify(const QString &message)
                                   "IP: %6\n"
                                   "Time: %7\n\n"
                                   "%8")
-            .arg(qApp->applicationName(), d->appId,
-                 qApp->applicationVersion(), Proof::proofVersion(),
+            .arg(qApp->applicationName(),
+                 d->appId,
+                 qApp->applicationVersion(),
+                 Proof::proofVersion(),
                  QSysInfo::prettyProductName(),
                  ipsList.join("; "),
                  QDateTime::currentDateTime().toString(Qt::ISODate),

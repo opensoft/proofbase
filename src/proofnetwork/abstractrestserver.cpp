@@ -4,7 +4,7 @@
 #include "proofcore/memorystoragenotificationhandler.h"
 #include "proofcore/proofglobal.h"
 #include "proofcore/coreapplication.h"
-#include "proofcore/notifier.h"
+#include "proofcore/errornotifier.h"
 #include "proofcore/proofobject.h"
 
 #include <QDir>
@@ -358,7 +358,7 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
         {"network_addresses", QJsonArray::fromStringList(ipsList)}
     };
 
-    auto notificationsMemoryStorage = Notifier::instance()->handler<MemoryStorageNotificationHandler>();
+    auto notificationsMemoryStorage = ErrorNotifier::instance()->handler<MemoryStorageNotificationHandler>();
     QPair<QDateTime, QString> lastError;
     if (notificationsMemoryStorage) {
         statusObj["app_id"] = notificationsMemoryStorage->appId();
@@ -389,7 +389,7 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
 
 void AbstractRestServer::rest_get_System_RecentErrors(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &, const QByteArray &)
 {
-    auto notificationsMemoryStorage = Notifier::instance()->handler<MemoryStorageNotificationHandler>();
+    auto notificationsMemoryStorage = ErrorNotifier::instance()->handler<MemoryStorageNotificationHandler>();
     auto lastErrors = notificationsMemoryStorage
             ? notificationsMemoryStorage->messages()
             : QMultiMap<QDateTime, QString>{{QDateTime::currentDateTimeUtc(), QString("Memory storage error handler not set")}};

@@ -55,8 +55,10 @@ QPair<QDateTime, QString> MemoryStorageNotificationHandler::lastMessage() const
     return d->lastMessage;
 }
 
-void MemoryStorageNotificationHandler::notify(const QString &message)
+void MemoryStorageNotificationHandler::notify(const QString &message, ErrorNotifier::Severity severity, const QString &packId)
 {
+    Q_UNUSED(packId)
+    Q_UNUSED(severity)
     Q_D(MemoryStorageNotificationHandler);
     d->mutex.lock();
     d->lastMessage = qMakePair(QDateTime::currentDateTimeUtc(), message);

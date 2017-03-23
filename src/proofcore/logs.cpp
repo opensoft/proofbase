@@ -1,4 +1,5 @@
 #include "logs.h"
+#include "errornotifier.h"
 
 #include <QMap>
 #include <QFile>
@@ -16,6 +17,16 @@
 
 static const int COMPRESS_TIMEOUT = 24 * 60 * 60 * 1000; // 1 day
 
+static const QMap<QtMsgType, QString> STRINGIFIED_TYPES = {
+    { QtDebugMsg, "D"},
+    { QtWarningMsg, "W"},
+    { QtCriticalMsg, "C"},
+    { QtFatalMsg, "F"},
+    { QtInfoMsg, "I"}
+};
+
+static const QSet<QtMsgType> TYPES_FOR_NOTIFIER = {QtWarningMsg, QtCriticalMsg, QtFatalMsg};
+
 static bool isConsoleOutputEnabled = true;
 static QString logsStoragePath;
 static QString logFileNameBase;
@@ -26,13 +37,6 @@ static QTimer compressTimer;
 static QFile *currentLogFile = nullptr;
 static QDate currentLogFileDate;
 
-static const QMap<QtMsgType, QString> stringifiedTypes = {
-    { QtDebugMsg, "D"},
-    { QtWarningMsg, "W"},
-    { QtCriticalMsg, "C"},
-    { QtFatalMsg, "F"},
-    { QtInfoMsg, "I"}
-};
 
 namespace {
 class DetachedCompresser: public QRunnable
@@ -62,10 +66,30 @@ private:
     QString m_filePath;
 };
 
-void fileHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
+void baseHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
     if (isConsoleOutputEnabled && defaultHandler)
         defaultHandler(type, context, message);
+
+    if (TYPES_FOR_NOTIFIER.contains(type)) {
+        Proof::ErrorNotifier::Severity severity = Proof::ErrorNotifier::Severity::Warning;
+        switch (type) {
+        case QtCriticalMsg:
+        case QtFatalMsg:
+            severity = Proof::ErrorNotifier::Severity::Critical;
+            break;
+        case QtWarningMsg:
+        default:
+            severity = Proof::ErrorNotifier::Severity::Warning;
+            break;
+        }
+        Proof::ErrorNotifier::instance()->notify(message, severity);
+    }
+}
+
+void fileHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
+{
+    baseHandler(type, context, message);
 
     if (!logFileNameBase.isEmpty()) {
         QMutexLocker writeLocker(&logFileWriteMutex);
@@ -87,7 +111,7 @@ void fileHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
 
         QString logLine = QString("[%1][%2][%3][%4@%5:%6] %7\n")
                 .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
-                .arg(stringifiedTypes.value(type, "D"))
+                .arg(STRINGIFIED_TYPES.value(type, "D"))
                 .arg(context.category)
                 .arg(context.function)
                 .arg(QString(context.file).remove(QRegularExpression("^(\\.\\.[/\\\\])+")))
@@ -99,11 +123,6 @@ void fileHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
     }
 }
 
-void consoleHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
-{
-    if (isConsoleOutputEnabled && defaultHandler)
-        defaultHandler(type, context, message);
-}
 
 void compressOldFiles()
 {
@@ -153,7 +172,7 @@ void Proof::Logs::setup(const QStringList &defaultLoggingRules)
     }
     qSetMessagePattern("[%{type}][%{function}] %{message}");
 
-    QtMessageHandler oldHandler = qInstallMessageHandler(&consoleHandler);
+    QtMessageHandler oldHandler = qInstallMessageHandler(&baseHandler);
     if (!defaultHandler)
         defaultHandler = oldHandler;
 }
@@ -197,5 +216,5 @@ void Proof::Logs::installFileHandler(const QString &fileName)
 
 void Proof::Logs::uninstallFileHandler()
 {
-    qInstallMessageHandler(&consoleHandler);
+    qInstallMessageHandler(&baseHandler);
 }

@@ -20,7 +20,7 @@ public:
     QMultiMap<QDateTime, QString> messages() const;
     QPair<QDateTime, QString> lastMessage() const;
 
-    void notify(const QString &message) override;
+    void notify(const QString &message, ErrorNotifier::Severity severity, const QString &packId) override;
 
     static QString id();
 };

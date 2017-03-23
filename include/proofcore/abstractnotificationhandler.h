@@ -3,6 +3,7 @@
 
 #include "proofcore/proofobject.h"
 #include "proofcore/proofcore_global.h"
+#include "proofcore/errornotifier.h"
 
 #include <QString>
 
@@ -15,7 +16,7 @@ class PROOF_CORE_EXPORT AbstractNotificationHandler : public ProofObject
 public:
     QString appId() const;
 
-    virtual void notify(const QString &message) = 0;
+    virtual void notify(const QString &message, ErrorNotifier::Severity severity, const QString &packId) = 0;
     //All subclasses should have static QString id() method which should return unique name for this handler
 
 protected:

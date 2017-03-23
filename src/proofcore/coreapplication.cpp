@@ -7,7 +7,7 @@
 #include "settingsgroup.h"
 #include "proofglobal.h"
 #include "expirator.h"
-#include "notifier.h"
+#include "errornotifier.h"
 #include "memorystoragenotificationhandler.h"
 
 #include <QDir>
@@ -175,7 +175,7 @@ CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *a
     bool daemonized = d->daemonizeIfNeeded();
     d->updatePrettifiedName();
     Expirator::instance();
-    Notifier::instance();
+    ErrorNotifier::instance();
     d->settings = new Proof::Settings(this);
     d->initLogs(daemonized);
     d->initQca();
@@ -255,9 +255,9 @@ void CoreApplication::postInit()
     d->updateManager->start();
 
     //We can't add core-related initializers in core init, so we just do it here directly
-    Proof::SettingsGroup *notifierGroup = proofApp->settings()->group("errors_notifier", Proof::Settings::NotFoundPolicy::Add);
+    Proof::SettingsGroup *notifierGroup = proofApp->settings()->group("error_notifier", Proof::Settings::NotFoundPolicy::Add);
     QString appId = notifierGroup->value("app_id", "", Proof::Settings::NotFoundPolicy::Add).toString();
-    Proof::Notifier::instance()->registerHandler(new Proof::MemoryStorageNotificationHandler(appId));
+    Proof::ErrorNotifier::instance()->registerHandler(new Proof::MemoryStorageNotificationHandler(appId));
 
     for (const auto &initializer : CoreApplicationPrivate::initializers)
         initializer();

@@ -9,7 +9,7 @@
 #include "proofcore/settings.h"
 #include "proofcore/settingsgroup.h"
 #include "proofcore/coreapplication.h"
-#include "proofcore/notifier.h"
+#include "proofcore/errornotifier.h"
 
 Q_LOGGING_CATEGORY(proofNetworkMiscLog, "proof.network.misc")
 Q_LOGGING_CATEGORY(proofNetworkAmqpLog, "proof.network.amqp")
@@ -25,7 +25,7 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
     //clang-format on
 
     Proof::CoreApplication::addInitializer([]() {
-        Proof::SettingsGroup *notifierGroup = proofApp->settings()->group("errors_notifier", Proof::Settings::NotFoundPolicy::Add);
+        Proof::SettingsGroup *notifierGroup = proofApp->settings()->group("error_notifier", Proof::Settings::NotFoundPolicy::Add);
 
         QString appId = notifierGroup->value("app_id", "", Proof::Settings::NotFoundPolicy::Add).toString();
 
@@ -56,7 +56,7 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
                 if (!trimmed.isEmpty())
                     to << trimmed;
             }
-            Proof::Notifier::instance()->registerHandler(new Proof::EmailNotificationHandler(smtpClient, from, to, appId));
+            Proof::ErrorNotifier::instance()->registerHandler(new Proof::EmailNotificationHandler(smtpClient, from, to, appId));
         }
     });
 }

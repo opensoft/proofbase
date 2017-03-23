@@ -17,7 +17,7 @@ class PROOF_NETWORK_EXPORT EmailNotificationHandler : public AbstractNotificatio
     Q_DECLARE_PRIVATE(EmailNotificationHandler)
 public:
     EmailNotificationHandler(const SmtpClientSP &smtpClient, const QString &from, const QStringList &to, const QString &appId);
-    void notify(const QString &message) override;
+    void notify(const QString &message, ErrorNotifier::Severity severity, const QString &packId) override;
 
     static QString id();
 };
