@@ -27,9 +27,7 @@ public:
         QSharedPointer<Entity> result = storedEntity.toStrongRef();
         EntityKey oldKey = result ? keyFunction(result.data()) : storedKey;
         if (oldKey != key || !Entity::isValidAndDirty(result)) {
-            result = cache.value(key);
-            if (!result)
-                result = cache.add(key, customEntityCreator());
+            result = cache.add(key, std::move(customEntityCreator));
             storedEntity = result.toWeakRef();
             storedKey = keyFunction(result.data());
             if (oldKey != key)
@@ -56,9 +54,7 @@ public:
                                              std::function<QSharedPointer<Entity>()> &&customEntityCreator)
     {
         if (!Entity::isValidAndDirty(storedEntity) || keyFunction(storedEntity.data()) != key) {
-            QSharedPointer<Entity> newEntity = cache.value(key);
-            if (!newEntity)
-                newEntity = cache.add(key, customEntityCreator());
+            QSharedPointer<Entity> newEntity = cache.add(key, std::move(customEntityCreator));
             storedEntity = newEntity;
             emit notifySignal(notifySignalEmitter, storedEntity);
         }

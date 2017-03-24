@@ -80,16 +80,10 @@ public:
     {
         QSharedPointer<Entity> entity = parseEntity<Entity>(jsonObject, operationId, errorMessage);
         if (entity) {
-            QSharedPointer<Entity> fromCache = cache.value(cacheKey(entity.data()));
-            if (fromCache) {
+            QSharedPointer<Entity> fromCache = cache.add(cacheKey(entity.data()), entity);
+            if (entity != fromCache) {
                 fromCache->updateFrom(entity);
                 entity = fromCache;
-            } else {
-                fromCache = cache.add(cacheKey(entity.data()), entity);
-                if (entity != fromCache) {
-                    fromCache->updateFrom(entity);
-                    entity = fromCache;
-                }
             }
         }
         return entity;
