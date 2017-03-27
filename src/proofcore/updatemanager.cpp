@@ -320,7 +320,7 @@ void UpdateManagerPrivate::checkForUpdates()
             return;
         }
         int foundVersionMajor = splittedVersion[0].toInt();
-        quint64 foundVersion = versionFromString(splittedVersion);
+        quint64 foundVersion = packVersion(splittedVersion);
         qCDebug(proofCoreUpdatesLog) << "Version found:" << QString("0x%1").arg(foundVersion, 16, 16, QLatin1Char('0'))
                                      << "; Current version is:" << QString("0x%1").arg(currentVersion, 16, 16, QLatin1Char('0'));
         if (foundVersion > currentVersion) {
@@ -401,8 +401,8 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
         } else {
             emit (q->*successSignal)();
             if (version.isEmpty())
-                version = versionToString(newVersion);
-            if (versionFromString(version) >= newVersion)
+                version = unpackVersionToString(newVersion);
+            if (packVersion(version) >= newVersion)
                 setNewVersion(0);
             setCurrentVersion(version);
         }
