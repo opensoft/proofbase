@@ -284,7 +284,7 @@ public:
         if (key == Key())
             return creator();
         bool isCreatorCalled = false;
-        QSharedPointer<T> result = WeakObjectsCache<Key, T>::add(key, [creator{std::move(creator)}, &isCreatorCalled]() {
+        QSharedPointer<T> result = WeakObjectsCache<Key, T>::add(key, [creator = std::move(creator), &isCreatorCalled]() {
             isCreatorCalled = true;
             return creator();
         });
