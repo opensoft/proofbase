@@ -1,6 +1,7 @@
 #include "updatemanager.h"
 #include "proofcore/proofobject_p.h"
 #include "proofcore/errornotifier.h"
+#include "proofcore/helpers/versionhelper.h"
 
 #include <QProcess>
 #include <QTimer>
@@ -55,10 +56,6 @@ class UpdateManagerPrivate : public ProofObjectPrivate
     void setNewVersionInstallable(bool arg);
 
     void updateTimerState();
-
-    static quint64 versionFromString(const QStringList &version);
-    static quint64 versionFromString(const QString &version);
-    static QString versionToString(quint64 version);
 
     QString aptSourcesListFilePath;
     QString packageName;
@@ -153,7 +150,7 @@ QString UpdateManager::aptSourcesListFilePath() const
 QString UpdateManager::currentVersion() const
 {
     Q_D(const UpdateManager);
-    return d->versionToString(d->currentVersion);
+    return unpackVersionToString(d->currentVersion);
 }
 
 QString UpdateManager::packageName() const
@@ -165,7 +162,7 @@ QString UpdateManager::packageName() const
 QString UpdateManager::newVersion() const
 {
     Q_D(const UpdateManager);
-    return d->versionToString(d->newVersion);
+    return unpackVersionToString(d->newVersion);
 }
 
 bool UpdateManager::newVersionInstallable() const
@@ -455,7 +452,7 @@ void UpdateManagerPrivate::setCurrentVersion(const QString &arg)
     QStringList splittedVersion = arg.split(".");
     if (splittedVersion.count() < 4)
         return;
-    quint64 version = versionFromString(splittedVersion);
+    quint64 version = packVersion(splittedVersion);
     if (currentVersion != version) {
         currentVersionMajor = splittedVersion[0].toInt();
         currentVersion = version;
@@ -503,32 +500,6 @@ void UpdateManagerPrivate::updateTimerState()
     } else {
         timer->stop();
     }
-}
-
-quint64 UpdateManagerPrivate::versionFromString(const QStringList &version)
-{
-    if (version.count() < 4)
-        return 0x0;
-    return ((quint64)version[0].toShort() << 48)
-            | ((quint64)version[1].toShort() << 32)
-            | ((quint64)version[2].toShort() << 16)
-            | ((quint64)version[3].toShort());
-}
-
-quint64 UpdateManagerPrivate::versionFromString(const QString &version)
-{
-    return versionFromString(version.split("."));
-}
-
-QString UpdateManagerPrivate::versionToString(quint64 version)
-{
-    if (!version)
-        return "";
-    return QString("%1.%2.%3.%4")
-            .arg(version >> 48)
-            .arg((version >> 32) & 0xFFFF)
-            .arg((version >> 16) & 0xFFFF)
-            .arg(version & 0xFFFF);
 }
 
 WorkerThread::WorkerThread(UpdateManagerPrivate *updater)

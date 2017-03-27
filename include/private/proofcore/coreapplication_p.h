@@ -1,11 +1,10 @@
 #ifndef COREAPPLICATION_P_H
 #define COREAPPLICATION_P_H
 
-#include "proofobject_p.h"
-#include "proofcore_global.h"
+#include "proofcore/proofobject_p.h"
+#include "proofcore/proofcore_global.h"
 
 #include <QtGlobal>
-#include <QCoreApplication>
 #include <QTranslator>
 #include <QSet>
 #include <QDateTime>
@@ -26,6 +25,7 @@ protected:
     void updatePrettifiedName();
     bool daemonizeIfNeeded();
     void initLogs(bool daemonized);
+    void execMigrations();
     void initQca();
     void initTranslator();
     void initUpdateManager();
@@ -45,9 +45,6 @@ protected:
 #ifndef QCA_DISABLED
     QScopedPointer<QCA::Initializer> qcaInit;
 #endif
-
-    static CoreApplication *instance;
-    static QList<std::function<void ()>> initializers;
 };
 }
 

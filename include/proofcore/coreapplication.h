@@ -58,6 +58,18 @@ public:
     static CoreApplication *instance();
 
     static void addInitializer(const std::function<void()> &initializer);
+    //Migration can't use qApp/proofApp since it is not guaranteed that they will exist or be properly configured during migration exec
+    //All migrations should be added before app ctor is called
+    //Max related version here means version when something is changed. I.e. it is not last non-changed version, it is first changed one
+    //Migration may not be called at all if config version is greater or equal than both related app and related proof versions
+    //Migration should minimize exec time in case when it was called but version is greater or equal than related
+    //arguments: oldAppVersion, oldProofVersion, settings pointer
+    //Versions are packed into quint64 using proofcore/helpers/versionhelper.h
+    using Migration = std::function<void(quint64, quint64, Settings *)>;
+    static void addMigration(quint64 maxRelatedVersion, Migration &&migration);
+    static void addMigration(const QString &maxRelatedVersion, Migration &&migration);
+    static void addMigrations(const QMap<quint64, QList<Migration>> &migrations);
+    static void addMigrations(const QMap<QString, QList<Migration>> &migrations);
 
 signals:
     void languageChanged(const QString &language);

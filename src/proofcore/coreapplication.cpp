@@ -9,6 +9,7 @@
 #include "expirator.h"
 #include "errornotifier.h"
 #include "memorystoragenotificationhandler.h"
+#include "helpers/versionhelper.h"
 
 #include <QDir>
 #include <QLocale>
@@ -24,8 +25,24 @@
 # include <ctime>
 #endif
 
-Proof::CoreApplication *Proof::CoreApplicationPrivate::instance = nullptr;
-QList<std::function<void()>> Proof::CoreApplicationPrivate::initializers = {};
+namespace {
+Proof::CoreApplication *&instance()
+{
+    static Proof::CoreApplication *obj = nullptr;
+    return obj;
+}
+
+QList<std::function<void()> > &initializers()
+{
+    static QList<std::function<void()>> obj;
+    return obj;
+}
+QMap<quint64, QList<Proof::CoreApplication::Migration>> &migrations()
+{
+    static QMap<quint64, QList<Proof::CoreApplication::Migration>> obj;
+    return obj;
+}
+}
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
 constexpr int BACKTRACE_MAX_SIZE = 50;
@@ -163,8 +180,8 @@ CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *a
     Q_D(CoreApplication);
     d->initCrashHandler();
 
-    Q_ASSERT(CoreApplicationPrivate::instance == nullptr);
-    CoreApplicationPrivate::instance = this;
+    Q_ASSERT(::instance() == nullptr);
+    ::instance() = this;
 
     app->setOrganizationName(orgName);
     app->setApplicationName(appName);
@@ -178,6 +195,7 @@ CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *a
     ErrorNotifier::instance();
     d->settings = new Proof::Settings(this);
     d->initLogs(daemonized);
+    d->execMigrations();
     d->initQca();
     d->initTranslator();
     d->initUpdateManager();
@@ -254,15 +272,10 @@ void CoreApplication::postInit()
     Q_D(CoreApplication);
     d->updateManager->start();
 
-    //We can't add core-related initializers in core init, so we just do it here directly
-    Proof::SettingsGroup *notifierGroup = proofApp->settings()->group("error_notifier", Proof::Settings::NotFoundPolicy::Add);
-    QString appId = notifierGroup->value("app_id", "", Proof::Settings::NotFoundPolicy::Add).toString();
-    Proof::ErrorNotifier::instance()->registerHandler(new Proof::MemoryStorageNotificationHandler(appId));
-
-    for (const auto &initializer : CoreApplicationPrivate::initializers)
-        initializer();
-    CoreApplicationPrivate::initializers.clear();
     d->initialized = true;
+    for (const auto &initializer : initializers())
+        initializer();
+    initializers().clear();
 }
 
 int CoreApplication::exec()
@@ -272,7 +285,7 @@ int CoreApplication::exec()
 
 CoreApplication *CoreApplication::instance()
 {
-    return CoreApplicationPrivate::instance;
+    return ::instance();
 }
 
 void CoreApplication::addInitializer(const std::function<void()> &initializer)
@@ -280,7 +293,35 @@ void CoreApplication::addInitializer(const std::function<void()> &initializer)
     if (instance() && instance()->d_func()->initialized)
         initializer();
     else
-        CoreApplicationPrivate::initializers << initializer;
+        initializers() << initializer;
+}
+
+void CoreApplication::addMigration(quint64 maxRelatedVersion, CoreApplication::Migration &&migration)
+{
+    Q_ASSERT_X(::instance() == nullptr, "addMigration", "Migration can only be added before Application object was created");
+    migrations()[maxRelatedVersion] << std::forward<Migration>(migration);
+}
+
+void CoreApplication::addMigration(const QString &maxRelatedVersion, CoreApplication::Migration &&migration)
+{
+    addMigration(packVersion(maxRelatedVersion), std::forward<Migration>(migration));
+}
+
+void CoreApplication::addMigrations(const QMap<quint64, QList<CoreApplication::Migration>> &migrations)
+{
+    for (quint64 version : migrations.keys()) {
+        for (Migration migration : migrations[version])
+            addMigration(version, std::forward<Migration>(migration));
+    }
+}
+
+void CoreApplication::addMigrations(const QMap<QString, QList<CoreApplication::Migration>> &migrations)
+{
+    for (const QString &version : migrations.keys()) {
+        quint64 packedVersion = packVersion(version);
+        for (Migration migration : migrations[version])
+            addMigration(packedVersion, std::forward<Migration>(migration));
+    }
 }
 
 void CoreApplicationPrivate::initCrashHandler()
@@ -351,6 +392,30 @@ void CoreApplicationPrivate::initLogs(bool daemonized)
         Logs::installFileHandler(logFileName);
 }
 
+void CoreApplicationPrivate::execMigrations()
+{
+    quint64 packedAppVersion = packVersion(settings->mainGroup()->value("__app_version__", "").toString().trimmed());
+    quint64 packedProofVersion = packVersion(settings->mainGroup()->value("__proof_version__", "").toString().trimmed());
+
+    if (packedAppVersion >= packVersion(qApp->applicationVersion())
+            && packedProofVersion >= packVersion(proofVersion())) {
+        migrations().clear();
+        return;
+    }
+
+    quint64 minVersion = std::min(packedAppVersion, packedProofVersion);
+
+    migrations()[minVersion];
+
+    for (auto it = ++migrations().find(minVersion); it != migrations().end(); ++it) {
+        for (const auto &migration : it.value())
+            migration(packedAppVersion, packedProofVersion, settings);
+    }
+    migrations().clear();
+
+    settings->mainGroup()->setValue("__app_version__", qApp->applicationVersion());
+    settings->mainGroup()->setValue("__proof_version__", proofVersion());
+}
 
 void CoreApplicationPrivate::initQca()
 {
