@@ -10,14 +10,11 @@
 namespace Proof {
 
 class SettingsGroupPrivate;
-
 class PROOF_CORE_EXPORT SettingsGroup : public ProofObject
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(SettingsGroup)
 public:
-    explicit SettingsGroup(const QString &name, QObject *parent = nullptr);
-
     QStringList groups() const;
     QStringList values() const;
 
@@ -32,11 +29,20 @@ public:
     void deleteGroup(const QString &groupName);
     void deleteValue(const QString &key);
 
+    //Destination must not overlap with current group
+    void copyTo(SettingsGroup *destination);
+
     QString name() const;
 
 signals:
     void groupAdded(const QString &groupName);
     void valueChanged(const QStringList &key, const QVariant &value);
+
+private:
+    friend class Settings;
+    SettingsGroup() = delete;
+    SettingsGroup(const QString &name, QObject *parent);
+    ~SettingsGroup();
 };
 
 }

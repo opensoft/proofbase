@@ -17,33 +17,6 @@ Q_LOGGING_CATEGORY(proofCoreTaskChainExtraLog, "proof.core.taskchain.extra")
 Q_LOGGING_CATEGORY(proofCoreTaskChainStatsLog, "proof.core.taskchain.stats")
 Q_LOGGING_CATEGORY(proofCoreCacheLog, "proof.core.cache")
 
-namespace {
-//TODO: move to Proof::Settings
-void moveSettingsGroup(Proof::SettingsGroup *oldGroup, Proof::SettingsGroup *newGroup)
-{
-    if (!oldGroup || !newGroup)
-        return;
-    for (const QString &name : oldGroup->values()) {
-        newGroup->setValue(name, oldGroup->value(name));
-        oldGroup->setValue(name, QVariant());
-    }
-
-    for (const QString &groupName : oldGroup->groups())
-        moveSettingsGroup(oldGroup->group(groupName), newGroup->addGroup(groupName));
-}
-
-void removeSettingsGroup(Proof::SettingsGroup *group)
-{
-    if (!group)
-        return;
-    for (const QString &name : group->values())
-        group->setValue(name, QVariant());
-
-    for (const QString &groupName : group->groups())
-        removeSettingsGroup(group->group(groupName));
-}
-}
-
 PROOF_LIBRARY_INITIALIZER(libraryInit)
 {
     //clang-format off
@@ -58,22 +31,22 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
     //error_notifier settings group migration
     Proof::CoreApplication::addMigration(Proof::packVersion(0, 17, 2, 7),
                                         [](quint64, quint64 oldProofVersion, Proof::Settings *settings) {
-        if (oldProofVersion > Proof::packVersion(0, 17, 2, 7))
+        if (oldProofVersion >= Proof::packVersion(0, 17, 2, 7))
             return;
 
         auto allGroups = settings->groups();
         if (!allGroups.contains("error_notifier")) {
             auto errorNotifierGroup = settings->addGroup("error_notifier");
             if (allGroups.contains("errors_notifier")) {
-                moveSettingsGroup(settings->group("errors_notifier"), errorNotifierGroup);
+                settings->group("errors_notifier")->copyTo(errorNotifierGroup);
             } else if (allGroups.contains("email_notifier")) {
                 auto emailGroup = errorNotifierGroup->addGroup("email");
-                moveSettingsGroup(settings->group("email_notifier"), emailGroup);
+                settings->group("email_notifier")->copyTo(emailGroup);
                 errorNotifierGroup->setValue("app_id", emailGroup->value("app_id"));
-                emailGroup->setValue("app_id", QVariant());
+                emailGroup->deleteValue("app_id");
             }
         }
-        removeSettingsGroup(settings->group("errors_notifier"));
-        removeSettingsGroup(settings->group("email_notifier"));
+        settings->deleteGroup("errors_notifier");
+        settings->deleteGroup("email_notifier");
     });
 }

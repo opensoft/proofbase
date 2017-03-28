@@ -26,6 +26,10 @@ SettingsGroup::SettingsGroup(const QString &name, QObject *parent)
     d->name = name;
 }
 
+SettingsGroup::~SettingsGroup()
+{
+}
+
 QStringList SettingsGroup::groups() const
 {
     Q_D(const SettingsGroup);
@@ -110,6 +114,18 @@ void SettingsGroup::deleteValue(const QString &key)
     Q_D(SettingsGroup);
     setValue(key, QVariant());
     qCDebug(proofCoreSettingsLog) << "Group:" << d->name << "value for key" << key << "was deleted";
+}
+
+void SettingsGroup::copyTo(SettingsGroup *destination)
+{
+    Q_D(SettingsGroup);
+    if (!destination || destination == this)
+        return;
+    for (const QString &name : values())
+        destination->setValue(name, value(name));
+
+    for (SettingsGroup *group : d->groups)
+        group->copyTo(destination->addGroup(group->name()));
 }
 
 QString SettingsGroup::name() const

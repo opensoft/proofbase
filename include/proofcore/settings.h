@@ -27,6 +27,7 @@ public:
     QStringList groups() const;
     SettingsGroup *group(const QString &groupName, NotFoundPolicy notFoundPolicy = NotFoundPolicy::DoNothing);
     SettingsGroup *addGroup(const QString &groupName);
+    void deleteGroup(const QString &groupName);
     static QString filePath();
 
 };
