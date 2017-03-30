@@ -31,6 +31,8 @@ void JsonAmqpClientPrivate::amqpMessageReceived()
         QJsonDocument messageDocument = QJsonDocument::fromJson(message.payload());
         qCDebug(proofNetworkAmqpLog) << "Queue message: " << messageDocument;
         handleJsonMessage(messageDocument, message.routingKey(), message.headers());
+    } else {
+        qCDebug(proofNetworkAmqpLog) << "Queue message is not valid: " << message.payload();
     }
 }
 
