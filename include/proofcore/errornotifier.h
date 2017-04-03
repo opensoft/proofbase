@@ -6,10 +6,6 @@
 
 namespace Proof {
 
-//TODO: add messageType to allow skip same messages to be sent again and again in small period of time (useful for emails)
-//TODO: add notifications to Logs
-//TODO: add migrations support
-
 class AbstractNotificationHandler;
 class ErrorNotifierPrivate;
 class PROOF_CORE_EXPORT ErrorNotifier : public ProofObject

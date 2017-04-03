@@ -162,7 +162,7 @@ QString UpdateManager::packageName() const
 QString UpdateManager::newVersion() const
 {
     Q_D(const UpdateManager);
-    return unpackVersionToString(d->newVersion);
+    return d->newVersion ? unpackVersionToString(d->newVersion) : "";
 }
 
 bool UpdateManager::newVersionInstallable() const
