@@ -234,10 +234,8 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
                 message = reply->readAll().trimmed();
 
             qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
-                                         << reply->request().url().path()
-                                         << reply->request().url().query()
-                                         << ": " << errorCode
-                                         << message;
+                                         << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
+                                         << ": " << errorCode << message;
             emit q->errorOccurred(operationId,
                                   RestApiError{RestApiError::Level::ServerError, errorCode,
                                                NETWORK_MODULE_CODE, NetworkErrorCode::ServerError,
@@ -273,8 +271,7 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
             proofErrorCode = NetworkErrorCode::ServiceUnavailable;
         }
         qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
-                                     << reply->request().url().path()
-                                     << reply->request().url().query()
+                                     << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                      << ": " << errorCode << errorString;
         emit q->errorOccurred(operationId,
                               RestApiError{RestApiError::Level::ClientError, errorCode,
@@ -292,8 +289,7 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
         if (error.error() != QSslError::SslError::NoError) {
             int errorCode = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
             qCDebug(proofNetworkMiscLog) << "SSL error occurred for" << operationId
-                                         << reply->request().url().path()
-                                         << reply->request().url().query()
+                                         << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                          << ": " << errorCode << error.errorString();
             if (!firstError)
                 continue;

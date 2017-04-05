@@ -73,8 +73,7 @@ void ProofServiceRestApiPrivate::replyFinished(qulonglong operationId, QNetworkR
                     args << arg.toString();
                 ErrorInfo errorInfo = errorsRegistry->infoForCode(serviceErrorCode.toInt(), args);
                 qCDebug(proofNetworkMiscLog) << "Error in JSON parsing occurred for" << operationId
-                                             << reply->request().url().path()
-                                             << reply->request().url().query()
+                                             << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                              << ": " << errorCode
                                              << errorInfo.proofModuleCode << errorInfo.proofErrorCode << errorInfo.message;
                 emit q->errorOccurred(operationId, RestApiError{RestApiError::Level::ServerError, errorCode,
