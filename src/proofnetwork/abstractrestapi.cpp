@@ -251,9 +251,10 @@ void AbstractRestApiPrivate::runReplyHandler(qulonglong operationId, QNetworkRep
 {
     QMutexLocker lock(&repliesMutex);
     if (replies.contains(reply)) {
-        auto handler = replies.take(reply).second;
+        auto handler = std::move(replies.value(reply).second);
         lock.unlock();
-        handler(operationId, reply);
+        if (handler)
+            handler(operationId, reply);
         cleanupReply(operationId, reply);
     }
 }
@@ -307,9 +308,10 @@ void AbstractRestApiPrivate::cleanupReply(qulonglong operationId, QNetworkReply 
 {
     Q_UNUSED(operationId)
     repliesMutex.lock();
-    replies.remove(reply);
+    int numberRemoved = replies.remove(reply);
     repliesMutex.unlock();
-    reply->deleteLater();
+    if (numberRemoved > 0)
+        reply->deleteLater();
 }
 
 void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error)
@@ -326,7 +328,7 @@ void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *
     Q_Q(AbstractRestApi);
     operationId = ++lastUsedOperationId;
     repliesMutex.lock();
-    replies[reply] = qMakePair(operationId, handler);
+    replies[reply] = qMakePair(operationId, std::move(handler));
     repliesMutex.unlock();
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [this, reply, operationId](QNetworkReply::NetworkError) {
