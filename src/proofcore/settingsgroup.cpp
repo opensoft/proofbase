@@ -104,6 +104,13 @@ void SettingsGroup::deleteGroup(const QString &groupName)
 {
     Q_D(SettingsGroup);
     if (d->groups.contains(groupName)) {
+        auto groupToDelete = d->groups[groupName];
+        for (const QString &valueName : groupToDelete->values())
+            groupToDelete->deleteValue(valueName);
+
+        for (const QString &groupName : groupToDelete->groups())
+            groupToDelete->deleteGroup(groupName);
+
         d->groups.take(groupName)->deleteLater();
         qCDebug(proofCoreSettingsLog) << "Group" << groupName << "was deleted";
     }
