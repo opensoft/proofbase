@@ -29,9 +29,9 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
     });
 
     //error_notifier settings group migration
-    Proof::CoreApplication::addMigration(Proof::packVersion(0, 17, 2, 7),
+    Proof::CoreApplication::addMigration(Proof::packVersion(0, 17, 4, 10),
                                         [](quint64, quint64 oldProofVersion, Proof::Settings *settings) {
-        if (oldProofVersion >= Proof::packVersion(0, 17, 2, 7))
+        if (oldProofVersion >= Proof::packVersion(0, 17, 4, 10))
             return;
 
         auto allGroups = settings->groups();
