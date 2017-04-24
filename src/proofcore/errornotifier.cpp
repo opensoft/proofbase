@@ -29,8 +29,10 @@ ErrorNotifier::ErrorNotifier()
 ErrorNotifier::~ErrorNotifier()
 {
     Q_D(ErrorNotifier);
-    for (auto handler : d->handlers.values())
-        delete handler;
+    d->mutex.lock();
+    qDeleteAll(d->handlers);
+    d->handlers.clear();
+    d->mutex.unlock();
 }
 
 ErrorNotifier *ErrorNotifier::instance()
