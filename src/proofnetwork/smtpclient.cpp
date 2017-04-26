@@ -174,7 +174,7 @@ bool SmtpClientPrivate::sendTextMail(const TaskChainSP &taskChain, const QString
     QTcpSocket *socket = (connectionType == SmtpClient::ConnectionType::Plain) ? new QTcpSocket : new QSslSocket;
     std::function<bool()> readyReadCallback = [this, &socket, &state, message, senderEmail, domain, userNameBase64, passwordBase64, &mutableTo, &result]() {
         QString reply = socket->readAll();
-        int stateReply = reply.left(3).toInt();
+        int stateReply = reply.leftRef(3).toInt();
         QByteArray toSend;
         //TODO: add support for actual response for EHLO with auth types here
         if (state == SmtpStates::Init && stateReply == 220) {

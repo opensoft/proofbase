@@ -95,7 +95,7 @@ public:
         Q_Q(AbstractRestApi);
         QSharedPointer<Entity> entity = Entity::fromJson(jsonObject);
         if (!entity) {
-            for (const QString &attribute : serverErrorAttributes) {
+            for (const QString &attribute : qAsConst(serverErrorAttributes)) {
                 if (!jsonObject.value(attribute).isUndefined()) {
                     QString jsonErrorMessage = jsonObject.value(attribute).toString();
                     if (errorMessage) {
@@ -256,7 +256,7 @@ private:
                 if (!jsonObject.value(attributeName).isUndefined() && jsonObject.value(attributeName).isArray()) {
                     result = jsonParser(jsonObject.value(attributeName).toArray());
                 } else {
-                    for (const QString &attribute : serverErrorAttributes) {
+                    for (const QString &attribute : qAsConst(serverErrorAttributes)) {
                         if (!jsonObject.value(attribute).isUndefined()) {
                             QString jsonErrorMessage = jsonObject.value(attribute).toString();
                             if (errorMessage) {

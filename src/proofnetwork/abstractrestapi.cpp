@@ -57,7 +57,7 @@ void AbstractRestApi::abortRequest(qulonglong operationId)
     d->repliesMutex.unlock();
 
     if (toAbort && toAbort->isRunning()) {
-        errorOccurred(operationId, error);
+        emit errorOccurred(operationId, error);
         toAbort->abort();
         toAbort->deleteLater();
     }
@@ -356,11 +356,11 @@ void AbstractRestApiPrivate::clearReplies()
         replies.remove(reply);
         toAbort << reply;
         if (operationId)
-            q->errorOccurred(operationId, error);
+            emit q->errorOccurred(operationId, error);
     }
     repliesMutex.unlock();
 
-    for(auto reply : toAbort) {
+    for(auto reply : qAsConst(toAbort)) {
         reply->abort();
         reply->deleteLater();
     }

@@ -1,3 +1,4 @@
+// clazy:skip
 #include "gtest/test_global.h"
 
 #include "proofnetwork/urlquerybuilder.h"

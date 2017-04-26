@@ -96,6 +96,7 @@ namespace Proof {
 
 class AbstractRestServerPrivate: public QObject
 {
+    Q_OBJECT
     Q_DECLARE_PUBLIC(AbstractRestServer)
     friend WorkerThread;
 
@@ -177,7 +178,7 @@ AbstractRestServer::~AbstractRestServer()
 {
     Q_D(AbstractRestServer);
     stopListen();
-    for (const WorkerThreadInfo &workerInfo : d->threadPool) {
+    for (const WorkerThreadInfo &workerInfo : qAsConst(d->threadPool)) {
         workerInfo.thread->stop();
         workerInfo.thread->quit();
         workerInfo.thread->wait(1000);
@@ -324,8 +325,10 @@ void AbstractRestServer::stopListen()
 void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &query, const QByteArray &)
 {
     QStringList ipsList;
-    for (const auto &interface : QNetworkInterface::allInterfaces()) {
-        for (const auto &address : interface.addressEntries()) {
+    const auto allIfaces = QNetworkInterface::allInterfaces();
+    for (const auto &interface : allIfaces) {
+        const auto addressEntries = interface.addressEntries();
+        for (const auto &address : addressEntries) {
             if (!address.ip().isLoopback())
                 ipsList << QString("%1 (%2)").arg(address.ip().toString(), interface.humanReadableName());
         }
@@ -372,13 +375,11 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
             : QJsonValue();
 
     QJsonArray healthArray;
-    auto currentHealthStatus = healthStatus(quick);
-    for (const auto &name : currentHealthStatus.keys()) {
-        for (const auto &value : currentHealthStatus.values(name)) {
-            healthArray.append(QJsonObject {{"name", name},
-                                            {"value", QJsonValue::fromVariant(value.second)},
-                                            {"updated_at", value.first.toString(Qt::ISODate)}});
-        }
+    const auto currentHealthStatus = healthStatus(quick);
+    for (auto it = currentHealthStatus.cbegin(); it != currentHealthStatus.cend(); ++it) {
+        healthArray.append(QJsonObject {{"name", it.key()},
+                                        {"value", QJsonValue::fromVariant(it.value().second)},
+                                        {"updated_at", it.value().first.toString(Qt::ISODate)}});
     }
     statusObj["health"] = healthArray;
 
@@ -402,7 +403,8 @@ void AbstractRestServer::rest_get_System_RecentErrors(QTcpSocket *socket, const 
     QList<QDateTime> uniqueErrorsKeys = lastErrors.uniqueKeys();
     std::reverse(uniqueErrorsKeys.begin(), uniqueErrorsKeys.end());
     for (const auto &time : uniqueErrorsKeys) {
-        for (const auto &message : lastErrors.values(time))
+        const auto allMessages = lastErrors.values(time);
+        for (const auto &message : allMessages)
             recentErrorsArray.append(errorObjectBuilder(time, message));
     }
     sendAnswer(socket, QJsonDocument(recentErrorsArray).toJson(), "text/json");
@@ -469,9 +471,7 @@ void AbstractRestServer::sendErrorCode(QTcpSocket *socket, int returnCode, const
 bool AbstractRestServer::checkBasicAuth(const QString &encryptedAuth) const
 {
     Q_D(const AbstractRestServer);
-    QByteArray auth = QString("%1:%2")
-            .arg(d->userName)
-            .arg(d->password).toLatin1().toBase64();
+    QByteArray auth = QString("%1:%2").arg(d->userName, d->password).toLatin1().toBase64();
     if (encryptedAuth == auth)
         return true;
     return false;
@@ -736,7 +736,8 @@ void WorkerThread::onReadyRead(QTcpSocket *socket)
 void WorkerThread::stop()
 {
     if (!ProofObject::call(this, &WorkerThread::stop, Proof::Call::Block)) {
-        for (QTcpSocket *socket : sockets.keys())
+        const auto allKeys = sockets.keys();
+        for (QTcpSocket *socket : allKeys)
             deleteSocket(socket);
     }
 }
@@ -755,10 +756,10 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
         additionalHeadersList << QString("Proof-Application: %1").arg(proofApp->prettifiedApplicationName());
         additionalHeadersList << QString("Proof-%1-Version: %2").arg(proofApp->prettifiedApplicationName(), qApp->applicationVersion());
         additionalHeadersList << QString("Proof-%1-Framework-Version: %2").arg(proofApp->prettifiedApplicationName(), Proof::proofVersion());
-        for (const auto &key : serverD->customHeaders.keys())
-            additionalHeadersList << QString("%1: %2").arg(key, serverD->customHeaders[key]);
-        for (const auto &key : headers.keys())
-            additionalHeadersList << QString("%1: %2").arg(key, headers[key]);
+        for (auto it = serverD->customHeaders.cbegin(); it != serverD->customHeaders.cend(); ++it)
+            additionalHeadersList << QString("%1: %2").arg(it.key(), it.value());
+        for (auto it = headers.cbegin(); it != headers.cend(); ++it)
+            additionalHeadersList << QString("%1: %2").arg(it.key(), it.value());
         QString additionalHeaders = additionalHeadersList.join("\r\n") + "\r\n";
 
         //TODO: Add support for keep-alive

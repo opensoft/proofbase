@@ -51,7 +51,8 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
 
         if (emailNotifierGroup->value("enabled", false, Proof::Settings::NotFoundPolicy::Add).toBool()) {
             QStringList to;
-            for (const auto &address : toString.split("|", QString::SkipEmptyParts)) {
+            const auto splittedTo = toString.split("|", QString::SkipEmptyParts);
+            for (const auto &address : splittedTo) {
                 QString trimmed = address.trimmed();
                 if (!trimmed.isEmpty())
                     to << trimmed;

@@ -438,11 +438,11 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
             result.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/vnd.%1").arg(vendor));
     }
 
-    for (const QNetworkCookie &cookie : cookies)
+    for (const QNetworkCookie &cookie : qAsConst(cookies))
         result.setHeader(QNetworkRequest::CookieHeader, QVariant::fromValue(cookie));
 
-    for (const QByteArray &header : customHeaders.keys())
-        result.setRawHeader(header, customHeaders[header]);
+    for (auto it = customHeaders.cbegin(); it != customHeaders.cend(); ++it)
+        result.setRawHeader(it.key(), it.value());
 
     result.setRawHeader("Proof-Application", proofApp->prettifiedApplicationName().toLatin1());
     result.setRawHeader(QString("Proof-%1-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(), qApp->applicationVersion().toLatin1());
@@ -459,10 +459,7 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
             result.setRawHeader("X-Client-Name", clientName.toLocal8Bit());
         result.setRawHeader("Authorization",
                             QString("Basic %1")
-                            .arg(QString(QString("%1:%2")
-                                 .arg(userName)
-                                 .arg(password)
-                                 .toLatin1().toBase64()))
+                            .arg(QString(QString("%1:%2").arg(userName, password).toLatin1().toBase64()))
                             .toLatin1());
         break;
     case RestAuthType::QuasiOAuth2:
@@ -513,10 +510,10 @@ QByteArray RestClientPrivate::generateWsseToken() const
     hasher.addData(hashedPassword);
 
     return QString("UsernameToken Username=\"%1\", PasswordDigest=\"%2\", Nonce=\"%3\", Created=\"%4\"")
-            .arg(userName)
-            .arg(QString(hasher.result().toBase64()))
-            .arg(QString(nonce.toLatin1().toBase64()))
-            .arg(createdAt)
+            .arg(userName,
+                 QString(hasher.result().toBase64()),
+                 QString(nonce.toLatin1().toBase64()),
+                 createdAt)
             .toLatin1();
 }
 
@@ -529,9 +526,7 @@ void RestClientPrivate::requestQuasiOAuth2token(int retries, const QString &meth
     if (explicitPort)
         url.setPort(port);
     url.setPath(method);
-    QString quasiOAuth2TokenRequestData = QString("grant_type=password&username=%1&password=%2")
-            .arg(userName)
-            .arg(password);
+    QString quasiOAuth2TokenRequestData = QString("grant_type=password&username=%1&password=%2").arg(userName, password);
     QDateTime expiredTime = QDateTime::currentDateTime();
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");

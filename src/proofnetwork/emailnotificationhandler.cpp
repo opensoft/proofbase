@@ -32,7 +32,7 @@ EmailNotificationHandler::EmailNotificationHandler(const SmtpClientSP &smtpClien
 {
     Q_D(EmailNotificationHandler);
     d->smtpClient = smtpClient;
-    d->from = QString("%1<%2>").arg(qApp->applicationName()).arg(from);
+    d->from = QString("%1<%2>").arg(qApp->applicationName(), from);
     d->to = to;
 }
 
@@ -65,8 +65,10 @@ void EmailNotificationHandler::notify(const QString &message, ErrorNotifier::Sev
     if (!d->appId.isEmpty())
         subject += QString(" (%1)").arg(d->appId);
     QStringList ipsList;
-    for (const auto &interface : QNetworkInterface::allInterfaces()) {
-        for (const auto &address : interface.addressEntries()) {
+    const auto allIfaces = QNetworkInterface::allInterfaces();
+    for (const auto &interface : allIfaces) {
+        const auto addressEntries = interface.addressEntries();
+        for (const auto &address : addressEntries) {
             auto ip = address.ip();
             if (ip.isLoopback())
                 continue;

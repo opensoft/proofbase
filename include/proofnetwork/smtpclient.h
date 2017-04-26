@@ -14,13 +14,13 @@ class PROOF_NETWORK_EXPORT SmtpClient : public ProofObject
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(SmtpClient)
-    Q_ENUMS(ConnectionType)
 public:
     enum class ConnectionType {
         Plain,
         Ssl,
         StartTls
     };
+    Q_ENUM(ConnectionType)
 
     explicit SmtpClient();
 
