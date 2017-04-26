@@ -102,9 +102,9 @@ void fileHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
         if (!currentLogFile) {
             currentLogFileDate = QDate::currentDate();
             currentLogFile = new QFile(QString("%1/%2.%3.log")
-                                       .arg(logsStoragePath)
-                                       .arg(logFileNameBase)
-                                       .arg(currentLogFileDate.toString("yyyyMMdd")));
+                                       .arg(logsStoragePath,
+                                            logFileNameBase,
+                                            currentLogFileDate.toString("yyyyMMdd")));
             if (!currentLogFile->open(QFile::Append | QFile::Text))
                 return;
         }
@@ -113,7 +113,7 @@ void fileHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
                 .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
                 .arg(STRINGIFIED_TYPES.value(type, "D"))
                 .arg(context.category)
-                .arg(context.function)
+                .arg(context.function) // clazy:exclude=qstring-arg
                 .arg(QString(context.file).remove(QRegularExpression("^(\\.\\.[/\\\\])+")))
                 .arg(context.line)
                 .arg(message);
@@ -150,8 +150,8 @@ void Proof::Logs::setup(const QStringList &defaultLoggingRules)
             .arg(qApp->organizationName());
 #else
     QString configPath = QString("%1/%2")
-            .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
-            .arg(qApp->organizationName());
+            .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
+                 qApp->organizationName());
 #endif
 
     if (!configPath.isEmpty() && QDir::root().mkpath(configPath)) {
@@ -181,8 +181,8 @@ void Proof::Logs::setLogsStoragePath(QString storagePath)
 {
     if (storagePath.isEmpty()) {
         storagePath = QString("%1/%2/prooflogs")
-                .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
-                .arg(qApp->organizationName());
+                .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation),
+                     qApp->organizationName());
     }
     logsStoragePath = storagePath;
     QDir logsDir = QDir(logsStoragePath);

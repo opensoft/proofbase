@@ -76,13 +76,13 @@ void Expirator::timerEvent(QTimerEvent *ev)
 
     d->m_mutex->lock();
     QSet<QDateTime> toRemove;
-    for (const QDateTime &time : d->m_controlledObjects.keys()) {
-        if (time > QDateTime::currentDateTime())
+    for (auto it = d->m_controlledObjects.cbegin(); it != d->m_controlledObjects.cend(); ++it) {
+        if (it.key() > QDateTime::currentDateTime())
             break;
-        toRemove << time;
+        toRemove << it.key();
     }
     qCDebug(proofCoreCacheLog) << "Cache expirator removing" << toRemove.count() << "objects";
-    for (const QDateTime &time : toRemove)
+    for (const QDateTime &time : qAsConst(toRemove))
         d->m_controlledObjects.remove(time);
     d->m_mutex->unlock();
 }

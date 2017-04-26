@@ -49,7 +49,7 @@ void ErrorNotifier::notify(const QString &message, Severity severity, const QStr
     d->mutex.lock();
     if (d->handlers.isEmpty())
         d->startBuffer << std::make_tuple(message, severity, packId);
-    for (auto handler : d->handlers.values())
+    for (AbstractNotificationHandler *handler : qAsConst(d->handlers))
         handler->notify(message, severity, packId);
     d->mutex.unlock();
 }

@@ -91,7 +91,7 @@ QString SettingsPrivate::filePath()
         int index = qApp->arguments().indexOf("-c") + 1;
         if (index < qApp->arguments().count()) {
             QString configPath = qApp->arguments().at(index);
-            if (QFileInfo(configPath).exists())
+            if (QFileInfo::exists(configPath))
                 return configPath;
         }
     }
@@ -107,9 +107,9 @@ QString SettingsPrivate::filePath()
             .arg(qApp->applicationName());
 #else
     QString configPath = QString("%1/%2/%3.conf")
-            .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
-            .arg(qApp->organizationName())
-            .arg(qApp->applicationName());
+            .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
+                 qApp->organizationName(),
+                 qApp->applicationName());
 #endif
     return configPath;
 }
@@ -131,22 +131,24 @@ void SettingsPrivate::readSettings()
 void SettingsPrivate::fillGroupFromSettings(SettingsGroup *groupToFill)
 {
     QSet<QString> toRemove = groupToFill->values().toSet();
-    for (const QString &key : settings->childKeys()) {
+    const auto childKeys = settings->childKeys();
+    for (const QString &key : childKeys) {
         toRemove.remove(key);
         groupToFill->setValue(key, settings->value(key));
     }
-    for (const QString &key : toRemove)
+    for (const QString &key : qAsConst(toRemove))
         groupToFill->deleteValue(key);
 
     toRemove = groupToFill->groups().toSet();
-    for (const QString &key : settings->childGroups()) {
+    const auto childGroups = settings->childGroups();
+    for (const QString &key : childGroups) {
         toRemove.remove(key);
         SettingsGroup *group = groupToFill->addGroup(key);
         settings->beginGroup(key);
         fillGroupFromSettings(group);
         settings->endGroup();
     }
-    for (const QString &key : toRemove)
+    for (const QString &key : qAsConst(toRemove))
         groupToFill->deleteGroup(key);
 }
 

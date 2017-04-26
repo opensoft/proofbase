@@ -23,6 +23,7 @@ using TaskChainWP = QWeakPointer<TaskChain>;
 class TaskChainPrivate;
 class PROOF_CORE_EXPORT TaskChain : public QThread
 {
+    Q_OBJECT
     Q_DECLARE_PRIVATE(TaskChain)
 public:
     ~TaskChain();

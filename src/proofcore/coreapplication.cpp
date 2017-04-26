@@ -32,9 +32,9 @@ Proof::CoreApplication *&instance()
     return obj;
 }
 
-QList<std::function<void()> > &initializers()
+QVector<std::function<void()> > &initializers()
 {
-    static QList<std::function<void()>> obj;
+    static QVector<std::function<void()>> obj;
     return obj;
 }
 QMap<quint64, QList<Proof::CoreApplication::Migration>> &migrations()
@@ -127,15 +127,15 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
                     .arg(i)
                     .arg(re.cap(1).trimmed()) //scope
                     .arg(name ? name : mangledName) //name
-                    .arg(re.cap(3).trimmed()) //offset
-                    .arg(re.cap(4).trimmed()); //address
+                    .arg(re.cap(3).trimmed()) // clazy:exclude=qstring-arg
+                    .arg(re.cap(4).trimmed()); //offset and address
 # else
             toLog = QString("[trace] #%1) %2 : %3+%4 (%5)")
                     .arg(i)
                     .arg(re.cap(1).trimmed()) //scope
                     .arg(name ? name : mangledName) //name
-                    .arg(re.cap(4).trimmed()) //offset
-                    .arg(re.cap(2).trimmed()); //address
+                    .arg(re.cap(4).trimmed()) // clazy:exclude=qstring-arg
+                    .arg(re.cap(2).trimmed()); //offset and address
 # endif
             if (crashFileDescriptor != -1) {
                 write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
@@ -273,7 +273,7 @@ void CoreApplication::postInit()
     d->updateManager->start();
 
     d->initialized = true;
-    for (const auto &initializer : initializers())
+    for (const auto &initializer : qAsConst(initializers()))
         initializer();
     initializers().clear();
 }
@@ -309,17 +309,18 @@ void CoreApplication::addMigration(const QString &maxRelatedVersion, CoreApplica
 
 void CoreApplication::addMigrations(const QMap<quint64, QList<CoreApplication::Migration>> &migrations)
 {
-    for (quint64 version : migrations.keys()) {
-        for (Migration migration : migrations[version])
+    for (auto it = migrations.cbegin(); it != migrations.cend(); ++it) {
+        quint64 version = it.key();
+        for (Migration migration : it.value())
             addMigration(version, std::forward<Migration>(migration));
     }
 }
 
 void CoreApplication::addMigrations(const QMap<QString, QList<CoreApplication::Migration>> &migrations)
 {
-    for (const QString &version : migrations.keys()) {
-        quint64 packedVersion = packVersion(version);
-        for (Migration migration : migrations[version])
+    for (auto it = migrations.cbegin(); it != migrations.cend(); ++it) {
+        quint64 packedVersion = packVersion(it.key());
+        for (Migration migration : it.value())
             addMigration(packedVersion, std::forward<Migration>(migration));
     }
 }
@@ -358,7 +359,7 @@ void CoreApplicationPrivate::updatePrettifiedName()
         if (appName[i] == QChar('-'))
             appName[i + 1] = appName[i + 1].toUpper();
     }
-    prettifiedApplicationName = QString("%1-%2").arg(appName).arg(appType);
+    prettifiedApplicationName = QString("%1-%2").arg(appName, appType);
 }
 
 bool CoreApplicationPrivate::daemonizeIfNeeded()
@@ -407,7 +408,7 @@ void CoreApplicationPrivate::execMigrations()
 
     migrations()[minVersion];
 
-    for (auto it = ++migrations().find(minVersion); it != migrations().end(); ++it) {
+    for (auto it = ++qAsConst(migrations()).find(minVersion); it != qAsConst(migrations()).cend(); ++it) {
         for (const auto &migration : it.value())
             migration(packedAppVersion, packedProofVersion, settings);
     }
@@ -430,7 +431,8 @@ void CoreApplicationPrivate::initTranslator()
     QSet<QString> languagesSet;
     languagesSet.insert("en");
     QDir translationsDir(TRANSLATIONS_PATH);
-    for (const QFileInfo &fileInfo : translationsDir.entryInfoList({"*.qm"}, QDir::Files)) {
+    const auto allTranslations = translationsDir.entryInfoList({"*.qm"}, QDir::Files);
+    for (const QFileInfo &fileInfo : allTranslations) {
         QString fileName = fileInfo.fileName();
         translationPrefixes.insert(fileName.mid(0, fileName.indexOf('.')));
         languagesSet.insert(fileName.mid(fileName.indexOf('.') + 1, -3).mid(0, 2));
@@ -441,7 +443,7 @@ void CoreApplicationPrivate::initTranslator()
     currentLanguage = localeGroup->value("language", "en", Settings::NotFoundPolicy::Add).toString();
     setLanguage(currentLanguage);
 
-    for (const QString &lang : availableLanguages) {
+    for (const QString &lang : qAsConst(availableLanguages)) {
         QLocale locale(lang);
         fullLanguageNames[lang] = QLocale::languageToString(locale.language());
     }
@@ -468,7 +470,7 @@ void CoreApplicationPrivate::setLanguage(const QString &language)
     SettingsGroup *localeGroup = settings->group("locale", Settings::NotFoundPolicy::Add);
     localeGroup->setValue("language", language);
 
-    for (QTranslator *installedTranslator : installedTranslators) {
+    for (QTranslator *installedTranslator : qAsConst(installedTranslators)) {
         if (installedTranslator) {
             qApp->removeTranslator(installedTranslator);
             delete installedTranslator;
@@ -476,7 +478,7 @@ void CoreApplicationPrivate::setLanguage(const QString &language)
     }
     installedTranslators.clear();
 
-    for (const QString &prefix : translationPrefixes) {
+    for (const QString &prefix : qAsConst(translationPrefixes)) {
         qCDebug(proofCoreMiscLog) << "Language prefix" << prefix;
         QTranslator *translator = new QTranslator(q);
         installedTranslators.append(translator);

@@ -105,10 +105,12 @@ void SettingsGroup::deleteGroup(const QString &groupName)
     Q_D(SettingsGroup);
     if (d->groups.contains(groupName)) {
         auto groupToDelete = d->groups[groupName];
-        for (const QString &valueName : groupToDelete->values())
+        const auto valuesToDelete = groupToDelete->values();
+        for (const QString &valueName : valuesToDelete)
             groupToDelete->deleteValue(valueName);
 
-        for (const QString &groupName : groupToDelete->groups())
+        const auto subgroupsToDelete = groupToDelete->groups();
+        for (const QString &groupName : subgroupsToDelete)
             groupToDelete->deleteGroup(groupName);
 
         d->groups.take(groupName)->deleteLater();
@@ -128,10 +130,11 @@ void SettingsGroup::copyTo(SettingsGroup *destination)
     Q_D(SettingsGroup);
     if (!destination || destination == this)
         return;
-    for (const QString &name : values())
+    const auto srcValues = values();
+    for (const QString &name : srcValues)
         destination->setValue(name, value(name));
 
-    for (SettingsGroup *group : d->groups)
+    for (SettingsGroup *group : qAsConst(d->groups))
         group->copyTo(destination->addGroup(group->name()));
 }
 

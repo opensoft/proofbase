@@ -9,7 +9,6 @@ namespace Proof {
 class PROOF_CORE_EXPORT Humanizer : public ProofObject
 {
     Q_OBJECT
-    Q_ENUMS(TimeCategory)
 public:
     enum TimeCategory {
         StopAtSeconds,
@@ -18,6 +17,7 @@ public:
         StopAtDays,
         StopAtWeeks
     };
+    Q_ENUM(TimeCategory)
 
     Humanizer(QObject *parent = nullptr);
 
