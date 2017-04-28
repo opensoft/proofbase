@@ -12,7 +12,9 @@ class UrlQueryBuilder;
 class PROOF_NETWORK_EXPORT UrlQueryBuilderPrivate
 {
     Q_DECLARE_PUBLIC(UrlQueryBuilder)
+    Q_DISABLE_COPY(UrlQueryBuilderPrivate)
 public:
+    UrlQueryBuilderPrivate() = default;
     virtual ~UrlQueryBuilderPrivate() {}
 
     UrlQueryBuilder *q_ptr;

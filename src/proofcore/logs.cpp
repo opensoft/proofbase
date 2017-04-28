@@ -39,10 +39,11 @@ static QDate currentLogFileDate;
 
 
 namespace {
-class DetachedCompresser: public QRunnable
+class DetachedArchiver: public QRunnable
 {
+    Q_DISABLE_COPY(DetachedArchiver)
 public:
-    DetachedCompresser(const QString &filePath) : m_filePath(filePath) {}
+    DetachedArchiver(const QString &filePath) : m_filePath(filePath) {}
 
     void run() override
     {
@@ -132,8 +133,7 @@ void compressOldFiles()
         if (file.suffix() != "gz"
                 && file.completeSuffix() != QString("%1.log").arg(QDate::currentDate().toString("yyyyMMdd"))
                 && file.completeSuffix() != QString("%1.log").arg(currentLogFileDate.toString("yyyyMMdd"))) {
-            DetachedCompresser *compresser = new DetachedCompresser(file.absoluteFilePath());
-            QThreadPool::globalInstance()->start(compresser);
+            QThreadPool::globalInstance()->start(new DetachedArchiver(file.absoluteFilePath()));
         }
     }
 }

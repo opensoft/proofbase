@@ -659,7 +659,7 @@ void AbstractRestServerPrivate::deleteSocket(QTcpSocket *socket, WorkerThread *w
     if (!ProofObject::call(this, &AbstractRestServerPrivate::deleteSocket, socket, worker)) {
         {
             QMutexLocker lock(&socketsMutex);
-            auto iter = sockets.find(socket);
+            auto iter = sockets.constFind(socket);
             if (iter != sockets.end())
                 sockets.erase(iter);
             else
