@@ -314,7 +314,7 @@ void AbstractRestApiPrivate::cleanupReply(qulonglong operationId, QNetworkReply 
         reply->deleteLater();
 }
 
-void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error)
+void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, QJsonParseError error)
 {
     Q_Q(AbstractRestApi);
     emit q->errorOccurred(operationId,

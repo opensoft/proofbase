@@ -48,7 +48,7 @@ public:
     virtual void sslErrorsOccurred(qulonglong operationId, QNetworkReply *reply, const QList<QSslError> &errors, bool forceUserFriendly = false);
     virtual void cleanupReply(qulonglong operationId, QNetworkReply *reply);
 
-    void notifyAboutJsonParseError(qulonglong operationId, const QJsonParseError &error);
+    void notifyAboutJsonParseError(qulonglong operationId, QJsonParseError error);
 
     void clearReplies();
 

@@ -10,7 +10,7 @@
 
 namespace Proof {
 class SmtpClientPrivate;
-class PROOF_NETWORK_EXPORT SmtpClient : public ProofObject
+class PROOF_NETWORK_EXPORT SmtpClient : public ProofObject // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(SmtpClient)

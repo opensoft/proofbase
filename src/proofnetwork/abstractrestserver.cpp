@@ -94,7 +94,7 @@ private:
 
 namespace Proof {
 
-class AbstractRestServerPrivate: public QObject
+class AbstractRestServerPrivate: public QObject // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
     Q_DECLARE_PUBLIC(AbstractRestServer)
@@ -110,7 +110,7 @@ private:
     AbstractRestServerPrivate(const AbstractRestServerPrivate &&other) = delete;
     AbstractRestServerPrivate &operator=(const AbstractRestServerPrivate &&other) = delete;
 
-    void tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body);
+    void tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, const QStringList &headers, const QByteArray &body);
     QStringList makeMethodName(const QString &type, const QString &name);
     MethodNode *findMethod(const QStringList &splittedMethod, QStringList &methodVariableParts);
     void fillMethods();
@@ -425,7 +425,7 @@ void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
 
     if (!d->threadPool.isEmpty()) {
         auto iter = std::min_element(d->threadPool.begin(), d->threadPool.end(),
-                                     [](const WorkerThreadInfo &lhs, const WorkerThreadInfo &rhs) {
+                                     [](WorkerThreadInfo lhs, WorkerThreadInfo rhs) {
                                          return lhs.socketCount < rhs.socketCount;
                                      });
         if (iter->socketCount == 0 || d->threadPool.count() >= d->suggestedMaxThreadsCount) {
@@ -591,7 +591,8 @@ void AbstractRestServerPrivate::addMethodToTree(const QString &realMethod, const
     currentNode->setTag(tag);
 }
 
-void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, QStringList headers, const QByteArray &body)
+void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method,
+                                                const QStringList &headers, const QByteArray &body)
 {
     Q_Q(AbstractRestServer);
     QStringList splittedByParamsMethod = method.split('?');
@@ -665,7 +666,7 @@ void AbstractRestServerPrivate::deleteSocket(QTcpSocket *socket, WorkerThread *w
                 return;
         }
         delete socket;
-        auto iter = std::find_if(threadPool.begin(), threadPool.end(), [worker](const WorkerThreadInfo &info) {
+        auto iter = std::find_if(threadPool.begin(), threadPool.end(), [worker](WorkerThreadInfo info) {
             return info.thread == worker;
         });
         --iter->socketCount;

@@ -12,7 +12,7 @@ HttpParser::HttpParser()
 {
 }
 
-HttpParser::Result HttpParser::parseNextPart(QByteArray data)
+HttpParser::Result HttpParser::parseNextPart(QByteArray data) // clazy:exclude=function-args-by-ref
 {
     Result result;
     do
