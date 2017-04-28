@@ -59,7 +59,7 @@ signals:
     void installationSucceeded();
     void installationFailed();
     void passwordChecked(bool isCorrect);
-    void aptSourcesListFilePathChanged(QString aptSourcesListFilePath);
+    void aptSourcesListFilePathChanged(const QString &aptSourcesListFilePath);
 };
 
 } // namespace Proof

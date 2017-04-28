@@ -21,7 +21,7 @@ using TaskChainSP = QSharedPointer<TaskChain>;
 using TaskChainWP = QWeakPointer<TaskChain>;
 
 class TaskChainPrivate;
-class PROOF_CORE_EXPORT TaskChain : public QThread
+class PROOF_CORE_EXPORT TaskChain : public QThread // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(TaskChain)

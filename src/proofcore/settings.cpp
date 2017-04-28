@@ -77,7 +77,7 @@ SettingsGroup *Settings::addGroup(const QString &groupName)
 void Settings::deleteGroup(const QString &groupName)
 {
     Q_D(Settings);
-    return d->mainGroup->deleteGroup(groupName);
+    d->mainGroup->deleteGroup(groupName);
 }
 
 QString Settings::filePath()

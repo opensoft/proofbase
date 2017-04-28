@@ -9,7 +9,7 @@
 
 namespace Proof {
 class AbstractNotificationHandlerPrivate;
-class PROOF_CORE_EXPORT AbstractNotificationHandler : public ProofObject
+class PROOF_CORE_EXPORT AbstractNotificationHandler : public ProofObject // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(AbstractNotificationHandler)

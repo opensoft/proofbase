@@ -9,7 +9,7 @@
 #include <QRegExp>
 
 namespace {
-class WorkerThread : public QThread
+class WorkerThread : public QThread // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
 public:
@@ -341,7 +341,7 @@ void UpdateManagerPrivate::checkForUpdates()
 #endif
 }
 
-void UpdateManagerPrivate::installVersion(QString version, const QString &password)
+void UpdateManagerPrivate::installVersion(QString version, const QString &password) // clazy:exclude=function-args-by-ref
 {
     Q_Q(UpdateManager);
 #ifdef Q_OS_LINUX

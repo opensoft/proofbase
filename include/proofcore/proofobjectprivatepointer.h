@@ -12,7 +12,12 @@ class PROOF_CORE_EXPORT ProofObjectPrivatePointer
 {
 public:
     ProofObjectPrivatePointer(ProofObjectPrivate *d);
+    ProofObjectPrivatePointer(const ProofObjectPrivatePointer &) = delete;
+    ProofObjectPrivatePointer(ProofObjectPrivatePointer &&) = default;
     ~ProofObjectPrivatePointer();
+
+    ProofObjectPrivatePointer &operator=(const ProofObjectPrivatePointer &) = delete;
+    ProofObjectPrivatePointer &operator=(ProofObjectPrivatePointer &&) = default;
 
     ProofObjectPrivate *data();
     const ProofObjectPrivate *data() const;

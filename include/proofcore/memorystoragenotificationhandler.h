@@ -10,7 +10,7 @@
 
 namespace Proof {
 class MemoryStorageNotificationHandlerPrivate;
-class PROOF_CORE_EXPORT MemoryStorageNotificationHandler : public AbstractNotificationHandler
+class PROOF_CORE_EXPORT MemoryStorageNotificationHandler : public AbstractNotificationHandler // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(MemoryStorageNotificationHandler)
