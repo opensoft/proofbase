@@ -1,3 +1,5 @@
+// clazy:skip
+
 #include "gtest/test_global.h"
 
 #include "proofcore/helpers/humanizer.h"
