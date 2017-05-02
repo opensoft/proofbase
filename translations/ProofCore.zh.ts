@@ -6,7 +6,7 @@
     <message>
         <location filename="../errormessagesregistry.cpp" line="23"/>
         <source>Unknown error</source>
-        <translation type="unfinished"></translation>
+        <translation>未知错误</translation>
     </message>
 </context>
 </TS>
