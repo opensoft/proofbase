@@ -34,9 +34,9 @@ void ProofServiceRestApiPrivate::replyFinished(qulonglong operationId, QNetworkR
     QString serviceFrameworkVersion;
     for (const auto &header : reply->rawHeaderPairs()) {
         QString headerName = header.first;
-        if (!headerName.startsWith("proof-", Qt::CaseInsensitive))
+        if (!headerName.startsWith(QLatin1String("proof-"), Qt::CaseInsensitive))
             continue;
-        if (!headerName.compare("proof-application", Qt::CaseInsensitive)) {
+        if (!headerName.compare(QLatin1String("proof-application"), Qt::CaseInsensitive)) {
             serviceName = header.second;
             continue;
         }
@@ -65,9 +65,9 @@ void ProofServiceRestApiPrivate::replyFinished(qulonglong operationId, QNetworkR
         QJsonParseError jsonError;
         QJsonDocument content = QJsonDocument::fromJson(reply->readAll(), &jsonError);
         if (jsonError.error == QJsonParseError::NoError && content.isObject()) {
-            QJsonValue serviceErrorCode = content.object().value("error_code");
+            QJsonValue serviceErrorCode = content.object().value(QStringLiteral("error_code"));
             if (serviceErrorCode.isDouble()) {
-                QJsonArray jsonArgs = content.object().value("message_args").toArray();
+                QJsonArray jsonArgs = content.object().value(QStringLiteral("message_args")).toArray();
                 QStringList args;
                 for (const auto &arg : jsonArgs)
                     args << arg.toString();

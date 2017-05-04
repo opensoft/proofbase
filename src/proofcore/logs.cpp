@@ -52,7 +52,7 @@ public:
             QTime compressTimer;
             compressTimer.start();
             qCDebug(proofCoreLoggerLog) << "Compressing" << m_filePath;
-            gzFile fi = gzopen(QString("%1.gz").arg(m_filePath).toLocal8Bit().constData(), "wb2");
+            gzFile fi = gzopen(QStringLiteral("%1.gz").arg(m_filePath).toLocal8Bit().constData(), "wb2");
             while (!file.atEnd()) {
                 QByteArray fileData = file.read(1048576);
                 gzwrite(fi, fileData.constData(), fileData.length());
@@ -102,20 +102,20 @@ void fileHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
         }
         if (!currentLogFile) {
             currentLogFileDate = QDate::currentDate();
-            currentLogFile = new QFile(QString("%1/%2.%3.log")
+            currentLogFile = new QFile(QStringLiteral("%1/%2.%3.log")
                                        .arg(logsStoragePath,
                                             logFileNameBase,
-                                            currentLogFileDate.toString("yyyyMMdd")));
+                                            currentLogFileDate.toString(QStringLiteral("yyyyMMdd"))));
             if (!currentLogFile->open(QFile::Append | QFile::Text))
                 return;
         }
 
-        QString logLine = QString("[%1][%2][%3][%4@%5:%6] %7\n")
-                .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
-                .arg(STRINGIFIED_TYPES.value(type, "D"))
+        QString logLine = QStringLiteral("[%1][%2][%3][%4@%5:%6] %7\n")
+                .arg(QTime::currentTime().toString(QStringLiteral("hh:mm:ss.zzz")))
+                .arg(STRINGIFIED_TYPES.value(type, QStringLiteral("D")))
                 .arg(context.category)
                 .arg(context.function) // clazy:exclude=qstring-arg
-                .arg(QString(context.file).remove(QRegularExpression("^(\\.\\.[/\\\\])+")))
+                .arg(QString(context.file).remove(QRegularExpression(QStringLiteral("^(\\.\\.[/\\\\])+"))))
                 .arg(context.line)
                 .arg(message);
 
@@ -130,9 +130,9 @@ void compressOldFiles()
     QFileInfoList files = QDir(logsStoragePath).entryInfoList(QDir::Files | QDir::NoSymLinks);
 
     for(const QFileInfo &file: files) {
-        if (file.suffix() != "gz"
-                && file.completeSuffix() != QString("%1.log").arg(QDate::currentDate().toString("yyyyMMdd"))
-                && file.completeSuffix() != QString("%1.log").arg(currentLogFileDate.toString("yyyyMMdd"))) {
+        if (file.suffix() != QLatin1String("gz")
+                && file.completeSuffix() != QStringLiteral("%1.log").arg(QDate::currentDate().toString(QStringLiteral("yyyyMMdd")))
+                && file.completeSuffix() != QStringLiteral("%1.log").arg(currentLogFileDate.toString(QStringLiteral("yyyyMMdd")))) {
             QThreadPool::globalInstance()->start(new DetachedArchiver(file.absoluteFilePath()));
         }
     }
@@ -149,7 +149,7 @@ void Proof::Logs::setup(const QStringList &defaultLoggingRules)
             .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
             .arg(qApp->organizationName());
 #else
-    QString configPath = QString("%1/%2")
+    QString configPath = QStringLiteral("%1/%2")
             .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
                  qApp->organizationName());
 #endif
@@ -161,7 +161,7 @@ void Proof::Logs::setup(const QStringList &defaultLoggingRules)
                                            "proof.core.taskchain.extra=false\n"
                                            "proof.core.taskchain.stats=false\n"
                                            "%1\n")
-                    .arg(defaultLoggingRules.join("\n"));
+                    .arg(defaultLoggingRules.join(QStringLiteral("\n")));
             if (loggingRulesFile.open(QFile::WriteOnly|QFile::Append))
                 loggingRulesFile.write(defaultRules.toLatin1());
             QLoggingCategory::setFilterRules(defaultRules);
@@ -170,7 +170,7 @@ void Proof::Logs::setup(const QStringList &defaultLoggingRules)
             QLoggingCategory::setFilterRules(rules);
         }
     }
-    qSetMessagePattern("[%{type}][%{function}] %{message}");
+    qSetMessagePattern(QStringLiteral("[%{type}][%{function}] %{message}"));
 
     QtMessageHandler oldHandler = qInstallMessageHandler(&baseHandler);
     if (!defaultHandler)
@@ -180,13 +180,13 @@ void Proof::Logs::setup(const QStringList &defaultLoggingRules)
 void Proof::Logs::setLogsStoragePath(QString storagePath)
 {
     if (storagePath.isEmpty()) {
-        storagePath = QString("%1/%2/prooflogs")
+        storagePath = QStringLiteral("%1/%2/prooflogs")
                 .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation),
                      qApp->organizationName());
     }
     logsStoragePath = storagePath;
     QDir logsDir = QDir(logsStoragePath);
-    logsDir.mkpath(".");
+    logsDir.mkpath(QStringLiteral("."));
 
     QObject::connect(&compressTimer, &QTimer::timeout, &compressTimer, [](){compressOldFiles();});
     compressOldFiles();

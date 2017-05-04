@@ -3,7 +3,7 @@
 namespace Proof {
 static bool proofUsesSettingsValue = true;
 QString proofVersion() {
-    return PROOF_VERSION;
+    return PROOF_VERSION; // clazy:skip=qstring-allocations
 }
 
 int proofVersionMajor() {

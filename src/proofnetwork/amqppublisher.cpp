@@ -55,7 +55,7 @@ void AmqpPublisher::publishMessageImpl(const QString &message, const QString &ro
 
     Q_D(AmqpPublisher);
     if (!d->exchange) {
-        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("No amqp exchange found for message publishing"), false);
+        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QStringLiteral("No amqp exchange found for message publishing"), false);
     } else {
         d->exchange->publish(message, routingKey);
         emit messagePublished(publishId);
@@ -70,7 +70,7 @@ void AmqpPublisherPrivate::connected()
         exchange = newExchange;
         qCDebug(proofNetworkAmqpLog) << "Create exchange:" << exchangeName;
         QObject::connect(exchange, static_cast<void(QAmqpExchange::*)(QAMQP::Error)>(&QAmqpExchange::error), q, [this, q](QAMQP::Error error) {
-            emit q->errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Exchange Error: %1").arg(error), false);
+            emit q->errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QStringLiteral("Exchange Error: %1").arg(error), false);
             qCDebug(proofNetworkAmqpLog) << "Exchange Error:" << error;
         });
 

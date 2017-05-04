@@ -74,9 +74,9 @@ protected:
     {
         sendErrorCode(socket, returnCode, reason, static_cast<int>(errorCode), args);
     }
-    void sendBadRequest(QTcpSocket *socket, const QString &reason = "Bad Request");
-    void sendNotFound(QTcpSocket *socket, const QString &reason = "Not Found");
-    void sendNotAuthorized(QTcpSocket *socket, const QString &reason = "Unauthorized");
+    void sendBadRequest(QTcpSocket *socket, const QString &reason = QStringLiteral("Bad Request"));
+    void sendNotFound(QTcpSocket *socket, const QString &reason = QStringLiteral("Not Found"));
+    void sendNotAuthorized(QTcpSocket *socket, const QString &reason = QStringLiteral("Unauthorized"));
     void sendInternalError(QTcpSocket *socket);
     bool checkBasicAuth(const QString &encryptedAuth) const;
     QString parseAuth(QTcpSocket *socket, const QString &header);

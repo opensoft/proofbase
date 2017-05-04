@@ -162,7 +162,7 @@ QString UpdateManager::packageName() const
 QString UpdateManager::newVersion() const
 {
     Q_D(const UpdateManager);
-    return d->newVersion ? unpackVersionToString(d->newVersion) : "";
+    return d->newVersion ? unpackVersionToString(d->newVersion) : QLatin1String("");
 }
 
 bool UpdateManager::newVersionInstallable() const
@@ -449,14 +449,14 @@ void UpdateManagerPrivate::setAptSourcesListFilePath(const QString &arg)
 void UpdateManagerPrivate::setCurrentVersion(const QString &arg)
 {
     Q_Q(UpdateManager);
-    QStringList splittedVersion = arg.split(".");
+    QStringList splittedVersion = arg.split(QStringLiteral("."));
     if (splittedVersion.count() < 4)
         return;
     quint64 version = packVersion(splittedVersion);
     if (currentVersion != version) {
         currentVersionMajor = splittedVersion[0].toInt();
         currentVersion = version;
-        qCDebug(proofCoreUpdatesLog) << "Current version:" << QString("0x%1").arg(currentVersion, 16, 16, QLatin1Char('0'));
+        qCDebug(proofCoreUpdatesLog) << "Current version:" << QStringLiteral("0x%1").arg(currentVersion, 16, 16, QLatin1Char('0'));
         emit q->currentVersionChanged(q->currentVersion());
         updateTimerState();
     }

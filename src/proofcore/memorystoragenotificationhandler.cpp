@@ -68,5 +68,5 @@ void MemoryStorageNotificationHandler::notify(const QString &message, ErrorNotif
 
 QString MemoryStorageNotificationHandler::id()
 {
-    return "MemoryStorageNotificationHandler";
+    return QStringLiteral("MemoryStorageNotificationHandler");
 }

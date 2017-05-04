@@ -181,7 +181,7 @@ bool SmtpClientPrivate::sendTextMail(const TaskChainSP &taskChain, const QString
             toSend = QString("EHLO " + domain).toUtf8();
             state = SmtpStates::Auth;
         } else if (state == SmtpStates::Auth && stateReply == 250) {
-            if (reply.contains("STARTTLS") && connectionType == SmtpClient::ConnectionType::StartTls) {
+            if (reply.contains(QLatin1String("STARTTLS")) && connectionType == SmtpClient::ConnectionType::StartTls) {
                 toSend = "STARTTLS";
                 state = SmtpStates::Tls;
             } else {

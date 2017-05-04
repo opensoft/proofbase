@@ -54,13 +54,13 @@ void UrlQueryBuilder::setCustomParam(const QString &name, unsigned int value)
 void UrlQueryBuilder::setCustomParam(const QString &name, const QDateTime &value)
 {
     //ProFIT supports slightly different format from ISO8601 so we need to modify it accordingly
-    QString result = value.toString(Qt::ISODate).replace("T", " ");
+    QString result = value.toString(Qt::ISODate).replace(QLatin1String("T"), QLatin1String(" "));
     if (result.lastIndexOf(QRegExp("[-+]\\d\\d:?\\d\\d")) == -1) {
-        if (result.endsWith("Z"))
+        if (result.endsWith(QLatin1String("Z")))
             result.chop(1);
-        result += value.timeZone().displayName(value, QTimeZone::OffsetName).replace("UTC", "");
+        result += value.timeZone().displayName(value, QTimeZone::OffsetName).replace(QLatin1String("UTC"), QLatin1String(""));
     }
-    result.replace(QRegExp("([-+])(\\d\\d):?(\\d\\d)"), "\\1\\2\\3");
+    result.replace(QRegExp("([-+])(\\d\\d):?(\\d\\d)"), QStringLiteral("\\1\\2\\3"));
     setCustomParam(name, result);
 }
 
@@ -103,7 +103,7 @@ QUrlQuery UrlQueryBuilder::toUrlQuery() const
     QUrlQuery urlQuery;
     for (auto it = d->params.cbegin(); it != d->params.cend(); ++it) {
         QString value = it.value();
-        value.replace("+", "%2B");
+        value.replace(QLatin1String("+"), QLatin1String("%2B"));
         urlQuery.addQueryItem(it.key(), value);
     }
     return urlQuery;

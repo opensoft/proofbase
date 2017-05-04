@@ -22,8 +22,8 @@
 
 #include <algorithm>
 
-static const QString REST_METHOD_PREFIX = QString("rest_");
-static const QString NO_AUTH_TAG = QString("NO_AUTH_REQUIRED");
+static const QString REST_METHOD_PREFIX = QStringLiteral("rest_");
+static const QString NO_AUTH_TAG = QStringLiteral("NO_AUTH_REQUIRED");
 static const int MIN_THREADS_COUNT = 5;
 
 namespace {
@@ -142,12 +142,12 @@ private:
 using namespace Proof;
 
 AbstractRestServer::AbstractRestServer(QObject *parent)
-    : AbstractRestServer(*new AbstractRestServerPrivate, "", 80, parent)
+    : AbstractRestServer(*new AbstractRestServerPrivate, QLatin1String(""), 80, parent)
 {
 }
 
 AbstractRestServer::AbstractRestServer(int port, QObject *parent)
-    : AbstractRestServer(*new AbstractRestServerPrivate, "", port, parent)
+    : AbstractRestServer(*new AbstractRestServerPrivate, QLatin1String(""), port, parent)
 {
 }
 
@@ -330,13 +330,13 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
         const auto addressEntries = interface.addressEntries();
         for (const auto &address : addressEntries) {
             if (!address.ip().isLoopback())
-                ipsList << QString("%1 (%2)").arg(address.ip().toString(), interface.humanReadableName());
+                ipsList << QStringLiteral("%1 (%2)").arg(address.ip().toString(), interface.humanReadableName());
         }
     }
 
-    bool quick = query.hasQueryItem("quick");
+    bool quick = query.hasQueryItem(QStringLiteral("quick"));
 
-    QString lastCrashAt("N/A");
+    QString lastCrashAt(QStringLiteral("N/A"));
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
     QByteArray homePath = qgetenv("HOME");
     QDir homeDir(homePath.isEmpty() ? "/tmp" : homePath);
@@ -364,13 +364,13 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
     auto notificationsMemoryStorage = ErrorNotifier::instance()->handler<MemoryStorageNotificationHandler>();
     QPair<QDateTime, QString> lastError;
     if (notificationsMemoryStorage) {
-        statusObj["app_id"] = notificationsMemoryStorage->appId();
+        statusObj[QStringLiteral("app_id")] = notificationsMemoryStorage->appId();
         lastError = notificationsMemoryStorage->lastMessage();
     } else {
-        lastError = qMakePair(QDateTime::currentDateTimeUtc(), QString("Memory storage error handler not set"));
+        lastError = qMakePair(QDateTime::currentDateTimeUtc(), QStringLiteral("Memory storage error handler not set"));
     }
 
-    statusObj["last_error"] = lastError.first.isValid()
+    statusObj[QStringLiteral("last_error")] = lastError.first.isValid()
             ? QJsonObject {{"timestamp", lastError.first.toString(Qt::ISODate)}, {"message", lastError.second}}
             : QJsonValue();
 
@@ -381,11 +381,11 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
                                         {"value", QJsonValue::fromVariant(it.value().second)},
                                         {"updated_at", it.value().first.toString(Qt::ISODate)}});
     }
-    statusObj["health"] = healthArray;
+    statusObj[QStringLiteral("health")] = healthArray;
 
-    statusObj["generated_at"] = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+    statusObj[QStringLiteral("generated_at")] = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
 
-    sendAnswer(socket, QJsonDocument(statusObj).toJson(), "text/json");
+    sendAnswer(socket, QJsonDocument(statusObj).toJson(), QStringLiteral("text/json"));
 }
 
 void AbstractRestServer::rest_get_System_RecentErrors(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &, const QByteArray &)
@@ -407,7 +407,7 @@ void AbstractRestServer::rest_get_System_RecentErrors(QTcpSocket *socket, const 
         for (const auto &message : allMessages)
             recentErrorsArray.append(errorObjectBuilder(time, message));
     }
-    sendAnswer(socket, QJsonDocument(recentErrorsArray).toJson(), "text/json");
+    sendAnswer(socket, QJsonDocument(recentErrorsArray).toJson(), QStringLiteral("text/json"));
 }
 
 QMap<QString, QPair<QDateTime, QVariant>> AbstractRestServer::healthStatus(bool) const
@@ -458,20 +458,20 @@ void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, 
 void AbstractRestServer::sendErrorCode(QTcpSocket *socket, int returnCode, const QString &reason, int errorCode, const QStringList &args)
 {
     QJsonObject body;
-    body.insert("error_code", errorCode);
+    body.insert(QStringLiteral("error_code"), errorCode);
     if (!args.empty()) {
         QJsonArray jsonArgs;
         for (const auto &arg : args)
             jsonArgs << arg;
-        body.insert("message_args", jsonArgs);
+        body.insert(QStringLiteral("message_args"), jsonArgs);
     }
-    sendAnswer(socket, QJsonDocument(body).toJson(QJsonDocument::Compact), "application/json", returnCode, reason);
+    sendAnswer(socket, QJsonDocument(body).toJson(QJsonDocument::Compact), QStringLiteral("application/json"), returnCode, reason);
 }
 
 bool AbstractRestServer::checkBasicAuth(const QString &encryptedAuth) const
 {
     Q_D(const AbstractRestServer);
-    QByteArray auth = QString("%1:%2").arg(d->userName, d->password).toLatin1().toBase64();
+    QByteArray auth = QStringLiteral("%1:%2").arg(d->userName, d->password).toLatin1().toBase64();
     if (encryptedAuth == auth)
         return true;
     return false;
@@ -480,12 +480,12 @@ bool AbstractRestServer::checkBasicAuth(const QString &encryptedAuth) const
 QString AbstractRestServer::parseAuth(QTcpSocket *socket, const QString &header)
 {
     QString auth;
-    QStringList parts = header.split(":");
+    QStringList parts = header.split(QStringLiteral(":"));
     if (parts.count() != 2) {
         sendInternalError(socket);
     } else {
-        parts = parts.at(1).split(" ", QString::SkipEmptyParts);
-        if (parts.count() != 2 || parts.at(0) != "Basic")
+        parts = parts.at(1).split(QStringLiteral(" "), QString::SkipEmptyParts);
+        if (parts.count() != 2 || parts.at(0) != QLatin1String("Basic"))
             sendNotAuthorized(socket);
         else
             auth = parts.at(1);
@@ -495,27 +495,27 @@ QString AbstractRestServer::parseAuth(QTcpSocket *socket, const QString &header)
 
 void AbstractRestServer::sendBadRequest(QTcpSocket *socket, const QString &reason)
 {
-    sendAnswer(socket, "", "text/plain; charset=utf-8", 400, reason);
+    sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), 400, reason);
 }
 
 void AbstractRestServer::sendNotFound(QTcpSocket *socket, const QString &reason)
 {
-    sendAnswer(socket, "", "text/plain; charset=utf-8", 404, reason);
+    sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), 404, reason);
 }
 
 void AbstractRestServer::sendNotAuthorized(QTcpSocket *socket, const QString &reason)
 {
-    sendAnswer(socket, "", "text/plain; charset=utf-8", 401, reason);
+    sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), 401, reason);
 }
 
 void AbstractRestServer::sendInternalError(QTcpSocket *socket)
 {
-    sendAnswer(socket, "", "text/plain; charset=utf-8", 500, "Internal Server Error");
+    sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), 500, QStringLiteral("Internal Server Error"));
 }
 
 QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const QString &name)
 {
-    QStringList splittedName = name.split("/", QString::SkipEmptyParts);
+    QStringList splittedName = name.split(QStringLiteral("/"), QString::SkipEmptyParts);
     bool isStartedWithPrefix = splittedName.size() >= splittedPathPrefix.size()
             && std::equal(splittedPathPrefix.cbegin(), splittedPathPrefix.cend(), splittedName.cbegin(),
                           [](const QString &prefixPart, const QString &namePart) { return prefixPart == namePart.toLower(); });
@@ -578,7 +578,7 @@ void AbstractRestServerPrivate::addMethodToTree(const QString &realMethod, const
         }
     }
 
-    QStringList splittedMethod = method.split("_");
+    QStringList splittedMethod = method.split(QStringLiteral("_"));
     Q_ASSERT(splittedMethod.count() >= 2);
 
     MethodNode *currentNode = &methodsTreeRoot;
@@ -612,7 +612,7 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
         if (authType == RestAuthType::Basic && methodNode->tag() != NO_AUTH_TAG) {
             QString encryptedAuth;
             for (int i = 0; i < headers.count(); ++i) {
-                if (headers.at(i).startsWith("Authorization", Qt::CaseInsensitive)) {
+                if (headers.at(i).startsWith(QLatin1String("Authorization"), Qt::CaseInsensitive)) {
                     encryptedAuth = q->parseAuth(socket, headers.at(i));
                     break;
                 }
@@ -630,7 +630,7 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
             q->sendNotAuthorized(socket);
         }
     } else {
-        q->sendNotFound(socket, "Wrong method");
+        q->sendNotFound(socket, QStringLiteral("Wrong method"));
     }
 }
 
@@ -727,7 +727,7 @@ void WorkerThread::onReadyRead(QTcpSocket *socket)
     case HttpParser::Result::Error:
         qCDebug(proofNetworkMiscLog) << "Parse error:" << info.parser.error();
         disconnect(info.readyReadConnection);
-        sendAnswer(socket, "", "text/plain; charset=utf-8", QHash<QString, QString>(), 400, "Bad Request");
+        sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), QHash<QString, QString>(), 400, QStringLiteral("Bad Request"));
         break;
     case HttpParser::Result::NeedMore:
         break;
@@ -754,14 +754,14 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
 
     if (sockets.contains(socket) && socket->state() == QTcpSocket::ConnectedState) {
         QStringList additionalHeadersList;
-        additionalHeadersList << QString("Proof-Application: %1").arg(proofApp->prettifiedApplicationName());
-        additionalHeadersList << QString("Proof-%1-Version: %2").arg(proofApp->prettifiedApplicationName(), qApp->applicationVersion());
-        additionalHeadersList << QString("Proof-%1-Framework-Version: %2").arg(proofApp->prettifiedApplicationName(), Proof::proofVersion());
+        additionalHeadersList << QStringLiteral("Proof-Application: %1").arg(proofApp->prettifiedApplicationName());
+        additionalHeadersList << QStringLiteral("Proof-%1-Version: %2").arg(proofApp->prettifiedApplicationName(), qApp->applicationVersion());
+        additionalHeadersList << QStringLiteral("Proof-%1-Framework-Version: %2").arg(proofApp->prettifiedApplicationName(), Proof::proofVersion());
         for (auto it = serverD->customHeaders.cbegin(); it != serverD->customHeaders.cend(); ++it)
-            additionalHeadersList << QString("%1: %2").arg(it.key(), it.value());
+            additionalHeadersList << QStringLiteral("%1: %2").arg(it.key(), it.value());
         for (auto it = headers.cbegin(); it != headers.cend(); ++it)
-            additionalHeadersList << QString("%1: %2").arg(it.key(), it.value());
-        QString additionalHeaders = additionalHeadersList.join("\r\n") + "\r\n";
+            additionalHeadersList << QStringLiteral("%1: %2").arg(it.key(), it.value());
+        QString additionalHeaders = additionalHeadersList.join(QStringLiteral("\r\n")) + "\r\n";
 
         //TODO: Add support for keep-alive
         socket->write(QString("HTTP/1.1 %1 %2\r\n"
@@ -774,7 +774,7 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
                       .arg(QString::number(returnCode),
                            reason,
                            contentType,
-                           !body.isEmpty() ? QString("Content-Length: %1\r\n").arg(body.size()) : QString(),
+                           !body.isEmpty() ? QStringLiteral("Content-Length: %1\r\n").arg(body.size()) : QString(),
                            additionalHeaders)
                       .toUtf8());
 

@@ -110,7 +110,7 @@ public:
                 }
             }
 
-            QString errorString("Can't create entity from server response");
+            QString errorString(QStringLiteral("Can't create entity from server response"));
             if (errorMessage) {
                 errorString.prepend(*errorMessage);
                 *errorMessage = errorString;
@@ -195,7 +195,7 @@ public:
         QJsonParseError jsonError;
         QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
-            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
+            QString jsonErrorString = QStringLiteral("JSON error: %1").arg(jsonError.errorString());
             if (errorMessage) {
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
@@ -206,7 +206,7 @@ public:
                                                jsonErrorString});
             return QJsonObject();
         } else if (doc.object().isEmpty()) {
-            QString jsonErrorString = "JSON error: empty entity data";
+            QString jsonErrorString = QStringLiteral("JSON error: empty entity data");
             if (errorMessage) {
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
@@ -240,7 +240,7 @@ private:
         QJsonParseError jsonError;
         QJsonDocument doc = QJsonDocument::fromJson(json, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
-            QString jsonErrorString = QString("JSON error: %1").arg(jsonError.errorString());
+            QString jsonErrorString = QStringLiteral("JSON error: %1").arg(jsonError.errorString());
             if (errorMessage) {
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
@@ -272,7 +272,7 @@ private:
                     }
                 }
             } else {
-                QString invalidJson = "Can't create list of entities from server response";
+                QString invalidJson = QStringLiteral("Can't create list of entities from server response");
                 if (errorMessage) {
                     invalidJson.prepend(*errorMessage);
                     *errorMessage = invalidJson;

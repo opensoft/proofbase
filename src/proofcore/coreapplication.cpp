@@ -56,7 +56,7 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
 
     alarm(10);
     char *homeDir = getenv("HOME");
-    QString crashFileName = QString("%1/proof_crash_%2").arg(homeDir ? homeDir : "/tmp").arg(time(0));
+    QString crashFileName = QStringLiteral("%1/proof_crash_%2").arg(homeDir ? homeDir : "/tmp").arg(time(0)); // clazy:skip=qstring-allocations
     int crashFileDescriptor = open(crashFileName.toLatin1().constData(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
     ucontext_t *uc = (ucontext_t *)context;
 # ifdef Q_OS_LINUX
@@ -65,14 +65,14 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
     void *caller = (void *) uc->uc_mcontext->__ss.__rip;
 # endif
 
-    QString toLog = "#######################################";
+    QString toLog = QStringLiteral("#######################################");
     if (crashFileDescriptor != -1) {
         write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
         write(crashFileDescriptor, "\n", 1);
     }
     write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
     write(STDOUT_FILENO, "\n", 1);
-    toLog = QString("signal %1 (%2), address is 0x%3 from 0x%4")
+    toLog = QStringLiteral("signal %1 (%2), address is 0x%3 from 0x%4")
             .arg(sig)
             .arg(strsignal(sig))
             .arg((unsigned long long) info->si_addr, 0, 16)
@@ -106,7 +106,7 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
 # endif
 
         if (re.indexIn(backtraceArray[i]) < 0) {
-            toLog = QString("[trace] #%1) %2")
+            toLog = QStringLiteral("[trace] #%1) %2")
                     .arg(i)
                     .arg(backtraceArray[i]);
             if (crashFileDescriptor != -1) {
@@ -130,7 +130,7 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
                     .arg(re.cap(3).trimmed()) // clazy:exclude=qstring-arg
                     .arg(re.cap(4).trimmed()); //offset and address
 # else
-            toLog = QString("[trace] #%1) %2 : %3+%4 (%5)")
+            toLog = QStringLiteral("[trace] #%1) %2 : %3+%4 (%5)")
                     .arg(i)
                     .arg(re.cap(1).trimmed()) //scope
                     .arg(name ? name : mangledName) //name
@@ -154,7 +154,7 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
 }
 #endif
 
-const QString TRANSLATIONS_PATH = ":/translations";
+const QString TRANSLATIONS_PATH = QStringLiteral(":/translations");
 
 using namespace Proof;
 
@@ -200,7 +200,7 @@ CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *a
     d->initTranslator();
     d->initUpdateManager();
 
-    qCDebug(proofCoreMiscLog).noquote() << QString("%1 started").arg(qApp->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
+    qCDebug(proofCoreMiscLog).noquote() << QStringLiteral("%1 started").arg(qApp->applicationName()).toLatin1().constData() << "with config at" << Proof::Settings::filePath();
 }
 
 CoreApplication::~CoreApplication()
@@ -344,13 +344,13 @@ void CoreApplicationPrivate::initCrashHandler()
 
 void CoreApplicationPrivate::updatePrettifiedName()
 {
-    QString appType = "Station";
+    QString appType = QStringLiteral("Station");
     QString appName = qApp->applicationName();
-    if (appName.startsWith("proofservice")) {
-        appName.remove("proofservice-");
-        appType = "Service";
+    if (appName.startsWith(QLatin1String("proofservice"))) {
+        appName.remove(QStringLiteral("proofservice-"));
+        appType = QStringLiteral("Service");
     } else {
-        appName.remove("proofstation-");
+        appName.remove(QStringLiteral("proofstation-"));
     }
 
     if (!appName.isEmpty())
@@ -359,7 +359,7 @@ void CoreApplicationPrivate::updatePrettifiedName()
         if (appName[i] == QChar('-'))
             appName[i + 1] = appName[i + 1].toUpper();
     }
-    prettifiedApplicationName = QString("%1-%2").arg(appName, appType);
+    prettifiedApplicationName = QStringLiteral("%1-%2").arg(appName, appType);
 }
 
 bool CoreApplicationPrivate::daemonizeIfNeeded()
@@ -376,15 +376,15 @@ bool CoreApplicationPrivate::daemonizeIfNeeded()
 void CoreApplicationPrivate::initLogs(bool daemonized)
 {
     bool consoleOutputEnabled = true;
-    QString logsStoragePath = "";
+    QString logsStoragePath = QLatin1String("");
     QString logFileName = qApp->applicationName();
     Settings::NotFoundPolicy policy = Proof::proofUsesSettings() ? Settings::NotFoundPolicy::Add : Settings::NotFoundPolicy::DoNothing;
 
-    SettingsGroup *logGroup = settings->group("logs", policy);
+    SettingsGroup *logGroup = settings->group(QStringLiteral("logs"), policy);
     if (logGroup) {
-        consoleOutputEnabled = !daemonized && logGroup->value("console", consoleOutputEnabled, policy).toBool();
-        logsStoragePath = logGroup->value("custom_storage_path", logsStoragePath, policy).toString();
-        logFileName = logGroup->value("filename", logFileName, policy).toString();
+        consoleOutputEnabled = !daemonized && logGroup->value(QStringLiteral("console"), consoleOutputEnabled, policy).toBool();
+        logsStoragePath = logGroup->value(QStringLiteral("custom_storage_path"), logsStoragePath, policy).toString();
+        logFileName = logGroup->value(QStringLiteral("filename"), logFileName, policy).toString();
     }
 
     Logs::setConsoleOutputEnabled(consoleOutputEnabled);
@@ -395,8 +395,8 @@ void CoreApplicationPrivate::initLogs(bool daemonized)
 
 void CoreApplicationPrivate::execMigrations()
 {
-    quint64 packedAppVersion = packVersion(settings->mainGroup()->value("__app_version__", "").toString().trimmed());
-    quint64 packedProofVersion = packVersion(settings->mainGroup()->value("__proof_version__", "").toString().trimmed());
+    quint64 packedAppVersion = packVersion(settings->mainGroup()->value(QStringLiteral("__app_version__"), "").toString().trimmed());
+    quint64 packedProofVersion = packVersion(settings->mainGroup()->value(QStringLiteral("__proof_version__"), "").toString().trimmed());
 
     if (packedAppVersion >= packVersion(qApp->applicationVersion())
             && packedProofVersion >= packVersion(proofVersion())) {
@@ -414,8 +414,8 @@ void CoreApplicationPrivate::execMigrations()
     }
     migrations().clear();
 
-    settings->mainGroup()->setValue("__app_version__", qApp->applicationVersion());
-    settings->mainGroup()->setValue("__proof_version__", proofVersion());
+    settings->mainGroup()->setValue(QStringLiteral("__app_version__"), qApp->applicationVersion());
+    settings->mainGroup()->setValue(QStringLiteral("__proof_version__"), proofVersion());
 }
 
 void CoreApplicationPrivate::initQca()
@@ -429,7 +429,7 @@ void CoreApplicationPrivate::initQca()
 void CoreApplicationPrivate::initTranslator()
 {
     QSet<QString> languagesSet;
-    languagesSet.insert("en");
+    languagesSet.insert(QStringLiteral("en"));
     QDir translationsDir(TRANSLATIONS_PATH);
     const auto allTranslations = translationsDir.entryInfoList({"*.qm"}, QDir::Files);
     for (const QFileInfo &fileInfo : allTranslations) {
@@ -439,8 +439,8 @@ void CoreApplicationPrivate::initTranslator()
     }
     availableLanguages = languagesSet.toList();
     std::sort(availableLanguages.begin(), availableLanguages.end());
-    SettingsGroup *localeGroup = settings->group("locale", Settings::NotFoundPolicy::Add);
-    currentLanguage = localeGroup->value("language", "en", Settings::NotFoundPolicy::Add).toString();
+    SettingsGroup *localeGroup = settings->group(QStringLiteral("locale"), Settings::NotFoundPolicy::Add);
+    currentLanguage = localeGroup->value(QStringLiteral("language"), QStringLiteral("en"), Settings::NotFoundPolicy::Add).toString();
     setLanguage(currentLanguage);
 
     for (const QString &lang : qAsConst(availableLanguages)) {
@@ -467,8 +467,8 @@ void CoreApplicationPrivate::setLanguage(const QString &language)
 {
     Q_Q(CoreApplication);
     currentLanguage = language;
-    SettingsGroup *localeGroup = settings->group("locale", Settings::NotFoundPolicy::Add);
-    localeGroup->setValue("language", language);
+    SettingsGroup *localeGroup = settings->group(QStringLiteral("locale"), Settings::NotFoundPolicy::Add);
+    localeGroup->setValue(QStringLiteral("language"), language);
 
     for (QTranslator *installedTranslator : qAsConst(installedTranslators)) {
         if (installedTranslator) {
@@ -482,7 +482,7 @@ void CoreApplicationPrivate::setLanguage(const QString &language)
         qCDebug(proofCoreMiscLog) << "Language prefix" << prefix;
         QTranslator *translator = new QTranslator(q);
         installedTranslators.append(translator);
-        translator->load(QString("%1.%2").arg(prefix, language), TRANSLATIONS_PATH);
+        translator->load(QStringLiteral("%1.%2").arg(prefix, language), TRANSLATIONS_PATH);
         qApp->installTranslator(translator);
     }
 }

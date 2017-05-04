@@ -99,7 +99,7 @@ public:
                 error.code = 0;
                 error.proofModuleCode = NETWORK_MODULE_CODE;
                 error.proofErrorCode = NetworkErrorCode::InvalidRequest;
-                error.message = "Invalid arguments";
+                error.message = QStringLiteral("Invalid arguments");
                 error.userFriendly = false;
             } else {
                 taskChain->fireSignalWaiters();
@@ -109,7 +109,7 @@ public:
             error.code = 0;
             error.proofModuleCode = NETWORK_MODULE_CODE;
             error.proofErrorCode = NetworkErrorCode::AuthCredentialsError;
-            error.message = "API is not logged in";
+            error.message = QStringLiteral("API is not logged in");
             error.userFriendly = false;
         }
         return error;
@@ -147,7 +147,7 @@ public:
                 error.code = 0;
                 error.proofModuleCode = NETWORK_MODULE_CODE;
                 error.proofErrorCode = NetworkErrorCode::InvalidRequest;
-                error.message = "Invalid arguments";
+                error.message = QStringLiteral("Invalid arguments");
                 error.userFriendly = false;
             } else {
                 taskChain->fireSignalWaiters();
@@ -157,7 +157,7 @@ public:
             error.code = 0;
             error.proofModuleCode = NETWORK_MODULE_CODE;
             error.proofErrorCode = NetworkErrorCode::AuthCredentialsError;
-            error.message = "API is not logged in";
+            error.message = QStringLiteral("API is not logged in");
             error.userFriendly = false;
         }
         return error;

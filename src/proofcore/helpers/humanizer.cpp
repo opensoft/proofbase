@@ -58,32 +58,32 @@ QString Proof::humanizeTime(qlonglong seconds, Humanizer::TimeCategory stopAt)
 
     QStringList result;
     if (weeks > 0 && stopAt <= Humanizer::TimeCategory::StopAtWeeks)
-        result << QString("%1w").arg(weeks);
+        result << QStringLiteral("%1w").arg(weeks);
     if (days > 0 && stopAt <= Humanizer::TimeCategory::StopAtDays)
-        result << QString("%1d").arg(days);
+        result << QStringLiteral("%1d").arg(days);
     if (hours > 0 && stopAt <= Humanizer::TimeCategory::StopAtHours)
-        result << QString("%1h").arg(hours);
+        result << QStringLiteral("%1h").arg(hours);
     if (minutes > 0 && stopAt <= Humanizer::TimeCategory::StopAtMinutes)
-        result << QString("%1m").arg(minutes);
+        result << QStringLiteral("%1m").arg(minutes);
     if (seconds > 0 && stopAt == Humanizer::TimeCategory::StopAtSeconds)
-        result << QString("%1s").arg(seconds);
+        result << QStringLiteral("%1s").arg(seconds);
 
     if (result.isEmpty()) {
         switch (stopAt) {
         case Humanizer::TimeCategory::StopAtWeeks:
-            return "<1w";
+            return QStringLiteral("<1w");
         case Humanizer::TimeCategory::StopAtDays:
-            return "<1d";
+            return QStringLiteral("<1d");
         case Humanizer::TimeCategory::StopAtHours:
-            return "<1h";
+            return QStringLiteral("<1h");
         case Humanizer::TimeCategory::StopAtMinutes:
-            return "<1m";
+            return QStringLiteral("<1m");
         case Humanizer::TimeCategory::StopAtSeconds:
-            return "0s";
+            return QStringLiteral("0s");
         }
     }
 
-    return result.join(" ");
+    return result.join(QStringLiteral(" "));
 }
 
 QString Proof::humanizeBytesSize(qlonglong bytes)
@@ -93,10 +93,10 @@ QString Proof::humanizeBytesSize(qlonglong bytes)
     static const qlonglong bytesInGigabyte = bytesInMegabyte << 10;
 
     if (bytes >= bytesInGigabyte)
-        return QString("%1G").arg((double)bytes / (double)bytesInGigabyte, 0, 'f', 2);
+        return QStringLiteral("%1G").arg((double)bytes / (double)bytesInGigabyte, 0, 'f', 2);
     if (bytes >= bytesInMegabyte)
-        return QString("%1M").arg((double)bytes / (double)bytesInMegabyte, 0, 'f', 2);
+        return QStringLiteral("%1M").arg((double)bytes / (double)bytesInMegabyte, 0, 'f', 2);
     if (bytes >= bytesInKilobyte)
-        return QString("%1K").arg((double)bytes / (double)bytesInKilobyte, 0, 'f', 2);
-    return QString("%1 bytes").arg(bytes);
+        return QStringLiteral("%1K").arg((double)bytes / (double)bytesInKilobyte, 0, 'f', 2);
+    return QStringLiteral("%1 bytes").arg(bytes);
 }

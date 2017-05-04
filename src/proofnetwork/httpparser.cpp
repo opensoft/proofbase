@@ -62,7 +62,7 @@ HttpParser::Result HttpParser::initialState(QByteArray &data)
             m_state = &HttpParser::headersState;
             result = Result::NeedMore;
         } else {
-            m_error = QString("Invalid start line: %1").arg(startLine);
+            m_error = QStringLiteral("Invalid start line: %1").arg(startLine);
             result = Result::Error;
         }
     } else {
@@ -86,15 +86,15 @@ HttpParser::Result HttpParser::headersState(QByteArray &data)
         if (headerRegExp.indexIn(header) != -1) {
             result = Result::NeedMore;
             m_headers << headerRegExp.cap(1);
-            if (headerRegExp.cap(2).compare("Content-Length", Qt::CaseInsensitive) == 0) {
+            if (headerRegExp.cap(2).compare(QLatin1String("Content-Length"), Qt::CaseInsensitive) == 0) {
                 bool ok = false;
                 m_contentLength = headerRegExp.cap(3).toULongLong(&ok);
                 if (!ok) {
                     result = Result::Error;
-                    m_error = QString("Can't convert %1 to unsinged long long for \"Content-Length\"").arg(headerRegExp.cap(3));
+                    m_error = QStringLiteral("Can't convert %1 to unsinged long long for \"Content-Length\"").arg(headerRegExp.cap(3));
                 }
             }
-        } else if (header == "\r\n") {
+        } else if (header == QLatin1String("\r\n")) {
             if (m_contentLength != 0) {
                 m_state = &HttpParser::bodyState;
                 result = Result::NeedMore;
@@ -102,7 +102,7 @@ HttpParser::Result HttpParser::headersState(QByteArray &data)
                 result = Result::Success;
             }
         } else {
-            m_error = QString("Invalid header: %1").arg(header);
+            m_error = QStringLiteral("Invalid header: %1").arg(header);
             result = Result::Error;
         }
     } else {

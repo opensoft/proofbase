@@ -24,12 +24,12 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
             if (d->autoReconnectionTries > 0) {
                 --d->autoReconnectionTries;
             } else {
-                emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Client Error: %1").arg(error), false);
+                emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QStringLiteral("Client Error: %1").arg(error), false);
                 d->autoReconnectionTries = AUTO_RECONNECTION_TRIES;
             }
         } else {
             d->rabbitClient->disconnectFromHost();
-            emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QString("Client Error: %1").arg(error), false);
+            emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QStringLiteral("Client Error: %1").arg(error), false);
             qCDebug(proofNetworkAmqpLog) << "Client Error:" << error;
         }
     });
@@ -40,22 +40,22 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
             if (d->autoReconnectionTries > 0) {
                 --d->autoReconnectionTries;
             } else {
-                emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable, "Can't connect to qamqp server (Socket)", false);
+                emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable, QStringLiteral("Can't connect to qamqp server (Socket)"), false);
                 d->autoReconnectionTries = AUTO_RECONNECTION_TRIES;
             }
         } else {
             d->rabbitClient->disconnectFromHost();
-            emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable, "Can't connect to qamqp server (Socket)", false);
+            emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable, QStringLiteral("Can't connect to qamqp server (Socket)"), false);
             qCDebug(proofNetworkAmqpLog) << "Socket Error:" << error;
         }
     });
 
     QObject::connect(d->rabbitClient, &QAmqpClient::sslErrors, this, [this](const QList<QSslError> &errors) {
-        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::SslError, "Can't connect to qamqp server (SSL)", false);
+        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::SslError, QStringLiteral("Can't connect to qamqp server (SSL)"), false);
 
         QString errorsString;
         for(const auto &error : errors)
-            errorsString += QString("%1,\n").arg(error.errorString());
+            errorsString += QStringLiteral("%1,\n").arg(error.errorString());
         errorsString.chop(2);
         qCDebug(proofNetworkAmqpLog) << "SSL Socket errors:" << errorsString;
     });

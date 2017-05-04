@@ -30,12 +30,12 @@ class PROOF_CORE_EXPORT CoreApplication : public ProofObject // clazy:exclude=ct
 public:
     CoreApplication(int &argc, char **argv,
                     const QString &orgName = QString(), const QString &appName = QString(),
-                    const QString &version = QString("0.0.0.0"),
+                    const QString &version = QStringLiteral("0.0.0.0"),
                     const QStringList &defaultLoggingRules = QStringList());
 
     CoreApplication(QCoreApplication *app,
                     const QString &orgName = QString(), const QString &appName = QString(),
-                    const QString &version = QString("0.0.0.0"),
+                    const QString &version = QStringLiteral("0.0.0.0"),
                     const QStringList &defaultLoggingRules = QStringList());
 
     ~CoreApplication();
@@ -77,7 +77,7 @@ signals:
 protected:
     CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *app,
                     const QString &orgName = QString(), const QString &appName = QString(),
-                    const QString &version = QString("0.0.0.0"),
+                    const QString &version = QStringLiteral("0.0.0.0"),
                     const QStringList &defaultLoggingRules = QStringList());
 };
 

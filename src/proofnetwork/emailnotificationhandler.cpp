@@ -32,7 +32,7 @@ EmailNotificationHandler::EmailNotificationHandler(const SmtpClientSP &smtpClien
 {
     Q_D(EmailNotificationHandler);
     d->smtpClient = smtpClient;
-    d->from = QString("%1<%2>").arg(qApp->applicationName(), from);
+    d->from = QStringLiteral("%1<%2>").arg(qApp->applicationName(), from);
     d->to = to;
 }
 
@@ -51,19 +51,19 @@ void EmailNotificationHandler::notify(const QString &message, ErrorNotifier::Sev
     QString severityName;
     switch(severity) {
     case ErrorNotifier::Severity::Error:
-        severityName = "Error";
+        severityName = QStringLiteral("Error");
         break;
     case ErrorNotifier::Severity::Critical:
-        severityName = "Critical error";
+        severityName = QStringLiteral("Critical error");
         break;
     case ErrorNotifier::Severity::Warning: //will never be used, added to supress warning
-        severityName = "Warning";
+        severityName = QStringLiteral("Warning");
         break;
     }
 
-    QString subject = QString("%1 at %2").arg(severityName, qApp->applicationName());
+    QString subject = QStringLiteral("%1 at %2").arg(severityName, qApp->applicationName());
     if (!d->appId.isEmpty())
-        subject += QString(" (%1)").arg(d->appId);
+        subject += QStringLiteral(" (%1)").arg(d->appId);
     QStringList ipsList;
     const auto allIfaces = QNetworkInterface::allInterfaces();
     for (const auto &interface : allIfaces) {
@@ -73,7 +73,7 @@ void EmailNotificationHandler::notify(const QString &message, ErrorNotifier::Sev
             if (ip.isLoopback())
                 continue;
 
-            ipsList << QString("%1 (%2)").arg(ip.toString(), interface.humanReadableName());
+            ipsList << QStringLiteral("%1 (%2)").arg(ip.toString(), interface.humanReadableName());
         }
     }
 
@@ -89,7 +89,7 @@ void EmailNotificationHandler::notify(const QString &message, ErrorNotifier::Sev
                  qApp->applicationVersion(),
                  Proof::proofVersion(),
                  QSysInfo::prettyProductName(),
-                 ipsList.join("; "),
+                 ipsList.join(QStringLiteral("; ")),
                  QDateTime::currentDateTime().toString(Qt::ISODate),
                  message);
     d->smtpClient->sendTextMail(subject, fullMessage, d->from, d->to);
@@ -97,6 +97,6 @@ void EmailNotificationHandler::notify(const QString &message, ErrorNotifier::Sev
 
 QString EmailNotificationHandler::id()
 {
-    return "EmailNotificationHandler";
+    return QStringLiteral("EmailNotificationHandler");
 }
 

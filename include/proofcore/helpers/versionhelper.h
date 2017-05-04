@@ -32,12 +32,12 @@ inline quint64 packVersion(const QStringList &version)
 
 inline quint64 packVersion(const QString &version)
 {
-    return packVersion(version.split("."));
+    return packVersion(version.split(QStringLiteral(".")));
 }
 
 inline QString unpackVersionToString(quint64 version)
 {
-    return QString("%1.%2.%3.%4")
+    return QStringLiteral("%1.%2.%3.%4")
             .arg(version >> 48)
             .arg((version >> 32) & 0xFFFF)
             .arg((version >> 16) & 0xFFFF)

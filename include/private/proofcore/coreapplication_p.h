@@ -39,7 +39,7 @@ protected:
     QSet<QString> translationPrefixes;
     QStringList availableLanguages;
     QVariantMap fullLanguageNames;
-    QString currentLanguage = "en";
+    QString currentLanguage = QStringLiteral("en");
     QList<QTranslator *> installedTranslators;
     bool initialized = false;
 #ifndef QCA_DISABLED

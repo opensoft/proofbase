@@ -31,7 +31,7 @@ Settings::Settings(QObject *parent)
     : ProofObject(*new SettingsPrivate, parent)
 {
     Q_D(Settings);
-    d->mainGroup = new SettingsGroup("", this);
+    d->mainGroup = new SettingsGroup(QLatin1String(""), this);
     connect(d->mainGroup, &SettingsGroup::valueChanged, this,
             [d](const QStringList &key, const QVariant &value){d->groupValueChanged(key, value);});
     d->readSettings();
@@ -87,8 +87,8 @@ QString Settings::filePath()
 
 QString SettingsPrivate::filePath()
 {
-    if (qApp->arguments().contains("-c")) {
-        int index = qApp->arguments().indexOf("-c") + 1;
+    if (qApp->arguments().contains(QStringLiteral("-c"))) {
+        int index = qApp->arguments().indexOf(QStringLiteral("-c")) + 1;
         if (index < qApp->arguments().count()) {
             QString configPath = qApp->arguments().at(index);
             if (QFileInfo::exists(configPath))
@@ -106,7 +106,7 @@ QString SettingsPrivate::filePath()
             .arg(qApp->organizationName())
             .arg(qApp->applicationName());
 #else
-    QString configPath = QString("%1/%2/%3.conf")
+    QString configPath = QStringLiteral("%1/%2/%3.conf")
             .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
                  qApp->organizationName(),
                  qApp->applicationName());

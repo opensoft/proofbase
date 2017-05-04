@@ -42,7 +42,7 @@ public:
     QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query,
                                          const QByteArray &body, const QString &vendor);
     QByteArray generateWsseToken() const;
-    void requestQuasiOAuth2token(int retries = 4, const QString &method = QString("/oauth2/token"));
+    void requestQuasiOAuth2token(int retries = 4, const QString &method = QStringLiteral("/oauth2/token"));
 
     void handleReply(QNetworkReply *reply);
     void cleanupReplyHandler(QNetworkReply *reply);
@@ -58,7 +58,7 @@ public:
     QString token;
     int port = 443;
     bool explicitPort = false;
-    QString scheme = QString("https");
+    QString scheme = QStringLiteral("https");
     RestAuthType authType = RestAuthType::NoAuth;
     QHash<QNetworkReply *, QTimer *> replyTimeouts;
     int msecsForTimeout = DEFAULT_REPLY_TIMEOUT;
@@ -333,9 +333,9 @@ QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, Q
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkRequest request = d->createNetworkRequest(method, query, "", "");
+    QNetworkRequest request = d->createNetworkRequest(method, query, "", QLatin1String(""));
     request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
-                      QString("multipart/form-data; boundary=%1").arg(QString(multiParts->boundary())));
+                      QStringLiteral("multipart/form-data; boundary=%1").arg(QString(multiParts->boundary())));
     QNetworkReply *reply = d->qnam->post(request, multiParts);
     qCDebug(proofNetworkMiscLog) << request.header(QNetworkRequest::KnownHeaders::ContentTypeHeader).toString();
     multiParts->setParent(reply);
@@ -421,21 +421,21 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         QJsonParseError error;
         QJsonDocument::fromJson(body, &error);
 
-        QString contentTypePattern = vendor.isEmpty() ? QString("application/%1") : QString("application/vnd.%1+%2").arg(vendor);
+        QString contentTypePattern = vendor.isEmpty() ? QStringLiteral("application/%1") : QStringLiteral("application/vnd.%1+%2").arg(vendor);
 
         //We assume that if it is not json and not xml it's url encoded data
         if (error.error == QJsonParseError::NoError)
-            result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg("json"));
+            result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg(QStringLiteral("json")));
         else if (body.startsWith("<?xml"))
-            result.setHeader(QNetworkRequest::ContentTypeHeader, vendor.isEmpty() ? "text/xml" : contentTypePattern.arg("xml"));
+            result.setHeader(QNetworkRequest::ContentTypeHeader, vendor.isEmpty() ? QStringLiteral("text/xml") : contentTypePattern.arg(QStringLiteral("xml")));
         else
-            result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg("x-www-form-urlencoded"));
+            result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg(QStringLiteral("x-www-form-urlencoded")));
 
     } else {
         if (vendor.isEmpty())
             result.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
         else
-            result.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/vnd.%1").arg(vendor));
+            result.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/vnd.%1").arg(vendor));
     }
 
     for (const QNetworkCookie &cookie : qAsConst(cookies))
@@ -445,8 +445,8 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         result.setRawHeader(it.key(), it.value());
 
     result.setRawHeader("Proof-Application", proofApp->prettifiedApplicationName().toLatin1());
-    result.setRawHeader(QString("Proof-%1-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(), qApp->applicationVersion().toLatin1());
-    result.setRawHeader(QString("Proof-%1-Framework-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(), Proof::proofVersion().toLatin1());
+    result.setRawHeader(QStringLiteral("Proof-%1-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(), qApp->applicationVersion().toLatin1());
+    result.setRawHeader(QStringLiteral("Proof-%1-Framework-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(), Proof::proofVersion().toLatin1());
 
     switch (authType) {
     case RestAuthType::Wsse:
@@ -458,8 +458,8 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
         if (!clientName.isEmpty())
             result.setRawHeader("X-Client-Name", clientName.toLocal8Bit());
         result.setRawHeader("Authorization",
-                            QString("Basic %1")
-                            .arg(QString(QString("%1:%2").arg(userName, password).toLatin1().toBase64()))
+                            QStringLiteral("Basic %1")
+                            .arg(QString(QStringLiteral("%1:%2").arg(userName, password).toLatin1().toBase64()))
                             .toLatin1());
         break;
     case RestAuthType::QuasiOAuth2:
@@ -478,10 +478,10 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
             while(!taskChain->touchTask(taskId))
                 qApp->processEvents();
         }
-        result.setRawHeader("Authorization", QString("Bearer %1").arg(quasiOAuth2Token).toLatin1());
+        result.setRawHeader("Authorization", QStringLiteral("Bearer %1").arg(quasiOAuth2Token).toLatin1());
         break;
     case RestAuthType::BearerToken:
-        result.setRawHeader("Authorization", QString("Bearer %1").arg(token).toLatin1());
+        result.setRawHeader("Authorization", QStringLiteral("Bearer %1").arg(token).toLatin1());
         break;
     case RestAuthType::NoAuth:
         if (!clientName.isEmpty())
@@ -502,14 +502,14 @@ QByteArray RestClientPrivate::generateWsseToken() const
     }
 
     QString createdAt = QDateTime::currentDateTime().toString(Qt::ISODate);
-    QString nonce = QUuid::createUuid().toString().replace("-", "");
+    QString nonce = QUuid::createUuid().toString().replace(QLatin1String("-"), QLatin1String(""));
 
     QCryptographicHash hasher(QCryptographicHash::Sha1);
     hasher.addData(nonce.toLatin1());
     hasher.addData(createdAt.toLatin1());
     hasher.addData(hashedPassword);
 
-    return QString("UsernameToken Username=\"%1\", PasswordDigest=\"%2\", Nonce=\"%3\", Created=\"%4\"")
+    return QStringLiteral("UsernameToken Username=\"%1\", PasswordDigest=\"%2\", Nonce=\"%3\", Created=\"%4\"")
             .arg(userName,
                  QString(hasher.result().toBase64()),
                  QString(nonce.toLatin1().toBase64()),
@@ -526,7 +526,7 @@ void RestClientPrivate::requestQuasiOAuth2token(int retries, const QString &meth
     if (explicitPort)
         url.setPort(port);
     url.setPath(method);
-    QString quasiOAuth2TokenRequestData = QString("grant_type=password&username=%1&password=%2").arg(userName, password);
+    QString quasiOAuth2TokenRequestData = QStringLiteral("grant_type=password&username=%1&password=%2").arg(userName, password);
     QDateTime expiredTime = QDateTime::currentDateTime();
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
@@ -538,7 +538,7 @@ void RestClientPrivate::requestQuasiOAuth2token(int retries, const QString &meth
             qCDebug(proofNetworkMiscLog) << "Network request to" << reply->request().url().toString() << "failed." << retries << " more attempts will be done";
             QTimer::singleShot(OAUTH_TOKEN_RETRY_TIMEOUT, q, [this, retries, method](){requestQuasiOAuth2token(retries - 1, method);});
         } else {
-            emit q->authenticationErrorOccurred("Can't connect to Scissorhands service.\nPlease check your internet connection.");
+            emit q->authenticationErrorOccurred(QStringLiteral("Can't connect to Scissorhands service.\nPlease check your internet connection."));
         }
         reply->deleteLater();
     });
@@ -549,16 +549,16 @@ void RestClientPrivate::requestQuasiOAuth2token(int retries, const QString &meth
             QJsonObject response = QJsonDocument::fromJson(reply->readAll(), &error).object();
 
             if (error.error == QJsonParseError::NoError) {
-                quasiOAuth2Token = response.value("access_token").toString();
-                int expiresInSeconds = response.value("expires_in").toInt();
+                quasiOAuth2Token = response.value(QStringLiteral("access_token")).toString();
+                int expiresInSeconds = response.value(QStringLiteral("expires_in")).toInt();
                 quasiOAuth2TokenExpiredDateTime = expiredTime.addSecs(expiresInSeconds);
                 if (quasiOAuth2Token.isEmpty())
-                    emit q->authenticationErrorOccurred("Wrong Scissorhands service authentication.\nPlease check your authentication settings.");
+                    emit q->authenticationErrorOccurred(QStringLiteral("Wrong Scissorhands service authentication.\nPlease check your authentication settings."));
                 else
                     emit q->authenticationSucceed();
 
             } else {
-                emit q->authenticationErrorOccurred("Wrong Scissorhands service answer.\nPlease check your host settings.");
+                emit q->authenticationErrorOccurred(QStringLiteral("Wrong Scissorhands service answer.\nPlease check your host settings."));
             }
         }
         reply->deleteLater();

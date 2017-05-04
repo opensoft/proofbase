@@ -46,7 +46,7 @@ void AbstractRestApi::abortRequest(qulonglong operationId)
     RestApiError error = RestApiError{RestApiError::Level::ClientError,
             NETWORK_ERROR_OFFSET + static_cast<int>(QNetworkReply::NetworkError::OperationCanceledError),
             NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable,
-            "Request canceled", false};
+            QStringLiteral("Request canceled"), false};
     for(auto reply : networkReplies) {
         if (operationId != d->replies[reply].first)
             continue;
@@ -95,7 +95,7 @@ AbstractRestApi::ErrorCallbackType AbstractRestApi::generateErrorCallback(qulong
            (qulonglong operationId, const Proof::RestApiError &_error) {
         if (currentOperationId != operationId)
             return false;
-        errorMessage = QString("%1: %2").arg(_error.code).arg(_error.message);
+        errorMessage = QStringLiteral("%1: %2").arg(_error.code).arg(_error.message);
         return true;
     };
 }
@@ -230,7 +230,7 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
         if (!ALLOWED_HTTP_STATUSES.contains(errorCode)) {
             QString message = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed();
             QString mimeType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
-            if (message.isEmpty() && mimeType == "text/plain")
+            if (message.isEmpty() && mimeType == QLatin1String("text/plain"))
                 message = reply->readAll().trimmed();
 
             qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
@@ -268,7 +268,7 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
         QString errorString = reply->errorString();
         long proofErrorCode = NetworkErrorCode::ServerError;
         if (reply->error() == QNetworkReply::NetworkError::OperationCanceledError) {
-            errorString = "Service is unavailable. Try again later";
+            errorString = QStringLiteral("Service is unavailable. Try again later");
             proofErrorCode = NetworkErrorCode::ServiceUnavailable;
         }
         qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
@@ -320,7 +320,7 @@ void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, Q
     emit q->errorOccurred(operationId,
                           RestApiError{RestApiError::Level::JsonParseError, error.error,
                                        NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                                       QString("JSON error: %1").arg(error.errorString())});
+                                       QStringLiteral("JSON error: %1").arg(error.errorString())});
 }
 
 void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *reply, RestAnswerHandler &&handler)
@@ -350,7 +350,7 @@ void AbstractRestApiPrivate::clearReplies()
     RestApiError error = RestApiError{RestApiError::Level::ClientError,
             NETWORK_ERROR_OFFSET + static_cast<int>(QNetworkReply::NetworkError::OperationCanceledError),
             NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable,
-            "Request canceled", false};
+            QStringLiteral("Request canceled"), false};
     for(auto reply : networkReplies) {
         qulonglong operationId = replies[reply].first;
         replies.remove(reply);
@@ -370,7 +370,7 @@ QString RestApiError::toString() const
 {
     if (level == Level::NoError)
         return QString();
-    return QString("%1: %2").arg(code).arg(message);
+    return QStringLiteral("%1: %2").arg(code).arg(message);
 }
 
 void RestApiError::reset()

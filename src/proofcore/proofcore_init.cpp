@@ -23,8 +23,8 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
     //clang-format on
 
     Proof::CoreApplication::addInitializer([]() {
-        Proof::SettingsGroup *notifierGroup = proofApp->settings()->group("error_notifier", Proof::Settings::NotFoundPolicy::Add);
-        QString appId = notifierGroup->value("app_id", "", Proof::Settings::NotFoundPolicy::Add).toString();
+        Proof::SettingsGroup *notifierGroup = proofApp->settings()->group(QStringLiteral("error_notifier"), Proof::Settings::NotFoundPolicy::Add);
+        QString appId = notifierGroup->value(QStringLiteral("app_id"), QStringLiteral(""), Proof::Settings::NotFoundPolicy::Add).toString();
         Proof::ErrorNotifier::instance()->registerHandler(new Proof::MemoryStorageNotificationHandler(appId));
     });
 
@@ -35,18 +35,18 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
             return;
 
         auto allGroups = settings->groups();
-        if (!allGroups.contains("error_notifier")) {
-            auto errorNotifierGroup = settings->addGroup("error_notifier");
-            if (allGroups.contains("errors_notifier")) {
-                settings->group("errors_notifier")->copyTo(errorNotifierGroup);
-            } else if (allGroups.contains("email_notifier")) {
-                auto emailGroup = errorNotifierGroup->addGroup("email");
-                settings->group("email_notifier")->copyTo(emailGroup);
-                errorNotifierGroup->setValue("app_id", emailGroup->value("app_id"));
-                emailGroup->deleteValue("app_id");
+        if (!allGroups.contains(QStringLiteral("error_notifier"))) {
+            auto errorNotifierGroup = settings->addGroup(QStringLiteral("error_notifier"));
+            if (allGroups.contains(QStringLiteral("errors_notifier"))) {
+                settings->group(QStringLiteral("errors_notifier"))->copyTo(errorNotifierGroup);
+            } else if (allGroups.contains(QStringLiteral("email_notifier"))) {
+                auto emailGroup = errorNotifierGroup->addGroup(QStringLiteral("email"));
+                settings->group(QStringLiteral("email_notifier"))->copyTo(emailGroup);
+                errorNotifierGroup->setValue(QStringLiteral("app_id"), emailGroup->value(QStringLiteral("app_id")));
+                emailGroup->deleteValue(QStringLiteral("app_id"));
             }
         }
-        settings->deleteGroup("errors_notifier");
-        settings->deleteGroup("email_notifier");
+        settings->deleteGroup(QStringLiteral("errors_notifier"));
+        settings->deleteGroup(QStringLiteral("email_notifier"));
     });
 }
