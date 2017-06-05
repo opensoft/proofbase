@@ -47,3 +47,4 @@ void ProofObjectPrivate::setDirty(bool arg)
 {
     dirtyFlag = arg;
 }
+
