@@ -404,14 +404,34 @@ void CoreApplicationPrivate::execMigrations()
         return;
     }
 
-    quint64 minVersion = std::min(packedAppVersion, packedProofVersion);
+    bool versionChanged = true;
 
-    migrations()[minVersion];
+    while (versionChanged) {
+        quint64 minVersion = std::min(packedAppVersion, packedProofVersion);
+        qCDebug(proofCoreMiscLog) << "Minimal appliable version for migrations is" << unpackVersionToString(minVersion);
+        migrations()[minVersion];
 
-    for (auto it = ++qAsConst(migrations()).find(minVersion); it != qAsConst(migrations()).cend(); ++it) {
-        for (const auto &migration : it.value())
-            migration(packedAppVersion, packedProofVersion, settings);
+        versionChanged = false;
+
+        for (auto it = ++qAsConst(migrations()).find(minVersion); !versionChanged && it != qAsConst(migrations()).cend(); ++it) {
+            qCDebug(proofCoreMiscLog) << "There are" << it.value().count() << "migrations for" << unpackVersionToString(it.key()) << "to run";
+            for (const auto &migration : it.value()) {
+                qCDebug(proofCoreMiscLog) << "Running migration";
+                migration(packedAppVersion, packedProofVersion, settings);
+                quint64 newPackedAppVersion = packVersion(settings->mainGroup()->value(QStringLiteral("__app_version__"), "").toString().trimmed());
+                quint64 newPackedProofVersion = packVersion(settings->mainGroup()->value(QStringLiteral("__proof_version__"), "").toString().trimmed());
+                // We need to start again with selecting start point
+                if (newPackedAppVersion != packedAppVersion || newPackedProofVersion != packedProofVersion) {
+                    packedAppVersion = newPackedAppVersion;
+                    packedProofVersion = newPackedProofVersion;
+                    versionChanged = true;
+                    qCDebug(proofCoreMiscLog) << "Versions in config changed after migration, we need to restart from new point";
+                    break;
+                }
+            }
+        }
     }
+
     migrations().clear();
 
     settings->mainGroup()->setValue(QStringLiteral("__app_version__"), qApp->applicationVersion());
