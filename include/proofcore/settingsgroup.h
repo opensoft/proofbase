@@ -15,8 +15,8 @@ class PROOF_CORE_EXPORT SettingsGroup : public ProofObject
     Q_OBJECT
     Q_DECLARE_PRIVATE(SettingsGroup)
 public:
-    QStringList groups() const;
-    QStringList values() const;
+    QSet<QString> groups() const;
+    QSet<QString> values() const;
 
     SettingsGroup *group(const QString &groupName,
                          Settings::NotFoundPolicy notFoundPolicy = Settings::NotFoundPolicy::DoNothing);
@@ -24,10 +24,10 @@ public:
                    Settings::NotFoundPolicy notFoundPolicy = Settings::NotFoundPolicy::DoNothing);
 
     SettingsGroup *addGroup(const QString &groupName);
-    void setValue(const QString &key, const QVariant &value);
+    void setValue(const QString &key, const QVariant &value, Settings::Storage storage = Settings::Storage::Local);
 
-    void deleteGroup(const QString &groupName);
-    void deleteValue(const QString &key);
+    void deleteGroup(const QString &groupName, Settings::Storage storage = Settings::Storage::Local);
+    void deleteValue(const QString &key, Settings::Storage storage = Settings::Storage::Local);
 
     //Destination must not overlap with current group
     void copyTo(SettingsGroup *destination);
@@ -36,12 +36,13 @@ public:
 
 signals:
     void groupAdded(const QString &groupName);
-    void valueChanged(const QStringList &key, const QVariant &value);
+    void groupRemoved(const QString &groupName);
+    void valueChanged(const QStringList &key, const QVariant &value, bool inherited);
 
 private:
     friend class Settings;
     SettingsGroup() = delete;
-    SettingsGroup(const QString &name, QObject *parent);
+    SettingsGroup(const QString &name, SettingsGroup *globalGroup, QObject *parent);
     ~SettingsGroup();
 };
 

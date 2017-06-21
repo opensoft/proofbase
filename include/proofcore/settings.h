@@ -16,7 +16,13 @@ class PROOF_CORE_EXPORT Settings : public ProofObject
 public:
     enum class NotFoundPolicy {
         DoNothing,
-        Add
+        Add,
+        AddGlobal
+    };
+
+    enum class Storage {
+        Local,
+        Global
     };
 
     explicit Settings(QObject *parent = nullptr);
@@ -24,11 +30,11 @@ public:
 
     void sync();
     SettingsGroup *mainGroup();
-    QStringList groups() const;
+    QSet<QString> groups() const;
     SettingsGroup *group(const QString &groupName, NotFoundPolicy notFoundPolicy = NotFoundPolicy::DoNothing);
     SettingsGroup *addGroup(const QString &groupName);
-    void deleteGroup(const QString &groupName);
-    static QString filePath();
+    void deleteGroup(const QString &groupName, Settings::Storage storage = Settings::Storage::Local);
+    static QString filePath(Storage storage = Storage::Local);
 
 };
 
