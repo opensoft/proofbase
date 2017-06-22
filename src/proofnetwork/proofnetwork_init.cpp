@@ -29,27 +29,29 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
 
         QString appId = notifierGroup->value(QStringLiteral("app_id"), QStringLiteral(""), Proof::Settings::NotFoundPolicy::Add).toString();
 
-        Proof::SettingsGroup *emailNotifierGroup = notifierGroup->group(QStringLiteral("email"), Proof::Settings::NotFoundPolicy::Add);
-        auto smtpClient = Proof::SmtpClientSP::create();
+        Proof::SettingsGroup *emailNotifierGroup = notifierGroup->group(QStringLiteral("email"), Proof::Settings::NotFoundPolicy::AddGlobal);
+        if (emailNotifierGroup->value(QStringLiteral("enabled"), false, Proof::Settings::NotFoundPolicy::AddGlobal).toBool()) {
+            auto smtpClient = Proof::SmtpClientSP::create();
 
-        QString from = emailNotifierGroup->value(QStringLiteral("from"), QStringLiteral(""), Proof::Settings::NotFoundPolicy::Add).toString();
-        QString toString = emailNotifierGroup->value(QStringLiteral("to"), QStringLiteral(""), Proof::Settings::NotFoundPolicy::Add).toString();
+            QString from = emailNotifierGroup->value(QStringLiteral("from"), QStringLiteral(""), Proof::Settings::NotFoundPolicy::AddGlobal).toString();
+            QString toString = emailNotifierGroup->value(QStringLiteral("to"), QStringLiteral(""), Proof::Settings::NotFoundPolicy::AddGlobal).toString();
 
-        smtpClient->setHost(emailNotifierGroup->value(QStringLiteral("host"), QStringLiteral(""), Proof::Settings::NotFoundPolicy::Add).toString());
-        smtpClient->setPort(emailNotifierGroup->value(QStringLiteral("port"), 25, Proof::Settings::NotFoundPolicy::Add).toInt());
-        QString connectionType = emailNotifierGroup->value(QStringLiteral("type"), QStringLiteral("ssl"), Proof::Settings::NotFoundPolicy::Add).toString().toLower().trimmed();
-        if (connectionType == QLatin1String("ssl")) {
-            smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::Ssl);
-        } else if (connectionType == QLatin1String("starttls")) {
-            smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::StartTls);
-        } else {
-            smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::Plain);
-            emailNotifierGroup->setValue(QStringLiteral("type"), QStringLiteral("plain"));
-        }
-        smtpClient->setUserName(emailNotifierGroup->value(QStringLiteral("username"), QStringLiteral(""), Proof::Settings::NotFoundPolicy::Add).toString());
-        smtpClient->setPassword(emailNotifierGroup->value(QStringLiteral("password"), QStringLiteral(""), Proof::Settings::NotFoundPolicy::Add).toString());
+            smtpClient->setHost(emailNotifierGroup->value(QStringLiteral("host"), QStringLiteral(""), Proof::Settings::NotFoundPolicy::AddGlobal).toString());
+            smtpClient->setPort(emailNotifierGroup->value(QStringLiteral("port"), 25, Proof::Settings::NotFoundPolicy::AddGlobal).toInt());
+            QString connectionType = emailNotifierGroup->value(QStringLiteral("type"), QStringLiteral("starttls"),
+                                                               Proof::Settings::NotFoundPolicy::AddGlobal).toString().toLower().trimmed();
+            if (connectionType == QLatin1String("ssl")) {
+                smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::Ssl);
+            } else if (connectionType == QLatin1String("starttls")) {
+                smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::StartTls);
+            } else {
+                smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::Plain);
+            }
+            smtpClient->setUserName(emailNotifierGroup->value(QStringLiteral("username"), QStringLiteral(""),
+                                                              Proof::Settings::NotFoundPolicy::AddGlobal).toString());
+            smtpClient->setPassword(emailNotifierGroup->value(QStringLiteral("password"), QStringLiteral(""),
+                                                              Proof::Settings::NotFoundPolicy::AddGlobal).toString());
 
-        if (emailNotifierGroup->value(QStringLiteral("enabled"), false, Proof::Settings::NotFoundPolicy::Add).toBool()) {
             QStringList to;
             const auto splittedTo = toString.split(QStringLiteral("|"), QString::SkipEmptyParts);
             for (const auto &address : splittedTo) {

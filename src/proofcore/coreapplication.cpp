@@ -383,7 +383,7 @@ void CoreApplicationPrivate::initLogs(bool daemonized)
     SettingsGroup *logGroup = settings->group(QStringLiteral("logs"), policy);
     if (logGroup) {
         consoleOutputEnabled = !daemonized && logGroup->value(QStringLiteral("console"), consoleOutputEnabled, policy).toBool();
-        logsStoragePath = logGroup->value(QStringLiteral("custom_storage_path"), logsStoragePath, policy).toString();
+        logsStoragePath = logGroup->value(QStringLiteral("custom_storage_path"), logsStoragePath, Settings::NotFoundPolicy::AddGlobal).toString();
         logFileName = logGroup->value(QStringLiteral("filename"), logFileName, policy).toString();
     }
 
@@ -475,8 +475,8 @@ void CoreApplicationPrivate::initUpdateManager()
     updateManager = new UpdateManager(q);
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
     SettingsGroup *updatesGroup = settings->group("updates", Settings::NotFoundPolicy::Add);
-    updateManager->setAutoUpdateEnabled(updatesGroup->value("auto_update", true, Settings::NotFoundPolicy::Add).toBool());
-    updateManager->setAptSourcesListFilePath(updatesGroup->value("sources_list_file", "", Settings::NotFoundPolicy::Add).toString());
+    updateManager->setAutoUpdateEnabled(updatesGroup->value("auto_update", false, Settings::NotFoundPolicy::Add).toBool());
+    updateManager->setAptSourcesListFilePath(updatesGroup->value("sources_list_file", "", Settings::NotFoundPolicy::AddGlobal).toString());
 
     updateManager->setCurrentVersion(qApp->applicationVersion());
     updateManager->setPackageName(qApp->applicationName());
