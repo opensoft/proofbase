@@ -5,6 +5,8 @@
 
 using namespace Proof;
 
+ProofObject *ProofObjectPrivate::defaultInvoker = new ProofObject(nullptr);
+
 ProofObject::ProofObject(QObject *parent)
     : ProofObject(*new ProofObjectPrivate, parent)
 {
@@ -30,6 +32,11 @@ qulonglong ProofObject::nextQueuedCallId() const
 {
     Q_D(const ProofObject);
     return ++d->nextDelayedCallId;
+}
+
+ProofObject *ProofObject::defaultInvoker()
+{
+    return ProofObjectPrivate::defaultInvoker;
 }
 
 bool ProofObjectPrivate::isDirty() const

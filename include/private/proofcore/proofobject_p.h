@@ -67,6 +67,7 @@ private:
 
     QList<std::function<bool ()>> childrenDirtyCheckers;
     mutable std::atomic<qulonglong> nextDelayedCallId {0};
+    static ProofObject *defaultInvoker;
     bool dirtyFlag = false;
 };
 }
