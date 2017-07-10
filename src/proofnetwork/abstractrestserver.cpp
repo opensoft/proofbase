@@ -141,23 +141,23 @@ private:
 
 using namespace Proof;
 
-AbstractRestServer::AbstractRestServer(QObject *parent)
-    : AbstractRestServer(*new AbstractRestServerPrivate, QLatin1String(""), 80, parent)
+AbstractRestServer::AbstractRestServer()
+    : AbstractRestServer(*new AbstractRestServerPrivate, QLatin1String(""), 80)
 {
 }
 
-AbstractRestServer::AbstractRestServer(int port, QObject *parent)
-    : AbstractRestServer(*new AbstractRestServerPrivate, QLatin1String(""), port, parent)
+AbstractRestServer::AbstractRestServer(int port)
+    : AbstractRestServer(*new AbstractRestServerPrivate, QLatin1String(""), port)
 {
 }
 
-AbstractRestServer::AbstractRestServer(const QString &pathPrefix, int port, QObject *parent)
-    : AbstractRestServer(*new AbstractRestServerPrivate, pathPrefix, port, parent)
+AbstractRestServer::AbstractRestServer(const QString &pathPrefix, int port)
+    : AbstractRestServer(*new AbstractRestServerPrivate, pathPrefix, port)
 {
 }
 
-AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QString &pathPrefix, int port, QObject *parent)
-    : QTcpServer(parent),
+AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QString &pathPrefix, int port)
+    : QTcpServer(),
       d_ptr(&dd)
 {
     Q_D(AbstractRestServer);
