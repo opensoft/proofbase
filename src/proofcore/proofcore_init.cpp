@@ -51,9 +51,9 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
     });
 
     //proof-common config population
-    Proof::CoreApplication::addMigration(Proof::packVersion(0, 17, 6, 14),
+    Proof::CoreApplication::addMigration(Proof::packVersion(0, 17, 7, 14),
                                          [](quint64, quint64 oldProofVersion, Proof::Settings *settings) {
-        if (oldProofVersion >= Proof::packVersion(0, 17, 6, 14))
+        if (oldProofVersion >= Proof::packVersion(0, 17, 7, 14))
             return;
 
         const QStringList keys = {
