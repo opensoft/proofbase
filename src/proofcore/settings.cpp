@@ -113,9 +113,11 @@ QString SettingsPrivate::filePath(Settings::Storage storage)
             : QStringLiteral("proof-common");
 #if defined Q_OS_WIN
     //Windows already gives us org/app as part of conf location
-    QString configPath = QString("%1/%2.conf")
-            .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
-                 appName);
+    QString configPath = QStringLiteral("%1/%2/%3.conf")
+            .arg(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation),
+                 qApp->organizationName(),
+                 appName + (storage == Settings::Storage::Local
+                            ? QStringLiteral("/%1").arg(appName) : QStringLiteral("")));
 #elif defined Q_OS_ANDROID
     QString configPath = QString("%1/%2/%3.conf")
             .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation),
