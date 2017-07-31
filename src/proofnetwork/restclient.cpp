@@ -538,7 +538,7 @@ void RestClientPrivate::requestQuasiOAuth2token(int retries, const QString &meth
             qCDebug(proofNetworkMiscLog) << "Network request to" << reply->request().url().toString() << "failed." << retries << " more attempts will be done";
             QTimer::singleShot(OAUTH_TOKEN_RETRY_TIMEOUT, q, [this, retries, method](){requestQuasiOAuth2token(retries - 1, method);});
         } else {
-            emit q->authenticationErrorOccurred(QStringLiteral("Can't connect to Scissorhands service.\nPlease check your internet connection."));
+            emit q->authenticationErrorOccurred(QStringLiteral("Can't connect to Scissorhands service.\nPlease try again."));
         }
         reply->deleteLater();
     });
