@@ -17,6 +17,7 @@
 #include <QThread>
 #include <QBuffer>
 #include <QHttpMultiPart>
+#include <QNetworkInterface>
 
 static const int DEFAULT_REPLY_TIMEOUT = 5 * 60 * 1000; //5 minutes
 static const int OAUTH_TOKEN_REFRESH_TIMEOUT = 1000 * 60 * 60;//1 hour
@@ -48,7 +49,7 @@ public:
     void cleanupReplyHandler(QNetworkReply *reply);
     QPair<QString, QString> parseHost(const QString &host);
 
-    QNetworkAccessManager *qnam;
+    QNetworkAccessManager *qnam = nullptr;
     QString userName;
     QString password;
     QString clientName;
@@ -447,6 +448,14 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
     result.setRawHeader("Proof-Application", proofApp->prettifiedApplicationName().toLatin1());
     result.setRawHeader(QStringLiteral("Proof-%1-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(), qApp->applicationVersion().toLatin1());
     result.setRawHeader(QStringLiteral("Proof-%1-Framework-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(), Proof::proofVersion().toLatin1());
+
+    QStringList ipAdresses;
+    const auto allAddresses = QNetworkInterface::allAddresses();
+    for (const auto &address : allAddresses) {
+        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress::LocalHost)
+            ipAdresses << address.toString();
+    }
+    result.setRawHeader(QStringLiteral("Proof-IP-Addresses").toLatin1(), ipAdresses.join(QStringLiteral("; ")).toLatin1());
 
     switch (authType) {
     case RestAuthType::Wsse:
