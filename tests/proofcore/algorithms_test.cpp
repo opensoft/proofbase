@@ -243,10 +243,47 @@ TEST(AlgorithmsTest, eraseIfQMap)
     QMap<int, bool> testContainer = {{1, true}, {2, false}, {3, true}, {4, false}, {5, true}, {6, false}, {7, true}, {8, false}, {9, true}};
     QMap<int, bool> result;
 
-    auto falseValuePredicate = [](const QMap<int, bool>::iterator &x)->bool{return !x.value();};
-    auto bigValuePredicate = [](const QMap<int, bool>::iterator &x)->bool{return x.key() > 42;};
-    auto smallValuePredicate = [](const QMap<int, bool>::iterator &x)->bool{return x.key() < 42;};
-    auto nonEqualPredicate = [](const QMap<int, bool>::iterator &x)->bool{return x.key() != 5;};
+    auto falseValuePredicate = [](const auto &key, const auto &value)->bool{Q_UNUSED(key); return !value;};
+    auto bigValuePredicate = [](const auto &key, const auto &value)->bool{Q_UNUSED(value); return key > 42;};
+    auto smallValuePredicate = [](const auto &key, const auto &value)->bool{Q_UNUSED(value); return key < 42;};
+    auto nonEqualPredicate = [](const auto &key, const auto &value)->bool{Q_UNUSED(value); return key != 5;};
+
+    result = emptyContainer;
+    algorithms::eraseIf(result, falseValuePredicate);
+    EXPECT_EQ(0, result.size());
+    result = testContainer;
+    algorithms::eraseIf(result, falseValuePredicate);
+    ASSERT_EQ(5, result.size());
+    EXPECT_TRUE(result.contains(1));
+    EXPECT_TRUE(result.contains(3));
+    EXPECT_TRUE(result.contains(5));
+    EXPECT_TRUE(result.contains(7));
+    EXPECT_TRUE(result.contains(9));
+
+    result = testContainer;
+    algorithms::eraseIf(result, bigValuePredicate);
+    ASSERT_EQ(9, result.size());
+
+    result = testContainer;
+    algorithms::eraseIf(result, smallValuePredicate);
+    ASSERT_EQ(0, result.size());
+
+    result = testContainer;
+    algorithms::eraseIf(result, nonEqualPredicate);
+    ASSERT_EQ(1, result.size());
+    EXPECT_TRUE(result.contains(5));
+}
+
+TEST(AlgorithmsTest, eraseIfQHash)
+{
+    QHash<int, bool> emptyContainer;
+    QHash<int, bool> testContainer = {{1, true}, {2, false}, {3, true}, {4, false}, {5, true}, {6, false}, {7, true}, {8, false}, {9, true}};
+    QHash<int, bool> result;
+
+    auto falseValuePredicate = [](const auto &key, const auto &value)->bool{Q_UNUSED(key); return !value;};
+    auto bigValuePredicate = [](const auto &key, const auto &value)->bool{Q_UNUSED(value); return key > 42;};
+    auto smallValuePredicate = [](const auto &key, const auto &value)->bool{Q_UNUSED(value); return key < 42;};
+    auto nonEqualPredicate = [](const auto &key, const auto &value)->bool{Q_UNUSED(value); return key != 5;};
 
     result = emptyContainer;
     algorithms::eraseIf(result, falseValuePredicate);

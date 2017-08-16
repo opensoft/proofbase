@@ -26,13 +26,12 @@ static constexpr int round(double d)
 }
 
 namespace algorithms {
-//TODO: Predicate should accept two parameters (key and value), not an iterator
-//TODO: add QHash
-template<typename Key, typename T, typename Predicate>
-void eraseIf(QMap<Key, T> &container, const Predicate &predicate)
+template<typename Container, typename Predicate>
+auto eraseIf(Container &container, const Predicate &predicate)
+-> decltype(predicate(container.cbegin().key(), container.cbegin().value()), void())
 {
     for (auto it = container.begin(); it != container.end();) {
-        if (predicate(it))
+        if (predicate(it.key(), it.value()))
             it = container.erase(it);
         else
             ++it;
@@ -40,7 +39,8 @@ void eraseIf(QMap<Key, T> &container, const Predicate &predicate)
 }
 
 template<typename Container, typename Predicate>
-void eraseIf(Container &container, const Predicate &predicate)
+auto eraseIf(Container &container, const Predicate &predicate)
+-> decltype(predicate(*(container.cbegin())), void())
 {
     container.erase(std::remove_if(container.begin(), container.end(), predicate), container.end());
 }
