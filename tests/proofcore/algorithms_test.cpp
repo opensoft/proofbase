@@ -159,6 +159,142 @@ TEST(AlgorithmsTest, filterSet)
     EXPECT_EQ(5, result[0]);
 }
 
+TEST(AlgorithmsTest, findIfQList)
+{
+    QList<int> emptyContainer;
+    QList<int> testContainer = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    int result;
+
+    auto oddPredicate = [](int x)->bool{return x % 2;};
+    auto bigValuePredicate = [](int x)->bool{return x > 42;};
+    auto equalPredicate = [](int x)->bool{return x == 5;};
+
+    result = algorithms::findIf(emptyContainer, oddPredicate, -1);
+    EXPECT_EQ(-1, result);
+    result = algorithms::findIf(testContainer, oddPredicate, -1);
+    ASSERT_EQ(1, result);
+
+    result = algorithms::findIf(testContainer, bigValuePredicate, -1);
+    ASSERT_EQ(-1, result);
+    result = algorithms::findIf(testContainer, bigValuePredicate, 50);
+    ASSERT_EQ(50, result);
+    result = algorithms::findIf(testContainer, bigValuePredicate);
+    ASSERT_EQ(0, result);
+
+    result = algorithms::findIf(testContainer, equalPredicate);
+    EXPECT_EQ(5, result);
+}
+
+TEST(AlgorithmsTest, findIfQSet)
+{
+    QSet<int> emptyContainer;
+    QSet<int> testContainer = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    int result;
+
+    auto oddPredicate = [](int x)->bool{return x % 2;};
+    auto bigValuePredicate = [](int x)->bool{return x > 42;};
+    auto equalPredicate = [](int x)->bool{return x == 5;};
+
+    result = algorithms::findIf(emptyContainer, oddPredicate, -1);
+    EXPECT_EQ(-1, result);
+    result = algorithms::findIf(testContainer, oddPredicate, -1);
+    ASSERT_TRUE((QSet<int>{1, 3, 5, 7, 9}).contains(result));
+
+    result = algorithms::findIf(testContainer, bigValuePredicate, -1);
+    ASSERT_EQ(-1, result);
+    result = algorithms::findIf(testContainer, bigValuePredicate, 50);
+    ASSERT_EQ(50, result);
+    result = algorithms::findIf(testContainer, bigValuePredicate);
+    ASSERT_EQ(0, result);
+
+    result = algorithms::findIf(testContainer, equalPredicate);
+    EXPECT_EQ(5, result);
+}
+
+TEST(AlgorithmsTest, findIfQMap)
+{
+    QMap<int, bool> emptyContainer;
+    QMap<int, bool> testContainer = {{1, true}, {2, false}, {3, true}, {4, false}, {5, true}, {6, false}, {7, true}, {8, false}, {9, true}};
+    QPair<int, bool> result;
+
+    auto oddPredicate = [](int, bool y)->bool{return y;};
+    auto bigValuePredicate = [](int x, bool)->bool{return x > 42;};
+    auto equalPredicate = [](int x, bool)->bool{return x == 5;};
+
+    result = algorithms::findIf(emptyContainer, oddPredicate, qMakePair(-1, false));
+    EXPECT_EQ(-1, result.first);
+    EXPECT_FALSE(result.second);
+    result = algorithms::findIf(testContainer, oddPredicate, qMakePair(-1, false));
+    ASSERT_EQ(1, result.first);
+    ASSERT_TRUE(result.second);
+
+    result = algorithms::findIf(testContainer, bigValuePredicate, qMakePair(-1, false));
+    EXPECT_EQ(-1, result.first);
+    EXPECT_FALSE(result.second);
+    result = algorithms::findIf(testContainer, bigValuePredicate, qMakePair(50, true));
+    EXPECT_EQ(50, result.first);
+    EXPECT_TRUE(result.second);
+    result = algorithms::findIf(testContainer, bigValuePredicate);
+    EXPECT_EQ(0, result.first);
+    EXPECT_FALSE(result.second);
+
+    result = algorithms::findIf(testContainer, equalPredicate);
+    EXPECT_EQ(5, result.first);
+    EXPECT_TRUE(result.second);
+}
+
+TEST(AlgorithmsTest, findIfVector)
+{
+    std::vector<int> emptyContainer;
+    std::vector<int> testContainer = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    int result;
+
+    auto oddPredicate = [](int x)->bool{return x % 2;};
+    auto bigValuePredicate = [](int x)->bool{return x > 42;};
+    auto equalPredicate = [](int x)->bool{return x == 5;};
+
+    result = algorithms::findIf(emptyContainer, oddPredicate, -1);
+    EXPECT_EQ(-1, result);
+    result = algorithms::findIf(testContainer, oddPredicate, -1);
+    ASSERT_EQ(1, result);
+
+    result = algorithms::findIf(testContainer, bigValuePredicate, -1);
+    ASSERT_EQ(-1, result);
+    result = algorithms::findIf(testContainer, bigValuePredicate, 50);
+    ASSERT_EQ(50, result);
+    result = algorithms::findIf(testContainer, bigValuePredicate);
+    ASSERT_EQ(0, result);
+
+    result = algorithms::findIf(testContainer, equalPredicate);
+    EXPECT_EQ(5, result);
+}
+
+TEST(AlgorithmsTest, findIfSet)
+{
+    std::set<int> emptyContainer;
+    std::set<int> testContainer = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    int result;
+
+    auto oddPredicate = [](int x)->bool{return x % 2;};
+    auto bigValuePredicate = [](int x)->bool{return x > 42;};
+    auto equalPredicate = [](int x)->bool{return x == 5;};
+
+    result = algorithms::findIf(emptyContainer, oddPredicate, -1);
+    EXPECT_EQ(-1, result);
+    result = algorithms::findIf(testContainer, oddPredicate, -1);
+    ASSERT_EQ(1, result);
+
+    result = algorithms::findIf(testContainer, bigValuePredicate, -1);
+    ASSERT_EQ(-1, result);
+    result = algorithms::findIf(testContainer, bigValuePredicate, 50);
+    ASSERT_EQ(50, result);
+    result = algorithms::findIf(testContainer, bigValuePredicate);
+    ASSERT_EQ(0, result);
+
+    result = algorithms::findIf(testContainer, equalPredicate);
+    EXPECT_EQ(5, result);
+}
+
 TEST(AlgorithmsTest, eraseIfQList)
 {
     QList<int> emptyContainer;

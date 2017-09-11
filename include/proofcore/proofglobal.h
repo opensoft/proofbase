@@ -28,7 +28,8 @@ static constexpr int round(double d)
 namespace algorithms {
 template<typename Container, typename Predicate>
 auto eraseIf(Container &container, const Predicate &predicate)
--> decltype(predicate(container.cbegin().key(), container.cbegin().value()), void())
+-> decltype(predicate(container.cbegin().key(), container.cbegin().value()),
+            void())
 {
     for (auto it = container.begin(); it != container.end();) {
         if (predicate(it.key(), it.value()))
@@ -40,7 +41,8 @@ auto eraseIf(Container &container, const Predicate &predicate)
 
 template<typename Container, typename Predicate>
 auto eraseIf(Container &container, const Predicate &predicate)
--> decltype(predicate(*(container.cbegin())), void())
+-> decltype(predicate(*(container.cbegin())),
+            void())
 {
     container.erase(std::remove_if(container.begin(), container.end(), predicate), container.end());
 }
@@ -91,6 +93,34 @@ auto filter(const Container &container, const Predicate &predicate)
             result.insert(it.key(), it.value());
     }
     return result;
+}
+
+template<typename Container, typename Predicate, typename Result = typename Container::value_type>
+auto findIf(const Container &container, const Predicate &predicate, const Result &defaultValue = Result())
+-> decltype(predicate(*(container.cbegin())),
+            Result())
+{
+    auto it = container.cbegin();
+    auto end = container.cend();
+    for (; it != end; ++it) {
+        if (predicate(*it))
+            return *it;
+    }
+    return defaultValue;
+}
+
+template<typename Container, typename Predicate, typename Result = QPair<typename Container::key_type, typename Container::mapped_type>>
+auto findIf(const Container &container, const Predicate &predicate, const Result &defaultValue = Result())
+-> decltype(predicate(container.cbegin().key(), container.cbegin().value()),
+            Result())
+{
+    auto it = container.cbegin();
+    auto end = container.cend();
+    for (; it != end; ++it) {
+        if (predicate(it.key(), it.value()))
+            return qMakePair(it.key(), it.value());
+    }
+    return defaultValue;
 }
 
 }
