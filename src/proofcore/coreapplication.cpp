@@ -270,12 +270,7 @@ Settings *CoreApplication::settings() const
 void CoreApplication::postInit()
 {
     Q_D(CoreApplication);
-    d->updateManager->start();
-
-    d->initialized = true;
-    for (const auto &initializer : qAsConst(initializers()))
-        initializer();
-    initializers().clear();
+    d->postInit();
 }
 
 int CoreApplication::exec()
@@ -323,6 +318,16 @@ void CoreApplication::addMigrations(const QMap<QString, QList<CoreApplication::M
         for (Migration migration : it.value())
             addMigration(packedVersion, std::forward<Migration>(migration));
     }
+}
+
+void CoreApplicationPrivate::postInit()
+{
+    updateManager->start();
+
+    initialized = true;
+    for (const auto &initializer : qAsConst(initializers()))
+        initializer();
+    initializers().clear();
 }
 
 void CoreApplicationPrivate::initCrashHandler()

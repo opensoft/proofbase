@@ -21,6 +21,8 @@ class PROOF_CORE_EXPORT CoreApplicationPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(CoreApplication)
 protected:
+    virtual void postInit();
+
     void initCrashHandler();
     void updatePrettifiedName();
     bool daemonizeIfNeeded();
