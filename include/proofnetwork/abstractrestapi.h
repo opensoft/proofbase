@@ -92,7 +92,7 @@ public:
         RestApiError error;
         if (!callee->isLoggedOut()) {
             taskChain->addSignalWaiter(callee, signal, callback);
-            taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
+            taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::apiErrorOccurred, generateErrorCallback(currentOperationId, error));
             currentOperationId = (*callee.*method)(args...);
             if (!currentOperationId) {
                 error.level = RestApiError::Level::ClientError;
@@ -140,7 +140,7 @@ public:
         RestApiError error;
         if (!callee->isLoggedOut()) {
             taskChain->addSignalWaiter(callee, signal, callback);
-            taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::errorOccurred, generateErrorCallback(currentOperationId, error));
+            taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::apiErrorOccurred, generateErrorCallback(currentOperationId, error));
             currentOperationId = (*callee.*method)(args...);
             if (!currentOperationId) {
                 error.level = RestApiError::Level::ClientError;
@@ -177,7 +177,7 @@ public:
     }
 
 signals:
-    void errorOccurred(qulonglong operationId, const Proof::RestApiError &error);
+    void apiErrorOccurred(qulonglong operationId, const Proof::RestApiError &error);
 
 protected:
     AbstractRestApi(const RestClientSP &restClient, AbstractRestApiPrivate &dd, QObject *parent = nullptr);

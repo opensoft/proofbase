@@ -76,6 +76,7 @@ public:
 
 signals:
     void queuedCallRequested(qulonglong queuedCallId, QPrivateSignal);
+    void errorOccurred(long moduleCode, long errorCode, const QString &errorMessage, bool userFriendly, bool fatal = false);
 
 protected:
     ProofObject(ProofObjectPrivate &dd, QObject *parent = nullptr);

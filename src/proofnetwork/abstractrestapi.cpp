@@ -57,7 +57,7 @@ void AbstractRestApi::abortRequest(qulonglong operationId)
     d->repliesMutex.unlock();
 
     if (toAbort && toAbort->isRunning()) {
-        emit errorOccurred(operationId, error);
+        emit apiErrorOccurred(operationId, error);
         toAbort->abort();
         toAbort->deleteLater();
     }
@@ -236,7 +236,7 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
             qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
                                          << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                          << ": " << errorCode << message;
-            emit q->errorOccurred(operationId,
+            emit q->apiErrorOccurred(operationId,
                                   RestApiError{RestApiError::Level::ServerError, errorCode,
                                                NETWORK_MODULE_CODE, NetworkErrorCode::ServerError,
                                                message, forceUserFriendly});
@@ -274,7 +274,7 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
         qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
                                      << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                      << ": " << errorCode << errorString;
-        emit q->errorOccurred(operationId,
+        emit q->apiErrorOccurred(operationId,
                               RestApiError{RestApiError::Level::ClientError, errorCode,
                                            NETWORK_MODULE_CODE, proofErrorCode,
                                            errorString, forceUserFriendly});
@@ -295,7 +295,7 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
             if (!firstError)
                 continue;
             firstError = false;
-            emit q->errorOccurred(operationId,
+            emit q->apiErrorOccurred(operationId,
                                   RestApiError{RestApiError::Level::ClientError, errorCode,
                                                NETWORK_MODULE_CODE, NetworkErrorCode::SslError,
                                                error.errorString(), forceUserFriendly});
@@ -317,7 +317,7 @@ void AbstractRestApiPrivate::cleanupReply(qulonglong operationId, QNetworkReply 
 void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, QJsonParseError error)
 {
     Q_Q(AbstractRestApi);
-    emit q->errorOccurred(operationId,
+    emit q->apiErrorOccurred(operationId,
                           RestApiError{RestApiError::Level::JsonParseError, error.error,
                                        NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                        QStringLiteral("JSON error: %1").arg(error.errorString())});
@@ -356,7 +356,7 @@ void AbstractRestApiPrivate::clearReplies()
         replies.remove(reply);
         toAbort << reply;
         if (operationId)
-            emit q->errorOccurred(operationId, error);
+            emit q->apiErrorOccurred(operationId, error);
     }
     repliesMutex.unlock();
 

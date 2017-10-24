@@ -76,7 +76,7 @@ void ProofServiceRestApiPrivate::replyFinished(qulonglong operationId, QNetworkR
                                              << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                              << ": " << errorCode
                                              << errorInfo.proofModuleCode << errorInfo.proofErrorCode << errorInfo.message;
-                emit q->errorOccurred(operationId, RestApiError{RestApiError::Level::ServerError, errorCode,
+                emit q->apiErrorOccurred(operationId, RestApiError{RestApiError::Level::ServerError, errorCode,
                                                                 errorInfo.proofModuleCode, errorInfo.proofErrorCode,
                                                                 errorInfo.message, forceUserFriendly ? true : errorInfo.userFriendly});
                 cleanupReply(operationId, reply);

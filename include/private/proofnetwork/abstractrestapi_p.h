@@ -102,7 +102,7 @@ public:
                         jsonErrorMessage.prepend(*errorMessage);
                         *errorMessage = jsonErrorMessage;
                     }
-                    emit q->errorOccurred(operationId,
+                    emit q->apiErrorOccurred(operationId,
                                           RestApiError{RestApiError::Level::JsonServerError, 0,
                                                        NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                        jsonErrorMessage});
@@ -115,7 +115,7 @@ public:
                 errorString.prepend(*errorMessage);
                 *errorMessage = errorString;
             }
-            emit q->errorOccurred(operationId,
+            emit q->apiErrorOccurred(operationId,
                                   RestApiError{RestApiError::Level::JsonDataError, 0,
                                                NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                errorString});
@@ -200,7 +200,7 @@ public:
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
             }
-            emit q->errorOccurred(operationId,
+            emit q->apiErrorOccurred(operationId,
                                   RestApiError{RestApiError::Level::JsonParseError, jsonError.error,
                                                NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                jsonErrorString});
@@ -211,7 +211,7 @@ public:
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
             }
-            emit q->errorOccurred(operationId,
+            emit q->apiErrorOccurred(operationId,
                                   RestApiError{RestApiError::Level::JsonParseError, 0,
                                                NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                jsonErrorString});
@@ -245,7 +245,7 @@ private:
                 jsonErrorString.prepend(*errorMessage);
                 *errorMessage = jsonErrorString;
             }
-            emit q->errorOccurred(operationId,
+            emit q->apiErrorOccurred(operationId,
                                   RestApiError{RestApiError::Level::JsonParseError, jsonError.error,
                                                NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                jsonErrorString});
@@ -263,7 +263,7 @@ private:
                                 jsonErrorMessage.prepend(*errorMessage);
                                 *errorMessage = jsonErrorMessage;
                             }
-                            emit q->errorOccurred(operationId,
+                            emit q->apiErrorOccurred(operationId,
                                                   RestApiError{RestApiError::Level::JsonServerError, 0,
                                                                NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                                jsonErrorMessage});
@@ -277,7 +277,7 @@ private:
                     invalidJson.prepend(*errorMessage);
                     *errorMessage = invalidJson;
                 }
-                emit q->errorOccurred(operationId,
+                emit q->apiErrorOccurred(operationId,
                                       RestApiError{RestApiError::Level::JsonDataError, 0,
                                                    NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
                                                    invalidJson});
