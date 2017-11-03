@@ -72,13 +72,13 @@ void ProofServiceRestApiPrivate::replyFinished(qulonglong operationId, QNetworkR
                 for (const auto &arg : jsonArgs)
                     args << arg.toString();
                 ErrorInfo errorInfo = errorsRegistry->infoForCode(serviceErrorCode.toInt(), args);
-                qCDebug(proofNetworkMiscLog) << "Error in JSON parsing occurred for" << operationId
-                                             << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
-                                             << ": " << errorCode
-                                             << errorInfo.proofModuleCode << errorInfo.proofErrorCode << errorInfo.message;
+                qCWarning(proofNetworkMiscLog) << "Error in JSON parsing occurred for" << operationId
+                                               << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
+                                               << ": " << errorCode
+                                               << errorInfo.proofModuleCode << errorInfo.proofErrorCode << errorInfo.message;
                 emit q->apiErrorOccurred(operationId, RestApiError{RestApiError::Level::ServerError, errorCode,
-                                                                errorInfo.proofModuleCode, errorInfo.proofErrorCode,
-                                                                errorInfo.message, forceUserFriendly ? true : errorInfo.userFriendly});
+                                                                   errorInfo.proofModuleCode, errorInfo.proofErrorCode,
+                                                                   errorInfo.message, forceUserFriendly ? true : errorInfo.userFriendly});
                 cleanupReply(operationId, reply);
                 return;
             }

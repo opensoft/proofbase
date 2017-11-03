@@ -241,12 +241,12 @@ void UpdateManagerPrivate::checkPassword(const QString &password)
             currentRead = currentRead.trimmed();
 
             if (currentRead.contains("is not in the sudoers")) {
-                qCDebug(proofCoreUpdatesLog) << "User not in sudoers list; log:\n" << readBuffer;
+                qCWarning(proofCoreUpdatesLog) << "User not in sudoers list; log:\n" << readBuffer;
                 emit q->passwordChecked(false);
                 return;
             }
             if (currentRead.contains("Sorry, try again")) {
-                qCDebug(proofCoreUpdatesLog) << "Sudo rejected the password; log:\n" << readBuffer;
+                qCWarning(proofCoreUpdatesLog) << "Sudo rejected the password; log:\n" << readBuffer;
                 emit q->passwordChecked(false);
                 return;
             }
@@ -292,7 +292,7 @@ void UpdateManagerPrivate::checkForUpdates()
                                          .arg(updater->exitCode()));
         }
     } else {
-        qCDebug(proofCoreUpdatesLog) << "apt-get update process couldn't be started" << updater->error() << updater->errorString();
+        qCWarning(proofCoreUpdatesLog) << "apt-get update process couldn't be started" << updater->error() << updater->errorString();
         ErrorNotifier::instance()->notify(QString("Error occurred during looking for updates.\nApt-get couldn't be started.\n%1 - %2")
                                      .arg(updater->error()).arg(updater->errorString()));
     }
@@ -316,7 +316,6 @@ void UpdateManagerPrivate::checkForUpdates()
         QStringList splittedVersion = version.split(".");
         if (splittedVersion.count() < 4) {
             qCDebug(proofCoreUpdatesLog) << "Strange version found" << version << ". Returning.";
-            ErrorNotifier::instance()->notify(QString("Error occurred during looking for updates.\nStrange version %1 found.").arg(version));
             return;
         }
         int foundVersionMajor = splittedVersion[0].toInt();
@@ -334,9 +333,7 @@ void UpdateManagerPrivate::checkForUpdates()
                 installVersion("", "");
         }
     } else {
-        qCDebug(proofCoreUpdatesLog) << "process couldn't be started" << checker->error() << checker->errorString();
-        ErrorNotifier::instance()->notify(QString("Error occurred during looking for updates.\nApt-get couldn't be started.\n%1 - %2")
-                                     .arg(updater->error()).arg(updater->errorString()));
+        qCWarning(proofCoreUpdatesLog) << "apt-get process couldn't be started" << checker->error() << checker->errorString();
     }
 #endif
 }
@@ -355,8 +352,7 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
     updater->waitForStarted();
     if (updater->error() == QProcess::UnknownError) {
         if (!updater->waitForReadyRead()) {
-            qCDebug(proofCoreUpdatesLog) << "No answer from apt-get. Returning";
-            ErrorNotifier::instance()->notify("Error occurred during update.\nNo answer from apt-get.");
+            qCWarning(proofCoreUpdatesLog) << "No answer from apt-get. Returning";
             emit (q->*failSignal)();
             return;
         }
@@ -369,8 +365,7 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
         if (currentRead.contains("[sudo]") || currentRead.contains("password for")) {
             updater->write(QString("%1\n").arg(password).toLatin1());
             if (!updater->waitForReadyRead()) {
-                qCDebug(proofCoreUpdatesLog) << "No answer from apt-get. Returning";
-                ErrorNotifier::instance()->notify("Error occurred during update.\nNo answer from apt-get.");
+                qCWarning(proofCoreUpdatesLog) << "No answer from apt-get. Returning";
                 emit (q->*failSignal)();
                 return;
             }
@@ -380,14 +375,12 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
             currentRead = currentRead.trimmed();
 
             if (currentRead.contains("is not in the sudoers")) {
-                qCDebug(proofCoreUpdatesLog) << "User not in sudoers list; log:\n" << readBuffer;
-                ErrorNotifier::instance()->notify(QString("Error occurred during update.\nUser not in sudoers list.\n\n%1").arg(readBuffer.constData()));
+                qCWarning(proofCoreUpdatesLog) << "User not in sudoers list; log:\n" << readBuffer;
                 emit (q->*failSignal)();
                 return;
             }
             if (currentRead.contains("Sorry, try again")) {
-                qCDebug(proofCoreUpdatesLog) << "Sudo rejected the password; log:\n" << readBuffer;
-                ErrorNotifier::instance()->notify(QString("Error occurred during update.\nPassword rejected.\n\n%1").arg(readBuffer.constData()));
+                qCWarning(proofCoreUpdatesLog) << "Sudo rejected the password; log:\n" << readBuffer;
                 emit (q->*failSignal)();
                 return;
             }
@@ -407,9 +400,7 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
             setCurrentVersion(version);
         }
     } else {
-        ErrorNotifier::instance()->notify(QString("Error occurred during update.\nApt-get couldn't be started.\n%1 - %2")
-                                     .arg(updater->error()).arg(updater->errorString()));
-        qCDebug(proofCoreUpdatesLog) << "process couldn't be started" << updater->error() << updater->errorString();
+        qCWarning(proofCoreUpdatesLog) << "apt-get process couldn't be started" << updater->error() << updater->errorString();
     }
 #else
     Q_UNUSED(version)

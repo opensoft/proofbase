@@ -71,11 +71,11 @@ void AmqpPublisherPrivate::connected()
         qCDebug(proofNetworkAmqpLog) << "Create exchange:" << exchangeName;
         QObject::connect(exchange, static_cast<void(QAmqpExchange::*)(QAMQP::Error)>(&QAmqpExchange::error), q, [this, q](QAMQP::Error error) {
             emit q->errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QStringLiteral("Exchange Error: %1").arg(error), false);
-            qCDebug(proofNetworkAmqpLog) << "Exchange Error:" << error;
+            qCWarning(proofNetworkAmqpLog) << "RabbitMQ exchange error:" << error;
         });
 
         QObject::connect(exchange, &QAmqpExchange::opened, q, [this, q]() {
-            qCDebug(proofNetworkAmqpLog) << "Exchange opened" << q->sender();
+            qCDebug(proofNetworkAmqpLog) << "RabbitMQ exchange opened" << q->sender();
             emit q->connected();
         });
     }

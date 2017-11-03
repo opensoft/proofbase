@@ -289,7 +289,7 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
     for (const QSslError &error : errors) {
         if (error.error() != QSslError::SslError::NoError) {
             int errorCode = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
-            qCDebug(proofNetworkMiscLog) << "SSL error occurred for" << operationId
+            qCWarning(proofNetworkMiscLog) << "SSL error occurred for" << operationId
                                          << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                          << ": " << errorCode << error.errorString();
             if (!firstError)

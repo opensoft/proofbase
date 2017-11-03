@@ -1,6 +1,8 @@
 #include "logs.h"
 #include "errornotifier.h"
 
+#include "proofalgorithms.h"
+
 #include <QMap>
 #include <QFile>
 #include <QDateTime>
@@ -26,6 +28,7 @@ static const QMap<QtMsgType, QString> STRINGIFIED_TYPES = {
 };
 
 static const QSet<QtMsgType> TYPES_FOR_NOTIFIER = {QtWarningMsg, QtCriticalMsg, QtFatalMsg};
+static const QList<QLatin1String> NOTIFIER_EXCLUDES = {QLatin1String("QML Image"), QLatin1String("Binding loop")};
 
 static bool isConsoleOutputEnabled = true;
 static QString logsStoragePath;
@@ -84,7 +87,12 @@ void baseHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
             severity = Proof::ErrorNotifier::Severity::Warning;
             break;
         }
-        Proof::ErrorNotifier::instance()->notify(message, severity);
+        bool shouldNotify = Proof::algorithms::findIf(NOTIFIER_EXCLUDES,
+                                                      [message](const auto &x){return message.contains(x);},
+                                                      QLatin1String("")
+                                                     ).size() == 0;
+        if (shouldNotify)
+            Proof::ErrorNotifier::instance()->notify(QString("%1: %2").arg(context.category).arg(message), severity);
     }
 }
 

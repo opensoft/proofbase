@@ -695,13 +695,13 @@ void WorkerThread::handleNewConnection(qintptr socketDescriptor)
 
     void (QTcpSocket:: *errorSignal)(QAbstractSocket::SocketError) = &QTcpSocket::error;
     info.errorConnection = connect(tcpSocket, errorSignal, this, [tcpSocket, this] {
-        qCDebug(proofNetworkMiscLog) << "Socket error:" << tcpSocket->errorString();
+        qCWarning(proofNetworkMiscLog) << "RestServer: socket error:" << tcpSocket->errorString();
     }, Qt::QueuedConnection);
 
     info.disconnectConnection = connect(tcpSocket, &QTcpSocket::disconnected, this, [tcpSocket, this] { deleteSocket(tcpSocket); }, Qt::QueuedConnection);
 
     if (!tcpSocket->setSocketDescriptor(socketDescriptor)) {
-        qCDebug(proofNetworkMiscLog) << "Can't create socket, error:" << tcpSocket->errorString();
+        qCWarning(proofNetworkMiscLog) << "RestServer: can't create socket, error:" << tcpSocket->errorString();
         serverD->deleteSocket(tcpSocket, this);
         return;
     }
@@ -725,7 +725,7 @@ void WorkerThread::onReadyRead(QTcpSocket *socket)
         serverD->tryToCallMethod(socket, info.parser.method(), info.parser.uri(), info.parser.headers(), info.parser.body());
         break;
     case HttpParser::Result::Error:
-        qCDebug(proofNetworkMiscLog) << "Parse error:" << info.parser.error();
+        qCWarning(proofNetworkMiscLog) << "RestServer: parse error:" << info.parser.error();
         disconnect(info.readyReadConnection);
         sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), QHash<QString, QString>(), 400, QStringLiteral("Bad Request"));
         break;

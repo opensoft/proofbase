@@ -585,7 +585,7 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
     timer->setSingleShot(true);
     replyTimeouts.insert(reply, timer);
     QObject::connect(timer, &QTimer::timeout, [timer, reply](){
-        qCDebug(proofNetworkMiscLog) << "Timed out:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << reply->isRunning();
+        qCWarning(proofNetworkMiscLog) << "Timed out:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << reply->isRunning();
         if (reply->isRunning())
             reply->abort();
         timer->deleteLater();
@@ -595,7 +595,7 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
 
     QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                      q, [this, reply](QNetworkReply::NetworkError e) {
-        qCDebug(proofNetworkMiscLog) << "Error occurred:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << e;
+        qCWarning(proofNetworkMiscLog) << "Error occurred:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << e;
         cleanupReplyHandler(reply);
     });
     QObject::connect(reply, &QNetworkReply::finished,

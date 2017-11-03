@@ -24,13 +24,14 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
             if (d->autoReconnectionTries > 0) {
                 --d->autoReconnectionTries;
             } else {
+                qCWarning(proofNetworkAmqpLog) << "RabbitMQ Client Connection Error:" << error;
                 emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QStringLiteral("Client Error: %1").arg(error), false);
                 d->autoReconnectionTries = AUTO_RECONNECTION_TRIES;
             }
         } else {
             d->rabbitClient->disconnectFromHost();
             emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QStringLiteral("Client Error: %1").arg(error), false);
-            qCDebug(proofNetworkAmqpLog) << "Client Error:" << error;
+            qCWarning(proofNetworkAmqpLog) << "RabbitMQ Client Connection Error:" << error;
         }
     });
 
@@ -40,13 +41,14 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
             if (d->autoReconnectionTries > 0) {
                 --d->autoReconnectionTries;
             } else {
+                qCWarning(proofNetworkAmqpLog) << "RabbitMQ Socket Error:" << error;
                 emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable, QStringLiteral("Can't connect to qamqp server (Socket)"), false);
                 d->autoReconnectionTries = AUTO_RECONNECTION_TRIES;
             }
         } else {
             d->rabbitClient->disconnectFromHost();
             emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable, QStringLiteral("Can't connect to qamqp server (Socket)"), false);
-            qCDebug(proofNetworkAmqpLog) << "Socket Error:" << error;
+            qCWarning(proofNetworkAmqpLog) << "RabbitMQ Socket Connection Error:" << error;
         }
     });
 
@@ -57,7 +59,7 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
         for(const auto &error : errors)
             errorsString += QStringLiteral("%1,\n").arg(error.errorString());
         errorsString.chop(2);
-        qCDebug(proofNetworkAmqpLog) << "SSL Socket errors:" << errorsString;
+        qCWarning(proofNetworkAmqpLog) << "RabbitMQ SSL Socket errors:" << errorsString;
     });
 
     QObject::connect(d->rabbitClient, &QAmqpClient::connected, this, [this, d]() {
