@@ -138,7 +138,7 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
             return;
         }
 
-        settings->mainGroup()->setValue("selected_printers", name, Proof::Settings::Storage::Local);
+        settings->mainGroup()->setValue("selected_printer", name, Proof::Settings::Storage::Local);
 
         if (commonPrinters.contains(name)) {
             settings->deleteGroup("label_printer", Proof::Settings::Storage::Local);
