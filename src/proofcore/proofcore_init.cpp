@@ -145,7 +145,7 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
             return;
         }
 
-        commonPrinters.append(name);
+        commonPrinters << name;
         settings->mainGroup()->setValue("label_printers", commonPrinters.join("|"), Proof::Settings::Storage::Global);
         auto newPrinterGroup = settings->group(name, Proof::Settings::NotFoundPolicy::AddGlobal);
         auto host = printerGroup->value("host", "", Proof::Settings::NotFoundPolicy::DoNothing).toString();
@@ -154,6 +154,7 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
         auto forceServiceUsage = printerGroup->value("force_service_usage", "", Proof::Settings::NotFoundPolicy::DoNothing).toBool();
 
         newPrinterGroup->setValue("name", name);
+        newPrinterGroup->setValue("title", name);
         newPrinterGroup->setValue("host", host);
         newPrinterGroup->setValue("port", port);
         newPrinterGroup->setValue("binaries_check", binariesCheck);
