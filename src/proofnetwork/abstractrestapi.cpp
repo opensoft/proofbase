@@ -229,9 +229,17 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
         int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if (!ALLOWED_HTTP_STATUSES.contains(errorCode)) {
             QString message;
-            QString mimeType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
-            if (mimeType == QLatin1String("text/plain"))
+            QStringList contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString().split(";", QString::SkipEmptyParts);
+            for (QString &str : contentType)
+                str = str.trimmed();
+            if (contentType.contains(QLatin1String("text/plain"))) {
                 message = reply->readAll().trimmed();
+            } else if (contentType.contains(QLatin1String("application/json"))) {
+                QJsonParseError jsonError;
+                QJsonDocument doc = QJsonDocument::fromJson(reply->readAll(), &jsonError);
+                if (jsonError.error == QJsonParseError::NoError && doc.isObject())
+                    message = doc.object()[QStringLiteral("message")].toString();
+            }
             if (message.isEmpty())
                 message = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed();
 
@@ -239,9 +247,9 @@ void AbstractRestApiPrivate::replyFinished(qulonglong operationId, QNetworkReply
                                          << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                          << ": " << errorCode << message;
             emit q->apiErrorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::ServerError, errorCode,
-                                               NETWORK_MODULE_CODE, NetworkErrorCode::ServerError,
-                                               message, forceUserFriendly});
+                                     RestApiError{RestApiError::Level::ServerError, errorCode,
+                                                  NETWORK_MODULE_CODE, NetworkErrorCode::ServerError,
+                                                  message, forceUserFriendly});
             cleanupReply(operationId, reply);
         }
     }
