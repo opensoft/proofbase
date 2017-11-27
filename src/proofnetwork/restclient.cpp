@@ -627,6 +627,8 @@ QPair<QString, QString> RestClientPrivate::parseHost(const QString &host)
     if (hostIndex > 0)
         parts.removeFirst();
 
-    QString postfix = '/' + parts.join('/');
+    QString postfix;
+    if (!parts.isEmpty())
+        postfix = '/' + parts.join('/');
     return {newHost, postfix};
 }
