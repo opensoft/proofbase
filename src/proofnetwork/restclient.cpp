@@ -40,7 +40,7 @@ class RestClientPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(RestClient)
 public:
-    QNetworkRequest createNetworkRequest(const QString &method, const QUrlQuery &query,
+    QNetworkRequest createNetworkRequest(QString method, const QUrlQuery &query,
                                          const QByteArray &body, const QString &vendor);
     QByteArray generateWsseToken() const;
     void requestQuasiOAuth2token(int retries = 4, const QString &method = QStringLiteral("/oauth2/token"));
@@ -393,7 +393,7 @@ void RestClient::authenticate()
     }
 }
 
-QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, const QUrlQuery &query,
+QNetworkRequest RestClientPrivate::createNetworkRequest(QString method, const QUrlQuery &query,
                                                         const QByteArray &body, const QString &vendor)
 {
     Q_Q(RestClient);
@@ -405,14 +405,9 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QString &method, c
     url.setHost(host);
     if (explicitPort)
         url.setPort(port);
-    if (postfix.isEmpty()) {
-        url.setPath(method);
-    } else {
-        if (method.startsWith('/'))
-            url.setPath(postfix + method);
-        else
-            url.setPath(postfix + '/' + method);
-    }
+    if (!method.startsWith('/'))
+        method.prepend('/');
+    url.setPath(postfix + method);
     url.setQuery(query);
 
     result.setUrl(url);
