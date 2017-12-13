@@ -56,19 +56,20 @@ TaskChain::~TaskChain()
     qCDebug(proofCoreTaskChainStatsLog) << "Chains in use:" << TaskChainPrivate::chainsCounter;
 }
 
-TaskChainSP TaskChain::createChain()
+TaskChainSP TaskChain::createChain(bool selfDestroyable)
 {
     TaskChainSP result(new TaskChain());
-    result->d_func()->selfPointer = result;
+    if (selfDestroyable) {
+        result->d_func()->selfPointer = result;
 
-    auto connection = QSharedPointer<QMetaObject::Connection>::create();
-    auto checker = [result, connection](){
-        QObject::disconnect(*connection);
-        result->d_func()->selfPointer.clear();
-    };
-    *connection = connect(result.data(), &QThread::finished, result.data(), checker);
+        auto connection = QSharedPointer<QMetaObject::Connection>::create();
+        auto checker = [result, connection](){
+            QObject::disconnect(*connection);
+            result->d_func()->selfPointer.clear();
+        };
+        *connection = connect(result.data(), &QThread::finished, result.data(), checker);
+    }
     qCDebug(proofCoreTaskChainExtraLog) << "New chain created" << result.data();
-
     return result;
 }
 
@@ -142,7 +143,8 @@ void TaskChain::run()
             else
                 ++it;
         }
-        deleteSelf = !d->futures.size();
+        if (d->selfPointer && d->futures.empty())
+            deleteSelf = true;
         d->releaseFutures();
         if (!deleteSelf)
             QThread::msleep(SELF_MANAGEMENT_PAUSE_SLEEP_TIME_IN_MSECS);

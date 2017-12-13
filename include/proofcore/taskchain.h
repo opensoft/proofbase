@@ -34,8 +34,10 @@ public:
         return QSharedPointer<std::function<void(Args...)>>::create();
     }
 
-    // NOTE: Chain must be created (or moved after creation) in thread with Qt event loop and that thread must live all time that chain lives
-    static TaskChainSP createChain();
+    // Chain must be created (or moved after creation) in thread with Qt event loop and that thread must live all time that chain lives
+    // If called with selfDestroyable == false, pay attention to when destroy this object. All tasks should be completed to this moment 
+    // or dtor will wait for them (due to way how futures are implemented in C++)
+    static TaskChainSP createChain(bool selfDestroyable = true);
 
     template<class Task, class ...Args>
     qlonglong addTask(Task &&task,
