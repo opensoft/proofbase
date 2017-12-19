@@ -81,7 +81,7 @@ qlonglong AbstractRestApi::clientSslErrorOffset()
 AbstractRestApi::ErrorCallbackType AbstractRestApi::generateErrorCallback(qulonglong &currentOperationId, RestApiError &error)
 {
     return [&currentOperationId, &error]
-           (qulonglong operationId, const Proof::RestApiError &_error) {
+            (qulonglong operationId, const Proof::RestApiError &_error) {
         if (currentOperationId != operationId)
             return false;
         error = _error;
@@ -92,7 +92,7 @@ AbstractRestApi::ErrorCallbackType AbstractRestApi::generateErrorCallback(qulong
 AbstractRestApi::ErrorCallbackType AbstractRestApi::generateErrorCallback(qulonglong &currentOperationId, QString &errorMessage)
 {
     return [&currentOperationId, &errorMessage]
-           (qulonglong operationId, const Proof::RestApiError &_error) {
+            (qulonglong operationId, const Proof::RestApiError &_error) {
         if (currentOperationId != operationId)
             return false;
         errorMessage = QStringLiteral("%1: %2").arg(_error.code).arg(_error.message);
@@ -272,22 +272,34 @@ void AbstractRestApiPrivate::runReplyHandler(qulonglong operationId, QNetworkRep
 void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetworkReply *reply, bool forceUserFriendly)
 {
     Q_Q(AbstractRestApi);
-    if (reply->error() != QNetworkReply::NetworkError::NoError
-            && (reply->error() < 200 || (reply->error() % 100) == 99)) {
+    if (reply->error() != QNetworkReply::NetworkError::NoError && (reply->error() < 200 || (reply->error() % 100) == 99)) {
         int errorCode = NETWORK_ERROR_OFFSET + static_cast<int>(reply->error());
         QString errorString = reply->errorString();
         long proofErrorCode = NetworkErrorCode::ServerError;
-        if (reply->error() == QNetworkReply::NetworkError::OperationCanceledError) {
-            errorString = QStringLiteral("Service is unavailable. Try again later");
-            proofErrorCode = NetworkErrorCode::ServiceUnavailable;
-        }
         qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
                                      << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                      << ": " << errorCode << errorString;
+        switch (reply->error()) {
+        case QNetworkReply::HostNotFoundError:
+            errorString = QStringLiteral("Host %1 not found. Try again later").arg(reply->url().host());
+            proofErrorCode = NetworkErrorCode::ServiceUnavailable;
+            forceUserFriendly = true;
+            break;
+        case QNetworkReply::ConnectionRefusedError:
+        case QNetworkReply::RemoteHostClosedError:
+        case QNetworkReply::TimeoutError:
+        case QNetworkReply::OperationCanceledError:
+            errorString = QStringLiteral("Host %1 is unavailable. Try again later").arg(reply->url().host());
+            proofErrorCode = NetworkErrorCode::ServiceUnavailable;
+            forceUserFriendly = true;
+            break;
+        default:
+            break;
+        }
         emit q->apiErrorOccurred(operationId,
-                              RestApiError{RestApiError::Level::ClientError, errorCode,
-                                           NETWORK_MODULE_CODE, proofErrorCode,
-                                           errorString, forceUserFriendly});
+                                 RestApiError{RestApiError::Level::ClientError, errorCode,
+                                              NETWORK_MODULE_CODE, proofErrorCode,
+                                              errorString, forceUserFriendly});
         cleanupReply(operationId, reply);
     }
 }
@@ -300,15 +312,15 @@ void AbstractRestApiPrivate::sslErrorsOccurred(qulonglong operationId, QNetworkR
         if (error.error() != QSslError::SslError::NoError) {
             int errorCode = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
             qCWarning(proofNetworkMiscLog) << "SSL error occurred for" << operationId
-                                         << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
-                                         << ": " << errorCode << error.errorString();
+                                           << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
+                                           << ": " << errorCode << error.errorString();
             if (!firstError)
                 continue;
             firstError = false;
             emit q->apiErrorOccurred(operationId,
-                                  RestApiError{RestApiError::Level::ClientError, errorCode,
-                                               NETWORK_MODULE_CODE, NetworkErrorCode::SslError,
-                                               error.errorString(), forceUserFriendly});
+                                     RestApiError{RestApiError::Level::ClientError, errorCode,
+                                                  NETWORK_MODULE_CODE, NetworkErrorCode::SslError,
+                                                  error.errorString(), forceUserFriendly});
             cleanupReply(operationId, reply);
         }
     }
@@ -328,9 +340,9 @@ void AbstractRestApiPrivate::notifyAboutJsonParseError(qulonglong operationId, Q
 {
     Q_Q(AbstractRestApi);
     emit q->apiErrorOccurred(operationId,
-                          RestApiError{RestApiError::Level::JsonParseError, error.error,
-                                       NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                                       QStringLiteral("JSON error: %1").arg(error.errorString())});
+                             RestApiError{RestApiError::Level::JsonParseError, error.error,
+                                          NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
+                                          QStringLiteral("JSON error: %1").arg(error.errorString())});
 }
 
 void AbstractRestApiPrivate::setupReply(qulonglong &operationId, QNetworkReply *reply, RestAnswerHandler &&handler)
