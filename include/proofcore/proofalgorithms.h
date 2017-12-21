@@ -31,6 +31,14 @@ auto addToContainer(C &container, const T &value) -> decltype(container.insert(v
     container.insert(value.first, value.second);
 }
 
+template<typename C>
+auto reserveContainer(C &container, int size) -> decltype(container.reserve(size), void())
+{
+    container.reserve(size);
+}
+
+inline void reserveContainer(...) {}
+
 //TODO: remove this workaround with wrapper for const_cast after msvc 2015->2017 transition
 template<typename T> T & constCastWrapper(const T &ref)
 {
@@ -136,6 +144,7 @@ auto map(const Container &container, const Predicate &predicate, Result destinat
 {
     auto it = container.cbegin();
     auto end = container.cend();
+    __util::reserveContainer(destination, container.size());
     for (; it != end; ++it)
         __util::addToContainer(destination, predicate(*it));
     return destination;
@@ -148,6 +157,7 @@ auto map(const Container &container, const Predicate &predicate, Result destinat
 {
     auto it = container.cbegin();
     auto end = container.cend();
+    __util::reserveContainer(destination, container.size());
     for (; it != end; ++it)
         __util::addToContainer(destination, predicate(it.key(), it.value()));
     return destination;
