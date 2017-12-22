@@ -6,4 +6,8 @@ win32 {
     LIBS *= -lqamqp
 }
 
+msvc { 
+    QMAKE_CXXFLAGS *= /wd4251 /wd4275
+}
+
 android:ANDROID_EXTRA_LIBS *= $$(PROOF_PATH)/lib/libqamqp.so

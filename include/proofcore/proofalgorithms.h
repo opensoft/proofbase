@@ -6,9 +6,8 @@
 namespace Proof {
 namespace algorithms {
 namespace __util {
-//TODO: remove this workaround with second void() after msvc 2015->2017 transition
 template<typename C, typename T>
-auto addToContainer(C &container, const T &value) -> decltype(container.push_back(value), void(), void())
+auto addToContainer(C &container, const T &value) -> decltype(container.push_back(value), void())
 {
     container.push_back(value);
 }
@@ -39,7 +38,7 @@ auto reserveContainer(C &container, int size) -> decltype(container.reserve(size
 
 inline void reserveContainer(...) {}
 
-//TODO: remove this workaround with wrapper for const_cast after msvc 2015->2017 transition
+//TODO: remove this workaround with wrapper for const_cast after msvc fix its INTERNAL COMPILER ERROR
 template<typename T> T & constCastWrapper(const T &ref)
 {
     return const_cast<T &>(ref);
