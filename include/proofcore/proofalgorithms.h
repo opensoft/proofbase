@@ -6,6 +6,9 @@
 namespace Proof {
 namespace algorithms {
 namespace __util {
+template<int current> struct level : level<current - 1> {};
+template<> struct level<0> {};
+
 template<typename C, typename T>
 auto addToContainer(C &container, const T &value) -> decltype(container.push_back(value), void())
 {
@@ -31,12 +34,13 @@ auto addToContainer(C &container, const T &value) -> decltype(container.insert(v
 }
 
 template<typename C>
-auto reserveContainer(C &container, int size) -> decltype(container.reserve(size), void())
+auto reserveContainer(C &container, int size, level<1>) -> decltype(container.reserve(size), void())
 {
     container.reserve(size);
 }
 
-inline void reserveContainer(...) {}
+//Fallback
+template<typename C> void reserveContainer(C &, int, level<0>) {}
 
 //TODO: remove this workaround with wrapper for const_cast after msvc fix its INTERNAL COMPILER ERROR
 template<typename T> T & constCastWrapper(const T &ref)
@@ -143,7 +147,7 @@ auto map(const Container &container, const Predicate &predicate, Result destinat
 {
     auto it = container.cbegin();
     auto end = container.cend();
-    __util::reserveContainer(destination, container.size());
+    __util::reserveContainer(destination, container.size(), __util::level<1>{});
     for (; it != end; ++it)
         __util::addToContainer(destination, predicate(*it));
     return destination;
@@ -156,7 +160,7 @@ auto map(const Container &container, const Predicate &predicate, Result destinat
 {
     auto it = container.cbegin();
     auto end = container.cend();
-    __util::reserveContainer(destination, container.size());
+    __util::reserveContainer(destination, container.size(), __util::level<1>{});
     for (; it != end; ++it)
         __util::addToContainer(destination, predicate(it.key(), it.value()));
     return destination;
