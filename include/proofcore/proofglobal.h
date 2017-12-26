@@ -28,13 +28,30 @@ static constexpr int round(double d)
 }
 
 #ifdef Q_CC_MSVC
-# pragma section(".CRT$XCU")
-# define PROOF_LIBRARY_INITIALIZER(X) \
-    static void X(); \
-    __declspec(dllexport) \
-    __declspec(allocate(".CRT$XCU")) \
-    void(*proof_ctor_##X)() = &X; \
-    static void X()
+# include <SDKDDKVer.h>
+# define WIN32_LEAN_AND_MEAN
+# include <windows.h>
+# define PROOF_LIBRARY_INITIALIZER(X)                  \
+    __pragma(warning(push))                            \
+    __pragma(warning(disable:4100))                    \
+    static void X(void);                               \
+    BOOL APIENTRY DllMain(HMODULE hModule,             \
+                          DWORD  ul_reason_for_call,   \
+                          LPVOID lpReserved            \
+    )                                                  \
+    {                                                  \
+        switch (ul_reason_for_call) {                  \
+        case DLL_PROCESS_ATTACH:                       \
+            X();                                       \
+        case DLL_THREAD_ATTACH:                        \
+        case DLL_THREAD_DETACH:                        \
+        case DLL_PROCESS_DETACH:                       \
+            break;                                     \
+        }                                              \
+        return TRUE;                                   \
+    }                                                  \
+    __pragma(warning(pop))                             \
+    static void X(void)
 #else
 # define PROOF_LIBRARY_INITIALIZER(f) \
     __attribute__((constructor))\
