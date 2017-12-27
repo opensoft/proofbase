@@ -425,9 +425,7 @@ void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
 
     if (!d->threadPool.isEmpty()) {
         auto iter = std::min_element(d->threadPool.begin(), d->threadPool.end(),
-                                     [](WorkerThreadInfo lhs, WorkerThreadInfo rhs) {
-                                         return lhs.socketCount < rhs.socketCount;
-                                     });
+                                     [](WorkerThreadInfo lhs, WorkerThreadInfo rhs) {return lhs.socketCount < rhs.socketCount;});
         if (iter->socketCount == 0 || d->threadPool.count() >= d->suggestedMaxThreadsCount) {
             worker = iter->thread;
             ++iter->socketCount;
@@ -637,15 +635,20 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
 void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers,
                                            int returnCode, const QString &reason)
 {
-    qCDebug(proofNetworkMiscLog) << "Replying" << returnCode << ":" << reason << "at socket" << socket;
     WorkerThread *worker = nullptr;
     {
         QMutexLocker lock(&socketsMutex);
         if (sockets.contains(socket))
             worker = qobject_cast<WorkerThread *>(socket->thread());
     }
-    if (worker != nullptr)
+    if (worker != nullptr) {
+        qCDebug(proofNetworkMiscLog) << "Replying" << returnCode << ":" << reason << "at socket" << socket;
         worker->sendAnswer(socket, body, contentType, headers, returnCode, reason);
+    } else {
+        qCDebug(proofNetworkMiscLog).noquote() << "Wanted to reply" << returnCode << ":" << reason
+                                               << "at socket" << QString("QTcpSocket(%1)").arg(reinterpret_cast<quint64>(socket), 0, 16)
+                                               << "but it is dead already";
+    }
 }
 
 void AbstractRestServerPrivate::registerSocket(QTcpSocket *socket)
@@ -666,10 +669,10 @@ void AbstractRestServerPrivate::deleteSocket(QTcpSocket *socket, WorkerThread *w
                 return;
         }
         delete socket;
-        auto iter = std::find_if(threadPool.begin(), threadPool.end(), [worker](WorkerThreadInfo info) {
-            return info.thread == worker;
-        });
-        --iter->socketCount;
+        auto iter = std::find_if(threadPool.begin(), threadPool.end(),
+                                 [worker](WorkerThreadInfo info) {return info.thread == worker;});
+        if (iter != threadPool.end())
+            --iter->socketCount;
     }
 }
 
