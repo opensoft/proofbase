@@ -50,7 +50,7 @@ bool AbstractAmqpReceiverPrivate::startConsuming(QAmqpQueue *queue)
     QObject::connect(queue, &QAmqpQueue::messageReceived, q, [this]() { amqpMessageReceived(); });
     bool consumeStarted = queue->consume(QAmqpQueue::coNoAck);
     if (consumeStarted) {
-        queueState = QueueState::ConsumingState;
+        queueState = QueueState::Consuming;
         emit q->connected();
     }
     return consumeStarted;
@@ -60,14 +60,14 @@ void AbstractAmqpReceiverPrivate::connected()
 {
     Q_Q(AbstractAmqpReceiver);
     auto newQueue = rabbitClient->createQueue(queueName);
-    queueState = QueueState::OpeningState;
+    queueState = QueueState::Opening;
 
     if (newQueue != queue) {
         qCDebug(proofNetworkAmqpLog) << "Create queue: " << queueName;
         queue = newQueue;
         QObject::connect(queue, static_cast<void (QAmqpQueue::*)(QAMQP::Error)>(&QAmqpQueue::error), q, [this, q](QAMQP::Error error) {
-            if ((queueState == QueueState::DeclaredState) && (error == QAMQP::PreconditionFailedError) && createdQueueIfNotExists) {
-                queueState = QueueState::ReopeningState;
+            if ((queueState == QueueState::Declared) && (error == QAMQP::PreconditionFailedError) && createdQueueIfNotExists) {
+                queueState = QueueState::Reopening;
                 queue->reset();
                 queue->reopen();
             } else {
@@ -77,14 +77,14 @@ void AbstractAmqpReceiverPrivate::connected()
         });
 
         QObject::connect(queue, &QAmqpQueue::declared, q, [this, q]() {
-            queueState = QueueState::DeclaredState;
+            queueState = QueueState::Declared;
             queueDeclared(queue);
         });
 
         QObject::connect(queue, &QAmqpQueue::opened, q, [this, q]() {
             qCDebug(proofNetworkAmqpLog) << "Queue opened " << q->sender();
-            if (createdQueueIfNotExists && queueState == QueueState::OpeningState) {
-                queueState = QueueState::DeclaredState;
+            if (createdQueueIfNotExists && queueState == QueueState::Opening) {
+                queueState = QueueState::Declared;
                 queue->declare(queueOptions);
             } else {
                 startConsuming(queue);

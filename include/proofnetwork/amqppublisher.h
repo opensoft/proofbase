@@ -5,6 +5,8 @@
 #include "proofnetwork/proofnetwork_types.h"
 #include "proofnetwork/proofnetwork_global.h"
 
+#include "proofnetwork/3rdparty/qamqp/qamqpexchange.h"
+
 #include <QSslConfiguration>
 
 namespace Proof {
@@ -22,6 +24,12 @@ public:
 
     //TODO: add options if will be needed
     qulonglong publishMessage(const QString &message, const QString &routingKey);
+
+    QAmqpExchange::ExchangeOptions exchangeOptions() const;
+
+    bool createExchangeIfNotExists() const;
+    void setCreateExchangeIfNotExists(bool createExchangeIfNotExists,
+                                      QAmqpExchange::ExchangeOptions options = {QAmqpExchange::Durable});
 
 signals:
     void messagePublished(qulonglong id);

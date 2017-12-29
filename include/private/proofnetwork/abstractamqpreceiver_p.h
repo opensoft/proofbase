@@ -18,13 +18,12 @@ public:
     virtual void queueDeclared(QAmqpQueue *queue) = 0;
     virtual void amqpMessageReceived() = 0;
 
-    enum class QueueState
-    {
-        OpeningState,
-        ErrorState,
-        ReopeningState,
-        DeclaredState,
-        ConsumingState
+    enum class QueueState {
+        Opening,
+        Error,
+        Reopening,
+        Declared,
+        Consuming
     };
 
     QAmqpQueue *queue = nullptr;
@@ -32,7 +31,7 @@ public:
     bool createdQueueIfNotExists = false;
     QAmqpQueue::QueueOptions queueOptions = {QAmqpQueue::Durable, QAmqpQueue::AutoDelete};
 
-    QueueState queueState = QueueState::ErrorState;
+    QueueState queueState = QueueState::Error;
 
     bool startConsuming(QAmqpQueue *queue);
 };
