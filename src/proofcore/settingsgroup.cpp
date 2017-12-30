@@ -187,12 +187,12 @@ void SettingsGroup::deleteGroup(const QString &groupName, Settings::Storage stor
     if (d->groups.contains(groupName)) {
         auto groupToDelete = d->groups[groupName];
         const auto valuesToDelete = groupToDelete->values();
-        for (const QString &valueName : valuesToDelete)
-            groupToDelete->deleteValue(valueName);
+        for (const QString &toDelete : valuesToDelete)
+            groupToDelete->deleteValue(toDelete);
 
         const auto subgroupsToDelete = groupToDelete->groups();
-        for (const QString &groupName : subgroupsToDelete)
-            groupToDelete->deleteGroup(groupName);
+        for (const QString &toDelete : subgroupsToDelete)
+            groupToDelete->deleteGroup(toDelete);
 
         //if global group with this name was empty then we can safely remove it
         if (d->globalGroup && d->globalGroup->group(groupName)

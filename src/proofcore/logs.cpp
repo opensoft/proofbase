@@ -35,7 +35,7 @@ static QString logsStoragePath;
 static QString logFileNameBase;
 static QtMessageHandler defaultHandler = nullptr;
 static QMutex logFileWriteMutex;
-static QTimer compressTimer;
+static QTimer oldLogsArchiver;
 
 static QFile *currentLogFile = nullptr;
 static QDate currentLogFileDate;
@@ -196,10 +196,10 @@ void Proof::Logs::setLogsStoragePath(QString storagePath)
     QDir logsDir = QDir(logsStoragePath);
     logsDir.mkpath(QStringLiteral("."));
 
-    QObject::connect(&compressTimer, &QTimer::timeout, &compressTimer, [](){compressOldFiles();});
+    QObject::connect(&oldLogsArchiver, &QTimer::timeout, &oldLogsArchiver, [](){compressOldFiles();});
     compressOldFiles();
-    compressTimer.setTimerType(Qt::VeryCoarseTimer);
-    compressTimer.start(COMPRESS_TIMEOUT);
+    oldLogsArchiver.setTimerType(Qt::VeryCoarseTimer);
+    oldLogsArchiver.start(COMPRESS_TIMEOUT);
 }
 
 void Proof::Logs::setRulesFromString(const QString &rulesString)

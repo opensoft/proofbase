@@ -34,13 +34,13 @@ auto addToContainer(C &container, const T &value) -> decltype(container.insert(v
 }
 
 template<typename C>
-auto reserveContainer(C &container, int size, level<1>) -> decltype(container.reserve(size), void())
+auto reserveContainer(C &container, long long size, level<1>) -> decltype(container.reserve(size), void())
 {
     container.reserve(size);
 }
 
 //Fallback
-template<typename C> void reserveContainer(C &, int, level<0>) {}
+template<typename C> void reserveContainer(C &, long long, level<0>) {}
 
 //TODO: remove this workaround with wrapper for const_cast after msvc fix its INTERNAL COMPILER ERROR
 template<typename T> T & constCastWrapper(const T &ref)
