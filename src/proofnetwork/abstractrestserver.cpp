@@ -19,6 +19,7 @@
 #include <QJsonArray>
 #include <QNetworkInterface>
 #include <QSysInfo>
+#include <QReadWriteLock>
 
 #include <algorithm>
 
@@ -51,13 +52,26 @@ private:
 
 struct WorkerThreadInfo
 {
-    explicit WorkerThreadInfo(WorkerThread *thread, quint32 socketCount)
-        : thread(thread), socketCount(socketCount)
+    explicit WorkerThreadInfo(WorkerThread *thread, long long socketCount)
+        : thread(thread)
     {
+        this->socketCount = socketCount;
+    }
+
+    WorkerThreadInfo(const WorkerThreadInfo &other)
+    {
+        *this = other;
+    }
+
+    WorkerThreadInfo &operator=(const WorkerThreadInfo &other)
+    {
+        thread = other.thread;
+        socketCount.store(other.socketCount);
+        return *this;
     }
 
     WorkerThread *thread = nullptr;
-    quint32 socketCount = 0;
+    std::atomic_llong socketCount {0};
 };
 
 struct SocketInfo
@@ -94,6 +108,8 @@ private:
 
 namespace Proof {
 
+//TODO: refactor to remove qobject parent
+//it is possible now to call methods of any class, not only qobjects
 class AbstractRestServerPrivate: public QObject // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
@@ -129,6 +145,7 @@ private:
     QStringList splittedPathPrefix;
     QThread *serverThread = nullptr;
     QList<WorkerThreadInfo> threadPool;
+    QReadWriteLock threadPoolLock;
     QSet<QTcpSocket *> sockets;
     QMutex socketsMutex;
     MethodNode methodsTreeRoot;
@@ -163,7 +180,7 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     Q_D(AbstractRestServer);
     d->q_ptr = this;
 
-    d->serverThread = new QThread(this);
+    d->serverThread = new QThread();
     d->port = port;
     setPathPrefix(pathPrefix);
 
@@ -178,16 +195,19 @@ AbstractRestServer::~AbstractRestServer()
 {
     Q_D(AbstractRestServer);
     stopListen();
+    d->threadPoolLock.lockForWrite();
     for (const WorkerThreadInfo &workerInfo : qAsConst(d->threadPool)) {
         workerInfo.thread->stop();
         workerInfo.thread->quit();
         workerInfo.thread->wait(1000);
         delete workerInfo.thread;
     }
+    d->threadPoolLock.unlock();
 
     d->serverThread->quit();
     d->serverThread->wait(1000);
     d->serverThread->terminate();
+    delete d->serverThread;
 }
 
 QString AbstractRestServer::userName() const
@@ -423,19 +443,23 @@ void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
 
     WorkerThread *worker = nullptr;
 
+    d->threadPoolLock.lockForRead();
     if (!d->threadPool.isEmpty()) {
         auto iter = std::min_element(d->threadPool.begin(), d->threadPool.end(),
-                                     [](WorkerThreadInfo lhs, WorkerThreadInfo rhs) {return lhs.socketCount < rhs.socketCount;});
+                                     [](const WorkerThreadInfo &lhs, const WorkerThreadInfo &rhs) {return lhs.socketCount < rhs.socketCount;});
         if (iter->socketCount == 0 || d->threadPool.count() >= d->suggestedMaxThreadsCount) {
             worker = iter->thread;
             ++iter->socketCount;
         }
     }
+    d->threadPoolLock.unlock();
 
     if (worker == nullptr) {
         worker = new WorkerThread(d);
         worker->start();
-        d->threadPool << WorkerThreadInfo{worker, 1};
+        d->threadPoolLock.lockForWrite();
+        d->threadPool << WorkerThreadInfo(worker, 1);
+        d->threadPoolLock.unlock();
     }
 
     worker->handleNewConnection(socketDescriptor);
@@ -659,21 +683,20 @@ void AbstractRestServerPrivate::registerSocket(QTcpSocket *socket)
 
 void AbstractRestServerPrivate::deleteSocket(QTcpSocket *socket, WorkerThread *worker)
 {
-    if (!ProofObject::call(this, &AbstractRestServerPrivate::deleteSocket, socket, worker)) {
-        {
-            QMutexLocker lock(&socketsMutex);
-            auto iter = sockets.constFind(socket);
-            if (iter != sockets.end())
-                sockets.erase(iter);
-            else
-                return;
-        }
-        delete socket;
-        auto iter = std::find_if(threadPool.begin(), threadPool.end(),
-                                 [worker](WorkerThreadInfo info) {return info.thread == worker;});
-        if (iter != threadPool.end())
-            --iter->socketCount;
+    {
+        QMutexLocker lock(&socketsMutex);
+        auto iter = sockets.constFind(socket);
+        if (iter != sockets.end())
+            sockets.erase(iter);
+        else
+            return;
     }
+    delete socket;
+    threadPoolLock.lockForRead();
+    auto iter = std::find_if(threadPool.begin(), threadPool.end(), [worker](const WorkerThreadInfo &info) {return info.thread == worker;});
+    if (iter != threadPool.end())
+        --iter->socketCount;
+    threadPoolLock.unlock();
 }
 
 WorkerThread::WorkerThread(Proof::AbstractRestServerPrivate *const _server_d)
