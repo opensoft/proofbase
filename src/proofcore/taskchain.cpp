@@ -52,6 +52,11 @@ TaskChain::TaskChain()
 
 TaskChain::~TaskChain()
 {
+    if (isRunning()) {
+        //Thread can be running at this point only if we are not in self destroyable mode
+        terminate();
+        wait();
+    }
     --TaskChainPrivate::chainsCounter;
     qCDebug(proofCoreTaskChainStatsLog) << "Chains in use:" << TaskChainPrivate::chainsCounter;
 }
