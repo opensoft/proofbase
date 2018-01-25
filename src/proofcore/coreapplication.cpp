@@ -244,11 +244,6 @@ int CoreApplication::languageIndex() const
     return d->availableLanguages.indexOf(d->currentLanguage);
 }
 
-QString CoreApplication::emptyString() const
-{
-    return QStringLiteral("");
-}
-
 UpdateManager *CoreApplication::updateManager() const
 {
     Q_D(const CoreApplication);

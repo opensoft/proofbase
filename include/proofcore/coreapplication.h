@@ -23,7 +23,6 @@ class PROOF_CORE_EXPORT CoreApplication : public ProofObject // clazy:exclude=ct
     Q_PROPERTY(QVariantMap fullLanguageNames READ fullLanguageNames CONSTANT)
     Q_PROPERTY(QString language READ language WRITE setLanguage NOTIFY languageChanged)
     Q_PROPERTY(int languageIndex READ languageIndex NOTIFY languageChanged)
-    Q_PROPERTY(QString emptyString READ emptyString NOTIFY languageChanged)
     Q_PROPERTY(Proof::UpdateManager *updateManager READ updateManager CONSTANT)
     Q_PROPERTY(QDateTime startedAt READ startedAt CONSTANT)
     Q_DECLARE_PRIVATE(CoreApplication)
@@ -46,7 +45,6 @@ public:
     QString language() const;
     void setLanguage(const QString &language);
     int languageIndex() const;
-    QString emptyString() const;
     UpdateManager *updateManager() const;
     QDateTime startedAt() const;
 
