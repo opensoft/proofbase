@@ -15,6 +15,8 @@ Q_LOGGING_CATEGORY(proofCoreUpdatesLog, "proof.core.updates")
 Q_LOGGING_CATEGORY(proofCoreMiscLog, "proof.core.misc")
 Q_LOGGING_CATEGORY(proofCoreTaskChainExtraLog, "proof.core.taskchain.extra")
 Q_LOGGING_CATEGORY(proofCoreTaskChainStatsLog, "proof.core.taskchain.stats")
+Q_LOGGING_CATEGORY(proofCoreTasksExtraLog, "proof.core.tasks.extra")
+Q_LOGGING_CATEGORY(proofCoreTasksStatsLog, "proof.core.tasks.stats")
 Q_LOGGING_CATEGORY(proofCoreCacheLog, "proof.core.cache")
 
 PROOF_LIBRARY_INITIALIZER(libraryInit)

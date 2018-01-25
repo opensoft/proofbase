@@ -7,6 +7,7 @@
 #include "settingsgroup.h"
 #include "proofglobal.h"
 #include "expirator.h"
+#include "tasks.h"
 #include "errornotifier.h"
 #include "memorystoragenotificationhandler.h"
 #include "helpers/versionhelper.h"
@@ -182,6 +183,7 @@ CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *a
 
     Q_ASSERT(::instance() == nullptr);
     ::instance() = this;
+    tasks::TasksDispatcher::instance();
 
     app->setOrganizationName(orgName);
     app->setApplicationName(appName);

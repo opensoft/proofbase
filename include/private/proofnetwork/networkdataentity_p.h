@@ -5,7 +5,7 @@
 #include "proofnetwork/proofnetwork_types.h"
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofcore/objectscache.h"
-#include "proofcore/spinlock_p.h"
+#include "proofcore/spinlock.h"
 
 #include <QtGlobal>
 

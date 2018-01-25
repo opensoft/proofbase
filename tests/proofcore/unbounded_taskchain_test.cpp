@@ -2,7 +2,7 @@
 
 #include "gtest/test_global.h"
 
-#include "proofcore/taskchain.h"
+#include "proofcore/unbounded_taskchain.h"
 
 #include <QThread>
 #include <QDateTime>
@@ -10,9 +10,37 @@
 
 #include <thread>
 
-using namespace Proof;
+using namespace Proof::tasks::unbounded;
 
-TEST(TaskChainTest, memoryCheckWithChainCapture)
+TEST(UnboundedTaskChainTest, memoryCheckWithNoChainCapture)
+{
+    TaskChainWP chainWeak;
+    QThread thread;
+    thread.start();
+    std::atomic<bool> flag(false);
+    {
+        TaskChainSP chain = TaskChain::createChain();
+        chain->moveToThread(&thread);
+        chainWeak = chain.toWeakRef();
+        auto task = TaskChain::createTask<>();
+        *task = [&flag]() {
+            while (!flag) {}
+        };
+        chain->addTask(*task);
+    }
+    EXPECT_FALSE(chainWeak.isNull());
+    flag = true;
+    for (int i = 0; i < 2000; ++i) {
+        if (chainWeak.isNull())
+            break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    thread.quit();
+    thread.wait(100);
+    EXPECT_TRUE(chainWeak.isNull());
+}
+
+TEST(UnboundedTaskChainTest, memoryCheckWithChainCapture)
 {
     TaskChainWP chainWeak;
     QWeakPointer<std::function<void()>> secondTaskWeak;
@@ -49,7 +77,7 @@ TEST(TaskChainTest, memoryCheckWithChainCapture)
     EXPECT_TRUE(secondTaskWeak.isNull());
 }
 
-TEST(TaskChainTest, stepsPerforming)
+TEST(UnboundedTaskChainTest, stepsPerforming)
 {
     TaskChainWP chainWeak;
     QThread thread;
@@ -94,7 +122,7 @@ TEST(TaskChainTest, stepsPerforming)
     EXPECT_EQ(2, counter);
 }
 
-TEST(TaskChainTest, stepsPerformingWithArgs)
+TEST(UnboundedTaskChainTest, stepsPerformingWithArgs)
 {
     TaskChainWP chainWeak;
     QThread thread;
@@ -130,7 +158,7 @@ TEST(TaskChainTest, stepsPerformingWithArgs)
     EXPECT_EQ(2, counter);
 }
 
-TEST(TaskChainTest, signalWaiting)
+TEST(UnboundedTaskChainTest, signalWaiting)
 {
     TaskChainWP chainWeak;
     QThread thread;
@@ -176,7 +204,7 @@ TEST(TaskChainTest, signalWaiting)
     EXPECT_TRUE(chainWeak.isNull());
 }
 
-TEST(TaskChainTest, tasksTree)
+TEST(UnboundedTaskChainTest, tasksTree)
 {
     TaskChainWP chainWeak;
     QThread thread;
@@ -253,7 +281,7 @@ TEST(TaskChainTest, tasksTree)
     EXPECT_TRUE(chainWeak.isNull());
 }
 
-TEST(TaskChainTest, tasksTreeWaiting)
+TEST(UnboundedTaskChainTest, tasksTreeWaiting)
 {
     QThread thread;
     thread.start();
@@ -297,7 +325,7 @@ TEST(TaskChainTest, tasksTreeWaiting)
     EXPECT_GT((unsigned long long)rootTaskEndedTime, (unsigned long long)child2TaskEndedTime);
 }
 
-TEST(TaskChainTest, tasksTreeWaitingTimeout)
+TEST(UnboundedTaskChainTest, tasksTreeWaitingTimeout)
 {
     QThread thread;
     thread.start();
