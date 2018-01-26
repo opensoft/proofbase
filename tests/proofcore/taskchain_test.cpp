@@ -117,10 +117,9 @@ TEST(TaskChainTest, stepsPerformingWithArgs)
         };
         chain->addTask(*firstTask);
     }
-    EXPECT_FALSE(chainWeak.isNull());
     flag = true;
     for (int i = 0; i < 2000; ++i) {
-        if (chainWeak.isNull())
+        if (counter == 2)
             break;
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
