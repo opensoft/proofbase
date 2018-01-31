@@ -28,6 +28,20 @@ bool ProofObject::isDirty() const
     return d->isDirty();
 }
 
+void ProofObject::emitError(const Failure &failure, Failure::Hints forceHints)
+{
+    emit errorOccurred(failure.moduleCode, failure.errorCode, failure.message,
+                       (failure.hints | forceHints) & Failure::UserFriendlyHint,
+                       (failure.hints | forceHints) & Failure::CriticalHint);
+}
+
+std::function<void(const Failure &)> ProofObject::simpleFailureHandler(Failure::Hints forceHints)
+{
+    return [this, forceHints](const Failure &failure) {
+        emitError(failure, forceHints);
+    };
+}
+
 qulonglong ProofObject::nextQueuedCallId() const
 {
     Q_D(const ProofObject);

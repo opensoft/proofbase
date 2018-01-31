@@ -2,6 +2,7 @@
 #define ABSTRACTRESTAPI_H
 
 #include "proofcore/proofobject.h"
+#include "proofcore/future.h"
 #include "proofcore/taskchain.h"
 #include "proofnetwork/restclient.h"
 #include "proofnetwork/proofnetwork_types.h"
@@ -32,6 +33,11 @@ struct PROOF_NETWORK_EXPORT RestApiError
     void reset();
     bool isNetworkError() const;
     QNetworkReply::NetworkError toNetworkError() const;
+
+    //TODO: Replace completely
+    //As it looks like - we don't need level (we use it only to check if error happened and if it was server error)
+    // and everything else can be easily covered with Failure directly
+    Failure toFailure() const;
 
     Level level = Level::NoError;
     qlonglong code = 0;

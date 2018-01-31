@@ -414,3 +414,13 @@ QNetworkReply::NetworkError RestApiError::toNetworkError() const
     else
         return QNetworkReply::UnknownNetworkError;
 }
+
+Failure RestApiError::toFailure() const
+{
+    if (level == Level::NoError)
+        return Failure();
+    else
+        return Failure(message, proofModuleCode, proofErrorCode,
+                       userFriendly ? Failure::UserFriendlyHint : Failure::NoHint,
+                       code ? code : QVariant());
+}

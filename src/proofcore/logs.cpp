@@ -168,6 +168,9 @@ void Proof::Logs::setup(const QStringList &defaultLoggingRules)
             QString defaultRules = QString("proof.core.cache=false\n"
                                            "proof.core.taskchain.extra=false\n"
                                            "proof.core.taskchain.stats=false\n"
+                                           "proof.core.tasks.extra=false\n"
+                                           "proof.core.tasks.stats=false\n"
+                                           "proof.core.futures.*=false\n"
                                            "%1\n")
                     .arg(defaultLoggingRules.join(QStringLiteral("\n")));
             if (loggingRulesFile.open(QFile::WriteOnly|QFile::Append))

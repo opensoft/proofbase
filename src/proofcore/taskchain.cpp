@@ -7,8 +7,7 @@
 
 static const qlonglong TASK_ADDING_SPIN_SLEEP_TIME_IN_MSECS = 1;
 static const qlonglong WAIT_FOR_TASK_SPIN_SLEEP_TIME_IN_MSECS = 1;
-static const qlonglong SELF_MANAGEMENT_SPIN_SLEEP_TIME_IN_MSECS = 5;
-static const qlonglong SELF_MANAGEMENT_PAUSE_SLEEP_TIME_IN_MSECS = 1000;
+
 
 namespace Proof {
 

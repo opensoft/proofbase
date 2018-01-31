@@ -51,7 +51,6 @@ public:
     void disconnectFromHost();
 
 signals:
-    void errorOccurred(long moduleCode, long errorCode, const QString &errorMessage, bool userFriendly);
     void connected();
     void disconnected();
 

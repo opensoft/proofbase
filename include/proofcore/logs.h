@@ -6,7 +6,6 @@
 #include <QString>
 
 namespace Proof {
-
 namespace Logs {
     PROOF_CORE_EXPORT void setup(const QStringList &defaultLoggingRules = QStringList());
     PROOF_CORE_EXPORT void setLogsStoragePath(QString storagePath = QString());
