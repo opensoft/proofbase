@@ -62,7 +62,7 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
         qCWarning(proofNetworkAmqpLog) << "RabbitMQ SSL Socket errors:" << errorsString;
     });
 
-    QObject::connect(d->rabbitClient, &QAmqpClient::connected, this, [this, d]() {
+    QObject::connect(d->rabbitClient, &QAmqpClient::connected, this, [d]() {
         qCDebug(proofNetworkAmqpLog) << "Connected";
         d->autoReconnectionTries = AUTO_RECONNECTION_TRIES;
         d->connected();

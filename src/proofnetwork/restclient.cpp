@@ -469,7 +469,7 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(QString method, const QU
     case RestAuthType::QuasiOAuth2:
         if (QDateTime::currentDateTime() >= quasiOAuth2TokenExpiredDateTime) {
             Proof::TaskChainSP taskChain = Proof::TaskChain::createChain();
-            auto task = [taskChain, this, q]() {
+            auto task = [taskChain, q]() {
                 std::function<bool()> callback = [](){return true;};
                 taskChain->addSignalWaiter(q, &RestClient::authenticationErrorOccurred, callback);
                 taskChain->addSignalWaiter(q, &RestClient::authenticationSucceed, callback);

@@ -76,7 +76,7 @@ void AbstractAmqpReceiverPrivate::connected()
             }
         });
 
-        QObject::connect(queue, &QAmqpQueue::declared, q, [this, q]() {
+        QObject::connect(queue, &QAmqpQueue::declared, q, [this]() {
             queueState = QueueState::Declared;
             queueDeclared(queue);
         });

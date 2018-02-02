@@ -720,7 +720,7 @@ void WorkerThread::handleNewConnection(qintptr socketDescriptor)
     info.readyReadConnection = connect(tcpSocket, &QTcpSocket::readyRead, this, [tcpSocket, this] { onReadyRead(tcpSocket); }, Qt::QueuedConnection);
 
     void (QTcpSocket:: *errorSignal)(QAbstractSocket::SocketError) = &QTcpSocket::error;
-    info.errorConnection = connect(tcpSocket, errorSignal, this, [tcpSocket, this] {
+    info.errorConnection = connect(tcpSocket, errorSignal, this, [tcpSocket] {
         qCWarning(proofNetworkMiscLog) << "RestServer: socket error:" << tcpSocket->errorString();
     }, Qt::QueuedConnection);
 

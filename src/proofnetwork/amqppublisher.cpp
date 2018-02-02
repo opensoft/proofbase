@@ -113,7 +113,7 @@ void AmqpPublisherPrivate::connected()
             }
         });
 
-        QObject::connect(exchange, &QAmqpExchange::declared, q, [this, q]() {
+        QObject::connect(exchange, &QAmqpExchange::declared, q, [this]() {
             exchangeState = ExchangeState::Declared;
         });
 

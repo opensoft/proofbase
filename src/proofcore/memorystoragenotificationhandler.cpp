@@ -31,7 +31,7 @@ MemoryStorageNotificationHandler::MemoryStorageNotificationHandler(const QString
     d->cleanupTimer = new QTimer(this);
     d->cleanupTimer->setInterval(1000 * 60 * 60);
     d->cleanupTimer->setTimerType(Qt::VeryCoarseTimer);
-    connect(d->cleanupTimer, &QTimer::timeout, this, [this, d]() {
+    connect(d->cleanupTimer, &QTimer::timeout, this, [d]() {
         QDateTime limiter = QDateTime::currentDateTimeUtc().addMSecs(-MSECS_TO_KEEP);
         d->mutex.lock();
         while (!d->messages.isEmpty() && d->messages.firstKey() < limiter)
