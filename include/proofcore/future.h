@@ -97,6 +97,11 @@ public:
         return m_future;
     }
 
+    bool filled()
+    {
+        return m_future->completed();
+    }
+
     void failure(const Failure &reason)
     {
         m_future->fillFailure(reason);
@@ -114,7 +119,6 @@ public:
 
 private:
     FutureSP<T> m_future = Future<T>::create();
-    std::atomic_bool m_filled {false};
 };
 template<typename T> using PromiseSP = QSharedPointer<Promise<T>>;
 template<typename T> using PromiseWP = QWeakPointer<Promise<T>>;

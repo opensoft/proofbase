@@ -3,7 +3,9 @@
 #include "gtest/test_global.h"
 
 #include "proofcore/proofobject.h"
-#include "proofcore/taskchain.h"
+
+#include "proofcore/tasks.h"
+#include "proofcore/future.h"
 
 #include <QThread>
 #include <QDateTime>
@@ -98,8 +100,7 @@ TEST(ProofObjectTest, BlockingCall)
     thread->start();
 
     int result = 0;
-    auto chain = TaskChain::createChain();
-    qlonglong taskId = chain->addTask([testObj]() {
+    auto task = tasks::run([testObj]() {
         while (!testObj->started) {
             QThread::yieldCurrentThread();
             qApp->processEvents();
@@ -125,7 +126,7 @@ TEST(ProofObjectTest, BlockingCall)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(chain->waitForTask(taskId, 100));
+    EXPECT_TRUE(task->wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -141,8 +142,7 @@ TEST(ProofObjectTest, EventsBlockingCall)
     thread->start();
 
     int result = 0;
-    auto chain = TaskChain::createChain();
-    qlonglong taskId = chain->addTask([testObj]() {
+    auto task = tasks::run([testObj]() {
         while (!testObj->started) {
             QThread::yieldCurrentThread();
             qApp->processEvents();
@@ -168,7 +168,7 @@ TEST(ProofObjectTest, EventsBlockingCall)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(chain->waitForTask(taskId, 100));
+    EXPECT_TRUE(task->wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -207,8 +207,7 @@ TEST(ProofObjectTest, BlockingCallQObject)
     thread->start();
 
     int result = 0;
-    auto chain = TaskChain::createChain();
-    qlonglong taskId = chain->addTask([testObj]() {
+    auto task = tasks::run([testObj]() {
         while (!testObj->started) {
             QThread::yieldCurrentThread();
             qApp->processEvents();
@@ -234,7 +233,7 @@ TEST(ProofObjectTest, BlockingCallQObject)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(chain->waitForTask(taskId, 100));
+    EXPECT_TRUE(task->wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -250,8 +249,7 @@ TEST(ProofObjectTest, EventsBlockingCallQObject)
     thread->start();
 
     int result = 0;
-    auto chain = TaskChain::createChain();
-    qlonglong taskId = chain->addTask([testObj]() {
+    auto task = tasks::run([testObj]() {
         while (!testObj->started) {
             QThread::yieldCurrentThread();
             qApp->processEvents();
@@ -277,7 +275,7 @@ TEST(ProofObjectTest, EventsBlockingCallQObject)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(chain->waitForTask(taskId, 100));
+    EXPECT_TRUE(task->wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -319,8 +317,7 @@ TEST(ProofObjectTest, BlockingCallPlainObjectWithContext)
     thread->start();
 
     int result = 0;
-    auto chain = TaskChain::createChain();
-    qlonglong taskId = chain->addTask([testObj]() {
+    auto task = tasks::run([testObj]() {
         while (!testObj->started) {
             QThread::yieldCurrentThread();
             qApp->processEvents();
@@ -346,7 +343,7 @@ TEST(ProofObjectTest, BlockingCallPlainObjectWithContext)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(chain->waitForTask(taskId, 100));
+    EXPECT_TRUE(task->wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -364,8 +361,7 @@ TEST(ProofObjectTest, EventsBlockingCallPlainObjectWithContext)
     thread->start();
 
     int result = 0;
-    auto chain = TaskChain::createChain();
-    qlonglong taskId = chain->addTask([testObj]() {
+    auto task = tasks::run([testObj]() {
         while (!testObj->started) {
             QThread::yieldCurrentThread();
             qApp->processEvents();
@@ -391,7 +387,7 @@ TEST(ProofObjectTest, EventsBlockingCallPlainObjectWithContext)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(chain->waitForTask(taskId, 100));
+    EXPECT_TRUE(task->wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -434,8 +430,7 @@ TEST(ProofObjectTest, BlockingCallWithContext)
     thread->start();
 
     int result = 0;
-    auto chain = TaskChain::createChain();
-    qlonglong taskId = chain->addTask([testObj]() {
+    auto task = tasks::run([testObj]() {
         while (!testObj->started) {
             QThread::yieldCurrentThread();
             qApp->processEvents();
@@ -461,7 +456,7 @@ TEST(ProofObjectTest, BlockingCallWithContext)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(chain->waitForTask(taskId, 100));
+    EXPECT_TRUE(task->wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -479,8 +474,7 @@ TEST(ProofObjectTest, EventsBlockingCallWithContext)
     thread->start();
 
     int result = 0;
-    auto chain = TaskChain::createChain();
-    qlonglong taskId = chain->addTask([testObj]() {
+    auto task = tasks::run([testObj]() {
         while (!testObj->started) {
             QThread::yieldCurrentThread();
             qApp->processEvents();
@@ -506,7 +500,7 @@ TEST(ProofObjectTest, EventsBlockingCallWithContext)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(chain->waitForTask(taskId, 100));
+    EXPECT_TRUE(task->wait(100));
 
     thread->quit();
     thread->wait(1000);

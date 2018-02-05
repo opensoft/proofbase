@@ -1,7 +1,8 @@
 #include "smtpclient.h"
 
 #include "proofcore/proofobject_p.h"
-#include "proofcore/taskchain.h"
+#include "proofcore/tasks.h"
+#include "proofcore/future.h"
 
 #include <QTcpSocket>
 #include <QSslSocket>
@@ -11,7 +12,7 @@ class SmtpClientPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(SmtpClient)
 
-    bool sendTextMail(const Proof::TaskChainSP &taskChain, const QString &subject, const QString &body, const QString &from,
+    bool sendTextMail(const QString &subject, const QString &body, const QString &from,
                       const QStringList &to, const QStringList &cc, const QStringList &bcc);
 
     QString userName;
@@ -108,13 +109,12 @@ void SmtpClient::sendTextMail(const QString &subject, const QString &body, const
                               const QStringList &to, const QStringList &cc, const QStringList &bcc)
 {
     Q_D(SmtpClient);
-    auto taskChain = Proof::TaskChain::createChain();
-    taskChain->addTask([d, taskChain, subject, body, from, to, cc, bcc]() {
-        d->sendTextMail(taskChain, subject, body, from, to, cc, bcc);
+    tasks::run([d, subject, body, from, to, cc, bcc]() {
+        d->sendTextMail(subject, body, from, to, cc, bcc);
     });
 }
 
-bool SmtpClientPrivate::sendTextMail(const TaskChainSP &taskChain, const QString &subject, const QString &body, const QString &from,
+bool SmtpClientPrivate::sendTextMail(const QString &subject, const QString &body, const QString &from,
                                      const QStringList &to, const QStringList &cc, const QStringList &bcc)
 {
     qCDebug(proofNetworkMiscLog) << "Sending email from" << from << "to" << to;
@@ -246,8 +246,8 @@ bool SmtpClientPrivate::sendTextMail(const TaskChainSP &taskChain, const QString
         return true;
     };
 
-    taskChain->addSignalWaiter(socket, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), errorCallback);
-    taskChain->addSignalWaiter(socket, &QTcpSocket::readyRead, readyReadCallback);
+    tasks::addSignalWaiter(socket, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), errorCallback);
+    tasks::addSignalWaiter(socket, &QTcpSocket::readyRead, readyReadCallback);
     switch (connectionType) {
     case SmtpClient::ConnectionType::Ssl:
         static_cast<QSslSocket *>(socket)->connectToHostEncrypted(host, port);
@@ -257,13 +257,13 @@ bool SmtpClientPrivate::sendTextMail(const TaskChainSP &taskChain, const QString
         socket->connectToHost(host, port);
         break;
     }
-    taskChain->fireSignalWaiters();
+    tasks::fireSignalWaiters();
     while (socket->isOpen()) {
-        taskChain->addSignalWaiter(socket, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), errorCallback);
+        tasks::addSignalWaiter(socket, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), errorCallback);
         if (connectionType == SmtpClient::ConnectionType::StartTls && state == SmtpStates::Tls)
-            taskChain->addSignalWaiter(static_cast<QSslSocket *>(socket), &QSslSocket::encrypted, startTlsEncryptedCallback);
-        taskChain->addSignalWaiter(socket, &QTcpSocket::readyRead, readyReadCallback);
-        taskChain->fireSignalWaiters();
+            tasks::addSignalWaiter(static_cast<QSslSocket *>(socket), &QSslSocket::encrypted, startTlsEncryptedCallback);
+        tasks::addSignalWaiter(socket, &QTcpSocket::readyRead, readyReadCallback);
+        tasks::fireSignalWaiters();
     }
 
     return result;

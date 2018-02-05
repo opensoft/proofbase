@@ -4,7 +4,6 @@
 #include "proofcore/proofobject.h"
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
-#include "proofcore/taskchain.h"
 
 #include <QStringList>
 

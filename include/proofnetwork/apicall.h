@@ -1,15 +1,50 @@
 #ifndef PROOF_APICALL_H
 #define PROOF_APICALL_H
 #include "proofcore/future.h"
+#include "proofcore/helpers/prooftypetraits.h"
 #include "proofcore/tasks.h"
 #include "proofnetwork/abstractrestapi.h"
 
 namespace Proof {
+namespace __util {
+template<typename Result>
+struct ApiCallSuccessCallbackGenerator
+{
+    template <typename Signal>
+    static std::function<bool(qulonglong, Result)>
+    result(qulonglong &currentOperationId, Result &result, Signal)
+    {
+        return [&result, &currentOperationId] (qulonglong operationId, Result received) {
+            if (currentOperationId != operationId)
+                return false;
+            result = received;
+            return true;
+        };
+    }
+};
+
+template<typename ...Results>
+struct ApiCallSuccessCallbackGenerator<std::tuple<Results...>>
+{
+    template<typename T, typename... Args>
+    static std::function<bool(qulonglong, typename std::decay<Args>::type...)>
+    result(qulonglong &currentOperationId, std::tuple<Results...> &results, void (T::*)(qulonglong, Args...))
+    {
+        return [&results, &currentOperationId] (qulonglong operationId, typename std::decay<Args>::type... received) {
+            if (currentOperationId != operationId)
+                return false;
+            results = std::make_tuple(received...);
+            return true;
+        };
+    }
+};
+}
+
 //TODO: 2.0: Change whole network layer to Futures approach to make it more streamlined
 template<typename Result>
 struct ApiCall
 {
-    template <class Callee, class Method, class Signal, class ...Args>
+    template <typename Callee, typename Method, typename Signal, typename ...Args>
     static FutureSP<Result> exec(int attempts, Callee *callee, Method method, Signal signal, Args... args)
     {
         return tasks::run([callee, method, signal, args...](void) -> Result {
@@ -17,7 +52,7 @@ struct ApiCall
                 return WithFailure(QStringLiteral("API is not logged in"), NETWORK_MODULE_CODE, NetworkErrorCode::AuthCredentialsError);
             qulonglong currentOperationId = 0;
             Result result;
-            auto callback = generateSuccessCallback(currentOperationId, result, signal);
+            auto callback = __util::ApiCallSuccessCallbackGenerator<Result>::result(currentOperationId, result, signal);
             RestApiError error;
             tasks::addSignalWaiter(callee, signal, callback);
             tasks::addSignalWaiter(callee, &Proof::AbstractRestApi::apiErrorOccurred, AbstractRestApi::generateErrorCallback(currentOperationId, error));
@@ -37,40 +72,17 @@ struct ApiCall
         });
     }
 
-    template <class Callee, class Method, class Signal, class ...Args>
+    template <typename Callee, typename Method, typename Signal, typename ...Args>
     static FutureSP<Result> exec(Callee *callee, Method method, Signal signal, Args... args)
     {
         return exec(1, callee, method, signal, args...);
-    }
-
-private:
-    template<class Signal>
-    static std::function<bool(qulonglong, Result)> generateSuccessCallback(qulonglong &currentOperationId, Result &result, Signal)
-    {
-        return [&result, &currentOperationId] (qulonglong operationId, Result received) {
-            if (currentOperationId != operationId)
-                return false;
-            result = received;
-            return true;
-        };
-    }
-    template<class... Types, class T, class... Args>
-    static std::function<bool(qulonglong, typename std::decay<Args>::type...)>
-    generateSuccessCallback(qulonglong &currentOperationId, std::tuple<Types...> &results, void (T::*)(qulonglong, Args...))
-    {
-        return [results, &currentOperationId] (qulonglong operationId, typename std::decay<Args>::type... received) mutable {
-            if (currentOperationId != operationId)
-                return false;
-            results = std::make_tuple(received...);
-            return true;
-        };
     }
 };
 
 template<>
 struct ApiCall<void>
 {
-    template <class Callee, class Method, class Signal, class ...Args>
+    template <typename Callee, typename Method, typename Signal, typename ...Args>
     static FutureSP<bool> exec(int attempts, Callee *callee, Method method, Signal signal, Args... args)
     {
         return tasks::run([callee, method, signal, args...](void) -> bool {
@@ -100,7 +112,7 @@ struct ApiCall<void>
         });
     }
 
-    template <class Callee, class Method, class Signal, class ...Args>
+    template <typename Callee, typename Method, typename Signal, typename ...Args>
     static FutureSP<bool> exec(Callee *callee, Method method, Signal signal, Args... args)
     {
         return exec(1, callee, method, signal, args...);
