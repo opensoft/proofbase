@@ -96,7 +96,6 @@ TEST(TaskChainTest, stepsPerforming)
 
 TEST(TaskChainTest, stepsPerformingWithArgs)
 {
-    TaskChainWP chainWeak;
     QThread thread;
     thread.start();
     std::atomic<int> counter(0);
@@ -104,7 +103,6 @@ TEST(TaskChainTest, stepsPerformingWithArgs)
     {
         TaskChainSP chain = TaskChain::createChain();
         chain->moveToThread(&thread);
-        chainWeak = chain.toWeakRef();
         auto firstTask = TaskChain::createTask<>();
         auto secondTask = TaskChain::createTask<std::atomic<int> *>();
         *firstTask = [&flag, chain, secondTask, &counter]() {
@@ -125,7 +123,6 @@ TEST(TaskChainTest, stepsPerformingWithArgs)
     }
     thread.quit();
     thread.wait(100);
-    EXPECT_TRUE(chainWeak.isNull());
     EXPECT_EQ(2, counter);
 }
 
