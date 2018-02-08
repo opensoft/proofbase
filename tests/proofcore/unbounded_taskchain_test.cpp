@@ -166,8 +166,7 @@ TEST(UnboundedTaskChainTest, signalWaiting)
     std::atomic<bool> flag(false);
     std::atomic<bool> result(false);
     std::atomic<bool> finished(false);
-    QTimer *timer = new QTimer();
-    timer = new QTimer;
+    QTimer *timer = new QTimer;
     timer->setSingleShot(true);
     timer->moveToThread(&thread);
     {
@@ -217,8 +216,7 @@ TEST(UnboundedTaskChainTest, tasksTree)
     std::atomic<bool> finished2(false);
     std::atomic_ullong evLoopThread1(0);
     std::atomic_ullong evLoopThread2(0);
-    QTimer *timer = new QTimer();
-    timer = new QTimer;
+    QTimer *timer = new QTimer;
     timer->setSingleShot(true);
     timer->moveToThread(&thread);
     {

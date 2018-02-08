@@ -396,8 +396,7 @@ TEST(TasksTest, signalWaiting)
     QThread thread;
     thread.start();
     std::atomic_bool ready {false};
-    QTimer *timer = new QTimer();
-    timer = new QTimer;
+    QTimer *timer = new QTimer;
     timer->setSingleShot(true);
     timer->moveToThread(&thread);
     FutureSP<int> future = run([timer, &ready]() {
