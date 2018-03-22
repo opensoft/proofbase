@@ -9,7 +9,7 @@
 static const int NETWORK_SSL_ERROR_OFFSET = 1500;
 static const int NETWORK_ERROR_OFFSET = 1000;
 
-static const QSet<int> ALLOWED_HTTP_STATUSES = {200, 201, 203, 204, 205, 206};
+static const QSet<int> ALLOWED_HTTP_STATUSES = {200, 201, 202, 203, 204, 205, 206};
 
 std::atomic<qulonglong> Proof::AbstractRestApiPrivate::lastUsedOperationId {0};
 
