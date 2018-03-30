@@ -65,7 +65,19 @@ void AbstractRestApi::abortRequest(qulonglong operationId)
 
 bool AbstractRestApi::isLoggedOut() const
 {
-    return false;
+    if (!restClient())
+        return true;
+
+    switch(restClient()->authType()) {
+    case Proof::RestAuthType::Basic:
+        return restClient()->userName().isEmpty() || restClient()->password().isEmpty();
+    case Proof::RestAuthType::Wsse:
+        return restClient()->userName().isEmpty();
+    case Proof::RestAuthType::BearerToken:
+        return restClient()->token().isEmpty();
+    default:
+        return false;
+    }
 }
 
 qlonglong AbstractRestApi::clientNetworkErrorOffset()
@@ -139,7 +151,7 @@ QNetworkReply *AbstractRestApiPrivate::get(qulonglong &operationId, RestAnswerHa
                                        << "\nRestClient object is in thread =" << restClient->thread()
                                        << "\nRestApi is in thread =" << q->thread()
                                        << "\nRunning in thread =" << QThread::currentThread();
-        return 0;
+        return nullptr;
     }
     QNetworkReply *reply = restClient->get(method, query, vendor);
     setupReply(operationId, reply, std::move(handler));
@@ -154,7 +166,7 @@ QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, RestAnswerH
                                        << "\nRestClient object is in thread =" << restClient->thread()
                                        << "\nRestApi is in thread =" << q->thread()
                                        << "\nrunning in thread =" << QThread::currentThread();
-        return 0;
+        return nullptr;
     }
     QNetworkReply *reply = restClient->post(method, query, body, vendor);
     setupReply(operationId, reply, std::move(handler));
@@ -169,7 +181,7 @@ QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, RestAnswerH
                                        << "\nRestClient object is in thread =" << restClient->thread()
                                        << "\nRestApi is in thread =" << q->thread()
                                        << "\nrunning in thread =" << QThread::currentThread();
-        return 0;
+        return nullptr;
     }
     QNetworkReply *reply = restClient->post(method, query, multiParts);
     setupReply(operationId, reply, std::move(handler));
@@ -184,7 +196,7 @@ QNetworkReply *AbstractRestApiPrivate::put(qulonglong &operationId, RestAnswerHa
                                        << "\nRestClient object is in thread =" << restClient->thread()
                                        << "\nRestApi is in thread =" << q->thread()
                                        << "\nrunning in thread =" << QThread::currentThread();
-        return 0;
+        return nullptr;
     }
     QNetworkReply *reply = restClient->put(method, query, body, vendor);
     setupReply(operationId, reply, std::move(handler));
@@ -199,7 +211,7 @@ QNetworkReply *AbstractRestApiPrivate::patch(qulonglong &operationId, RestAnswer
                                        << "\nRestClient object is in thread =" << restClient->thread()
                                        << "\nRestApi is in thread =" << q->thread()
                                        << "\nrunning in thread =" << QThread::currentThread();
-        return 0;
+        return nullptr;
     }
     QNetworkReply *reply = restClient->patch(method, query, body, vendor);
     setupReply(operationId, reply, std::move(handler));
@@ -214,7 +226,7 @@ QNetworkReply *AbstractRestApiPrivate::deleteResource(qulonglong &operationId, R
                                        << "\nRestClient object is in thread =" << restClient->thread()
                                        << "\nRestApi is in thread =" << q->thread()
                                        << "\nrunning in thread =" << QThread::currentThread();
-        return 0;
+        return nullptr;
     }
     QNetworkReply *reply = restClient->deleteResource(method, query, vendor);
     setupReply(operationId, reply, std::move(handler));
@@ -273,7 +285,9 @@ void AbstractRestApiPrivate::replyErrorOccurred(qulonglong operationId, QNetwork
 {
     Q_Q(AbstractRestApi);
     if (reply->error() != QNetworkReply::NetworkError::NoError && (reply->error() < 200 || (reply->error() % 100) == 99)) {
-        int errorCode = NETWORK_ERROR_OFFSET + static_cast<int>(reply->error());
+        int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (!errorCode)
+            errorCode = NETWORK_ERROR_OFFSET + static_cast<int>(reply->error());
         QString errorString = reply->errorString();
         long proofErrorCode = NetworkErrorCode::ServerError;
         qCDebug(proofNetworkMiscLog) << "Error occurred for" << operationId
