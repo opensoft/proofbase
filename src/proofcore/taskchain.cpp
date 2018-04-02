@@ -4,6 +4,8 @@
 
 #include <QMap>
 #include <QCoreApplication>
+#include <QMutex>
+#include <QWaitCondition>
 
 static const qlonglong TASK_ADDING_SPIN_SLEEP_TIME_IN_MSECS = 1;
 static const qlonglong WAIT_FOR_TASK_SPIN_SLEEP_TIME_IN_MSECS = 1;
@@ -79,7 +81,19 @@ bool TaskChain::waitForTask(qlonglong taskId, qlonglong msecs)
 
 bool TaskChain::touchTask(qlonglong taskId)
 {
-    return waitForTask(taskId, 1);
+    Q_D(TaskChain);
+    d->acquireFutures(WAIT_FOR_TASK_SPIN_SLEEP_TIME_IN_MSECS);
+    FutureSP<bool> futureToWait = d->futures.value(taskId);
+    d->releaseFutures();
+    if (!futureToWait)
+        return true;
+    bool result = futureToWait->completed();
+    if (result) {
+        d->acquireFutures(WAIT_FOR_TASK_SPIN_SLEEP_TIME_IN_MSECS);
+        d->futures.remove(taskId);
+        d->releaseFutures();
+    }
+    return result;
 }
 
 qlonglong TaskChain::addTaskPrivate(const FutureSP<bool> &taskFuture)
@@ -106,14 +120,31 @@ void TaskChainPrivate::releaseFutures()
 
 bool TaskChainPrivate::waitForFuture(const FutureSP<bool> &future, qlonglong msecs)
 {
+    if (future->completed())
+        return true;
     bool waitForever = msecs < 1;
-    QTime timer;
-    if (!waitForever)
+    //We need to maintain gui thread event loop while waiting
+    bool maintainEvents = QThread::currentThread() == qApp->thread();
+    if (maintainEvents || !waitForever) {
+        QTime timer;
+        if (!waitForever)
+            timer.start();
+        while (waitForever || (timer.elapsed() <= msecs)) {
+            if (future->completed())
+                return true;
+            if (maintainEvents)
+                QCoreApplication::processEvents();
+            QThread::msleep(1);
+        }
+    } else {
+        QTime timer;
         timer.start();
-    while (waitForever || (timer.elapsed() <= msecs)) {
-        if (future->completed())
-            return true;
-        QCoreApplication::processEvents();
+        QMutex mutex;
+        QWaitCondition waiter;
+        mutex.lock();
+        future->recover([](const auto &){return false;})->onSuccess([&waiter](bool) {waiter.wakeAll();});
+        waiter.wait(&mutex);
+        mutex.unlock();
     }
-    return false;
+    return future->completed();
 }
