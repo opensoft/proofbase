@@ -154,7 +154,7 @@ bool TaskChainPrivate::waitForFuture(const FutureSP<bool> &future, qlonglong mse
         QWaitCondition waiter;
         mutex.lock();
         bool wasInSameThread = false;
-        future->recover([](const auto &){return false;})->onSuccess([waitingThread = QThread::currentThread(), &waiter, &mutex, &wasInSameThread](bool) {
+        future->recover([](const auto &){return false;})->onSuccess([&waiter, &mutex, &wasInSameThread, waitingThread = QThread::currentThread()](bool) {
             if (QThread::currentThread() == waitingThread) {
                 wasInSameThread = true;
                 return;
