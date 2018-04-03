@@ -23,6 +23,8 @@ class TaskChainPrivate
 
     TaskChain *q_ptr = nullptr;
 
+    TaskChainWP weakSelf;
+
     QMap<qlonglong, FutureSP<bool>> futures;
     std::atomic_flag futuresLock = ATOMIC_FLAG_INIT;
     std::atomic_llong lastUsedId {0};
@@ -52,6 +54,7 @@ TaskChain::~TaskChain()
 TaskChainSP TaskChain::createChain(bool)
 {
     TaskChainSP result(new TaskChain());
+    result->d_func()->weakSelf = result.toWeakRef();
     qCDebug(proofCoreTaskChainExtraLog) << "New chain created" << result.data();
     return result;
 }
@@ -104,6 +107,14 @@ qlonglong TaskChain::addTaskPrivate(const FutureSP<bool> &taskFuture)
     qCDebug(proofCoreTaskChainExtraLog) << "Chain" << this << ": task added" << &taskFuture;
     d->futures[id] = taskFuture;
     d->releaseFutures();
+    taskFuture->recover([](const auto &){return true;})->onSuccess([self = d->weakSelf, id](bool) {
+        auto strongSelf = self.toStrongRef();
+        if (!strongSelf)
+            return;
+        strongSelf->d_ptr->acquireFutures(WAIT_FOR_TASK_SPIN_SLEEP_TIME_IN_MSECS);
+        strongSelf->d_ptr->futures.remove(id);
+        strongSelf->d_ptr->releaseFutures();
+    });
     return id;
 }
 
@@ -142,8 +153,18 @@ bool TaskChainPrivate::waitForFuture(const FutureSP<bool> &future, qlonglong mse
         QMutex mutex;
         QWaitCondition waiter;
         mutex.lock();
-        future->recover([](const auto &){return false;})->onSuccess([&waiter](bool) {waiter.wakeAll();});
-        waiter.wait(&mutex);
+        bool wasInSameThread = false;
+        future->recover([](const auto &){return false;})->onSuccess([waitingThread = QThread::currentThread(), &waiter, &mutex, &wasInSameThread](bool) {
+            if (QThread::currentThread() == waitingThread) {
+                wasInSameThread = true;
+                return;
+            }
+            mutex.lock();
+            mutex.unlock();
+            waiter.wakeAll();
+        });
+        if (!wasInSameThread)
+            waiter.wait(&mutex);
         mutex.unlock();
     }
     return future->completed();
