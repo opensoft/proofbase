@@ -883,7 +883,7 @@ TEST(AlgorithmsTest, mapQMap)
     resultVector = algorithms::map(testContainer, listPredicate, std::vector<long long>());
     ASSERT_EQ(9u, resultVector.size());
     for (size_t i = 1; i <= 9; ++i)
-        EXPECT_EQ(testContainer[static_cast<long long>(i)] ? i : i * 2, static_cast<long>(resultVector[i - 1]));
+        EXPECT_EQ(testContainer[static_cast<long long>(i)] ? i : i * 2, static_cast<unsigned long>(resultVector[i - 1]));
     resultQList = algorithms::map(testContainer, stableListPredicate, QSet<long long>()).toList();
     ASSERT_EQ(9, resultQList.size());
     std::sort(resultQList.begin(), resultQList.end());
@@ -1111,9 +1111,9 @@ TEST(AlgorithmsTest, mapVectorShort)
         EXPECT_DOUBLE_EQ(i * 2.0, static_cast<unsigned long>(resultVector2[i - 1]));
 
     std::vector<long long> resultVector3 = algorithms::map(testContainer, [](long long index, int x){return x * index;});
-    ASSERT_EQ(9, resultVector3.size());
+    ASSERT_EQ(9u, resultVector3.size());
     for (size_t i = 0; i < 9; ++i)
-        EXPECT_EQ(i * static_cast<unsigned int>(testContainer[i]), resultVector3[i]);
+        EXPECT_EQ(i * static_cast<unsigned int>(testContainer[i]), static_cast<unsigned int>(resultVector3[i]));
 }
 
 TEST(AlgorithmsTest, mapSetShort)
@@ -1128,7 +1128,7 @@ TEST(AlgorithmsTest, mapSetShort)
 
     std::set<int> resultQSet2 = algorithms::map(testContainer, [](long long, int x){return x * 2;});
     std::vector<int> resultVector2(resultSet.begin(), resultSet.end());
-    ASSERT_EQ(9, resultVector2.size());
+    ASSERT_EQ(9u, resultVector2.size());
     for (size_t i = 1; i <= 9; ++i)
         EXPECT_EQ(i * 2, static_cast<unsigned long>(resultVector2[i - 1]));
 }
