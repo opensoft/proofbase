@@ -485,6 +485,8 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(QString method, const QU
         result.setRawHeader("Authorization", QStringLiteral("Bearer %1").arg(quasiOAuth2Token).toLatin1());
         break;
     case RestAuthType::BearerToken:
+        if (!clientName.isEmpty())
+            result.setRawHeader("X-Client-Name", clientName.toLocal8Bit());
         result.setRawHeader("Authorization", QStringLiteral("Bearer %1").arg(token).toLatin1());
         break;
     case RestAuthType::NoAuth:
