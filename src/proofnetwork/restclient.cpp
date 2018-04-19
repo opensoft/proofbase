@@ -40,8 +40,8 @@ class RestClientPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(RestClient)
 public:
-    QNetworkRequest createNetworkRequest(QString method, const QUrlQuery &query,
-                                         const QByteArray &body, const QString &vendor);
+    QUrl createUrl(QString method, const QUrlQuery &query) const;
+    QNetworkRequest createNetworkRequest(const QUrl &url, const QByteArray &body, const QString &vendor);
     QByteArray generateWsseToken() const;
     void requestQuasiOAuth2token(int retries = 4, const QString &method = QStringLiteral("/oauth2/token"));
 
@@ -316,7 +316,7 @@ QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query, co
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkReply *reply = d->qnam->get(d->createNetworkRequest(method, query, "", vendor));
+    QNetworkReply *reply = d->qnam->get(d->createNetworkRequest(d->createUrl(method, query), "", vendor));
     d->handleReply(reply);
     return reply;
 }
@@ -325,7 +325,7 @@ QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, c
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkReply *reply = d->qnam->post(d->createNetworkRequest(method, query, body, vendor), body);
+    QNetworkReply *reply = d->qnam->post(d->createNetworkRequest(d->createUrl(method, query), body, vendor), body);
     d->handleReply(reply);
     return reply;
 }
@@ -334,7 +334,7 @@ QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, Q
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkRequest request = d->createNetworkRequest(method, query, "", QLatin1String(""));
+    QNetworkRequest request = d->createNetworkRequest(d->createUrl(method, query), "", QLatin1String(""));
     request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
                       QStringLiteral("multipart/form-data; boundary=%1").arg(QString(multiParts->boundary())));
     QNetworkReply *reply = d->qnam->post(request, multiParts);
@@ -348,7 +348,7 @@ QNetworkReply *RestClient::put(const QString &method, const QUrlQuery &query, co
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkReply *reply = d->qnam->put(d->createNetworkRequest(method, query, body, vendor), body);
+    QNetworkReply *reply = d->qnam->put(d->createNetworkRequest(d->createUrl(method, query), body, vendor), body);
     d->handleReply(reply);
     return reply;
 }
@@ -359,7 +359,7 @@ QNetworkReply *RestClient::patch(const QString &method, const QUrlQuery &query, 
     QBuffer *bodyBuffer = new QBuffer;
     bodyBuffer->setData(body);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkReply *reply = d->qnam->sendCustomRequest(d->createNetworkRequest(method, query, body, vendor), "PATCH", bodyBuffer);
+    QNetworkReply *reply = d->qnam->sendCustomRequest(d->createNetworkRequest(d->createUrl(method, query), body, vendor), "PATCH", bodyBuffer);
     d->handleReply(reply);
     bodyBuffer->setParent(reply);
     return reply;
@@ -369,7 +369,17 @@ QNetworkReply *RestClient::deleteResource(const QString &method, const QUrlQuery
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkReply *reply = d->qnam->deleteResource(d->createNetworkRequest(method, query, QByteArray(), vendor));
+    QNetworkReply *reply = d->qnam->deleteResource(d->createNetworkRequest(d->createUrl(method, query), QByteArray(), vendor));
+    d->handleReply(reply);
+    return reply;
+}
+
+QNetworkReply *RestClient::get(const QUrl &url)
+{
+    Q_D(RestClient);
+    qCDebug(proofNetworkMiscLog) << url;
+
+    QNetworkReply *reply = d->qnam->get(d->createNetworkRequest(url, QByteArray(), QStringLiteral()));
     d->handleReply(reply);
     return reply;
 }
@@ -393,13 +403,8 @@ void RestClient::authenticate()
     }
 }
 
-QNetworkRequest RestClientPrivate::createNetworkRequest(QString method, const QUrlQuery &query,
-                                                        const QByteArray &body, const QString &vendor)
+QUrl RestClientPrivate::createUrl(QString method, const QUrlQuery &query) const
 {
-    Q_Q(RestClient);
-
-    QNetworkRequest result;
-
     QUrl url;
     url.setScheme(scheme);
     url.setHost(host);
@@ -409,8 +414,14 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(QString method, const QU
         method.prepend('/');
     url.setPath(postfix + method);
     url.setQuery(query);
+    return url;
+}
 
-    result.setUrl(url);
+QNetworkRequest RestClientPrivate::createNetworkRequest(const QUrl &url, const QByteArray &body, const QString &vendor)
+{
+    Q_Q(RestClient);
+
+    QNetworkRequest result(url);
     result.setAttribute(QNetworkRequest::FollowRedirectsAttribute, followRedirects);
 
     if (!body.isEmpty()) {

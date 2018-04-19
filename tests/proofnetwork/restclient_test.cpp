@@ -56,7 +56,13 @@ INSTANTIATE_TEST_CASE_P(
         RestClientTest,
         testing::Values(
             // Without vendor, without body
-            HttpMethodsTestParam(std::bind(&Proof::RestClient::get, _1, "/", QUrlQuery(), QString()),
+            HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
+                                           (const QString &, const QUrlQuery &, const QString &)>(&Proof::RestClient::get),
+                                           _1, QStringLiteral("/"), QUrlQuery(), QString()),
+                                 "", "text/plain"),
+            HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
+                                           (const QUrl &)>(&Proof::RestClient::get),
+                                           _1, QUrl("http://127.0.0.1:9091/")),
                                  "", "text/plain"),
             HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
                                            (const QString &, const QUrlQuery &, const QByteArray &,
@@ -69,7 +75,7 @@ INSTANTIATE_TEST_CASE_P(
             HttpMethodsTestParam(std::bind(&Proof::RestClient::deleteResource, _1, "/", QUrlQuery(), QString()),
                                  "", "text/plain"),
             // With vendor, without body
-            HttpMethodsTestParam(std::bind(&Proof::RestClient::get, _1, "/", QUrlQuery(), "opensoft"),
+            HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)(const QString &, const QUrlQuery &, const QString &)>(&Proof::RestClient::get), _1, QStringLiteral("/"), QUrlQuery(), "opensoft"),
                                  "", "application/vnd.opensoft"),
             HttpMethodsTestParam(std::bind(static_cast<QNetworkReply *(Proof::RestClient::*)
                                            (const QString &, const QUrlQuery &, const QByteArray &,
