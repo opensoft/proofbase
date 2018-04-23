@@ -42,7 +42,11 @@ FutureSP<QByteArray> HttpDownloader::download(const QUrl &url)
             int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             // TODO: See in AbstractRestApi if you need more detailed error message
             QString errorMessage = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed();
-            promise->failure(Failure(QStringLiteral("Download failed: %1").arg(errorMessage), NETWORK_MODULE_CODE, NetworkErrorCode::ServerError, Failure::NoHint, errorCode));
+            if (errorMessage.isEmpty())
+                errorMessage = QStringLiteral("Download failed");
+            else
+                errorMessage = QStringLiteral("Download failed: ") + errorMessage;
+            promise->failure(Failure(errorMessage, NETWORK_MODULE_CODE, NetworkErrorCode::ServerError, Failure::NoHint, errorCode));
         };
 
         connect(reply, &QNetworkReply::finished, this, [promise, reply, errorHandler]() {

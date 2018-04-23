@@ -67,9 +67,31 @@ TEST_F(HttpDownloaderTest, failDownload)
     EXPECT_FALSE(future->succeeded());
     EXPECT_TRUE(future->failed());
     Failure failure = future->failureReason();
-    EXPECT_EQ(failure.data.toInt(), 404);
+    EXPECT_EQ(0, failure.data.toInt());
+    EXPECT_EQ(NetworkErrorCode::ServerError, failure.errorCode);
+    EXPECT_EQ("Download failed", failure.message);
 }
 
+
+TEST_F(HttpDownloaderTest, failDownloadNotFound)
+{
+    ASSERT_TRUE(serverRunner->serverIsRunning());
+    serverRunner->setResultCode(404, "Not Found");
+
+    FutureSP<QByteArray> future = httpDownloaderUT->download(QUrl("http://127.0.0.1:9091/test.jpg"));
+    QTime timer;
+    timer.start();
+    while (!future->completed() && timer.elapsed() < TIMEOUT)
+        qApp->processEvents();
+
+    ASSERT_TRUE(future->completed());
+    EXPECT_FALSE(future->succeeded());
+    EXPECT_TRUE(future->failed());
+    Failure failure = future->failureReason();
+    EXPECT_EQ(404, failure.data.toInt());
+    EXPECT_EQ(NetworkErrorCode::ServerError, failure.errorCode);
+    EXPECT_EQ("Download failed: Not Found", failure.message);
+}
 
 TEST_F(HttpDownloaderTest, wrongUrl)
 {
