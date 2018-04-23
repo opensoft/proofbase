@@ -57,7 +57,7 @@ TEST_F(HttpDownloaderTest, failDownload)
 {
     ASSERT_TRUE(serverRunner->serverIsRunning());
 
-    FutureSP<QByteArray> future = httpDownloaderUT->download(QUrl("http://127.0.0.1/test.jpg"));
+    FutureSP<QByteArray> future = httpDownloaderUT->download(QUrl("http://127.0.0.1:9000/test.jpg"));
     QTime timer;
     timer.start();
     while (!future->completed() && timer.elapsed() < TIMEOUT)
