@@ -21,7 +21,6 @@ class PROOF_NETWORK_EXPORT RestClient : public ProofObject // clazy:exclude=ctor
     Q_OBJECT
     Q_DECLARE_PRIVATE(RestClient)
 public:
-
     explicit RestClient(bool ignoreSslErrors = false);
 
     QString userName() const;
@@ -98,9 +97,6 @@ signals:
     void networkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
     void proxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator);
     void sslErrors(QNetworkReply *reply, const QList<QSslError> &errors);
-    //TODO: remove after switch to sh3
-    void authenticationSucceed();
-    void authenticationErrorOccurred(const QString &errorMessage);
 };
 
 }

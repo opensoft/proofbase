@@ -380,8 +380,6 @@ QUrl RestClientPrivate::createUrl(QString method, const QUrlQuery &query) const
 
 QNetworkRequest RestClientPrivate::createNetworkRequest(const QUrl &url, const QByteArray &body, const QString &vendor)
 {
-    Q_Q(RestClient);
-
     QNetworkRequest result(url);
     result.setAttribute(QNetworkRequest::FollowRedirectsAttribute, followRedirects);
 
