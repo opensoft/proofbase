@@ -7,8 +7,8 @@
 #include <QMutex>
 #include <QWaitCondition>
 
-static const qlonglong TASK_ADDING_SPIN_SLEEP_TIME_IN_MSECS = 1;
-static const qlonglong WAIT_FOR_TASK_SPIN_SLEEP_TIME_IN_MSECS = 1;
+static const qulonglong TASK_ADDING_SPIN_SLEEP_TIME_IN_MSECS = 1;
+static const qulonglong WAIT_FOR_TASK_SPIN_SLEEP_TIME_IN_MSECS = 1;
 
 
 namespace Proof {
@@ -17,7 +17,7 @@ class TaskChainPrivate
 {
     Q_DECLARE_PUBLIC(TaskChain)
 
-    void acquireFutures(qlonglong spinSleepTimeInMsecs);
+    void acquireFutures(qulonglong spinSleepTimeInMsecs);
     void releaseFutures();
     bool waitForFuture(const FutureSP<bool> &future, qlonglong msecs = 0);
 
@@ -37,7 +37,7 @@ std::atomic_llong TaskChainPrivate::chainsCounter {0};
 using namespace Proof;
 
 TaskChain::TaskChain()
-    : QThread(0), d_ptr(new TaskChainPrivate)
+    : QThread(nullptr), d_ptr(new TaskChainPrivate)
 {
     Q_D(TaskChain);
     d->q_ptr = this;
@@ -118,7 +118,7 @@ qlonglong TaskChain::addTaskPrivate(const FutureSP<bool> &taskFuture)
     return id;
 }
 
-void TaskChainPrivate::acquireFutures(qlonglong spinSleepTimeInMsecs)
+void TaskChainPrivate::acquireFutures(qulonglong spinSleepTimeInMsecs)
 {
     while (futuresLock.test_and_set(std::memory_order_acquire))
         QThread::msleep(spinSleepTimeInMsecs);
@@ -131,41 +131,5 @@ void TaskChainPrivate::releaseFutures()
 
 bool TaskChainPrivate::waitForFuture(const FutureSP<bool> &future, qlonglong msecs)
 {
-    if (future->completed())
-        return true;
-    bool waitForever = msecs < 1;
-    //We need to maintain gui thread event loop while waiting
-    bool maintainEvents = QThread::currentThread() == qApp->thread();
-    if (maintainEvents || !waitForever) {
-        QTime timer;
-        if (!waitForever)
-            timer.start();
-        while (waitForever || (timer.elapsed() <= msecs)) {
-            if (future->completed())
-                return true;
-            if (maintainEvents)
-                QCoreApplication::processEvents();
-            QThread::msleep(1);
-        }
-    } else {
-        QTime timer;
-        timer.start();
-        QMutex mutex;
-        QWaitCondition waiter;
-        mutex.lock();
-        bool wasInSameThread = false;
-        future->recover([](const auto &){return false;})->onSuccess([&waiter, &mutex, &wasInSameThread, waitingThread = QThread::currentThread()](bool) {
-            if (QThread::currentThread() == waitingThread) {
-                wasInSameThread = true;
-                return;
-            }
-            mutex.lock();
-            mutex.unlock();
-            waiter.wakeAll();
-        });
-        if (!wasInSameThread)
-            waiter.wait(&mutex);
-        mutex.unlock();
-    }
-    return future->completed();
+    return future->wait(msecs);
 }
