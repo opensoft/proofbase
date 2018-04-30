@@ -30,7 +30,6 @@ enum class RestAuthType {
     NoAuth,
     Basic,
     Wsse,
-    QuasiOAuth2, //TODO: Remove quasi support when production will moved on SH3
     BearerToken
 };
 }

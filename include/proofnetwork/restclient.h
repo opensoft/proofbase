@@ -77,10 +77,7 @@ public:
     QNetworkReply *patch(const QString &method, const QUrlQuery &query = QUrlQuery(),
                          const QByteArray &body = "", const QString &vendor = QString());
     QNetworkReply *deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery(), const QString &vendor = QString());
-
     QNetworkReply *get(const QUrl &url);
-
-    Q_INVOKABLE void authenticate();
 
 signals:
     void userNameChanged(const QString &arg);
