@@ -9,7 +9,7 @@
 namespace Proof {
 struct RestApiError;
 
-class PROOF_NETWORK_EXPORT  RestApiConsumer
+class PROOF_NETWORK_EXPORT RestApiConsumer
 {
 public:
     using ErrorCallbackType = Proof::AbstractRestApi::ErrorCallbackType;

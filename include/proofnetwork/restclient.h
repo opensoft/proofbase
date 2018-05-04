@@ -67,14 +67,10 @@ public:
     void unsetCookie(const QString &name);
 
     QNetworkReply *get(const QString &method, const QUrlQuery &query = QUrlQuery(), const QString &vendor = QString());
-    QNetworkReply *post(const QString &method, const QUrlQuery &query = QUrlQuery(),
-                        const QByteArray &body = "", const QString &vendor = QString());
-    QNetworkReply *post(const QString &method, const QUrlQuery &query,
-                       QHttpMultiPart *multiParts);
-    QNetworkReply *put(const QString &method, const QUrlQuery &query = QUrlQuery(),
-                       const QByteArray &body = "", const QString &vendor = QString());
-    QNetworkReply *patch(const QString &method, const QUrlQuery &query = QUrlQuery(),
-                         const QByteArray &body = "", const QString &vendor = QString());
+    QNetworkReply *post(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "", const QString &vendor = QString());
+    QNetworkReply *post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts);
+    QNetworkReply *put(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "", const QString &vendor = QString());
+    QNetworkReply *patch(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "", const QString &vendor = QString());
     QNetworkReply *deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery(), const QString &vendor = QString());
     QNetworkReply *get(const QUrl &url);
 

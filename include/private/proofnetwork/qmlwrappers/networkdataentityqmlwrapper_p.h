@@ -5,6 +5,8 @@
 #include "proofnetwork/networkdataentity.h"
 #include "proofnetwork/proofnetwork_global.h"
 
+#include "proofnetwork/qmlwrappers/networkdataentityqmlwrapper.h"
+
 #include <QtGlobal>
 #include <QSharedPointer>
 

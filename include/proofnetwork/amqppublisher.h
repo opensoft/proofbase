@@ -28,8 +28,7 @@ public:
     QAmqpExchange::ExchangeOptions exchangeOptions() const;
 
     bool createExchangeIfNotExists() const;
-    void setCreateExchangeIfNotExists(bool createExchangeIfNotExists,
-                                      QAmqpExchange::ExchangeOptions options = {QAmqpExchange::Durable});
+    void setCreateExchangeIfNotExists(bool createExchangeIfNotExists, QAmqpExchange::ExchangeOptions options = {QAmqpExchange::Durable});
 
 signals:
     void messagePublished(qulonglong id);

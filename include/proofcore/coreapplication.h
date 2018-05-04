@@ -40,8 +40,8 @@ public:
     ~CoreApplication();
 
     QString prettifiedApplicationName() const;
-    QStringList availableLanguages();
-    QVariantMap fullLanguageNames();
+    QStringList availableLanguages() const;
+    QVariantMap fullLanguageNames() const;
     QString language() const;
     void setLanguage(const QString &language);
     int languageIndex() const;

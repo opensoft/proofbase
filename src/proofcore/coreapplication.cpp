@@ -215,13 +215,13 @@ QString CoreApplication::prettifiedApplicationName() const
     return d->prettifiedApplicationName;
 }
 
-QStringList CoreApplication::availableLanguages()
+QStringList CoreApplication::availableLanguages() const
 {
     Q_D(const CoreApplication);
     return d->availableLanguages;
 }
 
-QVariantMap CoreApplication::fullLanguageNames()
+QVariantMap CoreApplication::fullLanguageNames() const
 {
     Q_D(const CoreApplication);
     return d->fullLanguageNames;
