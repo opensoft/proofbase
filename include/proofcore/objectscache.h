@@ -28,6 +28,8 @@ template<class Key, class T>
 class ObjectsCache
 {
 public:
+    using key_type = Key;
+    using cached_type = T;
     using Creator = std::function<QSharedPointer<T>()>;
 
     virtual QSharedPointer<T> add(const Key &key, const QSharedPointer<T> &object, bool overwriteCurrent = false) = 0;

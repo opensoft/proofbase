@@ -10,6 +10,7 @@
 
 Q_LOGGING_CATEGORY(proofCoreSettingsLog, "proof.core.settings")
 Q_LOGGING_CATEGORY(proofCoreCrashLog, "proof.core.crash")
+Q_LOGGING_CATEGORY(proofCoreFuturesLog, "proof.core.futures")
 Q_LOGGING_CATEGORY(proofCoreLoggerLog, "proof.core.logger")
 Q_LOGGING_CATEGORY(proofCoreUpdatesLog, "proof.core.updates")
 Q_LOGGING_CATEGORY(proofCoreMiscLog, "proof.core.misc")

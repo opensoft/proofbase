@@ -19,7 +19,6 @@ class TaskChainPrivate
 
     void acquireFutures(qulonglong spinSleepTimeInMsecs);
     void releaseFutures();
-    bool waitForFuture(const FutureSP<bool> &future, qlonglong msecs = 0);
 
     TaskChain *q_ptr = nullptr;
 
@@ -73,7 +72,7 @@ bool TaskChain::waitForTask(qlonglong taskId, qlonglong msecs)
     if (!futureToWait)
         return true;
 
-    bool result = d->waitForFuture(futureToWait, msecs);
+    bool result = futureToWait->wait(msecs);
     if (result) {
         d->acquireFutures(WAIT_FOR_TASK_SPIN_SLEEP_TIME_IN_MSECS);
         d->futures.remove(taskId);
@@ -127,9 +126,4 @@ void TaskChainPrivate::acquireFutures(qulonglong spinSleepTimeInMsecs)
 void TaskChainPrivate::releaseFutures()
 {
     futuresLock.clear(std::memory_order_release);
-}
-
-bool TaskChainPrivate::waitForFuture(const FutureSP<bool> &future, qlonglong msecs)
-{
-    return future->wait(msecs);
 }

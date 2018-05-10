@@ -16,8 +16,8 @@ class PROOF_CORE_EXPORT ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(ProofObject)
 public:
-    ProofObjectPrivate() {}
-    virtual ~ProofObjectPrivate() {}
+    ProofObjectPrivate();
+    virtual ~ProofObjectPrivate();
 
     bool isDirty() const;
     bool isDirtyItself() const;
