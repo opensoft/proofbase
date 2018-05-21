@@ -22,6 +22,46 @@
 static const int DEFAULT_REPLY_TIMEOUT = 5 * 60 * 1000; //5 minutes
 
 namespace Proof {
+class NetworkScheduler
+{
+public:
+    NetworkScheduler()
+    {
+        qnam = new QNetworkAccessManager;
+        qnamThread = new QThread();
+        qnamThread->start();
+        qnam->moveToThread(qnamThread);
+    }
+    ~NetworkScheduler()
+    {
+        qnam->deleteLater();
+        qnamThread->quit();
+        qnamThread->wait(250);
+        delete qnamThread;
+    }
+
+    static NetworkScheduler *instance()
+    {
+        static NetworkScheduler i;
+        return &i;
+    }
+
+    CancelableFuture<QNetworkReply *> addRequest(const QString &host, std::function<QNetworkReply *(QNetworkAccessManager*)> &&request);
+
+    QNetworkAccessManager *qnam = nullptr;
+    QThread *qnamThread = nullptr;
+private:
+    using RequestDescriptor = std::pair<QString, std::function<void()>>;
+
+    void schedule();
+    void decreaseUsage(const QString &host);
+
+    std::list<RequestDescriptor> requests;
+    QHash<QString, int> usages;
+    const int limit = 6;
+    SpinLock requestsLock;
+};
+
 class RestClientPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(RestClient)
@@ -32,26 +72,27 @@ public:
 
     void handleReply(QNetworkReply *reply);
     void cleanupReplyHandler(QNetworkReply *reply);
+    void cleanupAll();
     QPair<QString, QString> parseHost(const QString &host);
 
-    QNetworkAccessManager *qnam = nullptr;
+    bool ignoreSslErrors = false;
+    bool followRedirects = true;
+    bool explicitPort = false;
+    int port = 443;
+    RestAuthType authType = RestAuthType::NoAuth;
+    int msecsForTimeout = DEFAULT_REPLY_TIMEOUT;
     QString userName;
     QString password;
     QString clientName;
     QString host;
     QString postfix;
     QString token;
-    int port = 443;
-    bool explicitPort = false;
     QString scheme = QStringLiteral("https");
-    RestAuthType authType = RestAuthType::NoAuth;
     QHash<QNetworkReply *, QTimer *> replyTimeouts;
-    int msecsForTimeout = DEFAULT_REPLY_TIMEOUT;
     QHash<QByteArray, QByteArray> customHeaders;
     QHash<QString, QNetworkCookie> cookies;
-    bool ignoreSslErrors = false;
-    bool followRedirects = true;
 };
+
 }
 
 using namespace Proof;
@@ -60,20 +101,22 @@ RestClient::RestClient(bool ignoreSslErrors)
     : ProofObject(*new RestClientPrivate)
 {
     Q_D(RestClient);
+    moveToThread(NetworkScheduler::instance()->qnamThread);
     d->ignoreSslErrors = ignoreSslErrors;
-    d->qnam = new QNetworkAccessManager(this);
-    connect(d->qnam, &QNetworkAccessManager::authenticationRequired, this, &RestClient::authenticationRequired);
-    connect(d->qnam, &QNetworkAccessManager::encrypted, this, &RestClient::encrypted);
-    connect(d->qnam, &QNetworkAccessManager::finished, this, &RestClient::finished);
-    connect(d->qnam, &QNetworkAccessManager::networkAccessibleChanged, this, &RestClient::networkAccessibleChanged);
-    connect(d->qnam, &QNetworkAccessManager::proxyAuthenticationRequired, this, &RestClient::proxyAuthenticationRequired);
+    connect(NetworkScheduler::instance()->qnam, &QNetworkAccessManager::finished, this, &RestClient::finished);
     if (!ignoreSslErrors) {
-        connect(d->qnam, &QNetworkAccessManager::sslErrors, this,
-                [this, d](QNetworkReply *reply, const QList<QSslError> &errors) {
+        connect(NetworkScheduler::instance()->qnam, &QNetworkAccessManager::sslErrors,
+                this, [this, d](QNetworkReply *reply, const QList<QSslError> &errors) {
             d->cleanupReplyHandler(reply);
             emit sslErrors(reply, errors);
         });
     }
+}
+
+RestClient::~RestClient()
+{
+    Q_D(RestClient);
+    d->cleanupAll();
 }
 
 QString RestClient::userName() const
@@ -214,13 +257,13 @@ void RestClient::setAuthType(RestAuthType arg)
     }
 }
 
-qlonglong RestClient::msecsForTimeout() const
+int RestClient::msecsForTimeout() const
 {
     Q_D(const RestClient);
     return d->msecsForTimeout;
 }
 
-void RestClient::setMsecsForTimeout(qlonglong arg)
+void RestClient::setMsecsForTimeout(int arg)
 {
     Q_D(RestClient);
     if (d->msecsForTimeout != arg) {
@@ -292,76 +335,103 @@ void RestClient::unsetCookie(const QString &name)
     d->cookies.remove(name);
 }
 
-QNetworkReply *RestClient::get(const QString &method, const QUrlQuery &query, const QString &vendor)
+CancelableFuture<QNetworkReply *> RestClient::get(const QString &method, const QUrlQuery &query, const QString &vendor)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkReply *reply = d->qnam->get(d->createNetworkRequest(d->createUrl(method, query), "", vendor));
-    d->handleReply(reply);
-    return reply;
+
+    return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, vendor](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
+        QNetworkReply *reply = qnam->get(d->createNetworkRequest(d->createUrl(method, query), "", vendor));
+        d->handleReply(reply);
+        return reply;
+    });
 }
 
-QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
+CancelableFuture<QNetworkReply *> RestClient::post(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkReply *reply = d->qnam->post(d->createNetworkRequest(d->createUrl(method, query), body, vendor), body);
-    d->handleReply(reply);
-    return reply;
+
+    return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, body, vendor](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
+        QNetworkReply *reply = qnam->post(d->createNetworkRequest(d->createUrl(method, query), body, vendor), body);
+        d->handleReply(reply);
+        return reply;
+    });
 }
 
-QNetworkReply *RestClient::post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts)
+CancelableFuture<QNetworkReply *> RestClient::post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkRequest request = d->createNetworkRequest(d->createUrl(method, query), "", QLatin1String(""));
-    request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
-                      QStringLiteral("multipart/form-data; boundary=%1").arg(QString(multiParts->boundary())));
-    QNetworkReply *reply = d->qnam->post(request, multiParts);
-    qCDebug(proofNetworkMiscLog) << request.header(QNetworkRequest::KnownHeaders::ContentTypeHeader).toString();
-    multiParts->setParent(reply);
-    d->handleReply(reply);
-    return reply;
+
+    return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, multiParts](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
+        QNetworkRequest request = d->createNetworkRequest(d->createUrl(method, query), "", QLatin1String(""));
+        request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
+                          QStringLiteral("multipart/form-data; boundary=%1").arg(QString(multiParts->boundary())));
+        QNetworkReply *reply = qnam->post(request, multiParts);
+        qCDebug(proofNetworkMiscLog) << request.header(QNetworkRequest::KnownHeaders::ContentTypeHeader).toString();
+        multiParts->setParent(reply);
+        d->handleReply(reply);
+        return reply;
+    });
 }
 
-QNetworkReply *RestClient::put(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
+CancelableFuture<QNetworkReply *> RestClient::put(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkReply *reply = d->qnam->put(d->createNetworkRequest(d->createUrl(method, query), body, vendor), body);
-    d->handleReply(reply);
-    return reply;
+
+    return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, body, vendor](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
+        QNetworkReply *reply = qnam->put(d->createNetworkRequest(d->createUrl(method, query), body, vendor), body);
+        d->handleReply(reply);
+        return reply;
+    });
 }
 
-QNetworkReply *RestClient::patch(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
-{
-    Q_D(RestClient);
-    QBuffer *bodyBuffer = new QBuffer;
-    bodyBuffer->setData(body);
-    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkReply *reply = d->qnam->sendCustomRequest(d->createNetworkRequest(d->createUrl(method, query), body, vendor), "PATCH", bodyBuffer);
-    d->handleReply(reply);
-    bodyBuffer->setParent(reply);
-    return reply;
-}
-
-QNetworkReply *RestClient::deleteResource(const QString &method, const QUrlQuery &query, const QString &vendor)
+CancelableFuture<QNetworkReply *> RestClient::patch(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
-    QNetworkReply *reply = d->qnam->deleteResource(d->createNetworkRequest(d->createUrl(method, query), QByteArray(), vendor));
-    d->handleReply(reply);
-    return reply;
+
+    return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, body, vendor](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
+        QBuffer *bodyBuffer = new QBuffer;
+        bodyBuffer->setData(body);
+        QNetworkReply *reply = qnam->sendCustomRequest(d->createNetworkRequest(d->createUrl(method, query), body, vendor), "PATCH", bodyBuffer);
+        d->handleReply(reply);
+        bodyBuffer->setParent(reply);
+        return reply;
+    });
 }
 
-QNetworkReply *RestClient::get(const QUrl &url)
+CancelableFuture<QNetworkReply *> RestClient::deleteResource(const QString &method, const QUrlQuery &query, const QString &vendor)
+{
+    Q_D(RestClient);
+    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
+
+    return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, vendor](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
+        QNetworkReply *reply = qnam->deleteResource(d->createNetworkRequest(d->createUrl(method, query), QByteArray(), vendor));
+        d->handleReply(reply);
+        return reply;
+    });
+}
+
+CancelableFuture<QNetworkReply *> RestClient::get(const QUrl &url)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << url;
 
-    QNetworkReply *reply = d->qnam->get(d->createNetworkRequest(url, QByteArray(), QStringLiteral()));
-    d->handleReply(reply);
-    return reply;
+    return NetworkScheduler::instance()->addRequest(url.host(), [d, url](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkMiscLog) << url << "started";
+        QNetworkReply *reply = qnam->get(d->createNetworkRequest(url, QByteArray(), QStringLiteral()));
+        d->handleReply(reply);
+        return reply;
+    });
 }
 
 QUrl RestClientPrivate::createUrl(QString method, const QUrlQuery &query) const
@@ -478,14 +548,13 @@ QByteArray RestClientPrivate::generateWsseToken() const
 void RestClientPrivate::handleReply(QNetworkReply *reply)
 {
     Q_Q(RestClient);
-
     if (ignoreSslErrors)
         reply->ignoreSslErrors();
 
     QTimer *timer = new QTimer();
     timer->setSingleShot(true);
     replyTimeouts.insert(reply, timer);
-    QObject::connect(timer, &QTimer::timeout, [timer, reply](){
+    QObject::connect(timer, &QTimer::timeout, q, [timer, reply]() {
         qCWarning(proofNetworkMiscLog) << "Timed out:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << reply->isRunning();
         if (reply->isRunning())
             reply->abort();
@@ -499,8 +568,7 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
         qCWarning(proofNetworkMiscLog) << "Error occurred:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << e;
         cleanupReplyHandler(reply);
     });
-    QObject::connect(reply, &QNetworkReply::finished,
-                     q, [this, reply]() {
+    QObject::connect(reply, &QNetworkReply::finished, q, [this, reply]() {
         qCDebug(proofNetworkMiscLog) << "Finished:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         cleanupReplyHandler(reply);
     });
@@ -508,11 +576,26 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
 
 void RestClientPrivate::cleanupReplyHandler(QNetworkReply *reply)
 {
+    //This call is only for compatibility with old stations where restclient was explicitly moved to some other thread
+    //In proper workflow this call with not do anything since restclient is in the same thread
+    if (ProofObject::call(NetworkScheduler::instance()->qnam, this, &RestClientPrivate::cleanupReplyHandler, Call::Block, reply))
+        return;
     if (replyTimeouts.contains(reply)) {
         QTimer *connectionTimer = replyTimeouts.take(reply);
         connectionTimer->stop();
         connectionTimer->deleteLater();
     }
+}
+
+void RestClientPrivate::cleanupAll()
+{
+    if (ProofObject::call(NetworkScheduler::instance()->qnam, this, &RestClientPrivate::cleanupAll, Call::BlockEvents))
+        return;
+    algorithms::forEach(replyTimeouts, [](QNetworkReply *, QTimer *timer) {
+        timer->stop();
+        timer->deleteLater();
+    });
+    replyTimeouts.clear();
 }
 
 QPair<QString, QString> RestClientPrivate::parseHost(const QString &host)
@@ -532,4 +615,72 @@ QPair<QString, QString> RestClientPrivate::parseHost(const QString &host)
     if (!parts.isEmpty())
         postfix = '/' + parts.join('/');
     return {newHost, postfix};
+}
+
+CancelableFuture<QNetworkReply *> NetworkScheduler::addRequest(const QString &host, std::function<QNetworkReply *(QNetworkAccessManager *)> &&request)
+{
+    auto promise = PromiseSP<QNetworkReply *>::create();
+    promise->future()->flatMap([this, host](QNetworkReply *reply) {
+        auto checker = PromiseSP<bool>::create();
+        QObject::connect(reply, &QNetworkReply::finished, reply, [checker](){checker->success(true);});
+        QObject::connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), reply, [checker](){checker->success(true);});
+        QObject::connect(reply, &QNetworkReply::sslErrors, reply, [checker](){checker->success(true);});
+        return checker->future();
+    })->onSuccess([this, host](bool) {
+        decreaseUsage(host);
+        schedule();
+    });
+
+    requestsLock.lock();
+    qCDebug(proofNetworkExtraLog) << "Adding request for" << host << "with current usage =" << usages.value(host, 0);
+    requests.emplace_back(host, [this, host, request, promise]() {
+        if (promise->filled()) {
+            qCDebug(proofNetworkExtraLog) << "Request for" << host << "was ready to be sent, but is already canceled, skipping it";
+            decreaseUsage(host);
+            return;
+        }
+        qCDebug(proofNetworkExtraLog) << "Sending request for" << host;
+        promise->success(request(qnam));
+    });
+    requestsLock.unlock();
+
+    schedule();
+    return CancelableFuture<QNetworkReply *>(promise);
+}
+
+void NetworkScheduler::schedule()
+{
+    if (ProofObject::call(qnam, this, &NetworkScheduler::schedule))
+        return;
+    qCDebug(proofNetworkExtraLog) << "Scheduling network requests with queue size =" << requests.size();
+    while (requests.size()) {
+        bool found = false;
+        requestsLock.lock();
+        RequestDescriptor candidate;
+        for (auto it = requests.begin(); it != requests.end(); ++it) {
+            if (usages[it->first] < limit) {
+                candidate = *it;
+                found = true;
+                if (!candidate.first.isEmpty())
+                    ++usages[candidate.first];
+                requests.erase(it);
+                break;
+            }
+        }
+        requestsLock.unlock();
+        if (!found)
+            break;
+        candidate.second();
+    }
+}
+
+void NetworkScheduler::decreaseUsage(const QString &host)
+{
+    if (!host.isEmpty()) {
+        requestsLock.lock();
+        --usages[host];
+        if (usages[host] <= 0)
+            usages.remove(host);
+        requestsLock.unlock();
+    }
 }

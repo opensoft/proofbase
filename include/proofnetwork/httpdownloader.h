@@ -15,12 +15,7 @@ class PROOF_NETWORK_EXPORT HttpDownloader : public ProofObject
     Q_DECLARE_PRIVATE(HttpDownloader)
 public:
     explicit HttpDownloader(QObject *parent = nullptr);
-
     FutureSP<QByteArray> download(const QUrl &url);
-
-protected:
-    bool event(QEvent *event) override;
-
 };
 }
 #endif // PROOF_HTTPDOWNLOADER_H

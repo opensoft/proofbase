@@ -145,90 +145,42 @@ void AbstractRestApi::onRestClientChanging(const RestClientSP &client)
 
 QNetworkReply *AbstractRestApiPrivate::get(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query)
 {
-    Q_Q(AbstractRestApi);
-    if (QThread::currentThread() != restClient->thread()) {
-        qCWarning(proofNetworkMiscLog) << "AbstractRestApi::get(): RestApi and RestClient should live in same thread."
-                                       << "\nRestClient object is in thread =" << restClient->thread()
-                                       << "\nRestApi is in thread =" << q->thread()
-                                       << "\nRunning in thread =" << QThread::currentThread();
-        return nullptr;
-    }
-    QNetworkReply *reply = restClient->get(method, query, vendor);
+    QNetworkReply *reply = restClient->get(method, query, vendor)->result();
     setupReply(operationId, reply, std::move(handler));
     return reply;
 }
 
 QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
-    Q_Q(AbstractRestApi);
-    if (QThread::currentThread() != restClient->thread()) {
-        qCWarning(proofNetworkMiscLog) << "AbstractRestApi::post(): RestApi and RestClient should live in same thread."
-                                       << "\nRestClient object is in thread =" << restClient->thread()
-                                       << "\nRestApi is in thread =" << q->thread()
-                                       << "\nrunning in thread =" << QThread::currentThread();
-        return nullptr;
-    }
-    QNetworkReply *reply = restClient->post(method, query, body, vendor);
+    QNetworkReply *reply = restClient->post(method, query, body, vendor)->result();
     setupReply(operationId, reply, std::move(handler));
     return reply;
 }
 
 QNetworkReply *AbstractRestApiPrivate::post(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts)
 {
-    Q_Q(AbstractRestApi);
-    if (QThread::currentThread() != restClient->thread()) {
-        qCWarning(proofNetworkMiscLog) << "AbstractRestApi::post(): RestApi and RestClient should live in same thread."
-                                       << "\nRestClient object is in thread =" << restClient->thread()
-                                       << "\nRestApi is in thread =" << q->thread()
-                                       << "\nrunning in thread =" << QThread::currentThread();
-        return nullptr;
-    }
-    QNetworkReply *reply = restClient->post(method, query, multiParts);
+    QNetworkReply *reply = restClient->post(method, query, multiParts)->result();
     setupReply(operationId, reply, std::move(handler));
     return reply;
 }
 
 QNetworkReply *AbstractRestApiPrivate::put(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
-    Q_Q(AbstractRestApi);
-    if (QThread::currentThread() != restClient->thread()) {
-        qCWarning(proofNetworkMiscLog) << "AbstractRestApi::put(): RestApi and RestClient should live in same thread."
-                                       << "\nRestClient object is in thread =" << restClient->thread()
-                                       << "\nRestApi is in thread =" << q->thread()
-                                       << "\nrunning in thread =" << QThread::currentThread();
-        return nullptr;
-    }
-    QNetworkReply *reply = restClient->put(method, query, body, vendor);
+    QNetworkReply *reply = restClient->put(method, query, body, vendor)->result();
     setupReply(operationId, reply, std::move(handler));
     return reply;
 }
 
 QNetworkReply *AbstractRestApiPrivate::patch(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
-    Q_Q(AbstractRestApi);
-    if (QThread::currentThread() != restClient->thread()) {
-        qCWarning(proofNetworkMiscLog) << "AbstractRestApi::patch(): RestApi and RestClient should live in same thread."
-                                       << "\nRestClient object is in thread =" << restClient->thread()
-                                       << "\nRestApi is in thread =" << q->thread()
-                                       << "\nrunning in thread =" << QThread::currentThread();
-        return nullptr;
-    }
-    QNetworkReply *reply = restClient->patch(method, query, body, vendor);
+    QNetworkReply *reply = restClient->patch(method, query, body, vendor)->result();
     setupReply(operationId, reply, std::move(handler));
     return reply;
 }
 
 QNetworkReply *AbstractRestApiPrivate::deleteResource(qulonglong &operationId, RestAnswerHandler &&handler, const QString &method, const QUrlQuery &query)
 {
-    Q_Q(AbstractRestApi);
-    if (QThread::currentThread() != restClient->thread()) {
-        qCWarning(proofNetworkMiscLog) << "AbstractRestApiPrivate::deleteResource(): RestApi and RestClient should live in same thread."
-                                       << "\nRestClient object is in thread =" << restClient->thread()
-                                       << "\nRestApi is in thread =" << q->thread()
-                                       << "\nrunning in thread =" << QThread::currentThread();
-        return nullptr;
-    }
-    QNetworkReply *reply = restClient->deleteResource(method, query, vendor);
+    QNetworkReply *reply = restClient->deleteResource(method, query, vendor)->result();
     setupReply(operationId, reply, std::move(handler));
     return reply;
 }
@@ -437,4 +389,11 @@ Failure RestApiError::toFailure() const
         return Failure(message, proofModuleCode, proofErrorCode,
                        userFriendly ? Failure::UserFriendlyHint : Failure::NoHint,
                        code ? code : QVariant());
+}
+
+RestApiError RestApiError::fromFailure(const Failure &f)
+{
+    return RestApiError(f.exists ? Level::ServerError : Level::NoError,
+                        f.data.toInt(), f.moduleCode, f.errorCode,
+                        f.message, f.hints & Failure::UserFriendlyHint);
 }

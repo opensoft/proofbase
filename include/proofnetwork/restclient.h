@@ -4,6 +4,7 @@
 #include "proofcore/proofobject.h"
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
+#include "proofcore/future.h"
 
 #include <QNetworkAccessManager>
 #include <QUrlQuery>
@@ -22,6 +23,7 @@ class PROOF_NETWORK_EXPORT RestClient : public ProofObject // clazy:exclude=ctor
     Q_DECLARE_PRIVATE(RestClient)
 public:
     explicit RestClient(bool ignoreSslErrors = false);
+    ~RestClient();
 
     QString userName() const;
     void setUserName(const QString &arg);
@@ -50,8 +52,8 @@ public:
     RestAuthType authType() const;
     void setAuthType(RestAuthType arg);
 
-    qlonglong msecsForTimeout() const;
-    void setMsecsForTimeout(qlonglong arg);
+    int msecsForTimeout() const;
+    void setMsecsForTimeout(int arg);
 
     bool followRedirects() const;
     void setFollowRedirects(bool arg);
@@ -66,13 +68,13 @@ public:
     bool containsCookie(const QString &name) const;
     void unsetCookie(const QString &name);
 
-    QNetworkReply *get(const QString &method, const QUrlQuery &query = QUrlQuery(), const QString &vendor = QString());
-    QNetworkReply *post(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "", const QString &vendor = QString());
-    QNetworkReply *post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts);
-    QNetworkReply *put(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "", const QString &vendor = QString());
-    QNetworkReply *patch(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "", const QString &vendor = QString());
-    QNetworkReply *deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery(), const QString &vendor = QString());
-    QNetworkReply *get(const QUrl &url);
+    CancelableFuture<QNetworkReply *> get(const QString &method, const QUrlQuery &query = QUrlQuery(), const QString &vendor = QString());
+    CancelableFuture<QNetworkReply *> post(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "", const QString &vendor = QString());
+    CancelableFuture<QNetworkReply *> post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts);
+    CancelableFuture<QNetworkReply *> put(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "", const QString &vendor = QString());
+    CancelableFuture<QNetworkReply *> patch(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "", const QString &vendor = QString());
+    CancelableFuture<QNetworkReply *> deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery(), const QString &vendor = QString());
+    CancelableFuture<QNetworkReply *> get(const QUrl &url);
 
 signals:
     void userNameChanged(const QString &arg);
@@ -87,12 +89,8 @@ signals:
     void msecsForTimeoutChanged(qlonglong arg);
     void followRedirectsChanged(bool arg);
 
-    void authenticationRequired(QNetworkReply *reply, QAuthenticator *authenticator);
-    void encrypted(QNetworkReply *reply);
-    void finished(QNetworkReply *reply);
-    void networkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
-    void proxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator);
-    void sslErrors(QNetworkReply *reply, const QList<QSslError> &errors);
+    void finished(QNetworkReply *reply);//Remove
+    void sslErrors(QNetworkReply *reply, const QList<QSslError> &errors);//Remove
 };
 
 }

@@ -196,7 +196,7 @@ TEST_F(RestServerMethodsTest, withoutAuth)
 {
     ASSERT_TRUE(restServerWithoutAuthUT->isListening());
 
-    QNetworkReply *reply = restClientWithoutAuthUT->get("/test-method");
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/test-method")->result();
 
     QSignalSpy spy(reply, &QNetworkReply::finished);
 
@@ -215,7 +215,7 @@ TEST_F(RestServerMethodsTest, noAuthTag)
 {
     ASSERT_TRUE(restServerUT->isListening());
 
-    QNetworkReply *reply = restClientForNoAuthTagUT->get("/test-public-method");
+    QNetworkReply *reply = restClientForNoAuthTagUT->get("/test-public-method")->result();
 
     QSignalSpy spy(reply, &QNetworkReply::finished);
 
@@ -234,7 +234,7 @@ TEST_F(RestServerMethodsTest, noAuthTagNegative)
 {
     ASSERT_TRUE(restServerUT->isListening());
 
-    QNetworkReply *reply = restClientForNoAuthTagUT->get("/test-method");
+    QNetworkReply *reply = restClientForNoAuthTagUT->get("/test-method")->result();
 
     QSignalSpy spy(reply, &QNetworkReply::finished);
 
@@ -255,7 +255,7 @@ TEST_P(RestServerMethodsTest, methodsNames)
 
     ASSERT_TRUE(restServerUT->isListening());
 
-    QNetworkReply *reply = isPost ? restClientUT->post(method) : restClientUT->get(method);
+    QNetworkReply *reply = isPost ? restClientUT->post(method)->result() : restClientUT->get(method)->result();
 
     QSignalSpy spy(reply, &QNetworkReply::finished);
 
@@ -294,7 +294,7 @@ TEST_P(PathPrefixServerMethodsTest, methodsNames)
 
     ASSERT_TRUE(restServerWithPathPrefixUT->isListening());
 
-    QNetworkReply *reply = isPost ? restClientWithPrefixUT->post(method) : restClientWithPrefixUT->get(method);
+    QNetworkReply *reply = isPost ? restClientWithPrefixUT->post(method)->result() : restClientWithPrefixUT->get(method)->result();
 
     QSignalSpy spy(reply, &QNetworkReply::finished);
 
@@ -335,7 +335,7 @@ TEST_P(AnotherRestServerMethodsTest, methodsParams)
 
     QUrlQuery query(params);
 
-    QNetworkReply *reply = isPost ? restClientUT->post(method, query): restClientUT->get(method, query);
+    QNetworkReply *reply = isPost ? restClientUT->post(method, query)->result() : restClientUT->get(method, query)->result();
 
     QSignalSpy spy(reply, &QNetworkReply::finished);
 
@@ -371,7 +371,7 @@ TEST_P(SomeMoreRestServerMethodsTest, methodsVariableParts)
 
     ASSERT_TRUE(restServerUT->isListening());
 
-    QNetworkReply *reply = isPost ? restClientUT->post(method): restClientUT->get(method);
+    QNetworkReply *reply = isPost ? restClientUT->post(method)->result() : restClientUT->get(method)->result();
 
     QSignalSpy spy(reply, &QNetworkReply::finished);
 

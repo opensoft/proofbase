@@ -10,6 +10,7 @@
 #include <QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(proofNetworkMiscLog)
+Q_DECLARE_LOGGING_CATEGORY(proofNetworkExtraLog)
 Q_DECLARE_LOGGING_CATEGORY(proofNetworkAmqpLog)
 
 namespace Proof {

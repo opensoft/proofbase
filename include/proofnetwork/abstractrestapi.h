@@ -7,6 +7,7 @@
 #include "proofnetwork/restclient.h"
 #include "proofnetwork/proofnetwork_types.h"
 #include "proofnetwork/proofnetwork_global.h"
+#include "proofnetwork/baserestapi.h"
 
 #include <QNetworkReply>
 
@@ -38,6 +39,7 @@ struct PROOF_NETWORK_EXPORT RestApiError
     //As it looks like - we don't need level (we use it only to check if error happened and if it was server error)
     // and everything else can be easily covered with Failure directly
     Failure toFailure() const;
+    static RestApiError fromFailure(const Failure &f);
 
     Level level = Level::NoError;
     qlonglong code = 0;
@@ -90,8 +92,23 @@ public:
     static ErrorCallbackType generateErrorCallback(qulonglong &currentOperationId, QString &errorMessage);
 
     template <class Callee, class Result, class Method, class Signal, class ...Args>
-    static RestApiError chainedApiCall(const TaskChainSP &taskChain, Callee *callee, Method method,
-                                       Signal signal, Result &&result, Args... args)
+    static auto chainedApiCall(const TaskChainSP &, Callee *callee, Method method, Signal, Result &&result, Args... args)
+    -> decltype (callee->itIsBase(), RestApiError())
+    {
+        auto f = (*callee.*method)(args...);
+        f->wait();
+        if (f->failed()) {
+            return RestApiError::fromFailure(f->failureReason());
+        } else {
+            result = f->result();
+            return RestApiError();
+        }
+    }
+
+    template <class Callee, class Result, class Method, class Signal, class ...Args>
+    static auto chainedApiCall(const TaskChainSP &taskChain, Callee *callee, Method method,
+                               Signal signal, Result &&result, Args... args)
+    -> decltype (callee->abortRequest(42), RestApiError())
     {
         qulonglong currentOperationId = 0;
         auto callback = generateSuccessCallback(currentOperationId, std::forward<Result>(result), signal);
@@ -135,8 +152,18 @@ public:
     }
 
     template <class Callee, class Method, class Signal, class ...Args>
-    static RestApiError chainedApiCallWithoutResult(const TaskChainSP &taskChain, Callee *callee, Method method,
-                                                    Signal signal, Args... args)
+    static auto chainedApiCallWithoutResult(const TaskChainSP &, Callee *callee, Method method, Signal, Args... args)
+    -> decltype (callee->itIsBase(), RestApiError())
+    {
+        auto f = (*callee.*method)(args...);
+        f->wait();
+        return f->failed() ? RestApiError::fromFailure(f->failureReason()) : RestApiError();
+    }
+
+    template <class Callee, class Method, class Signal, class ...Args>
+    static auto chainedApiCallWithoutResult(const TaskChainSP &taskChain, Callee *callee, Method method,
+                                            Signal signal, Args... args)
+    -> decltype (callee->abortRequest(42), RestApiError())
     {
         qulonglong currentOperationId = 0;
         std::function<bool(qulonglong)> callback

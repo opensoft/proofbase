@@ -32,12 +32,8 @@ FutureSP<QByteArray> HttpDownloader::download(const QUrl &url)
         return Future<QByteArray>::fail(Failure(QStringLiteral("Url is not valid"), NETWORK_MODULE_CODE, NetworkErrorCode::InvalidUrl));
     }
 
-    FutureSP<QByteArray> future;
-    if (!call(this, &HttpDownloader::download, Proof::Call::BlockEvents, future, url)) {
-        PromiseSP<QByteArray> promise = PromiseSP<QByteArray>::create();
-        future = promise->future();
-        QNetworkReply *reply = d->restClient->get(url);
-
+    PromiseSP<QByteArray> promise = PromiseSP<QByteArray>::create();
+    d->restClient->get(url)->onSuccess([this, promise](QNetworkReply *reply) {
         auto errorHandler = [](QNetworkReply *reply, const PromiseSP<QByteArray> &promise) {
             int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             // TODO: See in AbstractRestApi if you need more detailed error message
@@ -65,17 +61,6 @@ FutureSP<QByteArray> HttpDownloader::download(const QUrl &url)
             errorHandler(reply, promise);
             reply->deleteLater();
         });
-    }
-    return future;
-}
-
-bool HttpDownloader::event(QEvent *event)
-{
-    Q_D(HttpDownloader);
-    if (event->type() == QEvent::ThreadChange)
-        QCoreApplication::postEvent(this, new QEvent(QEvent::User));
-    else if (event->type() == QEvent::User && d->restClient)
-        call(d->restClient.data(), &QObject::moveToThread, Proof::Call::BlockEvents, thread());
-
-    return QObject::event(event);
+    });
+    return promise->future();
 }

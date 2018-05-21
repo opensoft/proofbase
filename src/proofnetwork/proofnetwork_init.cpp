@@ -12,6 +12,7 @@
 #include "proofcore/errornotifier.h"
 
 Q_LOGGING_CATEGORY(proofNetworkMiscLog, "proof.network.misc")
+Q_LOGGING_CATEGORY(proofNetworkExtraLog, "proof.network.extra")
 Q_LOGGING_CATEGORY(proofNetworkAmqpLog, "proof.network.amqp")
 
 PROOF_LIBRARY_INITIALIZER(libraryInit)
