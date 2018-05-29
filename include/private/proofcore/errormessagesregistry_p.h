@@ -24,7 +24,7 @@ class PROOF_CORE_EXPORT ErrorMessagesRegistry
 {
 public:
     ErrorMessagesRegistry(std::initializer_list<ErrorInfo> list);
-    ErrorInfo infoForCode(int code, const QStringList &args = QStringList()) const;
+    ErrorInfo infoForCode(int code, const QVector<QString> &args = QVector<QString>()) const;
 
 private:
     QHash<long, ErrorInfo> m_infos;

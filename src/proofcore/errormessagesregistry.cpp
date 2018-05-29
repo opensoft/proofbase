@@ -1,4 +1,5 @@
 #include "errormessagesregistry_p.h"
+#include "proofcore/proofalgorithms.h"
 
 namespace Proof {
 
@@ -10,14 +11,11 @@ ErrorMessagesRegistry::ErrorMessagesRegistry(std::initializer_list<ErrorInfo> li
     }
 }
 
-ErrorInfo ErrorMessagesRegistry::infoForCode(int code, const QStringList &args) const
+ErrorInfo ErrorMessagesRegistry::infoForCode(int code, const QVector<QString> &args) const
 {
     if (m_infos.contains(code)) {
         ErrorInfo info = m_infos[code];
-        if (args.size() > 0) {
-            for (int i = 0; i < args.size(); i++)
-                info.message = info.message.arg(args[i]);
-        }
+        info.message = algorithms::reduce(args, [](const QString &acc, const QString &x){return acc.arg(x);}, info.message);
         return info;
     } else {
         return ErrorInfo{0, 0, QObject::tr("Unknown error"), true};

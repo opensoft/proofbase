@@ -30,11 +30,12 @@ public:
 
     CancelableFuture<QByteArray> configureReply(CancelableFuture<QNetworkReply *> replyFuture);
 
-    template<typename Result>
-    CancelableFuture<Result> invalidArgumentsFailure() const
+    template<typename Result> CancelableFuture<Result>
+    invalidArgumentsFailure(Failure &&f = Failure(QStringLiteral("Invalid arguments"),
+                                                  NETWORK_MODULE_CODE, NetworkErrorCode::InvalidRequest)) const
     {
         auto promise = PromiseSP<Result>::create();
-        promise->failure(Failure(QStringLiteral("Invalid arguments"), NETWORK_MODULE_CODE, NetworkErrorCode::InvalidRequest));
+        promise->failure(std::move(f));
         return CancelableFuture<Result>(promise);
     }
 
@@ -51,8 +52,8 @@ public:
         return CancelableFuture<T>(promise);
     }
 
-    virtual void processSuccessfulReply(QNetworkReply *reply, const PromiseSP<QByteArray> &promise) const;
-    virtual void processErroredReply(QNetworkReply *reply, const PromiseSP<QByteArray> &promise) const;
+    virtual void processSuccessfulReply(QNetworkReply *reply, const PromiseSP<QByteArray> &promise);
+    virtual void processErroredReply(QNetworkReply *reply, const PromiseSP<QByteArray> &promise);
 
     bool replyShouldBeHandledByError(QNetworkReply *reply) const;
 
@@ -143,6 +144,26 @@ public:
             }
             return result;
         };
+    }
+
+    std::function<QList<qlonglong>(const QByteArray &)>
+    intsArrayUnmarshaller(const QString &attributeName = QString()) const
+    {
+        return [this, attributeName](const QByteArray &data) {
+            auto arr = parseEntitiesArray(data, attributeName);
+            QList<qint64> result;
+            result.reserve(arr.count());
+            for (const QJsonValue &v : qAsConst(arr)) {
+                if (v.isDouble())
+                    result << v.toInt();
+            }
+            return result;
+        };
+    }
+
+    std::function<bool(const QByteArray &)> discardingUnmarshaller() const
+    {
+        return [](const QByteArray &){ return true; };
     }
 
     void rememberReply(const CancelableFuture<QByteArray> &reply);

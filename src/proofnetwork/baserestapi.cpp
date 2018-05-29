@@ -135,7 +135,7 @@ CancelableFuture<QByteArray> BaseRestApiPrivate::configureReply(CancelableFuture
     return result;
 }
 
-void BaseRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<QByteArray> &promise) const
+void BaseRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<QByteArray> &promise)
 {
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (ALLOWED_HTTP_STATUSES.contains(errorCode)) {
@@ -172,7 +172,7 @@ void BaseRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, const Prom
                              Failure::UserFriendlyHint, errorCode));
 }
 
-void BaseRestApiPrivate::processErroredReply(QNetworkReply *reply, const PromiseSP<QByteArray> &promise) const
+void BaseRestApiPrivate::processErroredReply(QNetworkReply *reply, const PromiseSP<QByteArray> &promise)
 {
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (!errorCode)
