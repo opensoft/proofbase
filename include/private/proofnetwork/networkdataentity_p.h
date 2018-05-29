@@ -2,6 +2,7 @@
 #define NETWORKDATAENTITY_P_H
 
 #include "proofcore/proofobject_p.h"
+#include "proofnetwork/networkdataentity.h"
 #include "proofnetwork/proofnetwork_types.h"
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofcore/objectscache.h"
@@ -18,58 +19,74 @@ class PROOF_NETWORK_EXPORT NetworkDataEntityPrivate : public ProofObjectPrivate
 public:
     NetworkDataEntityPrivate() : ProofObjectPrivate() {}
 
-    template<class T, class Entity, class EntityKey>
-    QSharedPointer<Entity> updateEntityField(QWeakPointer<Entity> &storedEntity, EntityKey &storedKey, const EntityKey &key,
-                                             ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&keyFunction,
-                                             T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal,
-                                             std::function<QSharedPointer<Entity>()> &&customEntityCreator)
+    template <typename Q, typename Entity, typename Key, typename KeyFunc, typename NotifySignal, typename Creator>
+    auto updateEntityField(QWeakPointer<Entity> &storedEntity, Key &storedKey, const Key &key,
+                           ObjectsCache<Key, Entity> &cache, KeyFunc &&keyFunc,
+                           Q *notifier, NotifySignal &&notifySignal, Creator &&creator)
+    ->decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
+               std::function<void(Q *, QSharedPointer<Entity>)>(notifySignal)(notifier, storedEntity),
+               cache.add(key, creator()),
+               QSharedPointer<Entity>())
     {
+        auto castedKeyFunc = std::function<Key(Entity *)>(std::forward<KeyFunc>(keyFunc));
+        auto castedSignal = std::function<void(Q *, QSharedPointer<Entity>)>(std::forward<NotifySignal>(notifySignal));
         QSharedPointer<Entity> result = storedEntity.toStrongRef();
-        EntityKey oldKey = result ? keyFunction(result.data()) : storedKey;
+        Key oldKey = result ? castedKeyFunc(result.data()) : storedKey;
         if (oldKey != key || !Entity::isValidAndDirty(result)) {
-            result = cache.add(key, std::move(customEntityCreator));
+            result = cache.add(key, std::forward<Creator>(creator));
             storedEntity = result.toWeakRef();
-            storedKey = keyFunction(result.data());
+            storedKey = castedKeyFunc(result.data());
             if (oldKey != key)
-                emit notifySignal(notifySignalEmitter, result);
+                emit castedSignal(notifier, result);
         }
         return result;
     }
 
-    template<class T, class Entity, class EntityKey>
-    QSharedPointer<Entity> updateEntityField(QWeakPointer<Entity> &storedEntity, EntityKey &storedKey, const EntityKey &key,
-                                             ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&keyFunction,
-                                             T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal)
+    template <typename Q, typename Entity, typename Key, typename KeyFunc, typename NotifySignal>
+    auto updateEntityField(QWeakPointer<Entity> &storedEntity, Key &storedKey, const Key &key,
+                           ObjectsCache<Key, Entity> &cache, KeyFunc &&keyFunc,
+                           Q *notifier, NotifySignal &&notifySignal)
+    ->decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
+               std::function<void(Q *, QSharedPointer<Entity>)>(notifySignal)(notifier, storedEntity),
+               QSharedPointer<Entity>())
     {
-        return updateEntityField<T, Entity, EntityKey>(storedEntity, storedKey, key,
-                                                       cache, std::move(keyFunction),
-                                                       notifySignalEmitter, std::move(notifySignal),
-                                                       std::bind(&Entity::create, key));
+        return updateEntityField(storedEntity, storedKey, key,
+                                 cache, std::forward<KeyFunc>(keyFunc),
+                                 notifier, std::forward<NotifySignal>(notifySignal),
+                                 std::bind(&Entity::create, key));
     }
 
-    template<class T, class Entity, class EntityKey>
-    QSharedPointer<Entity> updateEntityField(QSharedPointer<Entity> &storedEntity, const EntityKey &key,
-                                             ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&keyFunction,
-                                             T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal,
-                                             std::function<QSharedPointer<Entity>()> &&customEntityCreator)
+    template <typename Q, typename Entity, typename Key, typename KeyFunc, typename NotifySignal, typename Creator>
+    auto updateEntityField(QSharedPointer<Entity> &storedEntity, const Key &key,
+                           ObjectsCache<Key, Entity> &cache, KeyFunc &&keyFunc,
+                           Q *notifier, NotifySignal &&notifySignal, Creator &&creator)
+    ->decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
+               std::function<void(Q *, QSharedPointer<Entity>)>(notifySignal)(notifier, storedEntity),
+               cache.add(key, creator()),
+               QSharedPointer<Entity>())
     {
-        if (!Entity::isValidAndDirty(storedEntity) || keyFunction(storedEntity.data()) != key) {
-            QSharedPointer<Entity> newEntity = cache.add(key, std::move(customEntityCreator));
+        auto castedKeyFunc = std::function<Key(Entity *)>(std::forward<KeyFunc>(keyFunc));
+        auto castedSignal = std::function<void(Q *, QSharedPointer<Entity>)>(std::forward<NotifySignal>(notifySignal));
+        if (!Entity::isValidAndDirty(storedEntity) || castedKeyFunc(storedEntity.data()) != key) {
+            QSharedPointer<Entity> newEntity = cache.add(key, std::forward<Creator>(creator));
             storedEntity = newEntity;
-            emit notifySignal(notifySignalEmitter, storedEntity);
+            emit castedSignal(notifier, storedEntity);
         }
         return storedEntity;
     }
 
-    template<class T, class Entity, class EntityKey>
-    QSharedPointer<Entity> updateEntityField(QSharedPointer<Entity> &storedEntity, const EntityKey &key,
-                                             ObjectsCache<EntityKey, Entity> &cache, std::function<EntityKey(Entity *)> &&keyFunction,
-                                             T *notifySignalEmitter, std::function<void(T *, QSharedPointer<Entity>)> &&notifySignal)
+    template <typename Q, typename Entity, typename Key, typename KeyFunc, typename NotifySignal>
+    auto updateEntityField(QSharedPointer<Entity> &storedEntity, const Key &key,
+                           ObjectsCache<Key, Entity> &cache, KeyFunc &&keyFunc,
+                           Q *notifier, NotifySignal &&notifySignal)
+    ->decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
+               std::function<void(Q *, QSharedPointer<Entity>)>(notifySignal)(notifier, storedEntity),
+               QSharedPointer<Entity>())
     {
-        return updateEntityField<T, Entity, EntityKey>(storedEntity, key,
-                                                       cache, std::move(keyFunction),
-                                                       notifySignalEmitter, std::move(notifySignal),
-                                                       std::bind(&Entity::create, key));
+        return updateEntityField(storedEntity, key,
+                                 cache, std::forward<KeyFunc>(keyFunc),
+                                 notifier, std::forward<NotifySignal>(notifySignal),
+                                 std::bind(&Entity::create, key));
     }
 
     virtual void updateFrom(const Proof::NetworkDataEntitySP &other);

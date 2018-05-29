@@ -59,17 +59,17 @@ public:
     // It is possible to have Entity deduced here too,
     // but it is kept as non-deducible intentionally to avoid any issues,
     // make type deduction stricter and make it similar to non-cached version
-    template<typename Entity, typename Cache, typename CacheKey,
-             typename EntityKey = typename Cache::key_type>
-    auto entityUnmarshaller(Cache &cache, CacheKey &&cacheKey) const
-    ->decltype(std::function<EntityKey(Entity *)>(cacheKey)(cache.value(EntityKey()).data()) == EntityKey(),
+    template<typename Entity, typename Cache, typename KeyFunc,
+             typename Key = typename Cache::key_type>
+    auto entityUnmarshaller(Cache &cache, KeyFunc &&keyFunc) const
+    ->decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
                std::function<QSharedPointer<Entity>(const QByteArray &)>())
     {
-        return [this, &cache, cacheKey = std::function<EntityKey(Entity *)>(cacheKey)](const QByteArray &data) {
+        return [this, &cache, keyFunc = std::function<Key(Entity *)>(keyFunc)](const QByteArray &data) {
             auto entity = parseEntity<Entity>(data);
             if (!entity)
                 return entity;
-            auto fromCache = cache.add(cacheKey(entity.data()), entity);
+            auto fromCache = cache.add(keyFunc(entity.data()), entity);
             if (entity != fromCache) {
                 fromCache->updateFrom(entity);
                 entity = fromCache;
@@ -86,13 +86,13 @@ public:
         };
     }
 
-    template<typename Entity, typename Cache, typename CacheKey,
-             typename EntityKey = typename Cache::key_type>
-    auto entitiesArrayUnmarshaller(Cache &cache, CacheKey &&cacheKey, const QString &attributeName = QString()) const
-    ->decltype(std::function<EntityKey(Entity *)>(cacheKey)(cache.value(EntityKey()).data()) == EntityKey(),
+    template<typename Entity, typename Cache, typename KeyFunc,
+             typename Key = typename Cache::key_type>
+    auto entitiesArrayUnmarshaller(Cache &cache, KeyFunc &&keyFunc, const QString &attributeName = QString()) const
+    ->decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
                std::function<QList<QSharedPointer<Entity>>(const QByteArray &)>())
     {
-        return [this, attributeName, &cache, cacheKey = std::function<EntityKey(Entity *)>(cacheKey)](const QByteArray &data) {
+        return [this, attributeName, &cache, keyFunc = std::function<Key(Entity *)>(keyFunc)](const QByteArray &data) {
             auto arr = parseEntitiesArray(data, attributeName);
             QList<QSharedPointer<Entity>> result;
             result.reserve(arr.count());
@@ -100,7 +100,7 @@ public:
                 auto entity = parseEntity<Entity>(v.toObject());
                 if (!entity)
                     return QList<QSharedPointer<Entity>>();
-                auto fromCache = cache.add(cacheKey(entity.data()), entity);
+                auto fromCache = cache.add(keyFunc(entity.data()), entity);
                 if (entity != fromCache) {
                     fromCache->updateFrom(entity);
                     entity = fromCache;
