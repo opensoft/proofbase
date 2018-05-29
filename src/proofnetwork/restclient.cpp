@@ -425,7 +425,7 @@ CancelableFuture<QNetworkReply *> RestClient::get(const QUrl &url)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << url;
-
+    // TODO: warning QStringLiteral() macro without parameters. Also check variations QStringLiteral(""), QLatin1String(), QLatin1String("")
     return NetworkScheduler::instance()->addRequest(url.host(), [d, url](QNetworkAccessManager *qnam) {
         qCDebug(proofNetworkMiscLog) << url << "started";
         QNetworkReply *reply = qnam->get(d->createNetworkRequest(url, QByteArray(), QStringLiteral()));
