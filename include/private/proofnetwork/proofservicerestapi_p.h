@@ -1,7 +1,6 @@
 #ifndef PROOFSERVICERESTAPI_P_H
 #define PROOFSERVICERESTAPI_P_H
 
-#include "proofnetwork/abstractrestapi_p.h"
 #include "proofnetwork/baserestapi_p.h"
 #include "proofnetwork/proofservicerestapi.h"
 #include "proofcore/errormessagesregistry_p.h"
@@ -9,19 +8,6 @@
 
 namespace Proof {
 namespace NetworkServices {
-
-class ProofServiceRestApiOld;
-class PROOF_NETWORK_EXPORT ProofServiceRestApiOldPrivate : public AbstractRestApiPrivate
-{
-    Q_DECLARE_PUBLIC(ProofServiceRestApiOld)
-public:
-    ProofServiceRestApiOldPrivate(const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry);
-
-    void replyFinished(qulonglong operationId, QNetworkReply *reply, bool forceUserFriendly = false) override;
-
-    QSharedPointer<ErrorMessagesRegistry> errorsRegistry;
-};
-
 class ProofServiceRestApi;
 class PROOF_NETWORK_EXPORT ProofServiceRestApiPrivate : public BaseRestApiPrivate
 {
@@ -29,6 +15,8 @@ class PROOF_NETWORK_EXPORT ProofServiceRestApiPrivate : public BaseRestApiPrivat
 public:
     ProofServiceRestApiPrivate(const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry);
     void processSuccessfulReply(QNetworkReply *reply, const PromiseSP<QByteArray> &promise) override;
+
+    std::function<bool(const QByteArray &)> boolResultUnmarshaller();
 
     QSharedPointer<ErrorMessagesRegistry> errorsRegistry;
 

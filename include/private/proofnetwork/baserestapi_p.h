@@ -166,6 +166,36 @@ public:
         return [](const QByteArray &){ return true; };
     }
 
+    QJsonArray parseEntitiesArray(const QByteArray &data, const QString &attributeName = QLatin1String()) const
+    {
+        QJsonParseError jsonError;
+        QJsonDocument doc = QJsonDocument::fromJson(data, &jsonError);
+        if (jsonError.error != QJsonParseError::NoError) {
+            return WithFailure(QStringLiteral("JSON error: %1").arg(jsonError.errorString()),
+                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
+                               Failure::NoHint, jsonError.error);
+        }
+        if (doc.isArray())
+            return doc.array();
+        if (doc.isObject()) {
+            QJsonObject obj = doc.object();
+            if (obj.value(attributeName).isUndefined() || !obj.value(attributeName).isArray()) {
+                QString errorAttribute = algorithms::findIf(serverErrorAttributes, [obj](const QString &attr) {
+                    return !obj.value(attr).isUndefined();
+                });
+                if (!errorAttribute.isEmpty()) {
+                    return WithFailure(obj.value(errorAttribute).toString(),
+                                       NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
+                }
+                return WithFailure(QStringLiteral("Can't create list of entities from server response"),
+                                   NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
+            }
+            return obj.value(attributeName).toArray();
+        }
+        return WithFailure(QStringLiteral("Can't create list of entities from server response"),
+                           NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
+    }
+
     void rememberReply(const CancelableFuture<QByteArray> &reply);
     void abortAllReplies();
 
@@ -208,37 +238,6 @@ private:
                                NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
         }
         return entity;
-    }
-
-    QJsonArray parseEntitiesArray(const QByteArray &data, const QString &attributeName) const
-    {
-        QJsonParseError jsonError;
-        QJsonDocument doc = QJsonDocument::fromJson(data, &jsonError);
-        if (jsonError.error != QJsonParseError::NoError) {
-            return WithFailure(QStringLiteral("JSON error: %1").arg(jsonError.errorString()),
-                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                               Failure::NoHint, jsonError.error);
-        }
-        if (doc.isArray()) {
-            return doc.array();
-        }
-        if (doc.isObject()) {
-            QJsonObject obj = doc.object();
-            if (obj.value(attributeName).isUndefined() || !obj.value(attributeName).isArray()) {
-                QString errorAttribute = algorithms::findIf(serverErrorAttributes, [obj](const QString &attr) {
-                    return !obj.value(attr).isUndefined();
-                });
-                if (!errorAttribute.isEmpty()) {
-                    return WithFailure(obj.value(errorAttribute).toString(),
-                                       NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
-                }
-                return WithFailure(QStringLiteral("Can't create entity from server response"),
-                                   NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
-            }
-            return obj.value(attributeName).toArray();
-        }
-        return WithFailure(QStringLiteral("Can't create list of entities from server response"),
-                           NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
     }
 
     QHash<qint64, CancelableFuture<QByteArray>> allReplies;

@@ -1,7 +1,6 @@
 #ifndef PROOF_NETWORKSERVICES_PROOFSERVICERESTAPI_H
 #define PROOF_NETWORKSERVICES_PROOFSERVICERESTAPI_H
 
-#include "proofnetwork/abstractrestapi.h"
 #include "proofnetwork/baserestapi.h"
 #include "proofnetwork/proofnetwork_global.h"
 
@@ -13,18 +12,6 @@ enum class VersionedEntityType {
     Service,
     Framework,
     Unknown
-};
-
-class ProofServiceRestApiOldPrivate;
-class PROOF_NETWORK_EXPORT ProofServiceRestApiOld : public AbstractRestApi
-{
-    Q_OBJECT
-    Q_DECLARE_PRIVATE(ProofServiceRestApiOld)
-signals:
-    void versionFetched(Proof::NetworkServices::VersionedEntityType type, const QString &name, const QString &version);
-
-protected:
-    ProofServiceRestApiOld(const RestClientSP &restClient, ProofServiceRestApiOldPrivate &dd, QObject *parent = nullptr);
 };
 
 class ProofServiceRestApiPrivate;
