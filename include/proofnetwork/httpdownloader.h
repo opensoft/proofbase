@@ -14,6 +14,7 @@ class PROOF_NETWORK_EXPORT HttpDownloader : public ProofObject
     Q_OBJECT
     Q_DECLARE_PRIVATE(HttpDownloader)
 public:
+    explicit HttpDownloader(const Proof::RestClientSP &restClient, QObject *parent = nullptr);
     explicit HttpDownloader(QObject *parent = nullptr);
     FutureSP<QByteArray> download(const QUrl &url);
 };

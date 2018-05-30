@@ -10,17 +10,23 @@ class HttpDownloaderPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(HttpDownloader)
 
-    Proof::RestClientSP restClient = Proof::RestClientSP::create();
+    Proof::RestClientSP restClient;
 };
 
 }
 
 using namespace Proof;
 
-HttpDownloader::HttpDownloader(QObject *parent)
+HttpDownloader::HttpDownloader(const Proof::RestClientSP &restClient, QObject *parent)
     : ProofObject(*new HttpDownloaderPrivate, parent)
 {
+    Q_D(HttpDownloader);
+    d->restClient = restClient;
+}
 
+HttpDownloader::HttpDownloader(QObject *parent)
+    : HttpDownloader(Proof::RestClientSP::create(), parent)
+{
 }
 
 FutureSP<QByteArray> HttpDownloader::download(const QUrl &url)
