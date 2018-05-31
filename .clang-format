@@ -60,11 +60,11 @@ IncludeCategories:
       Priority: 10
     - Regex: '^("|<)proofcore/' # Proof headers
       Priority: 2
-    - Regex: '^("|<)proofutils/' # Proof headers
-      Priority: 3
-    - Regex: '^("|<)proofgui/' # Proof headers
-      Priority: 4
     - Regex: '^("|<)proofnetwork/' # Proof headers
+      Priority: 3
+    - Regex: '^("|<)proofutils/' # Proof headers
+      Priority: 4
+    - Regex: '^("|<)proofgui/' # Proof headers
       Priority: 5
     - Regex: '^("|<)proof.*/' # Proof headers
       Priority: 6
