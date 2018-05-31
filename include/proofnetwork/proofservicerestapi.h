@@ -7,7 +7,8 @@
 namespace Proof {
 namespace NetworkServices {
 
-enum class VersionedEntityType {
+enum class VersionedEntityType
+{
     Station,
     Service,
     Framework,

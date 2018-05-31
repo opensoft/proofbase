@@ -1,12 +1,12 @@
 // clazy:skip
 
-#include "gtest/test_global.h"
-
 #include "proofcore/taskchain.h"
 
-#include <QThread>
 #include <QDateTime>
+#include <QThread>
 #include <QTimer>
+
+#include "gtest/test_global.h"
 
 #include <thread>
 
@@ -26,12 +26,11 @@ TEST(TaskChainTest, memoryCheckWithChainCapture)
         auto firstTask = TaskChain::createTask<>();
         auto secondTask = TaskChain::createTask<>();
         *firstTask = [&flag, chain, secondTask]() {
-            while (!flag) {}
+            while (!flag) {
+            }
             chain->addTask(*secondTask);
         };
-        *secondTask = []() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        };
+        *secondTask = []() { std::this_thread::sleep_for(std::chrono::milliseconds(1)); };
         secondTaskWeak = secondTask.toWeakRef();
         chain->addTask(*firstTask);
     }
@@ -66,7 +65,8 @@ TEST(TaskChainTest, stepsPerforming)
         auto firstTask = TaskChain::createTask<>();
         auto secondTask = TaskChain::createTask<>();
         *firstTask = [&flag, chain, secondTask, &counter, &firstTaskThreadId]() {
-            while (!flag) {}
+            while (!flag) {
+            }
             firstTaskThreadId = std::this_thread::get_id();
             ++counter;
             qlonglong secondId = chain->addTask(*secondTask);
@@ -106,13 +106,12 @@ TEST(TaskChainTest, stepsPerformingWithArgs)
         auto firstTask = TaskChain::createTask<>();
         auto secondTask = TaskChain::createTask<std::atomic<int> *>();
         *firstTask = [&flag, chain, secondTask, &counter]() {
-            while (!flag) {}
+            while (!flag) {
+            }
             ++counter;
             chain->addTask(*secondTask, &counter);
         };
-        *secondTask = [](std::atomic<int> *counterPtr) {
-            ++(*counterPtr);
-        };
+        *secondTask = [](std::atomic<int> *counterPtr) { ++(*counterPtr); };
         chain->addTask(*firstTask);
     }
     flag = true;
@@ -156,7 +155,8 @@ TEST(TaskChainTest, signalWaiting)
         chain->addTask(*firstTask);
     }
     EXPECT_FALSE(chainWeak.isNull());
-    while (!flag) {}
+    while (!flag) {
+    }
     EXPECT_FALSE(finished);
     QMetaObject::invokeMethod(timer, "start", Qt::BlockingQueuedConnection, Q_ARG(int, 100));
     for (int i = 0; i < 2000; ++i) {
@@ -225,7 +225,8 @@ TEST(TaskChainTest, tasksTree)
         chain->addTask(*firstTask);
     }
     EXPECT_FALSE(chainWeak.isNull());
-    while (!startedFlag1 && !startedFlag2) {}
+    while (!startedFlag1 && !startedFlag2) {
+    }
     EXPECT_FALSE(finished1);
     EXPECT_FALSE(finished2);
     QMetaObject::invokeMethod(timer, "start", Qt::BlockingQueuedConnection, Q_ARG(int, 100));
@@ -310,8 +311,10 @@ TEST(TaskChainTest, tasksTreeWaitingTimeout)
         *firstTask = [chain, secondTask, thirdTask, &rootTaskEndedTime]() {
             qlonglong firstId = chain->addTask(*secondTask);
             qlonglong secondId = chain->addTask(*thirdTask);
-            while (!chain->waitForTask(firstId, 1)) {}
-            while (!chain->waitForTask(secondId, 1)) {}
+            while (!chain->waitForTask(firstId, 1)) {
+            }
+            while (!chain->waitForTask(secondId, 1)) {
+            }
             rootTaskEndedTime = QDateTime::currentDateTime().toMSecsSinceEpoch();
         };
 
@@ -329,7 +332,9 @@ TEST(TaskChainTest, tasksTreeWaitingTimeout)
         rootTaskId = chain->addTask(*firstTask);
     }
     EXPECT_NE(0ll, rootTaskId);
-    while (!chain->waitForTask(rootTaskId, 1)) {++rootCounter;}
+    while (!chain->waitForTask(rootTaskId, 1)) {
+        ++rootCounter;
+    }
     thread.quit();
     thread.wait(100);
     EXPECT_GT((unsigned long long)rootTaskEndedTime, (unsigned long long)child1TaskEndedTime);

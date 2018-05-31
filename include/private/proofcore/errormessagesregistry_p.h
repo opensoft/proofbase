@@ -3,10 +3,10 @@
 
 #include "proofcore/proofcore_global.h"
 
+#include <QHash>
 #include <QPair>
 #include <QString>
 #include <QStringList>
-#include <QHash>
 
 #include <initializer_list>
 

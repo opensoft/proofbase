@@ -16,9 +16,8 @@ public:
 
 protected:
     JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent = nullptr);
-
 };
 
-}
+} // namespace Proof
 
 #endif // JSONAMQPCLIENT_H

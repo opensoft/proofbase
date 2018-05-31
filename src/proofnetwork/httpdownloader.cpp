@@ -13,7 +13,7 @@ class HttpDownloaderPrivate : public ProofObjectPrivate
     Proof::RestClientSP restClient;
 };
 
-}
+} // namespace Proof
 
 using namespace Proof;
 
@@ -24,10 +24,8 @@ HttpDownloader::HttpDownloader(const Proof::RestClientSP &restClient, QObject *p
     d->restClient = restClient;
 }
 
-HttpDownloader::HttpDownloader(QObject *parent)
-    : HttpDownloader(Proof::RestClientSP::create(), parent)
-{
-}
+HttpDownloader::HttpDownloader(QObject *parent) : HttpDownloader(Proof::RestClientSP::create(), parent)
+{}
 
 FutureSP<QByteArray> HttpDownloader::download(const QUrl &url)
 {
@@ -35,7 +33,8 @@ FutureSP<QByteArray> HttpDownloader::download(const QUrl &url)
 
     if (!url.isValid()) {
         qCDebug(proofNetworkMiscLog) << "Url is not valid" << url;
-        return Future<QByteArray>::fail(Failure(QStringLiteral("Url is not valid"), NETWORK_MODULE_CODE, NetworkErrorCode::InvalidUrl));
+        return Future<QByteArray>::fail(
+            Failure(QStringLiteral("Url is not valid"), NETWORK_MODULE_CODE, NetworkErrorCode::InvalidUrl));
     }
 
     PromiseSP<QByteArray> promise = PromiseSP<QByteArray>::create();
@@ -48,7 +47,8 @@ FutureSP<QByteArray> HttpDownloader::download(const QUrl &url)
                 errorMessage = QStringLiteral("Download failed");
             else
                 errorMessage = QStringLiteral("Download failed: ") + errorMessage;
-            promise->failure(Failure(errorMessage, NETWORK_MODULE_CODE, NetworkErrorCode::ServerError, Failure::NoHint, errorCode));
+            promise->failure(
+                Failure(errorMessage, NETWORK_MODULE_CODE, NetworkErrorCode::ServerError, Failure::NoHint, errorCode));
         };
 
         connect(reply, &QNetworkReply::finished, this, [promise, reply, errorHandler]() {
@@ -60,13 +60,13 @@ FutureSP<QByteArray> HttpDownloader::download(const QUrl &url)
                 errorHandler(reply, promise);
             reply->deleteLater();
         });
-        connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-                this, [promise, reply, errorHandler](QNetworkReply::NetworkError) {
-            if (promise->filled())
-                return;
-            errorHandler(reply, promise);
-            reply->deleteLater();
-        });
+        connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this,
+                [promise, reply, errorHandler](QNetworkReply::NetworkError) {
+                    if (promise->filled())
+                        return;
+                    errorHandler(reply, promise);
+                    reply->deleteLater();
+                });
     });
     return promise->future();
 }

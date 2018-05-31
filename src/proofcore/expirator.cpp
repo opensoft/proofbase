@@ -2,12 +2,12 @@
 
 #include "proofobject_p.h"
 
-#include <QThread>
+#include <QMultiMap>
 #include <QMutex>
+#include <QSet>
+#include <QThread>
 #include <QTimer>
 #include <QTimerEvent>
-#include <QSet>
-#include <QMultiMap>
 
 namespace Proof {
 class ExpiratorPrivate : public ProofObjectPrivate
@@ -18,12 +18,11 @@ class ExpiratorPrivate : public ProofObjectPrivate
     QThread *m_thread;
     int m_timerId = 0;
 };
-}
+} // namespace Proof
 
 using namespace Proof;
 
-Expirator::Expirator()
-    : ProofObject(*new ExpiratorPrivate)
+Expirator::Expirator() : ProofObject(*new ExpiratorPrivate)
 {
     Q_D(Expirator);
     d->m_mutex = new QMutex();
@@ -32,12 +31,14 @@ Expirator::Expirator()
     d->m_thread->start();
 
     QTimer *timer = new QTimer();
-    connect(timer, &QTimer::timeout, this, [this, timer](){
-        Q_D(Expirator);
-        d->m_timerId = startTimer(1000 * 60 * 10, Qt::VeryCoarseTimer);
-        qCDebug(proofCoreCacheLog) << "Cache expirator timer started";
-        timer->deleteLater();
-    }, Qt::QueuedConnection);
+    connect(timer, &QTimer::timeout, this,
+            [this, timer]() {
+                Q_D(Expirator);
+                d->m_timerId = startTimer(1000 * 60 * 10, Qt::VeryCoarseTimer);
+                qCDebug(proofCoreCacheLog) << "Cache expirator timer started";
+                timer->deleteLater();
+            },
+            Qt::QueuedConnection);
     timer->setSingleShot(true);
     timer->start();
 }
@@ -86,4 +87,3 @@ void Expirator::timerEvent(QTimerEvent *ev)
         d->m_controlledObjects.remove(time);
     d->m_mutex->unlock();
 }
-

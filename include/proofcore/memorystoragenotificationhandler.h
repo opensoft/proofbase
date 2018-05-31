@@ -4,13 +4,14 @@
 #include "proofcore/abstractnotificationhandler.h"
 #include "proofcore/proofcore_global.h"
 
-#include <QString>
 #include <QDateTime>
 #include <QMultiMap>
+#include <QString>
 
 namespace Proof {
 class MemoryStorageNotificationHandlerPrivate;
-class PROOF_CORE_EXPORT MemoryStorageNotificationHandler : public AbstractNotificationHandler // clazy:exclude=ctor-missing-parent-argument
+class PROOF_CORE_EXPORT MemoryStorageNotificationHandler
+    : public AbstractNotificationHandler // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(MemoryStorageNotificationHandler)

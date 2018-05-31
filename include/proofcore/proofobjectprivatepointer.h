@@ -27,9 +27,19 @@ private:
 };
 
 // Functions for macro Q_D. Works thanks to ADL
-static inline ProofObjectPrivate *qGetPtrHelper(ProofObjectPrivatePointer &p) { return p.data(); }
-static inline const ProofObjectPrivate *qGetPtrHelper(const ProofObjectPrivatePointer &p) { return p.data(); }
-template <typename T> static inline T *qGetPtrHelper(T *ptr) { return ptr; }
+static inline ProofObjectPrivate *qGetPtrHelper(ProofObjectPrivatePointer &p)
+{
+    return p.data();
+}
+static inline const ProofObjectPrivate *qGetPtrHelper(const ProofObjectPrivatePointer &p)
+{
+    return p.data();
+}
+template <typename T>
+static inline T *qGetPtrHelper(T *ptr)
+{
+    return ptr;
+}
 
 } // namespace Proof
 

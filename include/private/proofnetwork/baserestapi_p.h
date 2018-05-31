@@ -1,16 +1,17 @@
 #ifndef BASERESTAPI_P_H
 #define BASERESTAPI_P_H
 
-#include "proofcore/proofobject_p.h"
+#include "proofcore/future.h"
 #include "proofcore/objectscache.h"
-#include "proofnetwork/restclient.h"
+#include "proofcore/proofobject_p.h"
+
 #include "proofnetwork/baserestapi.h"
 #include "proofnetwork/proofnetwork_global.h"
-#include "proofcore/future.h"
+#include "proofnetwork/restclient.h"
 
-#include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QJsonParseError>
 
 namespace Proof {
@@ -22,33 +23,36 @@ public:
     BaseRestApiPrivate() : ProofObjectPrivate() {}
 
     CancelableFuture<QByteArray> get(const QString &method, const QUrlQuery &query = QUrlQuery());
-    CancelableFuture<QByteArray> post(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");
+    CancelableFuture<QByteArray> post(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                                      const QByteArray &body = "");
     CancelableFuture<QByteArray> post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts);
-    CancelableFuture<QByteArray> put(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");
-    CancelableFuture<QByteArray> patch(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "");
+    CancelableFuture<QByteArray> put(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                                     const QByteArray &body = "");
+    CancelableFuture<QByteArray> patch(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                                       const QByteArray &body = "");
     CancelableFuture<QByteArray> deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery());
 
     CancelableFuture<QByteArray> configureReply(CancelableFuture<QNetworkReply *> replyFuture);
 
-    template<typename Result> CancelableFuture<Result>
-    invalidArgumentsFailure(Failure &&f = Failure(QStringLiteral("Invalid arguments"),
-                                                  NETWORK_MODULE_CODE, NetworkErrorCode::InvalidRequest)) const
+    template <typename Result>
+    CancelableFuture<Result> invalidArgumentsFailure(Failure &&f = Failure(QStringLiteral("Invalid arguments"),
+                                                                           NETWORK_MODULE_CODE,
+                                                                           NetworkErrorCode::InvalidRequest)) const
     {
         auto promise = PromiseSP<Result>::create();
         promise->failure(std::move(f));
         return CancelableFuture<Result>(promise);
     }
 
-    template<typename Unmarshaller,
-             typename T = typename std::result_of<Unmarshaller(QByteArray)>::type>
+    template <typename Unmarshaller, typename T = typename std::result_of<Unmarshaller(QByteArray)>::type>
     CancelableFuture<T> unmarshalReply(const CancelableFuture<QByteArray> &reply, Unmarshaller &&unmarshaller) const
     {
         auto promise = PromiseSP<T>::create();
         reply->onSuccess([promise, unmarshaller = std::forward<Unmarshaller>(unmarshaller)](const QByteArray &data) {
             promise->success(unmarshaller(data));
         });
-        reply->onFailure([promise](const Failure &f) {promise->failure(f);});
-        promise->future()->onFailure([reply](const Failure &) {reply.cancel();});
+        reply->onFailure([promise](const Failure &f) { promise->failure(f); });
+        promise->future()->onFailure([reply](const Failure &) { reply.cancel(); });
         return CancelableFuture<T>(promise);
     }
 
@@ -60,11 +64,10 @@ public:
     // It is possible to have Entity deduced here too,
     // but it is kept as non-deducible intentionally to avoid any issues,
     // make type deduction stricter and make it similar to non-cached version
-    template<typename Entity, typename Cache, typename KeyFunc,
-             typename Key = typename Cache::key_type>
+    template <typename Entity, typename Cache, typename KeyFunc, typename Key = typename Cache::key_type>
     auto entityUnmarshaller(Cache &cache, KeyFunc &&keyFunc) const
-    ->decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
-               std::function<QSharedPointer<Entity>(const QByteArray &)>())
+        -> decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
+                    std::function<QSharedPointer<Entity>(const QByteArray &)>())
     {
         return [this, &cache, keyFunc = std::function<Key(Entity *)>(keyFunc)](const QByteArray &data) {
             auto entity = parseEntity<Entity>(data);
@@ -79,19 +82,16 @@ public:
         };
     }
 
-    template<typename Entity>
+    template <typename Entity>
     std::function<QSharedPointer<Entity>(const QByteArray &)> entityUnmarshaller() const
     {
-        return [this](const QByteArray &data) {
-            return parseEntity<Entity>(data);
-        };
+        return [this](const QByteArray &data) { return parseEntity<Entity>(data); };
     }
 
-    template<typename Entity, typename Cache, typename KeyFunc,
-             typename Key = typename Cache::key_type>
+    template <typename Entity, typename Cache, typename KeyFunc, typename Key = typename Cache::key_type>
     auto entitiesArrayUnmarshaller(Cache &cache, KeyFunc &&keyFunc, const QString &attributeName = QString()) const
-    ->decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
-               std::function<QList<QSharedPointer<Entity>>(const QByteArray &)>())
+        -> decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
+                    std::function<QList<QSharedPointer<Entity>>(const QByteArray &)>())
     {
         return [this, attributeName, &cache, keyFunc = std::function<Key(Entity *)>(keyFunc)](const QByteArray &data) {
             auto arr = parseEntitiesArray(data, attributeName);
@@ -112,7 +112,7 @@ public:
         };
     }
 
-    template<typename Entity>
+    template <typename Entity>
     std::function<QList<QSharedPointer<Entity>>(const QByteArray &)>
     entitiesArrayUnmarshaller(const QString &attributeName = QString()) const
     {
@@ -130,8 +130,7 @@ public:
         };
     }
 
-    std::function<QList<QString>(const QByteArray &)>
-    stringsArrayUnmarshaller(const QString &attributeName = QString()) const
+    std::function<QList<QString>(const QByteArray &)> stringsArrayUnmarshaller(const QString &attributeName = QString()) const
     {
         return [this, attributeName](const QByteArray &data) {
             auto arr = parseEntitiesArray(data, attributeName);
@@ -146,8 +145,7 @@ public:
         };
     }
 
-    std::function<QList<qlonglong>(const QByteArray &)>
-    intsArrayUnmarshaller(const QString &attributeName = QString()) const
+    std::function<QList<qlonglong>(const QByteArray &)> intsArrayUnmarshaller(const QString &attributeName = QString()) const
     {
         return [this, attributeName](const QByteArray &data) {
             auto arr = parseEntitiesArray(data, attributeName);
@@ -163,7 +161,7 @@ public:
 
     std::function<bool(const QByteArray &)> discardingUnmarshaller() const
     {
-        return [](const QByteArray &){ return true; };
+        return [](const QByteArray &) { return true; };
     }
 
     QJsonArray parseEntitiesArray(const QByteArray &data, const QString &attributeName = QLatin1String()) const
@@ -171,9 +169,8 @@ public:
         QJsonParseError jsonError;
         QJsonDocument doc = QJsonDocument::fromJson(data, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
-            return WithFailure(QStringLiteral("JSON error: %1").arg(jsonError.errorString()),
-                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                               Failure::NoHint, jsonError.error);
+            return WithFailure(QStringLiteral("JSON error: %1").arg(jsonError.errorString()), NETWORK_MODULE_CODE,
+                               NetworkErrorCode::InvalidReply, Failure::NoHint, jsonError.error);
         }
         if (doc.isArray())
             return doc.array();
@@ -184,16 +181,16 @@ public:
                     return !obj.value(attr).isUndefined();
                 });
                 if (!errorAttribute.isEmpty()) {
-                    return WithFailure(obj.value(errorAttribute).toString(),
-                                       NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
+                    return WithFailure(obj.value(errorAttribute).toString(), NETWORK_MODULE_CODE,
+                                       NetworkErrorCode::InvalidReply);
                 }
                 return WithFailure(QStringLiteral("Can't create list of entities from server response"),
                                    NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
             }
             return obj.value(attributeName).toArray();
         }
-        return WithFailure(QStringLiteral("Can't create list of entities from server response"),
-                           NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
+        return WithFailure(QStringLiteral("Can't create list of entities from server response"), NETWORK_MODULE_CODE,
+                           NetworkErrorCode::InvalidReply);
     }
 
     void rememberReply(const CancelableFuture<QByteArray> &reply);
@@ -204,25 +201,25 @@ public:
     QStringList serverErrorAttributes;
 
 private:
-    template<typename Entity>
+    template <typename Entity>
     QSharedPointer<Entity> parseEntity(const QByteArray &data) const
     {
         QJsonParseError jsonError;
         QJsonDocument doc = QJsonDocument::fromJson(data, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
-            return WithFailure(QStringLiteral("JSON error: %1").arg(jsonError.errorString()),
-                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply,
-                               Failure::NoHint, jsonError.error);
+            return WithFailure(QStringLiteral("JSON error: %1").arg(jsonError.errorString()), NETWORK_MODULE_CODE,
+                               NetworkErrorCode::InvalidReply, Failure::NoHint, jsonError.error);
         }
         return parseEntity<Entity>(doc.object());
     }
 
-    template<typename Entity>
+    template <typename Entity>
     QSharedPointer<Entity> parseEntity(const QJsonObject &obj) const
-    {;
+    {
+        ;
         if (obj.isEmpty()) {
-            return WithFailure(QStringLiteral("JSON error: empty entity data"),
-                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
+            return WithFailure(QStringLiteral("JSON error: empty entity data"), NETWORK_MODULE_CODE,
+                               NetworkErrorCode::InvalidReply);
         }
 
         QSharedPointer<Entity> entity = Entity::fromJson(obj);
@@ -231,11 +228,11 @@ private:
                 return !obj.value(attr).isUndefined();
             });
             if (!errorAttribute.isEmpty()) {
-                return WithFailure(obj.value(errorAttribute).toString(),
-                                   NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
+                return WithFailure(obj.value(errorAttribute).toString(), NETWORK_MODULE_CODE,
+                                   NetworkErrorCode::InvalidReply);
             }
-            return WithFailure(QStringLiteral("Can't create entity from server response"),
-                               NETWORK_MODULE_CODE, NetworkErrorCode::InvalidReply);
+            return WithFailure(QStringLiteral("Can't create entity from server response"), NETWORK_MODULE_CODE,
+                               NetworkErrorCode::InvalidReply);
         }
         return entity;
     }
@@ -243,5 +240,5 @@ private:
     QHash<qint64, CancelableFuture<QByteArray>> allReplies;
     SpinLock allRepliesLock;
 };
-}
+} // namespace Proof
 #endif // BASERESTAPI_P_H

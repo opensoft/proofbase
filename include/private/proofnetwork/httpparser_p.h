@@ -32,7 +32,7 @@ private:
     Result bodyState(QByteArray &data);
 
 private:
-    using State = Result (HttpParser:: *)(QByteArray &);
+    using State = Result (HttpParser::*)(QByteArray &);
 
     State m_state = &HttpParser::initialState;
     QByteArray m_data;

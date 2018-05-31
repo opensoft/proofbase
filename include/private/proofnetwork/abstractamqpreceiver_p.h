@@ -18,7 +18,8 @@ public:
     virtual void queueDeclared(QAmqpQueue *queue) = 0;
     virtual void amqpMessageReceived() = 0;
 
-    enum class QueueState {
+    enum class QueueState
+    {
         Opening,
         Error,
         Reopening,
@@ -35,5 +36,5 @@ public:
 
     bool startConsuming(QAmqpQueue *queue);
 };
-}
+} // namespace Proof
 #endif // ABSTRACTAMQPRECEIVER_P_H

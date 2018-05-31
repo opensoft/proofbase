@@ -4,10 +4,8 @@
 
 namespace Proof {
 
-ProofObjectPrivatePointer::ProofObjectPrivatePointer(ProofObjectPrivate *d)
-    : m_pointer(d)
-{
-}
+ProofObjectPrivatePointer::ProofObjectPrivatePointer(ProofObjectPrivate *d) : m_pointer(d)
+{}
 
 ProofObjectPrivatePointer::~ProofObjectPrivatePointer()
 {

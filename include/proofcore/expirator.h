@@ -1,8 +1,8 @@
 #ifndef EXPIRATOR_H
 #define EXPIRATOR_H
 
-#include "proofcore/proofobject.h"
 #include "proofcore/proofcore_global.h"
+#include "proofcore/proofobject.h"
 
 #include <QDateTime>
 
@@ -27,8 +27,7 @@ private:
     Expirator &operator=(const Expirator &other) = delete;
     Expirator(const Expirator &&other) = delete;
     Expirator &operator=(const Expirator &&other) = delete;
-
 };
-}
+} // namespace Proof
 
 #endif // EXPIRATOR_H

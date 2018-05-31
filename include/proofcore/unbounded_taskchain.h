@@ -3,16 +3,16 @@
 
 #include "proofcore/proofcore_global.h"
 
-#include <QObject>
-#include <QEventLoop>
-#include <QThread>
 #include <QCoreApplication>
+#include <QEventLoop>
+#include <QObject>
 #include <QSharedPointer>
+#include <QThread>
 
+#include <atomic>
 #include <functional>
 #include <future>
 #include <type_traits>
-#include <atomic>
 
 //TODO: 1.0: do we really need it?
 namespace Proof {
@@ -30,8 +30,8 @@ class PROOF_CORE_EXPORT TaskChain : public QThread // clazy:exclude=ctor-missing
 public:
     ~TaskChain();
 
-    template<class ...Args>
-    static QSharedPointer<std::function<void(Args...)> > createTask()
+    template <class... Args>
+    static QSharedPointer<std::function<void(Args...)>> createTask()
     {
         return QSharedPointer<std::function<void(Args...)>>::create();
     }
@@ -41,39 +41,35 @@ public:
     // or dtor will wait for them (due to way how futures are implemented in C++)
     static TaskChainSP createChain(bool selfDestroyable = true);
 
-    template<class Task, class ...Args>
-    qlonglong addTask(Task &&task,
-                      Args &&... args)
+    template <class Task, class... Args>
+    qlonglong addTask(Task &&task, Args &&... args)
     {
         return addTaskPrivate(std::async(std::launch::async, std::forward<Task>(task), std::forward<Args>(args)...));
     }
 
-    template<class SignalSender, class SignalType, class ...Args>
-    void addSignalWaiter(SignalSender *sender,
-                         SignalType signal,
-                         std::function<bool(Args...)> callback)
+    template <class SignalSender, class SignalType, class... Args>
+    void addSignalWaiter(SignalSender *sender, SignalType signal, std::function<bool(Args...)> callback)
     {
-        std::function<void (const QSharedPointer<QEventLoop> &)> connector
-                = [sender, signal, callback, this] (const QSharedPointer<QEventLoop> &eventLoop) {
-            auto connection = QSharedPointer<QMetaObject::Connection>::create();
-            auto eventLoopWeak = eventLoop.toWeakRef();
-            std::function<void(Args...)> slot = [callback, eventLoopWeak, connection, this] (Args... args) {
-                QSharedPointer<QEventLoop> eventLoop = eventLoopWeak.toStrongRef();
-                if (!eventLoop)
-                    return;
-                if (!callback(args...))
-                    return;
-                QObject::disconnect(*connection);
-                if (!eventLoopStarted())
-                    clearEventLoop();
-                else
-                    eventLoop->quit();
+        std::function<void(const QSharedPointer<QEventLoop> &)> connector =
+            [sender, signal, callback, this](const QSharedPointer<QEventLoop> &eventLoop) {
+                auto connection = QSharedPointer<QMetaObject::Connection>::create();
+                auto eventLoopWeak = eventLoop.toWeakRef();
+                std::function<void(Args...)> slot = [callback, eventLoopWeak, connection, this](Args... args) {
+                    QSharedPointer<QEventLoop> eventLoop = eventLoopWeak.toStrongRef();
+                    if (!eventLoop)
+                        return;
+                    if (!callback(args...))
+                        return;
+                    QObject::disconnect(*connection);
+                    if (!eventLoopStarted())
+                        clearEventLoop();
+                    else
+                        eventLoop->quit();
+                };
+                *connection = QObject::connect(sender, signal, eventLoop.data(), slot, Qt::QueuedConnection);
             };
-            *connection = QObject::connect(sender, signal, eventLoop.data(),
-                                           slot, Qt::QueuedConnection);
-        };
-        qCDebug(proofCoreTaskChainExtraLog) << "Chain" << this << ": signal waiter added, sender:" << sender
-                                            << "signal:" << &signal;
+        qCDebug(proofCoreTaskChainExtraLog)
+            << "Chain" << this << ": signal waiter added, sender:" << sender << "signal:" << &signal;
         addSignalWaiterPrivate(std::move(connector));
     }
 
@@ -93,15 +89,15 @@ private:
     TaskChain &operator=(TaskChain &&other) = delete;
 
     qlonglong addTaskPrivate(std::future<void> &&taskFuture);
-    void addSignalWaiterPrivate(std::function<void (const QSharedPointer<QEventLoop> &)> &&connector);
+    void addSignalWaiterPrivate(std::function<void(const QSharedPointer<QEventLoop> &)> &&connector);
     bool eventLoopStarted() const;
     void clearEventLoop();
 
     QScopedPointer<TaskChainPrivate> d_ptr;
 };
 
-}
-}
-}
+} // namespace unbounded
+} // namespace tasks
+} // namespace Proof
 
 #endif // TASKS_UNBOUNDED_TASKCHAIN_H

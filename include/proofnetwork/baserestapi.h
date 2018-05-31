@@ -1,10 +1,11 @@
 #ifndef BASERESTAPI_H
 #define BASERESTAPI_H
-#include "proofcore/proofobject.h"
 #include "proofcore/future.h"
-#include "proofnetwork/restclient.h"
-#include "proofnetwork/proofnetwork_types.h"
+#include "proofcore/proofobject.h"
+
 #include "proofnetwork/proofnetwork_global.h"
+#include "proofnetwork/proofnetwork_types.h"
+#include "proofnetwork/restclient.h"
 
 #include <QNetworkReply>
 
@@ -23,11 +24,11 @@ public:
     static qlonglong clientSslErrorOffset();
 
     //TODO: remove after full switch to new network
-    void itIsBase(){}
+    void itIsBase() {}
 
 protected:
     BaseRestApi(const RestClientSP &restClient, BaseRestApiPrivate &dd, QObject *parent = nullptr);
 };
-}
+} // namespace Proof
 
 #endif // BASERESTAPI_H

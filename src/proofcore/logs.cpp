@@ -1,34 +1,33 @@
 #include "logs.h"
-#include "errornotifier.h"
 
+#include "errornotifier.h"
 #include "proofalgorithms.h"
 
-#include <QMap>
-#include <QFile>
-#include <QDateTime>
-#include <QtMessageHandler>
-#include <QStandardPaths>
 #include <QCoreApplication>
-#include <QRegularExpression>
+#include <QDateTime>
 #include <QDir>
+#include <QFile>
+#include <QMap>
 #include <QMutex>
+#include <QRegularExpression>
+#include <QStandardPaths>
 #include <QThreadPool>
 #include <QTimer>
+#include <QtMessageHandler>
 
 #include <zlib.h>
 
 static const int COMPRESS_TIMEOUT = 24 * 60 * 60 * 1000; // 1 day
 
-static const QMap<QtMsgType, QString> STRINGIFIED_TYPES = {
-    { QtDebugMsg, "D"},
-    { QtWarningMsg, "W"},
-    { QtCriticalMsg, "C"},
-    { QtFatalMsg, "F"},
-    { QtInfoMsg, "I"}
-};
+static const QMap<QtMsgType, QString> STRINGIFIED_TYPES = {{QtDebugMsg, "D"},
+                                                           {QtWarningMsg, "W"},
+                                                           {QtCriticalMsg, "C"},
+                                                           {QtFatalMsg, "F"},
+                                                           {QtInfoMsg, "I"}};
 
 static const QSet<QtMsgType> TYPES_FOR_NOTIFIER = {QtWarningMsg, QtCriticalMsg, QtFatalMsg};
-static const QList<QLatin1String> NOTIFIER_EXCLUDES = {QLatin1String("QML Image"), QLatin1String("Binding loop"), QLatin1String("QEGLPlatformContext")};
+static const QList<QLatin1String> NOTIFIER_EXCLUDES = {QLatin1String("QML Image"), QLatin1String("Binding loop"),
+                                                       QLatin1String("QEGLPlatformContext")};
 
 static bool isConsoleOutputEnabled = true;
 static QString logsStoragePath;
@@ -40,9 +39,8 @@ static QTimer oldLogsArchiver;
 static QFile *currentLogFile = nullptr;
 static QDate currentLogFileDate;
 
-
 namespace {
-class DetachedArchiver: public QRunnable
+class DetachedArchiver : public QRunnable
 {
     Q_DISABLE_COPY(DetachedArchiver)
 public:
@@ -87,11 +85,7 @@ void baseHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
             severity = Proof::ErrorNotifier::Severity::Warning;
             break;
         }
-        bool shouldNotify = Proof::algorithms::findIf(NOTIFIER_EXCLUDES,
-                                                      [message](const auto &x){return message.contains(x);},
-                                                      QLatin1String("")
-                                                     ).size() == 0;
-        if (shouldNotify)
+        if (!Proof::algorithms::exists(NOTIFIER_EXCLUDES, [message](const auto &x) { return message.contains(x); }))
             Proof::ErrorNotifier::instance()->notify(QString("%1: %2").arg(context.category).arg(message), severity);
     }
 }
@@ -102,50 +96,48 @@ void fileHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
 
     if (!logFileNameBase.isEmpty()) {
         QMutexLocker writeLocker(&logFileWriteMutex);
-        if (currentLogFile
-                && (QDate::currentDate() != currentLogFileDate
-                    || !currentLogFile->isOpen())) {
+        if (currentLogFile && (QDate::currentDate() != currentLogFileDate || !currentLogFile->isOpen())) {
             delete currentLogFile;
             currentLogFile = nullptr;
         }
         if (!currentLogFile) {
             currentLogFileDate = QDate::currentDate();
-            currentLogFile = new QFile(QStringLiteral("%1/%2.%3.log")
-                                       .arg(logsStoragePath,
-                                            logFileNameBase,
-                                            currentLogFileDate.toString(QStringLiteral("yyyyMMdd"))));
+            currentLogFile = new QFile(
+                QStringLiteral("%1/%2.%3.log")
+                    .arg(logsStoragePath, logFileNameBase, currentLogFileDate.toString(QStringLiteral("yyyyMMdd"))));
             if (!currentLogFile->open(QFile::Append | QFile::Text))
                 return;
         }
 
         QString logLine = QStringLiteral("[%1][%2][%3][%4@%5:%6] %7\n")
-                .arg(QTime::currentTime().toString(QStringLiteral("hh:mm:ss.zzz")))
-                .arg(STRINGIFIED_TYPES.value(type, QStringLiteral("D")))
-                .arg(context.category)
-                .arg(context.function) // clazy:exclude=qstring-arg
-                .arg(QString(context.file).remove(QRegularExpression(QStringLiteral("^(\\.\\.[/\\\\])+"))))
-                .arg(context.line)
-                .arg(message);
+                              .arg(QTime::currentTime().toString(QStringLiteral("hh:mm:ss.zzz")))
+                              .arg(STRINGIFIED_TYPES.value(type, QStringLiteral("D")))
+                              .arg(context.category)
+                              .arg(context.function) // clazy:exclude=qstring-arg
+                              .arg(QString(context.file).remove(QRegularExpression(QStringLiteral("^(\\.\\.[/\\\\])+"))))
+                              .arg(context.line)
+                              .arg(message);
 
         currentLogFile->write(logLine.toLocal8Bit());
         currentLogFile->flush();
     }
 }
 
-
 void compressOldFiles()
 {
     QFileInfoList files = QDir(logsStoragePath).entryInfoList(QDir::Files | QDir::NoSymLinks);
 
-    for(const QFileInfo &file: files) {
-        if (file.suffix() != QLatin1String("gz")
-                && file.completeSuffix() != QStringLiteral("%1.log").arg(QDate::currentDate().toString(QStringLiteral("yyyyMMdd")))
-                && file.completeSuffix() != QStringLiteral("%1.log").arg(currentLogFileDate.toString(QStringLiteral("yyyyMMdd")))) {
+    for (const QFileInfo &file : files) {
+        const auto suffix = file.suffix();
+        const auto fullSuffix = file.completeSuffix();
+        if (suffix != QLatin1String("gz")
+            && fullSuffix != QStringLiteral("%1.log").arg(QDate::currentDate().toString(QStringLiteral("yyyyMMdd")))
+            && fullSuffix != QStringLiteral("%1.log").arg(currentLogFileDate.toString(QStringLiteral("yyyyMMdd")))) {
             QThreadPool::globalInstance()->start(new DetachedArchiver(file.absoluteFilePath()));
         }
     }
 }
-}
+} // namespace
 
 void Proof::Logs::setup(const QStringList &defaultLoggingRules)
 {
@@ -154,12 +146,11 @@ void Proof::Logs::setup(const QStringList &defaultLoggingRules)
     QString configPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
 #elif defined Q_OS_ANDROID
     QString configPath = QString("%1/%2")
-            .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
-            .arg(qApp->organizationName());
+                             .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
+                             .arg(qApp->organizationName());
 #else
-    QString configPath = QStringLiteral("%1/%2")
-            .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
-                 qApp->organizationName());
+    QString configPath = QStringLiteral("%1/%2").arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
+                                                     qApp->organizationName());
 #endif
 
     if (!configPath.isEmpty() && QDir::root().mkpath(configPath)) {
@@ -172,8 +163,8 @@ void Proof::Logs::setup(const QStringList &defaultLoggingRules)
                                            "proof.core.tasks.stats=false\n"
                                            "proof.core.futures.*=false\n"
                                            "%1\n")
-                    .arg(defaultLoggingRules.join(QStringLiteral("\n")));
-            if (loggingRulesFile.open(QFile::WriteOnly|QFile::Append))
+                                       .arg(defaultLoggingRules.join(QStringLiteral("\n")));
+            if (loggingRulesFile.open(QFile::WriteOnly | QFile::Append))
                 loggingRulesFile.write(defaultRules.toLatin1());
             QLoggingCategory::setFilterRules(defaultRules);
         } else if (loggingRulesFile.open(QFile::ReadOnly)) {
@@ -192,14 +183,14 @@ void Proof::Logs::setLogsStoragePath(QString storagePath)
 {
     if (storagePath.isEmpty()) {
         storagePath = QStringLiteral("%1/%2/prooflogs")
-                .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation),
-                     qApp->organizationName());
+                          .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation),
+                               qApp->organizationName());
     }
     logsStoragePath = storagePath;
     QDir logsDir = QDir(logsStoragePath);
     logsDir.mkpath(QStringLiteral("."));
 
-    QObject::connect(&oldLogsArchiver, &QTimer::timeout, &oldLogsArchiver, [](){compressOldFiles();});
+    QObject::connect(&oldLogsArchiver, &QTimer::timeout, &oldLogsArchiver, []() { compressOldFiles(); });
     compressOldFiles();
     oldLogsArchiver.setTimerType(Qt::VeryCoarseTimer);
     oldLogsArchiver.start(COMPRESS_TIMEOUT);

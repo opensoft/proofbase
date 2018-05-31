@@ -2,9 +2,9 @@
 #define USER_H
 
 #include "proofnetwork/networkdataentity.h"
+#include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
 #include "proofnetwork/qmlwrappers/userqmlwrapper.h"
-#include "proofnetwork/proofnetwork_global.h"
 
 namespace Proof {
 class UserPrivate;
@@ -13,7 +13,6 @@ class PROOF_NETWORK_EXPORT User : public NetworkDataEntity // clazy:exclude=ctor
     Q_OBJECT
     Q_DECLARE_PRIVATE(User)
 public:
-
     QString userName() const;
     QString fullName() const;
     QString email() const;
@@ -32,6 +31,6 @@ protected:
     explicit User(const QString &userName);
     User(UserPrivate &dd, QObject *parent = nullptr);
 };
-}
+} // namespace Proof
 
 #endif // USER_H

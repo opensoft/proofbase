@@ -1,4 +1,5 @@
 #include "abstractnotificationhandler.h"
+
 #include "abstractnotificationhandler_p.h"
 
 using namespace Proof;
@@ -15,4 +16,3 @@ QString AbstractNotificationHandler::appId() const
     Q_D(const AbstractNotificationHandler);
     return d->appId;
 }
-

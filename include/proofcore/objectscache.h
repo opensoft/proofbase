@@ -1,13 +1,13 @@
 #ifndef OBJECTSCACHE_H
 #define OBJECTSCACHE_H
 
-#include "proofcore/proofobject.h"
 #include "proofcore/expirator.h"
+#include "proofcore/proofobject.h"
 
 #include <QHash>
+#include <QReadWriteLock>
 #include <QSharedPointer>
 #include <QWeakPointer>
-#include <QReadWriteLock>
 
 #include <functional>
 #include <type_traits>
@@ -17,14 +17,14 @@
  */
 namespace Proof {
 
-template<class Key, class T>
+template <class Key, class T>
 class WeakObjectsCache;
-template<class Key, class T>
+template <class Key, class T>
 class StrongObjectsCache;
-template<class Key, class T, class Enable = void>
+template <class Key, class T, class Enable = void>
 class GuaranteedLifeTimeObjectsCache;
 
-template<class Key, class T>
+template <class Key, class T>
 class ObjectsCache
 {
 public:
@@ -49,21 +49,20 @@ protected:
     ObjectsCache(const ObjectsCache &&other) = delete;
     ObjectsCache &operator=(const ObjectsCache &&other) = delete;
 
-    template<typename U = T>
+    template <typename U = T>
     QString valueTypeName(typename std::enable_if<!std::is_base_of<QObject, U>::value>::type * = nullptr) const
     {
         return QString();
     }
 
-    template<typename U = T>
+    template <typename U = T>
     QString valueTypeName(typename std::enable_if<std::is_base_of<QObject, U>::value>::type * = nullptr) const
     {
         return U::staticMetaObject.className();
     }
-
 };
 
-template<class Key, class T>
+template <class Key, class T>
 class WeakObjectsCache : public ObjectsCache<Key, T>
 {
 public:
@@ -93,9 +92,7 @@ public:
     {
         m_cacheLock.lockForWrite();
         m_cache.remove(key);
-        qCDebug(proofCoreCacheLog) << "Removing object with key" << key << "from"
-                                   << this->valueTypeName()
-                                   << "weakcache";
+        qCDebug(proofCoreCacheLog) << "Removing object with key" << key << "from" << this->valueTypeName() << "weakcache";
         m_cacheLock.unlock();
     }
 
@@ -103,9 +100,7 @@ public:
     {
         m_cacheLock.lockForWrite();
         m_cache.clear();
-        qCDebug(proofCoreCacheLog) << "Clearing"
-                                   << this->valueTypeName()
-                                   << "weakcache";
+        qCDebug(proofCoreCacheLog) << "Clearing" << this->valueTypeName() << "weakcache";
         m_cacheLock.unlock();
     }
 
@@ -148,20 +143,13 @@ public:
                 m_cache.remove(key);
             m_cacheLock.unlock();
         }
-        qCDebug(proofCoreCacheLog) << "Returning value"
-                                   << foundValue.data()
-                                   << "from"
-                                   << this->valueTypeName()
+        qCDebug(proofCoreCacheLog) << "Returning value" << foundValue.data() << "from" << this->valueTypeName()
                                    << "weakcache"
-                                   << "for key"
-                                   << key;
+                                   << "for key" << key;
         return foundValue;
     }
 
-    QList<Key> keys() const override
-    {
-        return m_cache.keys();
-    }
+    QList<Key> keys() const override { return m_cache.keys(); }
 
 protected:
     virtual QSharedPointer<T> valueFromOtherCaches(const Key &key)
@@ -176,7 +164,7 @@ protected:
     ~WeakObjectsCache() {}
 
 private:
-    template<class F>
+    template <class F>
     QSharedPointer<T> addPrivate(const Key &key, F &&creator, bool overwriteCurrent)
     {
         m_cacheLock.lockForWrite();
@@ -189,8 +177,7 @@ private:
         }
         QSharedPointer<T> object{creator()};
         m_cache[key] = object.toWeakRef();
-        qCDebug(proofCoreCacheLog) << "Adding object" << object.data() << "to"
-                                   << this->valueTypeName()
+        qCDebug(proofCoreCacheLog) << "Adding object" << object.data() << "to" << this->valueTypeName()
                                    << "weakcache with key" << key;
         m_cacheLock.unlock();
         return object;
@@ -208,10 +195,9 @@ private:
 
 //Dummy class for objects that are not based on ProofObject but need to be put in weak or strong cache
 //Such objects of course can not be placed in this cache (due to nature of Expirator) but can be placed in other caches
-template<class Key, class T>
-class GuaranteedLifeTimeObjectsCache
-        <Key, T, typename std::enable_if<!std::is_base_of<ProofObject, T>::value>::type>
-        : public ObjectsCache<Key, T>
+template <class Key, class T>
+class GuaranteedLifeTimeObjectsCache<Key, T, typename std::enable_if<!std::is_base_of<ProofObject, T>::value>::type>
+    : public ObjectsCache<Key, T>
 {
 public:
     using typename ObjectsCache<Key, T>::Creator;
@@ -239,10 +225,11 @@ public:
     {
         Q_ASSERT_X(false, "GuaranteedLifeTimeObjectsCache", "Should not be called for non-ProofObject values");
     }
-    bool isEmpty() const override {return true;}
-    bool contains(const Key &) const override {return false;}
-    QSharedPointer<T> value(const Key &, bool = true) override {return QSharedPointer<T>();}
-    QList<Key> keys() const override {return QList<Key>();}
+    bool isEmpty() const override { return true; }
+    bool contains(const Key &) const override { return false; }
+    QSharedPointer<T> value(const Key &, bool = true) override { return QSharedPointer<T>(); }
+    QList<Key> keys() const override { return QList<Key>(); }
+
 private:
     GuaranteedLifeTimeObjectsCache() : ObjectsCache<Key, T>() {}
     ~GuaranteedLifeTimeObjectsCache() {}
@@ -252,10 +239,9 @@ private:
     GuaranteedLifeTimeObjectsCache &operator=(const GuaranteedLifeTimeObjectsCache &&other) = delete;
 };
 
-template<class Key, class T>
-class GuaranteedLifeTimeObjectsCache
-        <Key, T, typename std::enable_if<std::is_base_of<ProofObject, T>::value>::type>
-        : public WeakObjectsCache<Key, T>
+template <class Key, class T>
+class GuaranteedLifeTimeObjectsCache<Key, T, typename std::enable_if<std::is_base_of<ProofObject, T>::value>::type>
+    : public WeakObjectsCache<Key, T>
 {
 public:
     using typename ObjectsCache<Key, T>::Creator;
@@ -266,10 +252,7 @@ public:
         return inst;
     }
 
-    void setObjectsMinLifeTime(qulonglong secs)
-    {
-        m_objectsMinLifeTimeInSeconds = secs;
-    }
+    void setObjectsMinLifeTime(qulonglong secs) { m_objectsMinLifeTimeInSeconds = secs; }
 
     QSharedPointer<T> add(const Key &key, const QSharedPointer<T> &object, bool overwriteCurrent = false) override
     {
@@ -316,16 +299,14 @@ private:
     {
         if (m_objectsMinLifeTimeInSeconds) {
             Expirator::instance()->addObject(object, QDateTime::currentDateTime().addSecs(m_objectsMinLifeTimeInSeconds));
-            qCDebug(proofCoreCacheLog) << "Object"
-                                       << this->valueTypeName()
-                                       << "added" << object.data() << "to expirator";
+            qCDebug(proofCoreCacheLog) << "Object" << this->valueTypeName() << "added" << object.data() << "to expirator";
         }
     }
 
     qulonglong m_objectsMinLifeTimeInSeconds = 8 * 60 * 60; //Default value is 8 hours
 };
 
-template<class Key, class T>
+template <class Key, class T>
 class StrongObjectsCache : public ObjectsCache<Key, T>
 {
 public:
@@ -355,8 +336,7 @@ public:
     {
         m_cacheLock.lockForWrite();
         m_cache.remove(key);
-        qCDebug(proofCoreCacheLog) << "Removing object with key" << key << "from"
-                                   << this->valueTypeName()
+        qCDebug(proofCoreCacheLog) << "Removing object with key" << key << "from" << this->valueTypeName()
                                    << "strongcache";
         m_cacheLock.unlock();
     }
@@ -365,9 +345,7 @@ public:
     {
         m_cacheLock.lockForWrite();
         m_cache.clear();
-        qCDebug(proofCoreCacheLog) << "Clearing"
-                                   << this->valueTypeName()
-                                   << "strongcache";
+        qCDebug(proofCoreCacheLog) << "Clearing" << this->valueTypeName() << "strongcache";
         m_cacheLock.unlock();
     }
 
@@ -399,20 +377,13 @@ public:
         }
         if (!foundValue && key == Key())
             foundValue = T::create();
-        qCDebug(proofCoreCacheLog) << "Returning value"
-                                   << foundValue.data()
-                                   << "from"
-                                   << this->valueTypeName()
+        qCDebug(proofCoreCacheLog) << "Returning value" << foundValue.data() << "from" << this->valueTypeName()
                                    << "strongcache"
-                                   << "for key"
-                                   << key;
+                                   << "for key" << key;
         return foundValue;
     }
 
-    QList<Key> keys() const override
-    {
-        return m_cache.keys();
-    }
+    QList<Key> keys() const override { return m_cache.keys(); }
 
 private:
     StrongObjectsCache() : ObjectsCache<Key, T>() {}
@@ -422,7 +393,7 @@ private:
     StrongObjectsCache(const StrongObjectsCache &&other) = delete;
     StrongObjectsCache &operator=(const StrongObjectsCache &&other) = delete;
 
-    template<class F>
+    template <class F>
     QSharedPointer<T> addPrivate(const Key &key, F &&creator, bool overwriteCurrent)
     {
         m_cacheLock.lockForWrite();
@@ -433,8 +404,7 @@ private:
         }
         QSharedPointer<T> object{creator()};
         m_cache[key] = object;
-        qCDebug(proofCoreCacheLog) << "Adding object" << object.data() << "to"
-                                   << this->valueTypeName()
+        qCDebug(proofCoreCacheLog) << "Adding object" << object.data() << "to" << this->valueTypeName()
                                    << "strongcache with key" << key;
         m_cacheLock.unlock();
         return object;
@@ -445,6 +415,6 @@ private:
     mutable QReadWriteLock m_cacheLock;
 };
 
-}
+} // namespace Proof
 
 #endif // OBJECTSCACHE_H

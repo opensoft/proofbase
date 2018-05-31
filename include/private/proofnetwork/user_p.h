@@ -1,8 +1,9 @@
 #ifndef USER_P_H
 #define USER_P_H
 
-#include "user.h"
 #include "networkdataentity_p.h"
+#include "user.h"
+
 #include "proofnetwork/proofnetwork_global.h"
 
 namespace Proof {
@@ -21,6 +22,6 @@ public:
     QString fullName;
     QString email;
 };
-}
+} // namespace Proof
 
 #endif // USER_P_H

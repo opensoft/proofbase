@@ -1,9 +1,9 @@
 #include "amqppublisher.h"
-#include "proofnetwork/abstractamqpclient_p.h"
 
 #include "proofnetwork/3rdparty/qamqp/qamqpclient.h"
 #include "proofnetwork/3rdparty/qamqp/qamqpexchange.h"
 #include "proofnetwork/3rdparty/qamqp/qamqpmessage.h"
+#include "proofnetwork/abstractamqpclient_p.h"
 
 namespace Proof {
 
@@ -11,7 +11,8 @@ class AmqpPublisherPrivate : public AbstractAmqpClientPrivate
 {
     Q_DECLARE_PUBLIC(AmqpPublisher)
 
-    enum class ExchangeState {
+    enum class ExchangeState
+    {
         Opening,
         Error,
         Reopening,
@@ -22,7 +23,7 @@ class AmqpPublisherPrivate : public AbstractAmqpClientPrivate
 
     QAmqpExchange *exchange = nullptr;
     QString exchangeName;
-    std::atomic_ullong nextPublishId {1};
+    std::atomic_ullong nextPublishId{1};
 
     ExchangeState exchangeState = ExchangeState::Error;
 
@@ -34,11 +35,8 @@ class AmqpPublisherPrivate : public AbstractAmqpClientPrivate
 
 using namespace Proof;
 
-AmqpPublisher::AmqpPublisher(QObject *parent)
-    : AbstractAmqpClient(*new AmqpPublisherPrivate, parent)
-{
-
-}
+AmqpPublisher::AmqpPublisher(QObject *parent) : AbstractAmqpClient(*new AmqpPublisherPrivate, parent)
+{}
 
 QString AmqpPublisher::exchangeName() const
 {
@@ -86,7 +84,8 @@ void AmqpPublisher::publishMessageImpl(const QString &message, const QString &ro
 
     Q_D(AmqpPublisher);
     if (!d->exchange) {
-        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QStringLiteral("No amqp exchange found for message publishing"), false);
+        emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError,
+                           QStringLiteral("No amqp exchange found for message publishing"), false);
     } else {
         d->exchange->publish(message, routingKey);
         emit messagePublished(publishId);
@@ -99,23 +98,24 @@ void AmqpPublisherPrivate::connected()
     auto newExchange = rabbitClient->createExchange(exchangeName);
     exchangeState = ExchangeState::Opening;
 
-    if (newExchange != exchange){
+    if (newExchange != exchange) {
         exchange = newExchange;
         qCDebug(proofNetworkAmqpLog) << "Create exchange:" << exchangeName;
-        QObject::connect(exchange, static_cast<void(QAmqpExchange::*)(QAMQP::Error)>(&QAmqpExchange::error), q, [this, q](QAMQP::Error error) {
-            if ((exchangeState == ExchangeState::Declared) && (error == QAMQP::PreconditionFailedError) && createdExchangeIfNotExists) {
-                exchangeState = ExchangeState::Reopening;
-                exchange->reset();
-                exchange->reopen();
-            } else {
-                emit q->errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QStringLiteral("Exchange Error: %1").arg(error), false);
-                qCWarning(proofNetworkAmqpLog) << "RabbitMQ exchange error:" << error;
-            }
-        });
+        QObject::connect(exchange, static_cast<void (QAmqpExchange::*)(QAMQP::Error)>(&QAmqpExchange::error), q,
+                         [this, q](QAMQP::Error error) {
+                             if ((exchangeState == ExchangeState::Declared) && (error == QAMQP::PreconditionFailedError)
+                                 && createdExchangeIfNotExists) {
+                                 exchangeState = ExchangeState::Reopening;
+                                 exchange->reset();
+                                 exchange->reopen();
+                             } else {
+                                 emit q->errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError,
+                                                       QStringLiteral("Exchange Error: %1").arg(error), false);
+                                 qCWarning(proofNetworkAmqpLog) << "RabbitMQ exchange error:" << error;
+                             }
+                         });
 
-        QObject::connect(exchange, &QAmqpExchange::declared, q, [this]() {
-            exchangeState = ExchangeState::Declared;
-        });
+        QObject::connect(exchange, &QAmqpExchange::declared, q, [this]() { exchangeState = ExchangeState::Declared; });
 
         QObject::connect(exchange, &QAmqpExchange::opened, q, [this, q]() {
             qCDebug(proofNetworkAmqpLog) << "RabbitMQ exchange opened" << q->sender();

@@ -24,10 +24,8 @@ inline quint64 packVersion(const QStringList &version)
 {
     if (version.count() < 4)
         return 0x0;
-    return ((quint64)version[0].toShort() << 48)
-            | ((quint64)version[1].toShort() << 32)
-            | ((quint64)version[2].toShort() << 16)
-            | ((quint64)version[3].toShort());
+    return ((quint64)version[0].toShort() << 48) | ((quint64)version[1].toShort() << 32)
+           | ((quint64)version[2].toShort() << 16) | ((quint64)version[3].toShort());
 }
 
 inline quint64 packVersion(const QString &version)
@@ -38,11 +36,11 @@ inline quint64 packVersion(const QString &version)
 inline QString unpackVersionToString(quint64 version)
 {
     return QStringLiteral("%1.%2.%3.%4")
-            .arg(version >> 48)
-            .arg((version >> 32) & 0xFFFF)
-            .arg((version >> 16) & 0xFFFF)
-            .arg(version & 0xFFFF);
+        .arg(version >> 48)
+        .arg((version >> 32) & 0xFFFF)
+        .arg((version >> 16) & 0xFFFF)
+        .arg(version & 0xFFFF);
 }
-}
+} // namespace Proof
 
 #endif // VERSIONHELPER_H

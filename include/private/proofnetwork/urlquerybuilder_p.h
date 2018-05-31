@@ -21,6 +21,6 @@ public:
 
     QHash<QString, QString> params;
 };
-}
+} // namespace Proof
 
 #endif // URLQUERYBUILDER_P_H

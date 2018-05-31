@@ -1,12 +1,11 @@
 #include "networkdataentity.h"
+
 #include "networkdataentity_p.h"
 
 using namespace Proof;
 
-NetworkDataEntity::NetworkDataEntity(NetworkDataEntityPrivate &dd, QObject *parent)
-    : ProofObject(dd, parent)
-{
-}
+NetworkDataEntity::NetworkDataEntity(NetworkDataEntityPrivate &dd, QObject *parent) : ProofObject(dd, parent)
+{}
 
 bool NetworkDataEntity::isFetched() const
 {

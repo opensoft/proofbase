@@ -1,16 +1,16 @@
 #ifndef COREAPPLICATION_P_H
 #define COREAPPLICATION_P_H
 
-#include "proofcore/proofobject_p.h"
 #include "proofcore/proofcore_global.h"
+#include "proofcore/proofobject_p.h"
 
-#include <QtGlobal>
-#include <QTranslator>
-#include <QSet>
 #include <QDateTime>
+#include <QSet>
+#include <QTranslator>
+#include <QtGlobal>
 
 #ifndef QCA_DISABLED
-# include <QtCrypto>
+#    include <QtCrypto>
 #endif
 
 namespace Proof {
@@ -48,6 +48,6 @@ protected:
     QScopedPointer<QCA::Initializer> qcaInit;
 #endif
 };
-}
+} // namespace Proof
 
 #endif // COREAPPLICATION_P_H

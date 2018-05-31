@@ -2,8 +2,9 @@
 #define QABSTRACTAMQPCLIENT_H
 
 #include "proofcore/proofobject.h"
-#include "proofnetwork/proofnetwork_types.h"
+
 #include "proofnetwork/proofnetwork_global.h"
+#include "proofnetwork/proofnetwork_types.h"
 
 #include <QSslConfiguration>
 
@@ -56,9 +57,8 @@ signals:
 
 protected:
     AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *parent = nullptr);
-
 };
 
-}
+} // namespace Proof
 
 #endif // QABSTRACTAMQPCLIENT_H

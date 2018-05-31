@@ -1,14 +1,14 @@
 // clazy:skip
 
-#include "gtest/test_global.h"
-
 #include "proofnetwork/abstractrestserver.h"
-#include "proofnetwork/restclient.h"
 #include "proofnetwork/proofnetwork_types.h"
+#include "proofnetwork/restclient.h"
 
-#include <QSignalSpy>
 #include <QNetworkReply>
+#include <QSignalSpy>
 #include <QTest>
+
+#include "gtest/test_global.h"
 
 #include <tuple>
 
@@ -19,8 +19,7 @@ class TestRestServer : public Proof::AbstractRestServer
 {
     Q_OBJECT
 public:
-    TestRestServer(const QString &pathPrefix = QString(), int port = 9091)
-        : Proof::AbstractRestServer(pathPrefix, port)
+    TestRestServer(const QString &pathPrefix = QString(), int port = 9091) : Proof::AbstractRestServer(pathPrefix, port)
     {
         setAuthType(Proof::RestAuthType::Basic);
         setUserName("username");
@@ -28,7 +27,8 @@ public:
     }
 
 public slots:
-    NO_AUTH_REQUIRED void rest_get_TestPublicMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
+    NO_AUTH_REQUIRED void rest_get_TestPublicMethod(QTcpSocket *socket, const QStringList &headers,
+                                                    const QStringList &methodVariableParts,
                                                     const QUrlQuery &queryParams, const QByteArray &body)
     {
         Q_UNUSED(headers)
@@ -54,8 +54,9 @@ public slots:
         sendAnswer(socket, __func__, "text/plain");
     }
 
-    void rest_get_TestMethod_SubMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
-                                       const QUrlQuery &queryParams, const QByteArray &body)
+    void rest_get_TestMethod_SubMethod(QTcpSocket *socket, const QStringList &headers,
+                                       const QStringList &methodVariableParts, const QUrlQuery &queryParams,
+                                       const QByteArray &body)
     {
         Q_UNUSED(headers)
         Q_UNUSED(methodVariableParts)
@@ -77,8 +78,7 @@ class TestRestServerWithoutAuth : public Proof::AbstractRestServer
 {
     Q_OBJECT
 public:
-    TestRestServerWithoutAuth()
-        : Proof::AbstractRestServer(9092) {}
+    TestRestServerWithoutAuth() : Proof::AbstractRestServer(9092) {}
 
 public slots:
     void rest_get_TestMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
@@ -96,16 +96,13 @@ class TestRestServerWithPathPrefix : public TestRestServer
 {
     Q_OBJECT
 public:
-    TestRestServerWithPathPrefix()
-        : TestRestServer("/api", 9093) {}
+    TestRestServerWithPathPrefix() : TestRestServer("/api", 9093) {}
 };
 
 class RestServerMethodsTest : public TestWithParam<std::tuple<QString, QString, int, bool>>
 {
 public:
-    RestServerMethodsTest()
-    {
-    }
+    RestServerMethodsTest() {}
 
     static void SetUpTestCase()
     {
@@ -173,7 +170,6 @@ protected:
     static TestRestServerWithoutAuth *restServerWithoutAuthUT;
     Proof::RestClientSP restClientWithPrefixUT;
     static TestRestServerWithPathPrefix *restServerWithPathPrefixUT;
-
 };
 
 TestRestServer *RestServerMethodsTest::restServerUT = nullptr;
@@ -181,16 +177,13 @@ TestRestServerWithoutAuth *RestServerMethodsTest::restServerWithoutAuthUT = null
 TestRestServerWithPathPrefix *RestServerMethodsTest::restServerWithPathPrefixUT = nullptr;
 
 class PathPrefixServerMethodsTest : public RestServerMethodsTest
-{
-};
+{};
 
 class AnotherRestServerMethodsTest : public RestServerMethodsTest
-{
-};
+{};
 
 class SomeMoreRestServerMethodsTest : public RestServerMethodsTest
-{
-};
+{};
 
 TEST_F(RestServerMethodsTest, withoutAuth)
 {
@@ -271,19 +264,21 @@ TEST_P(RestServerMethodsTest, methodsNames)
     delete reply;
 }
 
-INSTANTIATE_TEST_CASE_P(RestServerMethodsTestInstance,
-                        RestServerMethodsTest,
-                        testing::Values(std::tuple<QString, QString, int, bool>("/test-method", "rest_get_TestMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-met-hod", "",  404, false),
-                                        std::tuple<QString, QString, int, bool>("/tEst-meThoD", "rest_get_TestMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/testmethod", "rest_get_Testmethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method/sub-method", "rest_get_TestMethod_SubMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method/sub-method/subsub", "rest_get_TestMethod_SubMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method", "rest_post_TestMethod", 200, true),
-                                        std::tuple<QString, QString, int, bool>("/a/test-method", "", 404, true),
-                                        std::tuple<QString, QString, int, bool>("/a/test-method", "", 404, false),
-                                        std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, false),
-                                        std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, true)));
+INSTANTIATE_TEST_CASE_P(
+    RestServerMethodsTestInstance, RestServerMethodsTest,
+    testing::Values(std::tuple<QString, QString, int, bool>("/test-method", "rest_get_TestMethod", 200, false),
+                    std::tuple<QString, QString, int, bool>("/test-met-hod", "", 404, false),
+                    std::tuple<QString, QString, int, bool>("/tEst-meThoD", "rest_get_TestMethod", 200, false),
+                    std::tuple<QString, QString, int, bool>("/testmethod", "rest_get_Testmethod", 200, false),
+                    std::tuple<QString, QString, int, bool>("/test-method/sub-method", "rest_get_TestMethod_SubMethod",
+                                                            200, false),
+                    std::tuple<QString, QString, int, bool>("/test-method/sub-method/subsub",
+                                                            "rest_get_TestMethod_SubMethod", 200, false),
+                    std::tuple<QString, QString, int, bool>("/test-method", "rest_post_TestMethod", 200, true),
+                    std::tuple<QString, QString, int, bool>("/a/test-method", "", 404, true),
+                    std::tuple<QString, QString, int, bool>("/a/test-method", "", 404, false),
+                    std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, false),
+                    std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, true)));
 
 TEST_P(PathPrefixServerMethodsTest, methodsNames)
 {
@@ -294,7 +289,8 @@ TEST_P(PathPrefixServerMethodsTest, methodsNames)
 
     ASSERT_TRUE(restServerWithPathPrefixUT->isListening());
 
-    QNetworkReply *reply = isPost ? restClientWithPrefixUT->post(method)->result() : restClientWithPrefixUT->get(method)->result();
+    QNetworkReply *reply = isPost ? restClientWithPrefixUT->post(method)->result()
+                                  : restClientWithPrefixUT->get(method)->result();
 
     QSignalSpy spy(reply, &QNetworkReply::finished);
 
@@ -310,19 +306,21 @@ TEST_P(PathPrefixServerMethodsTest, methodsNames)
     delete reply;
 }
 
-INSTANTIATE_TEST_CASE_P(PathPrefixServerMethodsTestInstance,
-                        PathPrefixServerMethodsTest,
-                        testing::Values(std::tuple<QString, QString, int, bool>("/api/test-method", "rest_get_TestMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/api/test-met-hod", "",  404, false),
-                                        std::tuple<QString, QString, int, bool>("/api/tEst-meThoD", "rest_get_TestMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/api/testmethod", "rest_get_Testmethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/api/test-method/sub-method", "rest_get_TestMethod_SubMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/api/test-method/sub-method/subsub", "rest_get_TestMethod_SubMethod", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/api/test-method",  "rest_post_TestMethod", 200, true),
-                                        std::tuple<QString, QString, int, bool>("/api/wrong-method", "", 404, false),
-                                        std::tuple<QString, QString, int, bool>("/api/wrong-method", "", 404, true),
-                                        std::tuple<QString, QString, int, bool>("/test-method", "", 404, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method", "", 404, true)));
+INSTANTIATE_TEST_CASE_P(
+    PathPrefixServerMethodsTestInstance, PathPrefixServerMethodsTest,
+    testing::Values(std::tuple<QString, QString, int, bool>("/api/test-method", "rest_get_TestMethod", 200, false),
+                    std::tuple<QString, QString, int, bool>("/api/test-met-hod", "", 404, false),
+                    std::tuple<QString, QString, int, bool>("/api/tEst-meThoD", "rest_get_TestMethod", 200, false),
+                    std::tuple<QString, QString, int, bool>("/api/testmethod", "rest_get_Testmethod", 200, false),
+                    std::tuple<QString, QString, int, bool>("/api/test-method/sub-method",
+                                                            "rest_get_TestMethod_SubMethod", 200, false),
+                    std::tuple<QString, QString, int, bool>("/api/test-method/sub-method/subsub",
+                                                            "rest_get_TestMethod_SubMethod", 200, false),
+                    std::tuple<QString, QString, int, bool>("/api/test-method", "rest_post_TestMethod", 200, true),
+                    std::tuple<QString, QString, int, bool>("/api/wrong-method", "", 404, false),
+                    std::tuple<QString, QString, int, bool>("/api/wrong-method", "", 404, true),
+                    std::tuple<QString, QString, int, bool>("/test-method", "", 404, false),
+                    std::tuple<QString, QString, int, bool>("/test-method", "", 404, true)));
 
 TEST_P(AnotherRestServerMethodsTest, methodsParams)
 {
@@ -335,7 +333,8 @@ TEST_P(AnotherRestServerMethodsTest, methodsParams)
 
     QUrlQuery query(params);
 
-    QNetworkReply *reply = isPost ? restClientUT->post(method, query)->result() : restClientUT->get(method, query)->result();
+    QNetworkReply *reply = isPost ? restClientUT->post(method, query)->result()
+                                  : restClientUT->get(method, query)->result();
 
     QSignalSpy spy(reply, &QNetworkReply::finished);
 
@@ -354,13 +353,13 @@ TEST_P(AnotherRestServerMethodsTest, methodsParams)
     delete reply;
 }
 
-INSTANTIATE_TEST_CASE_P(AnotherRestServerMethodsTestInstance,
-                        AnotherRestServerMethodsTest,
-                        testing::Values(std::tuple<QString, QString, int, bool>("/test-method/123", "", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method", "param=123&another_param=true", 200, true),
-                                        std::tuple<QString, QString, int, bool>("/test-method/", "param=hello&another_param=true", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method/123/sub-method", "param=321&some_param=false", 200, true)
-                                        ));
+INSTANTIATE_TEST_CASE_P(
+    AnotherRestServerMethodsTestInstance, AnotherRestServerMethodsTest,
+    testing::Values(std::tuple<QString, QString, int, bool>("/test-method/123", "", 200, false),
+                    std::tuple<QString, QString, int, bool>("/test-method", "param=123&another_param=true", 200, true),
+                    std::tuple<QString, QString, int, bool>("/test-method/", "param=hello&another_param=true", 200, false),
+                    std::tuple<QString, QString, int, bool>("/test-method/123/sub-method", "param=321&some_param=false",
+                                                            200, true)));
 
 TEST_P(SomeMoreRestServerMethodsTest, methodsVariableParts)
 {
@@ -389,15 +388,14 @@ TEST_P(SomeMoreRestServerMethodsTest, methodsVariableParts)
     delete reply;
 }
 
-INSTANTIATE_TEST_CASE_P(SomeMoreRestServerMethodsTestInstance,
-                        SomeMoreRestServerMethodsTest,
-                        testing::Values(std::tuple<QString, QString, int, bool>("/test-method/123", "123", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method", "", 200, true),
-                                        std::tuple<QString, QString, int, bool>("/test-method/", "", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method////", "", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method/\\`123", "\\`123", 200, false),
-                                        std::tuple<QString, QString, int, bool>("/test-method/123/sub-method", "123/sub-method", 200, true),
-                                        std::tuple<QString, QString, int, bool>("/test-method/CaSetEST", "CaSetEST", 200, false)
-                                        ));
+INSTANTIATE_TEST_CASE_P(
+    SomeMoreRestServerMethodsTestInstance, SomeMoreRestServerMethodsTest,
+    testing::Values(std::tuple<QString, QString, int, bool>("/test-method/123", "123", 200, false),
+                    std::tuple<QString, QString, int, bool>("/test-method", "", 200, true),
+                    std::tuple<QString, QString, int, bool>("/test-method/", "", 200, false),
+                    std::tuple<QString, QString, int, bool>("/test-method////", "", 200, false),
+                    std::tuple<QString, QString, int, bool>("/test-method/\\`123", "\\`123", 200, false),
+                    std::tuple<QString, QString, int, bool>("/test-method/123/sub-method", "123/sub-method", 200, true),
+                    std::tuple<QString, QString, int, bool>("/test-method/CaSetEST", "CaSetEST", 200, false)));
 
 #include "abstractrestserver_test.moc"

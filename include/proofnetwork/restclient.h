@@ -1,15 +1,16 @@
 #ifndef RESTCLIENT_H
 #define RESTCLIENT_H
 
+#include "proofcore/future.h"
 #include "proofcore/proofobject.h"
+
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
-#include "proofcore/future.h"
 
-#include <QNetworkAccessManager>
-#include <QUrlQuery>
-#include <QNetworkCookie>
 #include <QByteArray>
+#include <QNetworkAccessManager>
+#include <QNetworkCookie>
+#include <QUrlQuery>
 
 class QNetworkReply;
 
@@ -68,12 +69,17 @@ public:
     bool containsCookie(const QString &name) const;
     void unsetCookie(const QString &name);
 
-    CancelableFuture<QNetworkReply *> get(const QString &method, const QUrlQuery &query = QUrlQuery(), const QString &vendor = QString());
-    CancelableFuture<QNetworkReply *> post(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "", const QString &vendor = QString());
+    CancelableFuture<QNetworkReply *> get(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                                          const QString &vendor = QString());
+    CancelableFuture<QNetworkReply *> post(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                                           const QByteArray &body = "", const QString &vendor = QString());
     CancelableFuture<QNetworkReply *> post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts);
-    CancelableFuture<QNetworkReply *> put(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "", const QString &vendor = QString());
-    CancelableFuture<QNetworkReply *> patch(const QString &method, const QUrlQuery &query = QUrlQuery(), const QByteArray &body = "", const QString &vendor = QString());
-    CancelableFuture<QNetworkReply *> deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery(), const QString &vendor = QString());
+    CancelableFuture<QNetworkReply *> put(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                                          const QByteArray &body = "", const QString &vendor = QString());
+    CancelableFuture<QNetworkReply *> patch(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                                            const QByteArray &body = "", const QString &vendor = QString());
+    CancelableFuture<QNetworkReply *> deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                                                     const QString &vendor = QString());
     CancelableFuture<QNetworkReply *> get(const QUrl &url);
 
 signals:
@@ -89,10 +95,10 @@ signals:
     void msecsForTimeoutChanged(qlonglong arg);
     void followRedirectsChanged(bool arg);
 
-    void finished(QNetworkReply *reply);//Remove
-    void sslErrors(QNetworkReply *reply, const QList<QSslError> &errors);//Remove
+    void finished(QNetworkReply *reply); //Remove
+    void sslErrors(QNetworkReply *reply, const QList<QSslError> &errors); //Remove
 };
 
-}
+} // namespace Proof
 
 #endif // RESTCLIENT_H

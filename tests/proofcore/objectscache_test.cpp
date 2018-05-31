@@ -1,7 +1,7 @@
 // clazy:skip
-#include "gtest/test_global.h"
-
 #include "proofcore/objectscache.h"
+
+#include "gtest/test_global.h"
 
 using namespace Proof;
 
@@ -14,19 +14,14 @@ class DummyData : public ProofObject
 {
 public:
     explicit DummyData(int _value) : ProofObject(0), value(_value) {}
-    static DummyDataSP create()
-    {
-        return DummyDataSP::create(0);
-    }
+    static DummyDataSP create() { return DummyDataSP::create(0); }
     int value;
 };
 
-class ObjectsCacheTest: public Test
+class ObjectsCacheTest : public Test
 {
 public:
-    ObjectsCacheTest()
-    {
-    }
+    ObjectsCacheTest() {}
 
 protected:
     void TearDown() override

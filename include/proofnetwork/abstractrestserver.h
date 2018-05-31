@@ -4,13 +4,13 @@
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
 
-#include <QTcpServer>
 #include <QScopedPointer>
 #include <QStringList>
+#include <QTcpServer>
 #include <QUrlQuery>
 
 #ifndef Q_MOC_RUN
-# define NO_AUTH_REQUIRED
+#    define NO_AUTH_REQUIRED
 #endif
 
 namespace Proof {
@@ -55,22 +55,27 @@ signals:
     void authTypeChanged(Proof::RestAuthType arg);
 
 protected slots:
-    NO_AUTH_REQUIRED void rest_get_System_Status(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
-                                                 const QUrlQuery &query, const QByteArray &body);
-    NO_AUTH_REQUIRED void rest_get_System_RecentErrors(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
-                                                       const QUrlQuery &query, const QByteArray &body);
+    NO_AUTH_REQUIRED void rest_get_System_Status(QTcpSocket *socket, const QStringList &headers,
+                                                 const QStringList &methodVariableParts, const QUrlQuery &query,
+                                                 const QByteArray &body);
+    NO_AUTH_REQUIRED void rest_get_System_RecentErrors(QTcpSocket *socket, const QStringList &headers,
+                                                       const QStringList &methodVariableParts, const QUrlQuery &query,
+                                                       const QByteArray &body);
 
 protected:
     virtual QMap<QString, QPair<QDateTime, QVariant>> healthStatus(bool quick) const;
 
     void incomingConnection(qintptr socketDescriptor) override;
 
-    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200, const QString &reason = QString());
-    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers,
-                    int returnCode = 200, const QString &reason = QString());
-    void sendErrorCode(QTcpSocket *socket, int returnCode, const QString &reason, int errorCode, const QStringList &args = QStringList());
-    template<class Enum>
-    void sendErrorCode(QTcpSocket *socket, int returnCode, const QString &reason, Enum errorCode, const QStringList &args = QStringList())
+    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode = 200,
+                    const QString &reason = QString());
+    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
+                    const QHash<QString, QString> &headers, int returnCode = 200, const QString &reason = QString());
+    void sendErrorCode(QTcpSocket *socket, int returnCode, const QString &reason, int errorCode,
+                       const QStringList &args = QStringList());
+    template <class Enum>
+    void sendErrorCode(QTcpSocket *socket, int returnCode, const QString &reason, Enum errorCode,
+                       const QStringList &args = QStringList())
     {
         sendErrorCode(socket, returnCode, reason, static_cast<int>(errorCode), args);
     }
@@ -85,5 +90,5 @@ protected:
     QScopedPointer<AbstractRestServerPrivate> d_ptr;
 };
 
-}
+} // namespace Proof
 #endif // ABSTRACTRESTSERVER_H

@@ -1,8 +1,7 @@
 #include "errornotifier.h"
 
-#include "proofobject_p.h"
-
 #include "abstractnotificationhandler.h"
+#include "proofobject_p.h"
 
 #include <QMutex>
 
@@ -21,10 +20,8 @@ class ErrorNotifierPrivate : public ProofObjectPrivate
 
 using namespace Proof;
 
-ErrorNotifier::ErrorNotifier()
-    : ProofObject(*new ErrorNotifierPrivate)
-{
-}
+ErrorNotifier::ErrorNotifier() : ProofObject(*new ErrorNotifierPrivate)
+{}
 
 ErrorNotifier::~ErrorNotifier()
 {

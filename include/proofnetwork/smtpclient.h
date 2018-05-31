@@ -2,6 +2,7 @@
 #define PROOF_SMTPCLIENT_H
 
 #include "proofcore/proofobject.h"
+
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
 
@@ -14,7 +15,8 @@ class PROOF_NETWORK_EXPORT SmtpClient : public ProofObject // clazy:exclude=ctor
     Q_OBJECT
     Q_DECLARE_PRIVATE(SmtpClient)
 public:
-    enum class ConnectionType {
+    enum class ConnectionType
+    {
         Plain,
         Ssl,
         StartTls

@@ -1,4 +1,5 @@
 #include "proofobject.h"
+
 #include "proofobject_p.h"
 
 #include <algorithm>
@@ -7,20 +8,16 @@ using namespace Proof;
 
 ProofObject *ProofObjectPrivate::defaultInvoker = new ProofObject(nullptr);
 
-ProofObject::ProofObject(QObject *parent)
-    : ProofObject(*new ProofObjectPrivate, parent)
-{
-}
+ProofObject::ProofObject(QObject *parent) : ProofObject(*new ProofObjectPrivate, parent)
+{}
 
-ProofObject::ProofObject(ProofObjectPrivate &dd, QObject *parent)
-    : QObject(parent), d_ptr(&dd)
+ProofObject::ProofObject(ProofObjectPrivate &dd, QObject *parent) : QObject(parent), d_ptr(&dd)
 {
     dd.q_ptr = this;
 }
 
 ProofObject::~ProofObject()
-{
-}
+{}
 
 bool ProofObject::isDirty() const
 {
@@ -37,9 +34,7 @@ void ProofObject::emitError(const Failure &failure, Failure::Hints forceHints)
 
 std::function<void(const Failure &)> ProofObject::simpleFailureHandler(Failure::Hints forceHints)
 {
-    return [this, forceHints](const Failure &failure) {
-        emitError(failure, forceHints);
-    };
+    return [this, forceHints](const Failure &failure) { emitError(failure, forceHints); };
 }
 
 qulonglong ProofObject::nextQueuedCallId() const
@@ -54,17 +49,16 @@ ProofObject *ProofObject::defaultInvoker()
 }
 
 ProofObjectPrivate::ProofObjectPrivate()
-{
-}
+{}
 
 ProofObjectPrivate::~ProofObjectPrivate()
-{
-}
+{}
 
 bool ProofObjectPrivate::isDirty() const
 {
-    return dirtyFlag || std::any_of(childrenDirtyCheckers.begin(), childrenDirtyCheckers.end(),
-                                    [](const std::function<bool ()> &func) { return func(); });
+    return dirtyFlag
+           || std::any_of(childrenDirtyCheckers.begin(), childrenDirtyCheckers.end(),
+                          [](const std::function<bool()> &func) { return func(); });
 }
 
 bool ProofObjectPrivate::isDirtyItself() const
@@ -76,4 +70,3 @@ void ProofObjectPrivate::setDirty(bool arg)
 {
     dirtyFlag = arg;
 }
-

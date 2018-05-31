@@ -26,13 +26,14 @@ class SmtpClient;
 using SmtpClientSP = QSharedPointer<SmtpClient>;
 using SmtpClientWP = QWeakPointer<SmtpClient>;
 
-enum class RestAuthType {
+enum class RestAuthType
+{
     NoAuth,
     Basic,
     Wsse,
     BearerToken
 };
-}
+} // namespace Proof
 
 Q_DECLARE_METATYPE(Proof::RestAuthType)
 #endif // PROOFNETWORK_TYPES_H

@@ -1,12 +1,12 @@
 #include "abstractamqpreceiver.h"
+
 #include "abstractamqpreceiver_p.h"
 
 using namespace Proof;
 
 AbstractAmqpReceiver::AbstractAmqpReceiver(AbstractAmqpReceiverPrivate &dd, QObject *parent)
     : AbstractAmqpClient(dd, parent)
-{
-}
+{}
 
 QString AbstractAmqpReceiver::queueName() const
 {
@@ -39,10 +39,8 @@ void AbstractAmqpReceiver::setCreateQueueIfNotExists(bool createQueueIfNotExists
     d->queueOptions = options;
 }
 
-AbstractAmqpReceiverPrivate::AbstractAmqpReceiverPrivate()
-    : AbstractAmqpClientPrivate()
-{
-}
+AbstractAmqpReceiverPrivate::AbstractAmqpReceiverPrivate() : AbstractAmqpClientPrivate()
+{}
 
 bool AbstractAmqpReceiverPrivate::startConsuming(QAmqpQueue *queue)
 {
@@ -65,16 +63,19 @@ void AbstractAmqpReceiverPrivate::connected()
     if (newQueue != queue) {
         qCDebug(proofNetworkAmqpLog) << "Create queue: " << queueName;
         queue = newQueue;
-        QObject::connect(queue, static_cast<void (QAmqpQueue::*)(QAMQP::Error)>(&QAmqpQueue::error), q, [this, q](QAMQP::Error error) {
-            if ((queueState == QueueState::Declared) && (error == QAMQP::PreconditionFailedError) && createdQueueIfNotExists) {
-                queueState = QueueState::Reopening;
-                queue->reset();
-                queue->reopen();
-            } else {
-                qCDebug(proofNetworkAmqpLog) << "Queue Error:" << error;
-                emit q->errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError, QStringLiteral("Queue Error: %1").arg(error), false);
-            }
-        });
+        QObject::connect(queue, static_cast<void (QAmqpQueue::*)(QAMQP::Error)>(&QAmqpQueue::error), q,
+                         [this, q](QAMQP::Error error) {
+                             if ((queueState == QueueState::Declared) && (error == QAMQP::PreconditionFailedError)
+                                 && createdQueueIfNotExists) {
+                                 queueState = QueueState::Reopening;
+                                 queue->reset();
+                                 queue->reopen();
+                             } else {
+                                 qCDebug(proofNetworkAmqpLog) << "Queue Error:" << error;
+                                 emit q->errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError,
+                                                       QStringLiteral("Queue Error: %1").arg(error), false);
+                             }
+                         });
 
         QObject::connect(queue, &QAmqpQueue::declared, q, [this]() {
             queueState = QueueState::Declared;

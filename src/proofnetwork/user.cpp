@@ -1,17 +1,14 @@
 #include "user.h"
+
 #include "user_p.h"
 
 using namespace Proof;
 
-User::User(const QString &userName)
-    : User(*new UserPrivate(userName))
-{
-}
+User::User(const QString &userName) : User(*new UserPrivate(userName))
+{}
 
-User::User(Proof::UserPrivate &dd, QObject *parent)
-    : NetworkDataEntity(dd, parent)
-{
-}
+User::User(Proof::UserPrivate &dd, QObject *parent) : NetworkDataEntity(dd, parent)
+{}
 
 QString User::userName() const
 {
@@ -46,8 +43,7 @@ UserSP User::create(const QString &userName)
     return result;
 }
 
-UserPrivate::UserPrivate(const QString &userName)
-    : userName(userName)
+UserPrivate::UserPrivate(const QString &userName) : userName(userName)
 {
     setDirty(!userName.isEmpty());
 }

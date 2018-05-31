@@ -1,15 +1,14 @@
 // clazy:skip
 
-#include "gtest/test_global.h"
-
-#include "proofcore/proofobject.h"
-
-#include "proofcore/tasks.h"
 #include "proofcore/future.h"
+#include "proofcore/proofobject.h"
+#include "proofcore/tasks.h"
 
-#include <QThread>
 #include <QDateTime>
+#include <QThread>
 #include <QTimer>
+
+#include "gtest/test_global.h"
 
 #include <atomic>
 
@@ -18,9 +17,10 @@ using namespace Proof;
 class TestProofObject : public ProofObject
 {
 public:
-    TestProofObject() : ProofObject(nullptr){}
+    TestProofObject() : ProofObject(nullptr) {}
 
-    int multiply(int a, int b) {
+    int multiply(int a, int b)
+    {
         methodThread = QThread::currentThread();
         started = true;
         while (!canProceed)
@@ -29,16 +29,17 @@ public:
     }
 
     QThread *methodThread = nullptr;
-    std::atomic_bool started {false};
-    std::atomic_bool canProceed {false};
+    std::atomic_bool started{false};
+    std::atomic_bool canProceed{false};
 };
 
 class TestQObject : public QObject
 {
 public:
-    TestQObject() : QObject(nullptr){}
+    TestQObject() : QObject(nullptr) {}
 
-    int multiply(int a, int b) {
+    int multiply(int a, int b)
+    {
         methodThread = QThread::currentThread();
         started = true;
         while (!canProceed)
@@ -47,8 +48,8 @@ public:
     }
 
     QThread *methodThread = nullptr;
-    std::atomic_bool started {false};
-    std::atomic_bool canProceed {false};
+    std::atomic_bool started{false};
+    std::atomic_bool canProceed{false};
 };
 
 class TestObject
@@ -56,7 +57,8 @@ class TestObject
 public:
     TestObject() {}
 
-    int multiply(int a, int b) {
+    int multiply(int a, int b)
+    {
         methodThread = QThread::currentThread();
         started = true;
         while (!canProceed)
@@ -65,8 +67,8 @@ public:
     }
 
     QThread *methodThread = nullptr;
-    std::atomic_bool started {false};
-    std::atomic_bool canProceed {false};
+    std::atomic_bool started{false};
+    std::atomic_bool canProceed{false};
 };
 
 TEST(ProofObjectTest, NonBlockingCall)
@@ -114,7 +116,8 @@ TEST(ProofObjectTest, BlockingCall)
 
     bool runnerExeced = false;
     QTimer queuedRunner;
-    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced](){runnerExeced = true;}, Qt::QueuedConnection);
+    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced]() { runnerExeced = true; },
+                     Qt::QueuedConnection);
     queuedRunner.setSingleShot(true);
     queuedRunner.start(0);
 
@@ -156,7 +159,8 @@ TEST(ProofObjectTest, EventsBlockingCall)
 
     bool runnerExeced = false;
     QTimer queuedRunner;
-    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced](){runnerExeced = true;}, Qt::QueuedConnection);
+    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced]() { runnerExeced = true; },
+                     Qt::QueuedConnection);
     queuedRunner.setSingleShot(true);
     queuedRunner.start(0);
 
@@ -221,7 +225,8 @@ TEST(ProofObjectTest, BlockingCallQObject)
 
     bool runnerExeced = false;
     QTimer queuedRunner;
-    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced](){runnerExeced = true;}, Qt::QueuedConnection);
+    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced]() { runnerExeced = true; },
+                     Qt::QueuedConnection);
     queuedRunner.setSingleShot(true);
     queuedRunner.start(0);
 
@@ -263,7 +268,8 @@ TEST(ProofObjectTest, EventsBlockingCallQObject)
 
     bool runnerExeced = false;
     QTimer queuedRunner;
-    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced](){runnerExeced = true;}, Qt::QueuedConnection);
+    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced]() { runnerExeced = true; },
+                     Qt::QueuedConnection);
     queuedRunner.setSingleShot(true);
     queuedRunner.start(0);
 
@@ -331,7 +337,8 @@ TEST(ProofObjectTest, BlockingCallPlainObjectWithContext)
 
     bool runnerExeced = false;
     QTimer queuedRunner;
-    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced](){runnerExeced = true;}, Qt::QueuedConnection);
+    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced]() { runnerExeced = true; },
+                     Qt::QueuedConnection);
     queuedRunner.setSingleShot(true);
     queuedRunner.start(0);
 
@@ -375,7 +382,8 @@ TEST(ProofObjectTest, EventsBlockingCallPlainObjectWithContext)
 
     bool runnerExeced = false;
     QTimer queuedRunner;
-    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced](){runnerExeced = true;}, Qt::QueuedConnection);
+    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced]() { runnerExeced = true; },
+                     Qt::QueuedConnection);
     queuedRunner.setSingleShot(true);
     queuedRunner.start(0);
 
@@ -444,7 +452,8 @@ TEST(ProofObjectTest, BlockingCallWithContext)
 
     bool runnerExeced = false;
     QTimer queuedRunner;
-    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced](){runnerExeced = true;}, Qt::QueuedConnection);
+    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced]() { runnerExeced = true; },
+                     Qt::QueuedConnection);
     queuedRunner.setSingleShot(true);
     queuedRunner.start(0);
 
@@ -488,7 +497,8 @@ TEST(ProofObjectTest, EventsBlockingCallWithContext)
 
     bool runnerExeced = false;
     QTimer queuedRunner;
-    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced](){runnerExeced = true;}, Qt::QueuedConnection);
+    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced]() { runnerExeced = true; },
+                     Qt::QueuedConnection);
     queuedRunner.setSingleShot(true);
     queuedRunner.start(0);
 

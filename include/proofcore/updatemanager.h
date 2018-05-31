@@ -2,6 +2,7 @@
 #define PROOF_UPDATEMANAGER_H
 
 #include "proofcore_global.h"
+
 #include "proofcore/proofobject.h"
 
 #include <QStringList>
@@ -15,7 +16,8 @@ class PROOF_CORE_EXPORT UpdateManager : public ProofObject
     Q_PROPERTY(bool supported READ supported CONSTANT)
     Q_PROPERTY(bool autoUpdateEnabled READ autoUpdateEnabled WRITE setAutoUpdateEnabled NOTIFY autoUpdateEnabledChanged)
     Q_PROPERTY(int timeout READ timeout WRITE setTimeout NOTIFY timeoutChanged)
-    Q_PROPERTY(QString aptSourcesListFilePath READ aptSourcesListFilePath WRITE setAptSourcesListFilePath NOTIFY aptSourcesListFilePathChanged)
+    Q_PROPERTY(QString aptSourcesListFilePath READ aptSourcesListFilePath WRITE setAptSourcesListFilePath NOTIFY
+                   aptSourcesListFilePathChanged)
     Q_PROPERTY(QString currentVersion READ currentVersion WRITE setCurrentVersion NOTIFY currentVersionChanged)
     Q_PROPERTY(QString packageName READ packageName WRITE setPackageName NOTIFY packageNameChanged)
     Q_PROPERTY(QString newVersion READ newVersion NOTIFY newVersionChanged)

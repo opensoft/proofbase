@@ -1,8 +1,8 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#include "proofcore/proofobject.h"
 #include "proofcore/proofcore_global.h"
+#include "proofcore/proofobject.h"
 
 namespace Proof {
 
@@ -14,13 +14,15 @@ class PROOF_CORE_EXPORT Settings : public ProofObject
     Q_OBJECT
     Q_DECLARE_PRIVATE(Settings)
 public:
-    enum class NotFoundPolicy {
+    enum class NotFoundPolicy
+    {
         DoNothing,
         Add,
         AddGlobal
     };
 
-    enum class Storage {
+    enum class Storage
+    {
         Local,
         Global
     };
@@ -35,9 +37,8 @@ public:
     SettingsGroup *addGroup(const QString &groupName);
     void deleteGroup(const QString &groupName, Settings::Storage storage = Settings::Storage::Local);
     static QString filePath(Storage storage = Storage::Local);
-
 };
 
-}
+} // namespace Proof
 
 #endif // SETTINGS_H

@@ -4,9 +4,9 @@
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
 
+#include <QDateTime>
 #include <QScopedPointer>
 #include <QUrlQuery>
-#include <QDateTime>
 
 namespace Proof {
 
@@ -39,6 +39,6 @@ protected:
     QScopedPointer<UrlQueryBuilderPrivate> d_ptr;
 };
 
-}
+} // namespace Proof
 
 #endif // PROOF_URLQUERYBUILDER_H

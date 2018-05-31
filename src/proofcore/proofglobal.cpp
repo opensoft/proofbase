@@ -2,23 +2,28 @@
 
 namespace Proof {
 static bool proofUsesSettingsValue = true;
-QString proofVersion() {
+QString proofVersion()
+{
     return PROOF_VERSION; // clazy:skip=qstring-allocations
 }
 
-int proofVersionMajor() {
+int proofVersionMajor()
+{
     return PROOF_VERSION_MAJOR;
 }
 
-int proofVersionYear() {
+int proofVersionYear()
+{
     return PROOF_VERSION_YEAR;
 }
 
-int proofVersionMonth() {
+int proofVersionMonth()
+{
     return PROOF_VERSION_MONTH;
 }
 
-int proofVersionDay() {
+int proofVersionDay()
+{
     return PROOF_VERSION_DAY;
 }
 
@@ -32,4 +37,4 @@ bool proofUsesSettings()
     return proofUsesSettingsValue;
 }
 
-}
+} // namespace Proof

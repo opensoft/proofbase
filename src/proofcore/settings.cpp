@@ -3,11 +3,11 @@
 #include "proofobject_p.h"
 #include "settingsgroup.h"
 
+#include <QCoreApplication>
+#include <QFileInfo>
 #include <QSettings>
 #include <QSharedPointer>
 #include <QStandardPaths>
-#include <QCoreApplication>
-#include <QFileInfo>
 
 namespace Proof {
 class SettingsPrivate : public ProofObjectPrivate
@@ -25,23 +25,22 @@ class SettingsPrivate : public ProofObjectPrivate
     SettingsGroup *mainGlobalGroup;
     QSharedPointer<QSettings> globalSettings;
 };
-}
+} // namespace Proof
 
 using namespace Proof;
 
-Settings::Settings(QObject *parent)
-    : ProofObject(*new SettingsPrivate, parent)
+Settings::Settings(QObject *parent) : ProofObject(*new SettingsPrivate, parent)
 {
     Q_D(Settings);
     d->mainGlobalGroup = new SettingsGroup(QLatin1String(""), nullptr, nullptr);
     d->mainLocalGroup = new SettingsGroup(QLatin1String(""), d->mainGlobalGroup, nullptr);
     connect(d->mainLocalGroup, &SettingsGroup::valueChanged, this,
             [d](const QStringList &key, const QVariant &value, bool inherited) {
-        if (!inherited)
-            d->groupValueChanged(key, value, d->localSettings);
-    });
+                if (!inherited)
+                    d->groupValueChanged(key, value, d->localSettings);
+            });
     connect(d->mainGlobalGroup, &SettingsGroup::valueChanged, this,
-            [d](const QStringList &key, const QVariant &value){d->groupValueChanged(key, value, d->globalSettings);});
+            [d](const QStringList &key, const QVariant &value) { d->groupValueChanged(key, value, d->globalSettings); });
     d->readSettings();
 }
 
@@ -108,26 +107,23 @@ QString SettingsPrivate::filePath(Settings::Storage storage)
                 return configPath;
         }
     }
-    QString appName = storage == Settings::Storage::Local
-            ? qApp->applicationName()
-            : QStringLiteral("proof-common");
+    QString appName = storage == Settings::Storage::Local ? qApp->applicationName() : QStringLiteral("proof-common");
 #if defined Q_OS_WIN
     //Windows already gives us org/app as part of conf location
     QString configPath = QStringLiteral("%1/%2/%3.conf")
-            .arg(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation),
-                 qApp->organizationName(),
-                 appName + (storage == Settings::Storage::Local
-                            ? QStringLiteral("/%1").arg(appName) : QStringLiteral("")));
+                             .arg(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation),
+                                  qApp->organizationName(),
+                                  appName
+                                      + (storage == Settings::Storage::Local ? QStringLiteral("/%1").arg(appName)
+                                                                             : QStringLiteral("")));
 #elif defined Q_OS_ANDROID
     QString configPath = QString("%1/%2/%3.conf")
-            .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation),
-                 qApp->organizationName(),
-                 appName);
+                             .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation),
+                                  qApp->organizationName(), appName);
 #else
     QString configPath = QStringLiteral("%1/%2/%3.conf")
-            .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
-                 qApp->organizationName(),
-                 appName);
+                             .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
+                                  qApp->organizationName(), appName);
 #endif
     return configPath;
 }
@@ -174,7 +170,8 @@ void SettingsPrivate::fillGroupFromSettings(SettingsGroup *groupToFill, const QS
         groupToFill->deleteGroup(key);
 }
 
-void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &value, const QSharedPointer<QSettings> &settings)
+void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &value,
+                                        const QSharedPointer<QSettings> &settings)
 {
     Q_ASSERT_X(key.count(), Q_FUNC_INFO, "key list can't be empty");
 
@@ -183,9 +180,7 @@ void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &
     while (!settings->group().isEmpty()) {
         settings->endGroup();
         QString newPath = settings->group();
-        groupsToRestore.prepend(newPath.isEmpty()
-                                ? groupPathToRestore
-                                : groupPathToRestore.mid(newPath.length() + 1));
+        groupsToRestore.prepend(newPath.isEmpty() ? groupPathToRestore : groupPathToRestore.mid(newPath.length() + 1));
         groupPathToRestore = newPath;
     }
 

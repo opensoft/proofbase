@@ -1,20 +1,18 @@
 // clazy:skip
 
-#include "gtest/test_global.h"
-
 #include "proofnetwork/httpdownloader.h"
+
+#include "gtest/test_global.h"
 
 using namespace Proof;
 using testing::Test;
 
 static const int TIMEOUT = 2000; //msec
 
-class HttpDownloaderTest: public Test
+class HttpDownloaderTest : public Test
 {
 public:
-    HttpDownloaderTest()
-    {
-    }
+    HttpDownloaderTest() {}
 
 protected:
     void SetUp() override
@@ -71,7 +69,6 @@ TEST_F(HttpDownloaderTest, failDownload)
     EXPECT_EQ(NetworkErrorCode::ServerError, failure.errorCode);
     EXPECT_EQ("Download failed", failure.message);
 }
-
 
 TEST_F(HttpDownloaderTest, failDownloadNotFound)
 {

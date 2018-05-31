@@ -1,4 +1,5 @@
 #include "errormessagesregistry_p.h"
+
 #include "proofcore/proofalgorithms.h"
 
 namespace Proof {
@@ -15,7 +16,8 @@ ErrorInfo ErrorMessagesRegistry::infoForCode(int code, const QVector<QString> &a
 {
     if (m_infos.contains(code)) {
         ErrorInfo info = m_infos[code];
-        info.message = algorithms::reduce(args, [](const QString &acc, const QString &x){return acc.arg(x);}, info.message);
+        info.message = algorithms::reduce(args, [](const QString &acc, const QString &x) { return acc.arg(x); },
+                                          info.message);
         return info;
     } else {
         return ErrorInfo{0, 0, QObject::tr("Unknown error"), true};
@@ -23,4 +25,3 @@ ErrorInfo ErrorMessagesRegistry::infoForCode(int code, const QVector<QString> &a
 }
 
 } // namespace Proof
-

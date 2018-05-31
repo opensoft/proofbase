@@ -1,9 +1,9 @@
 #ifndef PROOF_ABSTRACTNOTIFICATIONHANDLER_H
 #define PROOF_ABSTRACTNOTIFICATIONHANDLER_H
 
-#include "proofcore/proofobject.h"
-#include "proofcore/proofcore_global.h"
 #include "proofcore/errornotifier.h"
+#include "proofcore/proofcore_global.h"
+#include "proofcore/proofobject.h"
 
 #include <QString>
 

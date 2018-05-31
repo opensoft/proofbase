@@ -1,19 +1,16 @@
 #include "urlquerybuilder.h"
+
 #include "urlquerybuilder_p.h"
 
 #include <QTimeZone>
 
 namespace Proof {
 
-UrlQueryBuilder::UrlQueryBuilder()
-    : UrlQueryBuilder(*new UrlQueryBuilderPrivate)
-{
-}
+UrlQueryBuilder::UrlQueryBuilder() : UrlQueryBuilder(*new UrlQueryBuilderPrivate)
+{}
 
 UrlQueryBuilder::~UrlQueryBuilder()
-{
-
-}
+{}
 
 void UrlQueryBuilder::setCustomParam(const QString &name, const QString &value)
 {
@@ -58,7 +55,8 @@ void UrlQueryBuilder::setCustomParam(const QString &name, const QDateTime &value
     if (result.lastIndexOf(QRegExp("[-+]\\d\\d:?\\d\\d")) == -1) {
         if (result.endsWith(QLatin1String("Z")))
             result.chop(1);
-        result += value.timeZone().displayName(value, QTimeZone::OffsetName).replace(QLatin1String("UTC"), QLatin1String(""));
+        result +=
+            value.timeZone().displayName(value, QTimeZone::OffsetName).replace(QLatin1String("UTC"), QLatin1String(""));
     }
     result.replace(QRegExp("([-+])(\\d\\d):?(\\d\\d)"), QStringLiteral("\\1\\2\\3"));
     setCustomParam(name, result);
@@ -109,10 +107,9 @@ QUrlQuery UrlQueryBuilder::toUrlQuery() const
     return urlQuery;
 }
 
-UrlQueryBuilder::UrlQueryBuilder(UrlQueryBuilderPrivate &dd)
-    : d_ptr(&dd)
+UrlQueryBuilder::UrlQueryBuilder(UrlQueryBuilderPrivate &dd) : d_ptr(&dd)
 {
     d_ptr->q_ptr = this;
 }
 
-}
+} // namespace Proof

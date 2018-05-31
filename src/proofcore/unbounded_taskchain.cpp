@@ -29,7 +29,7 @@ class TaskChainPrivate
     std::atomic_flag futuresLock = ATOMIC_FLAG_INIT;
     TaskChainSP selfPointer;
     bool wasStarted = false;
-    std::atomic_llong lastUsedId {0};
+    std::atomic_llong lastUsedId{0};
 
     static thread_local bool currentEventLoopStarted;
     static thread_local QSharedPointer<QEventLoop> signalWaitersEventLoop;
@@ -38,15 +38,14 @@ class TaskChainPrivate
 
 thread_local bool TaskChainPrivate::currentEventLoopStarted = false;
 thread_local QSharedPointer<QEventLoop> TaskChainPrivate::signalWaitersEventLoop;
-std::atomic_llong TaskChainPrivate::chainsCounter {0};
-}
-}
-}
+std::atomic_llong TaskChainPrivate::chainsCounter{0};
+} // namespace unbounded
+} // namespace tasks
+} // namespace Proof
 
 using namespace Proof::tasks::unbounded;
 
-TaskChain::TaskChain()
-    : QThread(0), d_ptr(new TaskChainPrivate)
+TaskChain::TaskChain() : QThread(0), d_ptr(new TaskChainPrivate)
 {
     Q_D(TaskChain);
     d->q_ptr = this;
@@ -72,7 +71,7 @@ TaskChainSP TaskChain::createChain(bool selfDestroyable)
         result->d_func()->selfPointer = result;
 
         auto connection = QSharedPointer<QMetaObject::Connection>::create();
-        auto checker = [result, connection](){
+        auto checker = [result, connection]() {
             QObject::disconnect(*connection);
             result->d_func()->selfPointer.clear();
         };
@@ -172,7 +171,7 @@ qlonglong TaskChain::addTaskPrivate(std::future<void> &&taskFuture)
     return id;
 }
 
-void TaskChain::addSignalWaiterPrivate(std::function<void (const QSharedPointer<QEventLoop> &)> &&connector)
+void TaskChain::addSignalWaiterPrivate(std::function<void(const QSharedPointer<QEventLoop> &)> &&connector)
 {
     Q_D(TaskChain);
     if (!d->signalWaitersEventLoop) {

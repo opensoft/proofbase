@@ -9,8 +9,7 @@ static const QRegExp HEADER_REG_EXP("((.*): (.*))\r\n");
 using namespace Proof;
 
 HttpParser::HttpParser()
-{
-}
+{}
 
 HttpParser::Result HttpParser::parseNextPart(QByteArray data) // clazy:exclude=function-args-by-ref
 {
@@ -91,7 +90,8 @@ HttpParser::Result HttpParser::headersState(QByteArray &data)
                 m_contentLength = headerRegExp.cap(3).toULongLong(&ok);
                 if (!ok) {
                     result = Result::Error;
-                    m_error = QStringLiteral("Can't convert %1 to unsinged long long for \"Content-Length\"").arg(headerRegExp.cap(3));
+                    m_error = QStringLiteral("Can't convert %1 to unsinged long long for \"Content-Length\"")
+                                  .arg(headerRegExp.cap(3));
                 }
             }
         } else if (header == QLatin1String("\r\n")) {

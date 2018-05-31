@@ -1,12 +1,13 @@
 #include "userqmlwrapper.h"
+
 #include "userqmlwrapper_p.h"
+
 #include "proofnetwork/user.h"
 
 using namespace Proof;
 UserQmlWrapper::UserQmlWrapper(const UserSP &user, QObject *parent)
     : UserQmlWrapper(user, *new UserQmlWrapperPrivate, parent)
-{
-}
+{}
 
 UserQmlWrapper::UserQmlWrapper(const UserSP &user, UserQmlWrapperPrivate &dd, QObject *parent)
     : NetworkDataEntityQmlWrapper(user, dd, parent)
@@ -26,12 +27,9 @@ void UserQmlWrapper::setupEntity(const QSharedPointer<NetworkDataEntity> &old)
     UserSP user = d->entity<User>();
     Q_ASSERT(user);
 
-    connect(user.data(), &User::userNameChanged,
-            this, &UserQmlWrapper::userNameChanged);
-    connect(user.data(), &User::fullNameChanged,
-            this, &UserQmlWrapper::fullNameChanged);
-    connect(user.data(), &User::emailChanged,
-            this, &UserQmlWrapper::emailChanged);
+    connect(user.data(), &User::userNameChanged, this, &UserQmlWrapper::userNameChanged);
+    connect(user.data(), &User::fullNameChanged, this, &UserQmlWrapper::fullNameChanged);
+    connect(user.data(), &User::emailChanged, this, &UserQmlWrapper::emailChanged);
 
     auto castedOld = qSharedPointerCast<User>(old);
     if (castedOld) {

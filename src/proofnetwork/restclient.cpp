@@ -1,23 +1,23 @@
 #include "restclient.h"
 
+#include "proofcore/coreapplication.h"
 #include "proofcore/proofglobal.h"
 #include "proofcore/proofobject_p.h"
 #include "proofcore/taskchain.h"
-#include "proofcore/coreapplication.h"
 
 #include <QAuthenticator>
-#include <QNetworkRequest>
-#include <QNetworkReply>
+#include <QBuffer>
 #include <QCryptographicHash>
 #include <QDateTime>
+#include <QHttpMultiPart>
+#include <QJsonObject>
+#include <QJsonParseError>
+#include <QNetworkInterface>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QThread>
 #include <QTimer>
 #include <QUuid>
-#include <QJsonParseError>
-#include <QJsonObject>
-#include <QThread>
-#include <QBuffer>
-#include <QHttpMultiPart>
-#include <QNetworkInterface>
 
 static const int DEFAULT_REPLY_TIMEOUT = 5 * 60 * 1000; //5 minutes
 
@@ -46,10 +46,12 @@ public:
         return &i;
     }
 
-    CancelableFuture<QNetworkReply *> addRequest(const QString &host, std::function<QNetworkReply *(QNetworkAccessManager*)> &&request);
+    CancelableFuture<QNetworkReply *> addRequest(const QString &host,
+                                                 std::function<QNetworkReply *(QNetworkAccessManager *)> &&request);
 
     QNetworkAccessManager *qnam = nullptr;
     QThread *qnamThread = nullptr;
+
 private:
     using RequestDescriptor = std::pair<QString, std::function<void()>>;
 
@@ -93,23 +95,22 @@ public:
     QHash<QString, QNetworkCookie> cookies;
 };
 
-}
+} // namespace Proof
 
 using namespace Proof;
 
-RestClient::RestClient(bool ignoreSslErrors)
-    : ProofObject(*new RestClientPrivate)
+RestClient::RestClient(bool ignoreSslErrors) : ProofObject(*new RestClientPrivate)
 {
     Q_D(RestClient);
     moveToThread(NetworkScheduler::instance()->qnamThread);
     d->ignoreSslErrors = ignoreSslErrors;
     connect(NetworkScheduler::instance()->qnam, &QNetworkAccessManager::finished, this, &RestClient::finished);
     if (!ignoreSslErrors) {
-        connect(NetworkScheduler::instance()->qnam, &QNetworkAccessManager::sslErrors,
-                this, [this, d](QNetworkReply *reply, const QList<QSslError> &errors) {
-            d->cleanupReplyHandler(reply);
-            emit sslErrors(reply, errors);
-        });
+        connect(NetworkScheduler::instance()->qnam, &QNetworkAccessManager::sslErrors, this,
+                [this, d](QNetworkReply *reply, const QList<QSslError> &errors) {
+                    d->cleanupReplyHandler(reply);
+                    emit sslErrors(reply, errors);
+                });
     }
 }
 
@@ -348,7 +349,8 @@ CancelableFuture<QNetworkReply *> RestClient::get(const QString &method, const Q
     });
 }
 
-CancelableFuture<QNetworkReply *> RestClient::post(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
+CancelableFuture<QNetworkReply *> RestClient::post(const QString &method, const QUrlQuery &query,
+                                                   const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
@@ -361,7 +363,8 @@ CancelableFuture<QNetworkReply *> RestClient::post(const QString &method, const 
     });
 }
 
-CancelableFuture<QNetworkReply *> RestClient::post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts)
+CancelableFuture<QNetworkReply *> RestClient::post(const QString &method, const QUrlQuery &query,
+                                                   QHttpMultiPart *multiParts)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
@@ -379,7 +382,8 @@ CancelableFuture<QNetworkReply *> RestClient::post(const QString &method, const 
     });
 }
 
-CancelableFuture<QNetworkReply *> RestClient::put(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
+CancelableFuture<QNetworkReply *> RestClient::put(const QString &method, const QUrlQuery &query, const QByteArray &body,
+                                                  const QString &vendor)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
@@ -392,7 +396,8 @@ CancelableFuture<QNetworkReply *> RestClient::put(const QString &method, const Q
     });
 }
 
-CancelableFuture<QNetworkReply *> RestClient::patch(const QString &method, const QUrlQuery &query, const QByteArray &body, const QString &vendor)
+CancelableFuture<QNetworkReply *> RestClient::patch(const QString &method, const QUrlQuery &query,
+                                                    const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
@@ -401,21 +406,24 @@ CancelableFuture<QNetworkReply *> RestClient::patch(const QString &method, const
         qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
         QBuffer *bodyBuffer = new QBuffer;
         bodyBuffer->setData(body);
-        QNetworkReply *reply = qnam->sendCustomRequest(d->createNetworkRequest(d->createUrl(method, query), body, vendor), "PATCH", bodyBuffer);
+        QNetworkReply *reply = qnam->sendCustomRequest(d->createNetworkRequest(d->createUrl(method, query), body, vendor),
+                                                       "PATCH", bodyBuffer);
         d->handleReply(reply);
         bodyBuffer->setParent(reply);
         return reply;
     });
 }
 
-CancelableFuture<QNetworkReply *> RestClient::deleteResource(const QString &method, const QUrlQuery &query, const QString &vendor)
+CancelableFuture<QNetworkReply *> RestClient::deleteResource(const QString &method, const QUrlQuery &query,
+                                                             const QString &vendor)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
 
     return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, vendor](QNetworkAccessManager *qnam) {
         qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
-        QNetworkReply *reply = qnam->deleteResource(d->createNetworkRequest(d->createUrl(method, query), QByteArray(), vendor));
+        QNetworkReply *reply = qnam->deleteResource(
+            d->createNetworkRequest(d->createUrl(method, query), QByteArray(), vendor));
         d->handleReply(reply);
         return reply;
     });
@@ -457,15 +465,19 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QUrl &url, const Q
         QJsonParseError error;
         QJsonDocument::fromJson(body, &error);
 
-        QString contentTypePattern = vendor.isEmpty() ? QStringLiteral("application/%1") : QStringLiteral("application/vnd.%1+%2").arg(vendor);
+        QString contentTypePattern = vendor.isEmpty() ? QStringLiteral("application/%1")
+                                                      : QStringLiteral("application/vnd.%1+%2").arg(vendor);
 
         //We assume that if it is not json and not xml it's url encoded data
         if (error.error == QJsonParseError::NoError)
             result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg(QStringLiteral("json")));
         else if (body.startsWith("<?xml"))
-            result.setHeader(QNetworkRequest::ContentTypeHeader, vendor.isEmpty() ? QStringLiteral("text/xml") : contentTypePattern.arg(QStringLiteral("xml")));
+            result.setHeader(QNetworkRequest::ContentTypeHeader, vendor.isEmpty()
+                                                                     ? QStringLiteral("text/xml")
+                                                                     : contentTypePattern.arg(QStringLiteral("xml")));
         else
-            result.setHeader(QNetworkRequest::ContentTypeHeader, contentTypePattern.arg(QStringLiteral("x-www-form-urlencoded")));
+            result.setHeader(QNetworkRequest::ContentTypeHeader,
+                             contentTypePattern.arg(QStringLiteral("x-www-form-urlencoded")));
 
     } else {
         if (vendor.isEmpty())
@@ -481,8 +493,10 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QUrl &url, const Q
         result.setRawHeader(it.key(), it.value());
 
     result.setRawHeader("Proof-Application", proofApp->prettifiedApplicationName().toLatin1());
-    result.setRawHeader(QStringLiteral("Proof-%1-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(), qApp->applicationVersion().toLatin1());
-    result.setRawHeader(QStringLiteral("Proof-%1-Framework-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(), Proof::proofVersion().toLatin1());
+    result.setRawHeader(QStringLiteral("Proof-%1-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(),
+                        qApp->applicationVersion().toLatin1());
+    result.setRawHeader(QStringLiteral("Proof-%1-Framework-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(),
+                        Proof::proofVersion().toLatin1());
 
     QStringList ipAdresses;
     const auto allAddresses = QNetworkInterface::allAddresses();
@@ -490,7 +504,8 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QUrl &url, const Q
         if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress::LocalHost)
             ipAdresses << address.toString();
     }
-    result.setRawHeader(QStringLiteral("Proof-IP-Addresses").toLatin1(), ipAdresses.join(QStringLiteral("; ")).toLatin1());
+    result.setRawHeader(QStringLiteral("Proof-IP-Addresses").toLatin1(),
+                        ipAdresses.join(QStringLiteral("; ")).toLatin1());
 
     switch (authType) {
     case RestAuthType::Wsse:
@@ -503,8 +518,8 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QUrl &url, const Q
             result.setRawHeader("X-Client-Name", clientName.toLocal8Bit());
         result.setRawHeader("Authorization",
                             QStringLiteral("Basic %1")
-                            .arg(QString(QStringLiteral("%1:%2").arg(userName, password).toLatin1().toBase64()))
-                            .toLatin1());
+                                .arg(QString(QStringLiteral("%1:%2").arg(userName, password).toLatin1().toBase64()))
+                                .toLatin1());
         break;
     case RestAuthType::BearerToken:
         if (!clientName.isEmpty())
@@ -538,11 +553,8 @@ QByteArray RestClientPrivate::generateWsseToken() const
     hasher.addData(hashedPassword);
 
     return QStringLiteral("UsernameToken Username=\"%1\", PasswordDigest=\"%2\", Nonce=\"%3\", Created=\"%4\"")
-            .arg(userName,
-                 QString(hasher.result().toBase64()),
-                 QString(nonce.toLatin1().toBase64()),
-                 createdAt)
-            .toLatin1();
+        .arg(userName, QString(hasher.result().toBase64()), QString(nonce.toLatin1().toBase64()), createdAt)
+        .toLatin1();
 }
 
 void RestClientPrivate::handleReply(QNetworkReply *reply)
@@ -555,7 +567,9 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
     timer->setSingleShot(true);
     replyTimeouts.insert(reply, timer);
     QObject::connect(timer, &QTimer::timeout, q, [timer, reply]() {
-        qCWarning(proofNetworkMiscLog) << "Timed out:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << reply->isRunning();
+        qCWarning(proofNetworkMiscLog)
+            << "Timed out:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
+            << reply->isRunning();
         if (reply->isRunning())
             reply->abort();
         timer->deleteLater();
@@ -563,13 +577,17 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
 
     timer->start(msecsForTimeout);
 
-    QObject::connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-                     q, [this, reply](QNetworkReply::NetworkError e) {
-        qCWarning(proofNetworkMiscLog) << "Error occurred:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << e;
-        cleanupReplyHandler(reply);
-    });
+    QObject::connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), q,
+                     [this, reply](QNetworkReply::NetworkError e) {
+                         qCWarning(proofNetworkMiscLog)
+                             << "Error occurred:"
+                             << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << e;
+                         cleanupReplyHandler(reply);
+                     });
     QObject::connect(reply, &QNetworkReply::finished, q, [this, reply]() {
-        qCDebug(proofNetworkMiscLog) << "Finished:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        qCDebug(proofNetworkMiscLog)
+            << "Finished:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
+            << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         cleanupReplyHandler(reply);
     });
 }
@@ -578,7 +596,8 @@ void RestClientPrivate::cleanupReplyHandler(QNetworkReply *reply)
 {
     //This call is only for compatibility with old stations where restclient was explicitly moved to some other thread
     //In proper workflow this call with not do anything since restclient is in the same thread
-    if (ProofObject::call(NetworkScheduler::instance()->qnam, this, &RestClientPrivate::cleanupReplyHandler, Call::Block, reply))
+    if (ProofObject::call(NetworkScheduler::instance()->qnam, this, &RestClientPrivate::cleanupReplyHandler,
+                          Call::Block, reply))
         return;
     if (replyTimeouts.contains(reply)) {
         QTimer *connectionTimer = replyTimeouts.take(reply);
@@ -617,25 +636,30 @@ QPair<QString, QString> RestClientPrivate::parseHost(const QString &host)
     return {newHost, postfix};
 }
 
-CancelableFuture<QNetworkReply *> NetworkScheduler::addRequest(const QString &host, std::function<QNetworkReply *(QNetworkAccessManager *)> &&request)
+CancelableFuture<QNetworkReply *>
+NetworkScheduler::addRequest(const QString &host, std::function<QNetworkReply *(QNetworkAccessManager *)> &&request)
 {
     auto promise = PromiseSP<QNetworkReply *>::create();
-    promise->future()->flatMap([this, host](QNetworkReply *reply) {
-        auto checker = PromiseSP<bool>::create();
-        QObject::connect(reply, &QNetworkReply::finished, reply, [checker](){checker->success(true);});
-        QObject::connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), reply, [checker](){checker->success(true);});
-        QObject::connect(reply, &QNetworkReply::sslErrors, reply, [checker](){checker->success(true);});
-        return checker->future();
-    })->onSuccess([this, host](bool) {
-        decreaseUsage(host);
-        schedule();
-    });
+    promise->future()
+        ->flatMap([this, host](QNetworkReply *reply) {
+            auto checker = PromiseSP<bool>::create();
+            QObject::connect(reply, &QNetworkReply::finished, reply, [checker]() { checker->success(true); });
+            QObject::connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), reply,
+                             [checker]() { checker->success(true); });
+            QObject::connect(reply, &QNetworkReply::sslErrors, reply, [checker]() { checker->success(true); });
+            return checker->future();
+        })
+        ->onSuccess([this, host](bool) {
+            decreaseUsage(host);
+            schedule();
+        });
 
     requestsLock.lock();
     qCDebug(proofNetworkExtraLog) << "Adding request for" << host << "with current usage =" << usages.value(host, 0);
     requests.emplace_back(host, [this, host, request, promise]() {
         if (promise->filled()) {
-            qCDebug(proofNetworkExtraLog) << "Request for" << host << "was ready to be sent, but is already canceled, skipping it";
+            qCDebug(proofNetworkExtraLog)
+                << "Request for" << host << "was ready to be sent, but is already canceled, skipping it";
             decreaseUsage(host);
             return;
         }

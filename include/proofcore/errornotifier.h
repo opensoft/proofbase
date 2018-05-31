@@ -1,8 +1,8 @@
 #ifndef PROOF_ERRORNOTIFIER_H
 #define PROOF_ERRORNOTIFIER_H
 
-#include "proofcore/proofobject.h"
 #include "proofcore/proofcore_global.h"
+#include "proofcore/proofobject.h"
 
 namespace Proof {
 
@@ -13,7 +13,8 @@ class PROOF_CORE_EXPORT ErrorNotifier : public ProofObject // clazy:exclude=ctor
     Q_OBJECT
     Q_DECLARE_PRIVATE(ErrorNotifier)
 public:
-    enum class Severity {
+    enum class Severity
+    {
         Warning,
         Error,
         Critical
@@ -24,19 +25,19 @@ public:
 
     //Will not register same handler type twice
     //In case of trying to register same handler type will replace old one
-    template<class Handler>
+    template <class Handler>
     void registerHandler(Handler *handler)
     {
         registerHandler(Handler::id(), handler);
     }
 
-    template<class Handler>
+    template <class Handler>
     void unregisterHandler()
     {
         unregisterHandler(Handler::id());
     }
 
-    template<class Handler>
+    template <class Handler>
     Handler *handler()
     {
         return static_cast<Handler *>(handler(Handler::id()));

@@ -1,8 +1,9 @@
 #include "emailnotificationhandler.h"
 
+#include "smtpclient.h"
+
 #include "proofcore/abstractnotificationhandler_p.h"
 #include "proofcore/proofglobal.h"
-#include "smtpclient.h"
 
 #include <QDateTime>
 #include <QNetworkInterface>
@@ -27,7 +28,8 @@ class EmailNotificationHandlerPrivate : public AbstractNotificationHandlerPrivat
 
 using namespace Proof;
 
-EmailNotificationHandler::EmailNotificationHandler(const SmtpClientSP &smtpClient, const QString &from, const QStringList &to, const QString &appId)
+EmailNotificationHandler::EmailNotificationHandler(const SmtpClientSP &smtpClient, const QString &from,
+                                                   const QStringList &to, const QString &appId)
     : AbstractNotificationHandler(*new EmailNotificationHandlerPrivate, appId)
 {
     Q_D(EmailNotificationHandler);
@@ -43,13 +45,14 @@ void EmailNotificationHandler::notify(const QString &message, ErrorNotifier::Sev
     if (severity == ErrorNotifier::Severity::Warning)
         return;
     if (!packId.isEmpty()) {
-        if (d->packTimestamps.contains(packId) && d->packTimestamps[packId].msecsTo(QDateTime::currentDateTime()) < SAME_PACK_TIMEOUT)
+        if (d->packTimestamps.contains(packId)
+            && d->packTimestamps[packId].msecsTo(QDateTime::currentDateTime()) < SAME_PACK_TIMEOUT)
             return;
         d->packTimestamps[packId] = QDateTime::currentDateTime();
     }
 
     QString severityName;
-    switch(severity) {
+    switch (severity) {
     case ErrorNotifier::Severity::Error:
         severityName = QStringLiteral("Error");
         break;
@@ -84,14 +87,9 @@ void EmailNotificationHandler::notify(const QString &message, ErrorNotifier::Sev
                                   "IP: %6\n"
                                   "Time: %7\n\n"
                                   "%8")
-            .arg(qApp->applicationName(),
-                 d->appId,
-                 qApp->applicationVersion(),
-                 Proof::proofVersion(),
-                 QSysInfo::prettyProductName(),
-                 ipsList.join(QStringLiteral("; ")),
-                 QDateTime::currentDateTime().toString(Qt::ISODate),
-                 message);
+                              .arg(qApp->applicationName(), d->appId, qApp->applicationVersion(), Proof::proofVersion(),
+                                   QSysInfo::prettyProductName(), ipsList.join(QStringLiteral("; ")),
+                                   QDateTime::currentDateTime().toString(Qt::ISODate), message);
     d->smtpClient->sendTextMail(subject, fullMessage, d->from, d->to);
 }
 
@@ -99,4 +97,3 @@ QString EmailNotificationHandler::id()
 {
     return QStringLiteral("EmailNotificationHandler");
 }
-

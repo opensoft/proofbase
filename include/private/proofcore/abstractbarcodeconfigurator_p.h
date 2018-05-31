@@ -17,6 +17,6 @@ public:
     virtual QString name() const = 0;
     virtual void handleCommand(const QJsonObject &command) = 0;
 };
-}
+} // namespace Proof
 
 #endif // ABSTRACTBARCODERCONFIGURATOR_H

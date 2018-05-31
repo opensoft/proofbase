@@ -1,12 +1,14 @@
 #ifndef QABSTRACTAMQPCLIENT_P_H
 #define QABSTRACTAMQPCLIENT_P_H
 
-#include "proofcore/proofobject_p.h"
-#include "proofnetwork/proofnetwork_global.h"
 #include "abstractamqpclient.h"
+
+#include "proofcore/proofobject_p.h"
+
 #include "proofnetwork/3rdparty/qamqp/qamqpclient.h"
-#include "proofnetwork/3rdparty/qamqp/qamqpqueue.h"
 #include "proofnetwork/3rdparty/qamqp/qamqpmessage.h"
+#include "proofnetwork/3rdparty/qamqp/qamqpqueue.h"
+#include "proofnetwork/proofnetwork_global.h"
 
 namespace Proof {
 
@@ -23,5 +25,5 @@ public:
     int autoReconnectionTries = 0;
 };
 
-}
+} // namespace Proof
 #endif // QABSTRACTAMQPCLIENT_P_H

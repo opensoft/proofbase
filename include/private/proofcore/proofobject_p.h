@@ -5,10 +5,10 @@
 
 #include <QtGlobal>
 
-#include <atomic>
-#include <tuple>
-#include <functional>
 #include <algorithm>
+#include <atomic>
+#include <functional>
+#include <tuple>
 
 namespace Proof {
 class ProofObject;
@@ -23,7 +23,7 @@ public:
     bool isDirtyItself() const;
     void setDirty(bool arg);
 
-    template<class... Children>
+    template <class... Children>
     void registerChildren(const Children &... children)
     {
         std::tuple<const Children *...> childrenPointers(&children...);
@@ -38,38 +38,36 @@ private:
     ProofObjectPrivate(const ProofObjectPrivate &&other) = delete;
     ProofObjectPrivate &operator=(const ProofObjectPrivate &&other) = delete;
 
-    template<class T>
+    template <class T>
     bool isDirty(const QSharedPointer<T> &child)
     {
         return child.data()->isDirty();
     }
 
-    template<class Container>
+    template <class Container>
     bool isDirty(const Container &container)
     {
         return std::any_of(container.begin(), container.end(),
                            [this](decltype(*container.begin()) child) { return isDirty(child); });
     }
 
-    template<std::size_t N, class Tuple>
-    typename std::enable_if<(N != std::tuple_size<Tuple>::value - 1), bool>::type
-    isDirty(const Tuple &tuple)
+    template <std::size_t N, class Tuple>
+    typename std::enable_if<(N != std::tuple_size<Tuple>::value - 1), bool>::type isDirty(const Tuple &tuple)
     {
         return isDirty(*std::get<N>(tuple)) || isDirty<N + 1>(tuple);
     }
 
-    template<std::size_t N, class Tuple>
-    typename std::enable_if<(N == std::tuple_size<Tuple>::value - 1), bool>::type
-    isDirty(const Tuple &tuple)
+    template <std::size_t N, class Tuple>
+    typename std::enable_if<(N == std::tuple_size<Tuple>::value - 1), bool>::type isDirty(const Tuple &tuple)
     {
         return isDirty(*std::get<N>(tuple));
     }
 
-    QList<std::function<bool ()>> childrenDirtyCheckers;
-    mutable std::atomic<qulonglong> nextDelayedCallId {0};
+    QList<std::function<bool()>> childrenDirtyCheckers;
+    mutable std::atomic<qulonglong> nextDelayedCallId{0};
     static ProofObject *defaultInvoker;
     bool dirtyFlag = false;
 };
-}
+} // namespace Proof
 
 #endif // PROOFOBJECT_P_H

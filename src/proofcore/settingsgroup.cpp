@@ -19,7 +19,7 @@ class SettingsGroupPrivate : public ProofObjectPrivate
     QSet<QString> valuesNames;
     QSet<QString> groupsNames;
 };
-}
+} // namespace Proof
 
 using namespace Proof;
 
@@ -35,29 +35,27 @@ SettingsGroup::SettingsGroup(const QString &name, SettingsGroup *globalGroup, QO
         d->groupsNames = d->globalGroup->groups();
         connect(d->globalGroup, &Proof::SettingsGroup::valueChanged, this,
                 [this, d](const QStringList &key, const QVariant &value) {
-            // We don't care about sub values
-            if (key.count() > 1)
-                return;
-            // Add if changed, remove if deleted and doesn't exist in this group
-            bool emitNeeded = false;
-            if (value.isValid()) {
-                d->valuesNames << key.constFirst();
-                emitNeeded = !d->values.contains(key.constFirst());
-            } else if (!d->values.contains(key.constFirst())) {
-                d->valuesNames.remove(key.constFirst());
-                emitNeeded = true;
-            }
-            if (emitNeeded)
-                emit valueChanged(key, value, true);
-        });
-        connect(d->globalGroup, &Proof::SettingsGroup::groupAdded, this,
-                [this, d](const QString &groupName) {
+                    // We don't care about sub values
+                    if (key.count() > 1)
+                        return;
+                    // Add if changed, remove if deleted and doesn't exist in this group
+                    bool emitNeeded = false;
+                    if (value.isValid()) {
+                        d->valuesNames << key.constFirst();
+                        emitNeeded = !d->values.contains(key.constFirst());
+                    } else if (!d->values.contains(key.constFirst())) {
+                        d->valuesNames.remove(key.constFirst());
+                        emitNeeded = true;
+                    }
+                    if (emitNeeded)
+                        emit valueChanged(key, value, true);
+                });
+        connect(d->globalGroup, &Proof::SettingsGroup::groupAdded, this, [this, d](const QString &groupName) {
             d->groupsNames << groupName;
             if (!d->groups.contains(groupName))
                 emit groupAdded(groupName);
         });
-        connect(d->globalGroup, &Proof::SettingsGroup::groupRemoved, this,
-                [this, d](const QString &groupName) {
+        connect(d->globalGroup, &Proof::SettingsGroup::groupRemoved, this, [this, d](const QString &groupName) {
             if (!d->groups.contains(groupName)) {
                 d->groupsNames.remove(groupName);
                 emit groupRemoved(groupName);
@@ -69,8 +67,7 @@ SettingsGroup::SettingsGroup(const QString &name, SettingsGroup *globalGroup, QO
 }
 
 SettingsGroup::~SettingsGroup()
-{
-}
+{}
 
 QSet<QString> SettingsGroup::groups() const
 {
@@ -89,10 +86,9 @@ SettingsGroup *SettingsGroup::group(const QString &groupName, Settings::NotFound
     Q_D(SettingsGroup);
     SettingsGroup *result = d->groups.value(groupName, nullptr);
     if (!result && d->globalGroup) {
-        result = d->globalGroup->group(groupName,
-                                       notFoundPolicy == Settings::NotFoundPolicy::AddGlobal
-                                       ? Settings::NotFoundPolicy::Add
-                                       : Settings::NotFoundPolicy::DoNothing);
+        result = d->globalGroup->group(groupName, notFoundPolicy == Settings::NotFoundPolicy::AddGlobal
+                                                      ? Settings::NotFoundPolicy::Add
+                                                      : Settings::NotFoundPolicy::DoNothing);
         if (result)
             result = addGroup(groupName);
     }
@@ -126,18 +122,17 @@ SettingsGroup *SettingsGroup::addGroup(const QString &groupName)
     if (!newGroup) {
         bool globalMatchingGroupWillBeCreated = d->globalGroup && !d->globalGroup->group(groupName);
         newGroup = new SettingsGroup(groupName,
-                                     d->globalGroup
-                                     ? d->globalGroup->group(groupName, Settings::NotFoundPolicy::Add)
-                                     : nullptr,
+                                     d->globalGroup ? d->globalGroup->group(groupName, Settings::NotFoundPolicy::Add)
+                                                    : nullptr,
                                      this);
         d->groups[groupName] = newGroup;
         d->groupsNames << groupName;
-        connect(newGroup, &SettingsGroup::valueChanged,
-                this, [this, groupName](const QStringList &key, const QVariant &value, bool inherited) {
-            QStringList newKey {groupName};
-            newKey.append(key);
-            emit valueChanged(newKey, value, inherited);
-        });
+        connect(newGroup, &SettingsGroup::valueChanged, this,
+                [this, groupName](const QStringList &key, const QVariant &value, bool inherited) {
+                    QStringList newKey{groupName};
+                    newKey.append(key);
+                    emit valueChanged(newKey, value, inherited);
+                });
 
         // We don't need to emit this signal since it will be emitted by global group creation
         if (!globalMatchingGroupWillBeCreated)
@@ -166,14 +161,14 @@ void SettingsGroup::setValue(const QString &key, const QVariant &value, Settings
             if (!d->globalGroup || !d->globalGroup->values().contains(key))
                 d->valuesNames.remove(key);
         } else {
-            emitNeeded =!d->globalGroup || d->globalGroup->value(key) != value;
+            emitNeeded = !d->globalGroup || d->globalGroup->value(key) != value;
             d->valuesNames << key;
             d->values[key] = value;
         }
         if (emitNeeded)
             emit valueChanged({key}, value, false);
-        qCDebug(proofCoreSettingsLog) << "Group" << d->name << ": new value for key" << key
-                                      << "is" << value << "old value was" << oldValue;
+        qCDebug(proofCoreSettingsLog) << "Group" << d->name << ": new value for key" << key << "is" << value
+                                      << "old value was" << oldValue;
     }
 }
 
@@ -195,9 +190,8 @@ void SettingsGroup::deleteGroup(const QString &groupName, Settings::Storage stor
             groupToDelete->deleteGroup(toDelete);
 
         //if global group with this name was empty then we can safely remove it
-        if (d->globalGroup && d->globalGroup->group(groupName)
-                && !d->globalGroup->group(groupName)->values().count()
-                && !d->globalGroup->group(groupName)->groups().count()) {
+        if (d->globalGroup && d->globalGroup->group(groupName) && !d->globalGroup->group(groupName)->values().count()
+            && !d->globalGroup->group(groupName)->groups().count()) {
             d->globalGroup->deleteGroup(groupName);
         }
 

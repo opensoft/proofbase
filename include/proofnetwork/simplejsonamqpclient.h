@@ -17,6 +17,6 @@ public:
 signals:
     void messageReceived(const QJsonDocument &json, const QString &routingKey, const QHash<QString, QVariant> &headers);
 };
-}
+} // namespace Proof
 
 #endif // SIMPLEJSONAMQPCLIENT_H

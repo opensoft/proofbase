@@ -1,12 +1,13 @@
 #include "updatemanager.h"
-#include "proofcore/proofobject_p.h"
+
 #include "proofcore/errornotifier.h"
 #include "proofcore/helpers/versionhelper.h"
+#include "proofcore/proofobject_p.h"
 
 #include <QProcess>
-#include <QTimer>
-#include <QSet>
 #include <QRegExp>
+#include <QSet>
+#include <QTimer>
 
 namespace {
 class WorkerThread : public QThread // clazy:exclude=ctor-missing-parent-argument
@@ -15,26 +16,24 @@ class WorkerThread : public QThread // clazy:exclude=ctor-missing-parent-argumen
 public:
     explicit WorkerThread(Proof::UpdateManagerPrivate *updater);
 
-    template<class Method, class... Args>
+    template <class Method, class... Args>
     void callUpdater(Method method, Args... args);
 
-    template<class Method, class... Args>
+    template <class Method, class... Args>
     auto callUpdaterWithResult(Method method, Args &&... args)
-    -> decltype((std::declval<Proof::UpdateManagerPrivate&>().*method)(std::forward<Args>(args)...));
+        -> decltype((std::declval<Proof::UpdateManagerPrivate &>().*method)(std::forward<Args>(args)...));
 
 private:
-    template<class Result, class Method, class... Args>
-    typename std::enable_if<!std::is_same<Result, void>::value, Result>::type
-    doTheCall(Method method, Args &&... args);
+    template <class Result, class Method, class... Args>
+    typename std::enable_if<!std::is_same<Result, void>::value, Result>::type doTheCall(Method method, Args &&... args);
 
-    template<class Result, class Method, class... Args>
-    typename std::enable_if<std::is_same<Result, void>::value>::type
-    doTheCall(Method method, Args &&... args);
+    template <class Result, class Method, class... Args>
+    typename std::enable_if<std::is_same<Result, void>::value>::type doTheCall(Method method, Args &&... args);
 
 private:
     Proof::UpdateManagerPrivate *updater;
 };
-}
+} // namespace
 
 namespace Proof {
 class UpdateManagerPrivate : public ProofObjectPrivate
@@ -74,8 +73,7 @@ class UpdateManagerPrivate : public ProofObjectPrivate
 
 using namespace Proof;
 
-UpdateManager::UpdateManager(QObject *parent)
-    : ProofObject(*new UpdateManagerPrivate, parent)
+UpdateManager::UpdateManager(QObject *parent) : ProofObject(*new UpdateManagerPrivate, parent)
 {
     Q_D(UpdateManager);
     d->thread = new WorkerThread(d);
@@ -83,7 +81,7 @@ UpdateManager::UpdateManager(QObject *parent)
     d->timer->moveToThread(d->thread);
     d->timer->setTimerType(Qt::VeryCoarseTimer);
     d->timer->setInterval(60 * 60 * 1000); // 1 hour
-    connect(d->timer, &QTimer::timeout, d->timer, [d] {d->checkForUpdates();});
+    connect(d->timer, &QTimer::timeout, d->timer, [d] { d->checkForUpdates(); });
     d->thread->start();
 }
 
@@ -272,7 +270,8 @@ void UpdateManagerPrivate::checkForUpdates()
     if (aptSourcesListFilePath.isEmpty())
         updater->start("sudo -S apt-get update");
     else
-        updater->start(QString("sudo -S apt-get update -o Dir::Etc::sourcelist=\"%1\" -o Dir::Etc::sourceparts=\"-\"").arg(aptSourcesListFilePath));
+        updater->start(QString("sudo -S apt-get update -o Dir::Etc::sourcelist=\"%1\" -o Dir::Etc::sourceparts=\"-\"")
+                           .arg(aptSourcesListFilePath));
     updater->waitForStarted();
     if (updater->error() == QProcess::UnknownError) {
         bool errorSent = false;
@@ -280,7 +279,8 @@ void UpdateManagerPrivate::checkForUpdates()
             QByteArray data = updater->readAll().trimmed();
             if (data.contains("sudo") || data.contains("password for")) {
                 qCDebug(proofCoreUpdatesLog) << "apt-get update process asked for sudo password";
-                ErrorNotifier::instance()->notify(QString("Error occurred during looking for updates.\nApt-get update process asked for sudo password"));
+                ErrorNotifier::instance()->notify(QString(
+                    "Error occurred during looking for updates.\nApt-get update process asked for sudo password"));
                 errorSent = true;
                 updater->kill();
             }
@@ -288,13 +288,17 @@ void UpdateManagerPrivate::checkForUpdates()
         updater->waitForFinished(-1);
         qCDebug(proofCoreUpdatesLog) << "apt-get update process finished with code =" << updater->exitCode();
         if (updater->exitCode() && !errorSent) {
-            ErrorNotifier::instance()->notify(QString("Error occurred during looking for updates.\nApt-get process returned with exit code - %1.")
-                                         .arg(updater->exitCode()));
+            ErrorNotifier::instance()->notify(
+                QString("Error occurred during looking for updates.\nApt-get process returned with exit code - %1.")
+                    .arg(updater->exitCode()));
         }
     } else {
-        qCWarning(proofCoreUpdatesLog) << "apt-get update process couldn't be started" << updater->error() << updater->errorString();
-        ErrorNotifier::instance()->notify(QString("Error occurred during looking for updates.\nApt-get couldn't be started.\n%1 - %2")
-                                     .arg(updater->error()).arg(updater->errorString()));
+        qCWarning(proofCoreUpdatesLog) << "apt-get update process couldn't be started" << updater->error()
+                                       << updater->errorString();
+        ErrorNotifier::instance()->notify(
+            QString("Error occurred during looking for updates.\nApt-get couldn't be started.\n%1 - %2")
+                .arg(updater->error())
+                .arg(updater->errorString()));
     }
 
     QScopedPointer<QProcess> checker(new QProcess);
@@ -303,8 +307,9 @@ void UpdateManagerPrivate::checkForUpdates()
     if (checker->error() == QProcess::UnknownError) {
         checker->waitForFinished();
         if (checker->exitCode()) {
-            ErrorNotifier::instance()->notify(QString("Error occurred during looking for updates.\nApt-cache process returned with exit code - %1.")
-                                         .arg(checker->exitCode()));
+            ErrorNotifier::instance()->notify(
+                QString("Error occurred during looking for updates.\nApt-cache process returned with exit code - %1.")
+                    .arg(checker->exitCode()));
         }
         QList<QByteArray> lines = checker->readAll().trimmed().split('\n');
         QString version;
@@ -321,7 +326,8 @@ void UpdateManagerPrivate::checkForUpdates()
         int foundVersionMajor = splittedVersion[0].toInt();
         quint64 foundVersion = packVersion(splittedVersion);
         qCDebug(proofCoreUpdatesLog) << "Version found:" << QString("0x%1").arg(foundVersion, 16, 16, QLatin1Char('0'))
-                                     << "; Current version is:" << QString("0x%1").arg(currentVersion, 16, 16, QLatin1Char('0'));
+                                     << "; Current version is:"
+                                     << QString("0x%1").arg(currentVersion, 16, 16, QLatin1Char('0'));
         if (foundVersion > currentVersion) {
             if (foundVersionMajor > currentVersionMajor)
                 qCDebug(proofCoreUpdatesLog) << "Manual update needed because of different major version";
@@ -333,7 +339,8 @@ void UpdateManagerPrivate::checkForUpdates()
                 installVersion("", "");
         }
     } else {
-        qCWarning(proofCoreUpdatesLog) << "apt-get process couldn't be started" << checker->error() << checker->errorString();
+        qCWarning(proofCoreUpdatesLog) << "apt-get process couldn't be started" << checker->error()
+                                       << checker->errorString();
     }
 #endif
 }
@@ -348,12 +355,13 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
     QString package = isUpdate ? packageName : QString("%1=%2").arg(packageName, version);
     auto successSignal = isUpdate ? &UpdateManager::updateSucceeded : &UpdateManager::installationSucceeded;
     auto failSignal = isUpdate ? &UpdateManager::updateFailed : &UpdateManager::installationFailed;
-    updater->start(QString("sudo -S -k apt-get --quiet --assume-yes --force-yes --allow-unauthenticated install %1").arg(package));
+    updater->start(
+        QString("sudo -S -k apt-get --quiet --assume-yes --force-yes --allow-unauthenticated install %1").arg(package));
     updater->waitForStarted();
     if (updater->error() == QProcess::UnknownError) {
         if (!updater->waitForReadyRead()) {
             qCWarning(proofCoreUpdatesLog) << "No answer from apt-get. Returning";
-            emit (q->*failSignal)();
+            emit(q->*failSignal)();
             return;
         }
         QByteArray readBuffer;
@@ -366,7 +374,7 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
             updater->write(QString("%1\n").arg(password).toLatin1());
             if (!updater->waitForReadyRead()) {
                 qCWarning(proofCoreUpdatesLog) << "No answer from apt-get. Returning";
-                emit (q->*failSignal)();
+                emit(q->*failSignal)();
                 return;
             }
 
@@ -376,12 +384,12 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
 
             if (currentRead.contains("is not in the sudoers")) {
                 qCWarning(proofCoreUpdatesLog) << "User not in sudoers list; log:\n" << readBuffer;
-                emit (q->*failSignal)();
+                emit(q->*failSignal)();
                 return;
             }
             if (currentRead.contains("Sorry, try again")) {
                 qCWarning(proofCoreUpdatesLog) << "Sudo rejected the password; log:\n" << readBuffer;
-                emit (q->*failSignal)();
+                emit(q->*failSignal)();
                 return;
             }
         }
@@ -390,9 +398,9 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
         qCDebug(proofCoreUpdatesLog) << "Updated with exitcode =" << updater->exitCode() << "; log:\n" << readBuffer;
         if (updater->exitCode()) {
             ErrorNotifier::instance()->notify(QString("Error occurred during update.\n\n%1").arg(readBuffer.constData()));
-            emit (q->*failSignal)();
+            emit(q->*failSignal)();
         } else {
-            emit (q->*successSignal)();
+            emit(q->*successSignal)();
             if (version.isEmpty())
                 version = unpackVersionToString(newVersion);
             if (packVersion(version) >= newVersion)
@@ -400,7 +408,8 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
             setCurrentVersion(version);
         }
     } else {
-        qCWarning(proofCoreUpdatesLog) << "apt-get process couldn't be started" << updater->error() << updater->errorString();
+        qCWarning(proofCoreUpdatesLog) << "apt-get process couldn't be started" << updater->error()
+                                       << updater->errorString();
     }
 #else
     Q_UNUSED(version)
@@ -447,7 +456,8 @@ void UpdateManagerPrivate::setCurrentVersion(const QString &arg)
     if (currentVersion != version) {
         currentVersionMajor = splittedVersion[0].toInt();
         currentVersion = version;
-        qCDebug(proofCoreUpdatesLog) << "Current version:" << QStringLiteral("0x%1").arg(currentVersion, 16, 16, QLatin1Char('0'));
+        qCDebug(proofCoreUpdatesLog) << "Current version:"
+                                     << QStringLiteral("0x%1").arg(currentVersion, 16, 16, QLatin1Char('0'));
         emit q->currentVersionChanged(q->currentVersion());
         updateTimerState();
     }
@@ -485,7 +495,7 @@ void UpdateManagerPrivate::updateTimerState()
 {
     if (started && currentVersion != 0 && !packageName.isEmpty()) {
         if (!timer->isActive()) {
-            QTimer::singleShot(1, thread, [this](){checkForUpdates();});
+            QTimer::singleShot(1, thread, [this]() { checkForUpdates(); });
             timer->start();
         }
     } else {
@@ -493,45 +503,43 @@ void UpdateManagerPrivate::updateTimerState()
     }
 }
 
-WorkerThread::WorkerThread(UpdateManagerPrivate *updater)
-    : updater(updater)
+WorkerThread::WorkerThread(UpdateManagerPrivate *updater) : updater(updater)
 {
     moveToThread(this);
 }
 
-template<class Method, class... Args>
+template <class Method, class... Args>
 void WorkerThread::callUpdater(Method method, Args... args)
 {
     if (!ProofObject::call(this, &WorkerThread::callUpdater<Method, Args...>, method, args...))
         (updater->*method)(args...);
 }
 
-template<class Method, class... Args>
+template <class Method, class... Args>
 auto WorkerThread::callUpdaterWithResult(Method method, Args &&... args)
--> decltype((std::declval<Proof::UpdateManagerPrivate&>().*method)(std::forward<Args>(args)...))
+    -> decltype((std::declval<Proof::UpdateManagerPrivate &>().*method)(std::forward<Args>(args)...))
 {
-    using Result = decltype((std::declval<Proof::UpdateManagerPrivate&>().*method)(std::forward<Args>(args)...));
+    using Result = decltype((std::declval<Proof::UpdateManagerPrivate &>().*method)(std::forward<Args>(args)...));
     return doTheCall<Result>(method, std::forward<Args>(args)...);
 }
 
-template<class Result, class Method, class... Args>
-typename std::enable_if<!std::is_same<Result, void>::value, Result>::type
-WorkerThread::doTheCall(Method method, Args &&... args)
+template <class Result, class Method, class... Args>
+typename std::enable_if<!std::is_same<Result, void>::value, Result>::type WorkerThread::doTheCall(Method method,
+                                                                                                  Args &&... args)
 {
     Result result;
-    if (!ProofObject::call(this, &WorkerThread::doTheCall<Result, Method, Args &&...>,
-                           Call::Block, result, method, std::forward<Args>(args)...)) {
+    if (!ProofObject::call(this, &WorkerThread::doTheCall<Result, Method, Args &&...>, Call::Block, result, method,
+                           std::forward<Args>(args)...)) {
         result = (updater->*method)(std::forward<Args>(args)...);
     }
     return result;
 }
 
-template<class Result, class Method, class... Args>
-typename std::enable_if<std::is_same<Result, void>::value>::type
-WorkerThread::doTheCall(Method method, Args &&... args)
+template <class Result, class Method, class... Args>
+typename std::enable_if<std::is_same<Result, void>::value>::type WorkerThread::doTheCall(Method method, Args &&... args)
 {
-    if (!ProofObject::call(this, &WorkerThread::doTheCall<Result, Method, Args &&...>,
-                           Call::Block, method, std::forward<Args>(args)...)) {
+    if (!ProofObject::call(this, &WorkerThread::doTheCall<Result, Method, Args &&...>, Call::Block, method,
+                           std::forward<Args>(args)...)) {
         (updater->*method)(std::forward<Args>(args)...);
     }
 }

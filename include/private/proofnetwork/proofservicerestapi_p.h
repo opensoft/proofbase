@@ -1,10 +1,11 @@
 #ifndef PROOFSERVICERESTAPI_P_H
 #define PROOFSERVICERESTAPI_P_H
 
-#include "proofnetwork/baserestapi_p.h"
-#include "proofnetwork/proofservicerestapi.h"
 #include "proofcore/errormessagesregistry_p.h"
+
+#include "proofnetwork/baserestapi_p.h"
 #include "proofnetwork/proofnetwork_global.h"
+#include "proofnetwork/proofservicerestapi.h"
 
 namespace Proof {
 namespace NetworkServices {
@@ -19,10 +20,8 @@ public:
     std::function<bool(const QByteArray &)> boolResultUnmarshaller();
 
     QSharedPointer<ErrorMessagesRegistry> errorsRegistry;
-
 };
 } // namespace NetworkServices
 } // namespace Proof
 
 #endif // PROOFSERVICERESTAPI_P_H
-

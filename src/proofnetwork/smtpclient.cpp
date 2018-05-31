@@ -1,19 +1,19 @@
 #include "smtpclient.h"
 
+#include "proofcore/future.h"
 #include "proofcore/proofobject_p.h"
 #include "proofcore/tasks.h"
-#include "proofcore/future.h"
 
-#include <QTcpSocket>
 #include <QSslSocket>
+#include <QTcpSocket>
 
 namespace Proof {
 class SmtpClientPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(SmtpClient)
 
-    bool sendTextMail(const QString &subject, const QString &body, const QString &from,
-                      const QStringList &to, const QStringList &cc, const QStringList &bcc);
+    bool sendTextMail(const QString &subject, const QString &body, const QString &from, const QStringList &to,
+                      const QStringList &cc, const QStringList &bcc);
 
     QString userName;
     QString password;
@@ -21,15 +21,12 @@ class SmtpClientPrivate : public ProofObjectPrivate
     int port = 25;
     SmtpClient::ConnectionType connectionType = SmtpClient::ConnectionType::Plain;
 };
-}
+} // namespace Proof
 
 using namespace Proof;
 
-SmtpClient::SmtpClient()
-    : ProofObject(*new SmtpClientPrivate)
-{
-
-}
+SmtpClient::SmtpClient() : ProofObject(*new SmtpClientPrivate)
+{}
 
 QString SmtpClient::userName() const
 {
@@ -105,13 +102,11 @@ void SmtpClient::setConnectionType(SmtpClient::ConnectionType arg)
     }
 }
 
-void SmtpClient::sendTextMail(const QString &subject, const QString &body, const QString &from,
-                              const QStringList &to, const QStringList &cc, const QStringList &bcc)
+void SmtpClient::sendTextMail(const QString &subject, const QString &body, const QString &from, const QStringList &to,
+                              const QStringList &cc, const QStringList &bcc)
 {
     Q_D(SmtpClient);
-    tasks::run([d, subject, body, from, to, cc, bcc]() {
-        d->sendTextMail(subject, body, from, to, cc, bcc);
-    });
+    tasks::run([d, subject, body, from, to, cc, bcc]() { d->sendTextMail(subject, body, from, to, cc, bcc); });
 }
 
 bool SmtpClientPrivate::sendTextMail(const QString &subject, const QString &body, const QString &from,
@@ -166,13 +161,27 @@ bool SmtpClientPrivate::sendTextMail(const QString &subject, const QString &body
     message.replace("\n", "\r\n");
     message.replace("\r\n.\r\n", "\r\n..\r\n");
 
-    enum class SmtpStates {Init, Tls, Auth, User, Pass, Mail, Rcpt, Data, Body, Quit, Close};
+    enum class SmtpStates
+    {
+        Init,
+        Tls,
+        Auth,
+        User,
+        Pass,
+        Mail,
+        Rcpt,
+        Data,
+        Body,
+        Quit,
+        Close
+    };
 
     SmtpStates state = SmtpStates::Init;
     bool result = false;
 
     QTcpSocket *socket = (connectionType == SmtpClient::ConnectionType::Plain) ? new QTcpSocket : new QSslSocket;
-    std::function<bool()> readyReadCallback = [this, &socket, &state, message, senderEmail, domain, userNameBase64, passwordBase64, &mutableTo, &result]() {
+    std::function<bool()> readyReadCallback = [this, &socket, &state, message, senderEmail, domain, userNameBase64,
+                                               passwordBase64, &mutableTo, &result]() {
         QString reply = socket->readAll();
         int stateReply = reply.leftRef(3).toInt();
         QByteArray toSend;
@@ -223,7 +232,8 @@ bool SmtpClientPrivate::sendTextMail(const QString &subject, const QString &body
             socket->close();
             return true;
         } else {
-            qCDebug(proofNetworkMiscLog) << "Unknown state happened during email sending:" << static_cast<int>(state) << ". Server reply:" << reply;
+            qCDebug(proofNetworkMiscLog) << "Unknown state happened during email sending:" << static_cast<int>(state)
+                                         << ". Server reply:" << reply;
             state = SmtpStates::Close;
             socket->close();
             return true;
@@ -234,7 +244,8 @@ bool SmtpClientPrivate::sendTextMail(const QString &subject, const QString &body
     };
 
     std::function<bool()> errorCallback = [&socket]() {
-        qCDebug(proofNetworkMiscLog) << "Error occurred during email sending:" << socket->error() << socket->errorString();
+        qCDebug(proofNetworkMiscLog) << "Error occurred during email sending:" << socket->error()
+                                     << socket->errorString();
         socket->close();
         return true;
     };
@@ -246,7 +257,9 @@ bool SmtpClientPrivate::sendTextMail(const QString &subject, const QString &body
         return true;
     };
 
-    tasks::addSignalWaiter(socket, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), errorCallback);
+    tasks::addSignalWaiter(socket,
+                           static_cast<void (QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),
+                           errorCallback);
     tasks::addSignalWaiter(socket, &QTcpSocket::readyRead, readyReadCallback);
     switch (connectionType) {
     case SmtpClient::ConnectionType::Ssl:
@@ -259,7 +272,10 @@ bool SmtpClientPrivate::sendTextMail(const QString &subject, const QString &body
     }
     tasks::fireSignalWaiters();
     while (socket->isOpen()) {
-        tasks::addSignalWaiter(socket, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), errorCallback);
+        tasks::addSignalWaiter(socket,
+                               static_cast<void (QAbstractSocket::*)(QAbstractSocket::SocketError)>(
+                                   &QAbstractSocket::error),
+                               errorCallback);
         if (connectionType == SmtpClient::ConnectionType::StartTls && state == SmtpStates::Tls)
             tasks::addSignalWaiter(static_cast<QSslSocket *>(socket), &QSslSocket::encrypted, startTlsEncryptedCallback);
         tasks::addSignalWaiter(socket, &QTcpSocket::readyRead, readyReadCallback);
@@ -268,4 +284,3 @@ bool SmtpClientPrivate::sendTextMail(const QString &subject, const QString &body
 
     return result;
 }
-

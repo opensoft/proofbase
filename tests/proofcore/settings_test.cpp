@@ -1,26 +1,24 @@
 // clazy:skip
 
-#include "gtest/test_global.h"
-
 #include "proofcore/settings.h"
 #include "proofcore/settingsgroup.h"
 
-#include <QFile>
-#include <QDir>
-#include <QFileInfo>
 #include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QSignalSpy>
+
+#include "gtest/test_global.h"
 
 using namespace Proof;
 
 using testing::Test;
 
-class SettingsTest: public Test
+class SettingsTest : public Test
 {
 public:
-    SettingsTest()
-    {
-    }
+    SettingsTest() {}
 
 protected:
     void SetUp() override
@@ -46,7 +44,7 @@ protected:
             QFileInfo settingsFile(Settings::filePath(Settings::Storage::Local));
             settingsFile.absoluteDir().mkpath(".");
             QFile output(settingsFile.absoluteFilePath());
-            if (!output.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Text))
+            if (!output.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
                 return;
             QByteArray data = input.readAll();
             output.write(data);
@@ -59,7 +57,7 @@ protected:
             QFileInfo settingsFile(Settings::filePath(Settings::Storage::Global));
             settingsFile.absoluteDir().mkpath(".");
             QFile output(settingsFile.absoluteFilePath());
-            if (!output.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Text))
+            if (!output.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
                 return;
             QByteArray data = input.readAll();
             output.write(data);
@@ -199,14 +197,10 @@ TEST_F(SettingsTest, valueNotFoundPolicy)
     settings.sync();
 
     {
-        QStringList referenceList {
-            "[general]",
-            "non_existent_attribute1=42",
-            "non_existent_attribute=42"
-        };
+        QStringList referenceList{"[general]", "non_existent_attribute1=42", "non_existent_attribute=42"};
 
         QFile settingsFile(Settings::filePath(Settings::Storage::Local));
-        settingsFile.open(QIODevice::ReadOnly|QIODevice::Text);
+        settingsFile.open(QIODevice::ReadOnly | QIODevice::Text);
         QString fromFile = QString(settingsFile.readAll()).toLower();
         fromFile.remove(" ");
         QStringList listFromFile = fromFile.split("\n", QString::SkipEmptyParts);
@@ -218,13 +212,10 @@ TEST_F(SettingsTest, valueNotFoundPolicy)
     }
 
     {
-        QStringList referenceList {
-            "[general]",
-            "non_existent_attribute2=42"
-        };
+        QStringList referenceList{"[general]", "non_existent_attribute2=42"};
 
         QFile settingsFile(Settings::filePath(Settings::Storage::Global));
-        settingsFile.open(QIODevice::ReadOnly|QIODevice::Text);
+        settingsFile.open(QIODevice::ReadOnly | QIODevice::Text);
         QString fromFile = QString(settingsFile.readAll()).toLower();
         fromFile.remove(" ");
         QStringList listFromFile = fromFile.split("\n", QString::SkipEmptyParts);
@@ -279,15 +270,11 @@ TEST_F(SettingsTest, write)
     settings.sync();
 
     {
-        QStringList referenceList {
-            "[another]",
-            "[general]",
-            "another_global_attribute=abcde",
-            "main_global_attribute=edcba"
-        };
+        QStringList referenceList{"[another]", "[general]", "another_global_attribute=abcde",
+                                  "main_global_attribute=edcba"};
 
         QFile settingsFile(Settings::filePath(Settings::Storage::Global));
-        settingsFile.open(QIODevice::ReadOnly|QIODevice::Text);
+        settingsFile.open(QIODevice::ReadOnly | QIODevice::Text);
 
         QString fromFile = QString(settingsFile.readAll()).toLower();
         fromFile.remove(" ");
@@ -300,16 +287,11 @@ TEST_F(SettingsTest, write)
     }
 
     {
-        QStringList referenceList {
-            "[another]",
-            "[general]",
-            "another_first_attribute=abc",
-            "main_first_attribute=true",
-            "main_second_attribute=42"
-        };
+        QStringList referenceList{"[another]", "[general]", "another_first_attribute=abc", "main_first_attribute=true",
+                                  "main_second_attribute=42"};
 
         QFile settingsFile(Settings::filePath(Settings::Storage::Local));
-        settingsFile.open(QIODevice::ReadOnly|QIODevice::Text);
+        settingsFile.open(QIODevice::ReadOnly | QIODevice::Text);
 
         QString fromFile = QString(settingsFile.readAll()).toLower();
         fromFile.remove(" ");

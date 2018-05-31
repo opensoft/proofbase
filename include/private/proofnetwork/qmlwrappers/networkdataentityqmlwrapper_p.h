@@ -2,13 +2,13 @@
 #define NETWORKDATAENTITYQMLWRAPPER_P_H
 
 #include "proofcore/proofobject_p.h"
+
 #include "proofnetwork/networkdataentity.h"
 #include "proofnetwork/proofnetwork_global.h"
-
 #include "proofnetwork/qmlwrappers/networkdataentityqmlwrapper.h"
 
-#include <QtGlobal>
 #include <QSharedPointer>
+#include <QtGlobal>
 
 namespace Proof {
 class PROOF_NETWORK_EXPORT NetworkDataEntityQmlWrapperPrivate : public ProofObjectPrivate
@@ -19,19 +19,19 @@ public:
     QSharedPointer<NetworkDataEntity> dataEntity;
     QObject *lambdaConnectContext = nullptr;
 
-    template<class T>
+    template <class T>
     QSharedPointer<T> entity()
     {
         return qSharedPointerCast<T>(dataEntity);
     }
 
-    template<class T>
+    template <class T>
     const QSharedPointer<T> entity() const
     {
         return qSharedPointerCast<T>(dataEntity);
     }
 };
 
-}
+} // namespace Proof
 
 #endif // NETWORKDATAENTITYQMLWRAPPER_P_H

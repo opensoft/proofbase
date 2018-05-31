@@ -1,9 +1,9 @@
 #ifndef SETTINGSGROUP_H
 #define SETTINGSGROUP_H
 
-#include "proofcore/settings.h"
-#include "proofcore/proofobject.h"
 #include "proofcore/proofcore_global.h"
+#include "proofcore/proofobject.h"
+#include "proofcore/settings.h"
 
 #include <QVariant>
 
@@ -46,6 +46,6 @@ private:
     ~SettingsGroup();
 };
 
-}
+} // namespace Proof
 
 #endif // SETTINGSGROUP_H

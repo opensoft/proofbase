@@ -2,42 +2,42 @@
 #define NETWORKDATAENTITYQMLWRAPPER_H
 
 #include "proofcore/proofobject.h"
+
 #include "proofnetwork/proofnetwork_global.h"
 
 #include <QSharedPointer>
 
 #define PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(Nde, Type, Getter) \
-    Type Nde##QmlWrapper::Getter() const \
-    { \
-        Q_D(const Nde##QmlWrapper); \
+    Type Nde##QmlWrapper::Getter() const                     \
+    {                                                        \
+        Q_D(const Nde##QmlWrapper);                          \
         const QSharedPointer<Nde> entity = d->entity<Nde>(); \
-        Q_ASSERT(entity); \
-        return entity->Getter(); \
+        Q_ASSERT(entity);                                    \
+        return entity->Getter();                             \
     }
 
 #define PROOF_NDE_WRAPPER_PROPERTY_IMPL_RW(Nde, Type, Getter, Setter) \
-    PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(Nde, Type, Getter) \
-    void Nde##QmlWrapper::Setter(const Type &arg) \
-    { \
-        Q_D(Nde##QmlWrapper); \
-        QSharedPointer<Nde> entity = d->entity<Nde>(); \
-        Q_ASSERT(entity); \
-        if (arg != entity->Getter()) { \
-            entity->Setter(arg); \
-            emit Getter##Changed(arg); \
-        } \
+    PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(Nde, Type, Getter)              \
+    void Nde##QmlWrapper::Setter(const Type &arg)                     \
+    {                                                                 \
+        Q_D(Nde##QmlWrapper);                                         \
+        QSharedPointer<Nde> entity = d->entity<Nde>();                \
+        Q_ASSERT(entity);                                             \
+        if (arg != entity->Getter()) {                                \
+            entity->Setter(arg);                                      \
+            emit Getter##Changed(arg);                                \
+        }                                                             \
     }
 
-#define PROOF_NDE_WRAPPER_TOOLS(Nde) \
-    Proof::NetworkDataEntityQmlWrapper *clone() const override;
+#define PROOF_NDE_WRAPPER_TOOLS(Nde) Proof::NetworkDataEntityQmlWrapper *clone() const override;
 
-#define PROOF_NDE_WRAPPER_TOOLS_IMPL(Nde) \
+#define PROOF_NDE_WRAPPER_TOOLS_IMPL(Nde)                              \
     Proof::NetworkDataEntityQmlWrapper *Nde##QmlWrapper::clone() const \
-    { \
-        Q_D(const Nde##QmlWrapper); \
-        const QSharedPointer<Nde> entity = d->entity<Nde>(); \
-        Q_ASSERT(entity); \
-        return new Nde##QmlWrapper(entity); \
+    {                                                                  \
+        Q_D(const Nde##QmlWrapper);                                    \
+        const QSharedPointer<Nde> entity = d->entity<Nde>();           \
+        Q_ASSERT(entity);                                              \
+        return new Nde##QmlWrapper(entity);                            \
     }
 
 namespace Proof {
@@ -52,13 +52,13 @@ public:
     Q_INVOKABLE virtual Proof::NetworkDataEntityQmlWrapper *clone() const = 0;
     bool isFetched() const;
 
-    template<class T>
+    template <class T>
     QSharedPointer<T> entity()
     {
         return qSharedPointerCast<T>(entity());
     }
 
-    template<class T>
+    template <class T>
     const QSharedPointer<T> entity() const
     {
         return qSharedPointerCast<T>(entity());
@@ -79,6 +79,6 @@ protected:
 
     virtual void setupEntity(const QSharedPointer<NetworkDataEntity> &old = QSharedPointer<NetworkDataEntity>()) = 0;
 };
-}
+} // namespace Proof
 
 #endif // NETWORKDATAENTITYQMLWRAPPER_H

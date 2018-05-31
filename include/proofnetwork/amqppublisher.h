@@ -1,11 +1,10 @@
 #ifndef PROOF_AMQPPUBLISHER_H
 #define PROOF_AMQPPUBLISHER_H
 
-#include "proofnetwork/abstractamqpclient.h"
-#include "proofnetwork/proofnetwork_types.h"
-#include "proofnetwork/proofnetwork_global.h"
-
 #include "proofnetwork/3rdparty/qamqp/qamqpexchange.h"
+#include "proofnetwork/abstractamqpclient.h"
+#include "proofnetwork/proofnetwork_global.h"
+#include "proofnetwork/proofnetwork_types.h"
 
 #include <QSslConfiguration>
 
@@ -28,7 +27,8 @@ public:
     QAmqpExchange::ExchangeOptions exchangeOptions() const;
 
     bool createExchangeIfNotExists() const;
-    void setCreateExchangeIfNotExists(bool createExchangeIfNotExists, QAmqpExchange::ExchangeOptions options = {QAmqpExchange::Durable});
+    void setCreateExchangeIfNotExists(bool createExchangeIfNotExists,
+                                      QAmqpExchange::ExchangeOptions options = {QAmqpExchange::Durable});
 
 signals:
     void messagePublished(qulonglong id);

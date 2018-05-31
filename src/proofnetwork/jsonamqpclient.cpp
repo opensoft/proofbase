@@ -2,24 +2,19 @@
 
 #include "proofnetwork/jsonamqpclient_p.h"
 
-#include <QJsonDocument>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkReply>
 #include <QThread>
 
 using namespace Proof;
 
-JsonAmqpClient::JsonAmqpClient(QObject *parent)
-    : JsonAmqpClient(*new JsonAmqpClientPrivate, parent)
-{
-}
+JsonAmqpClient::JsonAmqpClient(QObject *parent) : JsonAmqpClient(*new JsonAmqpClientPrivate, parent)
+{}
 
-JsonAmqpClient::JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent)
-    : AbstractAmqpReceiver(dd, parent)
-{
-
-}
+JsonAmqpClient::JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent) : AbstractAmqpReceiver(dd, parent)
+{}
 
 void JsonAmqpClientPrivate::amqpMessageReceived()
 {
@@ -42,11 +37,11 @@ void JsonAmqpClientPrivate::queueDeclared(QAmqpQueue *queue)
     //Nothing there
 }
 
-void JsonAmqpClientPrivate::handleJsonMessage(const QJsonDocument &json, const QString &routingKey, const QHash<QString, QVariant> &headers)
+void JsonAmqpClientPrivate::handleJsonMessage(const QJsonDocument &json, const QString &routingKey,
+                                              const QHash<QString, QVariant> &headers)
 {
     Q_UNUSED(routingKey)
     Q_UNUSED(headers)
     Q_UNUSED(json)
     //Nothing there
 }
-

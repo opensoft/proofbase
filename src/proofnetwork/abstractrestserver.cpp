@@ -1,25 +1,26 @@
 #include "abstractrestserver.h"
 
-#include "proofnetwork/httpparser_p.h"
-#include "proofcore/memorystoragenotificationhandler.h"
-#include "proofcore/proofglobal.h"
 #include "proofcore/coreapplication.h"
 #include "proofcore/errornotifier.h"
+#include "proofcore/memorystoragenotificationhandler.h"
+#include "proofcore/proofglobal.h"
 #include "proofcore/proofobject.h"
 
+#include "proofnetwork/httpparser_p.h"
+
 #include <QDir>
-#include <QTcpSocket>
-#include <QMetaObject>
-#include <QMetaMethod>
-#include <QUrlQuery>
-#include <QSet>
-#include <QMutex>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
+#include <QMetaMethod>
+#include <QMetaObject>
+#include <QMutex>
 #include <QNetworkInterface>
-#include <QSysInfo>
 #include <QReadWriteLock>
+#include <QSet>
+#include <QSysInfo>
+#include <QTcpSocket>
+#include <QUrlQuery>
 
 #include <algorithm>
 
@@ -30,15 +31,16 @@ static const int MIN_THREADS_COUNT = 5;
 namespace {
 class WorkerThread;
 
-class MethodNode {
+class MethodNode
+{
 public:
     MethodNode();
     bool contains(const QString &name) const;
     void clear();
 
     operator QString();
-    MethodNode &operator [](const QString &name);
-    const MethodNode operator [](const QString &name) const;
+    MethodNode &operator[](const QString &name);
+    const MethodNode operator[](const QString &name) const;
     void setValue(const QString &value);
 
     QString tag() const;
@@ -52,16 +54,12 @@ private:
 
 struct WorkerThreadInfo
 {
-    explicit WorkerThreadInfo(WorkerThread *thread, long long socketCount)
-        : thread(thread)
+    explicit WorkerThreadInfo(WorkerThread *thread, long long socketCount) : thread(thread)
     {
         this->socketCount = socketCount;
     }
 
-    WorkerThreadInfo(const WorkerThreadInfo &other)
-    {
-        *this = other;
-    }
+    WorkerThreadInfo(const WorkerThreadInfo &other) { *this = other; }
 
     WorkerThreadInfo &operator=(const WorkerThreadInfo &other)
     {
@@ -71,14 +69,12 @@ struct WorkerThreadInfo
     }
 
     WorkerThread *thread = nullptr;
-    std::atomic_llong socketCount {0};
+    std::atomic_llong socketCount{0};
 };
 
 struct SocketInfo
 {
-    SocketInfo()
-    {
-    }
+    SocketInfo() {}
 
     Proof::HttpParser parser;
     QMetaObject::Connection readyReadConnection;
@@ -86,7 +82,7 @@ struct SocketInfo
     QMetaObject::Connection errorConnection;
 };
 
-class WorkerThread: public QThread
+class WorkerThread : public QThread
 {
     Q_OBJECT
 public:
@@ -101,7 +97,7 @@ public:
     void stop();
 
 private:
-    Proof::AbstractRestServerPrivate * const serverD;
+    Proof::AbstractRestServerPrivate *const serverD;
     QHash<QTcpSocket *, SocketInfo> sockets;
 };
 } // anonymous namespace
@@ -110,7 +106,7 @@ namespace Proof {
 
 //TODO: refactor to remove qobject parent
 //it is possible now to call methods of any class, not only qobjects
-class AbstractRestServerPrivate: public QObject // clazy:exclude=ctor-missing-parent-argument
+class AbstractRestServerPrivate : public QObject // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
     Q_DECLARE_PUBLIC(AbstractRestServer)
@@ -126,14 +122,15 @@ private:
     AbstractRestServerPrivate(const AbstractRestServerPrivate &&other) = delete;
     AbstractRestServerPrivate &operator=(const AbstractRestServerPrivate &&other) = delete;
 
-    void tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, const QStringList &headers, const QByteArray &body);
+    void tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, const QStringList &headers,
+                         const QByteArray &body);
     QStringList makeMethodName(const QString &type, const QString &name);
     MethodNode *findMethod(const QStringList &splittedMethod, QStringList &methodVariableParts);
     void fillMethods();
     void addMethodToTree(const QString &realMethod, const QString &tag);
 
-    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers,
-                    int returnCode = 200, const QString &reason = QString());
+    void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
+                    const QHash<QString, QString> &headers, int returnCode = 200, const QString &reason = QString());
     void registerSocket(QTcpSocket *socket);
     void deleteSocket(QTcpSocket *socket, WorkerThread *worker);
 
@@ -154,28 +151,23 @@ private:
     QHash<QString, QString> customHeaders;
 };
 
-}
+} // namespace Proof
 
 using namespace Proof;
 
-AbstractRestServer::AbstractRestServer()
-    : AbstractRestServer(*new AbstractRestServerPrivate, QLatin1String(""), 80)
-{
-}
+AbstractRestServer::AbstractRestServer() : AbstractRestServer(*new AbstractRestServerPrivate, QLatin1String(""), 80)
+{}
 
 AbstractRestServer::AbstractRestServer(int port)
     : AbstractRestServer(*new AbstractRestServerPrivate, QLatin1String(""), port)
-{
-}
+{}
 
 AbstractRestServer::AbstractRestServer(const QString &pathPrefix, int port)
     : AbstractRestServer(*new AbstractRestServerPrivate, pathPrefix, port)
-{
-}
+{}
 
 AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QString &pathPrefix, int port)
-    : QTcpServer(),
-      d_ptr(&dd)
+    : QTcpServer(), d_ptr(&dd)
 {
     Q_D(AbstractRestServer);
     d->q_ptr = this;
@@ -342,7 +334,8 @@ void AbstractRestServer::stopListen()
         close();
 }
 
-void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &query, const QByteArray &)
+void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStringList &, const QStringList &,
+                                                const QUrlQuery &query, const QByteArray &)
 {
     QStringList ipsList;
     const auto allIfaces = QNetworkInterface::allInterfaces();
@@ -371,15 +364,13 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
     }
 #endif
 
-    QJsonObject statusObj {
-        {"app_type", qApp->applicationName()},
-        {"app_version", qApp->applicationVersion()},
-        {"proof_version", Proof::proofVersion()},
-        {"started_at", proofApp->startedAt().toString(Qt::ISODate)},
-        {"last_crash_at", lastCrashAt},
-        {"os", QSysInfo::prettyProductName()},
-        {"network_addresses", QJsonArray::fromStringList(ipsList)}
-    };
+    QJsonObject statusObj{{"app_type", qApp->applicationName()},
+                          {"app_version", qApp->applicationVersion()},
+                          {"proof_version", Proof::proofVersion()},
+                          {"started_at", proofApp->startedAt().toString(Qt::ISODate)},
+                          {"last_crash_at", lastCrashAt},
+                          {"os", QSysInfo::prettyProductName()},
+                          {"network_addresses", QJsonArray::fromStringList(ipsList)}};
 
     auto notificationsMemoryStorage = ErrorNotifier::instance()->handler<MemoryStorageNotificationHandler>();
     QPair<QDateTime, QString> lastError;
@@ -391,15 +382,16 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
     }
 
     statusObj[QStringLiteral("last_error")] = lastError.first.isValid()
-            ? QJsonObject {{"timestamp", lastError.first.toString(Qt::ISODate)}, {"message", lastError.second}}
-            : QJsonValue();
+                                                  ? QJsonObject{{"timestamp", lastError.first.toString(Qt::ISODate)},
+                                                                {"message", lastError.second}}
+                                                  : QJsonValue();
 
     QJsonArray healthArray;
     const auto currentHealthStatus = healthStatus(quick);
     for (auto it = currentHealthStatus.cbegin(); it != currentHealthStatus.cend(); ++it) {
-        healthArray.append(QJsonObject {{"name", it.key()},
-                                        {"value", QJsonValue::fromVariant(it.value().second)},
-                                        {"updated_at", it.value().first.toString(Qt::ISODate)}});
+        healthArray.append(QJsonObject{{"name", it.key()},
+                                       {"value", QJsonValue::fromVariant(it.value().second)},
+                                       {"updated_at", it.value().first.toString(Qt::ISODate)}});
     }
     statusObj[QStringLiteral("health")] = healthArray;
 
@@ -408,15 +400,17 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
     sendAnswer(socket, QJsonDocument(statusObj).toJson(), QStringLiteral("text/json"));
 }
 
-void AbstractRestServer::rest_get_System_RecentErrors(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &, const QByteArray &)
+void AbstractRestServer::rest_get_System_RecentErrors(QTcpSocket *socket, const QStringList &, const QStringList &,
+                                                      const QUrlQuery &, const QByteArray &)
 {
     auto notificationsMemoryStorage = ErrorNotifier::instance()->handler<MemoryStorageNotificationHandler>();
     auto lastErrors = notificationsMemoryStorage
-            ? notificationsMemoryStorage->messages()
-            : QMultiMap<QDateTime, QString>{{QDateTime::currentDateTimeUtc(), QString("Memory storage error handler not set")}};
+                          ? notificationsMemoryStorage->messages()
+                          : QMultiMap<QDateTime, QString>{
+                                {QDateTime::currentDateTimeUtc(), QString("Memory storage error handler not set")}};
 
-    auto errorObjectBuilder = [](const QDateTime &time, const QString &error) ->QJsonObject {
-        return QJsonObject {{"timestamp", time.toString(Qt::ISODate)}, {"message", error}};
+    auto errorObjectBuilder = [](const QDateTime &time, const QString &error) -> QJsonObject {
+        return QJsonObject{{"timestamp", time.toString(Qt::ISODate)}, {"message", error}};
     };
 
     QJsonArray recentErrorsArray;
@@ -446,7 +440,9 @@ void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
     d->threadPoolLock.lockForRead();
     if (!d->threadPool.isEmpty()) {
         auto iter = std::min_element(d->threadPool.begin(), d->threadPool.end(),
-                                     [](const WorkerThreadInfo &lhs, const WorkerThreadInfo &rhs) {return lhs.socketCount < rhs.socketCount;});
+                                     [](const WorkerThreadInfo &lhs, const WorkerThreadInfo &rhs) {
+                                         return lhs.socketCount < rhs.socketCount;
+                                     });
         if (iter->socketCount == 0 || d->threadPool.count() >= d->suggestedMaxThreadsCount) {
             worker = iter->thread;
             ++iter->socketCount;
@@ -465,19 +461,22 @@ void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
     worker->handleNewConnection(socketDescriptor);
 }
 
-void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, int returnCode, const QString &reason)
+void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
+                                    int returnCode, const QString &reason)
 {
     Q_D(AbstractRestServer);
     d->sendAnswer(socket, body, contentType, QHash<QString, QString>(), returnCode, reason);
 }
 
-void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers, int returnCode, const QString &reason)
+void AbstractRestServer::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
+                                    const QHash<QString, QString> &headers, int returnCode, const QString &reason)
 {
     Q_D(AbstractRestServer);
     d->sendAnswer(socket, body, contentType, headers, returnCode, reason);
 }
 
-void AbstractRestServer::sendErrorCode(QTcpSocket *socket, int returnCode, const QString &reason, int errorCode, const QStringList &args)
+void AbstractRestServer::sendErrorCode(QTcpSocket *socket, int returnCode, const QString &reason, int errorCode,
+                                       const QStringList &args)
 {
     QJsonObject body;
     body.insert(QStringLiteral("error_code"), errorCode);
@@ -487,7 +486,8 @@ void AbstractRestServer::sendErrorCode(QTcpSocket *socket, int returnCode, const
             jsonArgs << arg;
         body.insert(QStringLiteral("message_args"), jsonArgs);
     }
-    sendAnswer(socket, QJsonDocument(body).toJson(QJsonDocument::Compact), QStringLiteral("application/json"), returnCode, reason);
+    sendAnswer(socket, QJsonDocument(body).toJson(QJsonDocument::Compact), QStringLiteral("application/json"),
+               returnCode, reason);
 }
 
 bool AbstractRestServer::checkBasicAuth(const QString &encryptedAuth) const
@@ -539,8 +539,11 @@ QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const
 {
     QStringList splittedName = name.split(QStringLiteral("/"), QString::SkipEmptyParts);
     bool isStartedWithPrefix = splittedName.size() >= splittedPathPrefix.size()
-            && std::equal(splittedPathPrefix.cbegin(), splittedPathPrefix.cend(), splittedName.cbegin(),
-                          [](const QString &prefixPart, const QString &namePart) { return prefixPart == namePart.toLower(); });
+                               && std::equal(splittedPathPrefix.cbegin(), splittedPathPrefix.cend(),
+                                             splittedName.cbegin(),
+                                             [](const QString &prefixPart, const QString &namePart) {
+                                                 return prefixPart == namePart.toLower();
+                                             });
     if (isStartedWithPrefix == false)
         return QStringList();
     splittedName.erase(splittedName.begin(), splittedName.begin() + splittedPathPrefix.size());
@@ -643,11 +646,9 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
         }
         if (isAuthenticationSuccessful) {
             QMetaObject::invokeMethod(q, methodName.toLatin1().constData(), Qt::DirectConnection,
-                                      Q_ARG(QTcpSocket *,socket),
-                                      Q_ARG(const QStringList &, headers),
+                                      Q_ARG(QTcpSocket *, socket), Q_ARG(const QStringList &, headers),
                                       Q_ARG(const QStringList &, methodVariableParts),
-                                      Q_ARG(const QUrlQuery &, queryParams),
-                                      Q_ARG(const QByteArray &, body));
+                                      Q_ARG(const QUrlQuery &, queryParams), Q_ARG(const QByteArray &, body));
         } else {
             q->sendNotAuthorized(socket);
         }
@@ -656,8 +657,8 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
     }
 }
 
-void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType, const QHash<QString, QString> &headers,
-                                           int returnCode, const QString &reason)
+void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
+                                           const QHash<QString, QString> &headers, int returnCode, const QString &reason)
 {
     WorkerThread *worker = nullptr;
     {
@@ -669,9 +670,9 @@ void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray 
         qCDebug(proofNetworkMiscLog) << "Replying" << returnCode << ":" << reason << "at socket" << socket;
         worker->sendAnswer(socket, body, contentType, headers, returnCode, reason);
     } else {
-        qCDebug(proofNetworkMiscLog).noquote() << "Wanted to reply" << returnCode << ":" << reason
-                                               << "at socket" << QString("QTcpSocket(%1)").arg(reinterpret_cast<quint64>(socket), 0, 16)
-                                               << "but it is dead already";
+        qCDebug(proofNetworkMiscLog).noquote()
+            << "Wanted to reply" << returnCode << ":" << reason << "at socket"
+            << QString("QTcpSocket(%1)").arg(reinterpret_cast<quint64>(socket), 0, 16) << "but it is dead already";
     }
 }
 
@@ -693,21 +694,20 @@ void AbstractRestServerPrivate::deleteSocket(QTcpSocket *socket, WorkerThread *w
     }
     delete socket;
     threadPoolLock.lockForRead();
-    auto iter = std::find_if(threadPool.begin(), threadPool.end(), [worker](const WorkerThreadInfo &info) {return info.thread == worker;});
+    auto iter = std::find_if(threadPool.begin(), threadPool.end(),
+                             [worker](const WorkerThreadInfo &info) { return info.thread == worker; });
     if (iter != threadPool.end())
         --iter->socketCount;
     threadPoolLock.unlock();
 }
 
-WorkerThread::WorkerThread(Proof::AbstractRestServerPrivate *const _server_d)
-    : serverD(_server_d)
+WorkerThread::WorkerThread(Proof::AbstractRestServerPrivate *const _server_d) : serverD(_server_d)
 {
     moveToThread(this);
 }
 
 WorkerThread::~WorkerThread()
-{
-}
+{}
 
 void WorkerThread::handleNewConnection(qintptr socketDescriptor)
 {
@@ -717,14 +717,19 @@ void WorkerThread::handleNewConnection(qintptr socketDescriptor)
     QTcpSocket *tcpSocket = new QTcpSocket();
     serverD->registerSocket(tcpSocket);
     SocketInfo info;
-    info.readyReadConnection = connect(tcpSocket, &QTcpSocket::readyRead, this, [tcpSocket, this] { onReadyRead(tcpSocket); }, Qt::QueuedConnection);
+    info.readyReadConnection = connect(tcpSocket, &QTcpSocket::readyRead, this,
+                                       [tcpSocket, this] { onReadyRead(tcpSocket); }, Qt::QueuedConnection);
 
-    void (QTcpSocket:: *errorSignal)(QAbstractSocket::SocketError) = &QTcpSocket::error;
-    info.errorConnection = connect(tcpSocket, errorSignal, this, [tcpSocket] {
-        qCWarning(proofNetworkMiscLog) << "RestServer: socket error:" << tcpSocket->errorString();
-    }, Qt::QueuedConnection);
+    void (QTcpSocket::*errorSignal)(QAbstractSocket::SocketError) = &QTcpSocket::error;
+    info.errorConnection = connect(tcpSocket, errorSignal, this,
+                                   [tcpSocket] {
+                                       qCWarning(proofNetworkMiscLog)
+                                           << "RestServer: socket error:" << tcpSocket->errorString();
+                                   },
+                                   Qt::QueuedConnection);
 
-    info.disconnectConnection = connect(tcpSocket, &QTcpSocket::disconnected, this, [tcpSocket, this] { deleteSocket(tcpSocket); }, Qt::QueuedConnection);
+    info.disconnectConnection = connect(tcpSocket, &QTcpSocket::disconnected, this,
+                                        [tcpSocket, this] { deleteSocket(tcpSocket); }, Qt::QueuedConnection);
 
     if (!tcpSocket->setSocketDescriptor(socketDescriptor)) {
         qCWarning(proofNetworkMiscLog) << "RestServer: can't create socket, error:" << tcpSocket->errorString();
@@ -748,12 +753,14 @@ void WorkerThread::onReadyRead(QTcpSocket *socket)
     switch (result) {
     case HttpParser::Result::Success:
         disconnect(info.readyReadConnection);
-        serverD->tryToCallMethod(socket, info.parser.method(), info.parser.uri(), info.parser.headers(), info.parser.body());
+        serverD->tryToCallMethod(socket, info.parser.method(), info.parser.uri(), info.parser.headers(),
+                                 info.parser.body());
         break;
     case HttpParser::Result::Error:
         qCWarning(proofNetworkMiscLog) << "RestServer: parse error:" << info.parser.error();
         disconnect(info.readyReadConnection);
-        sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), QHash<QString, QString>(), 400, QStringLiteral("Bad Request"));
+        sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), QHash<QString, QString>(), 400,
+                   QStringLiteral("Bad Request"));
         break;
     case HttpParser::Result::NeedMore:
         break;
@@ -772,17 +779,17 @@ void WorkerThread::stop()
 void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
                               const QHash<QString, QString> &headers, int returnCode, const QString &reason)
 {
-    if (Proof::ProofObject::call(this,
-                                 &WorkerThread::sendAnswer,
-                                 socket, body, contentType, headers, returnCode, reason)) {
+    if (Proof::ProofObject::call(this, &WorkerThread::sendAnswer, socket, body, contentType, headers, returnCode, reason)) {
         return;
     }
 
     if (sockets.contains(socket) && socket->state() == QTcpSocket::ConnectedState) {
         QStringList additionalHeadersList;
         additionalHeadersList << QStringLiteral("Proof-Application: %1").arg(proofApp->prettifiedApplicationName());
-        additionalHeadersList << QStringLiteral("Proof-%1-Version: %2").arg(proofApp->prettifiedApplicationName(), qApp->applicationVersion());
-        additionalHeadersList << QStringLiteral("Proof-%1-Framework-Version: %2").arg(proofApp->prettifiedApplicationName(), Proof::proofVersion());
+        additionalHeadersList << QStringLiteral("Proof-%1-Version: %2")
+                                     .arg(proofApp->prettifiedApplicationName(), qApp->applicationVersion());
+        additionalHeadersList << QStringLiteral("Proof-%1-Framework-Version: %2")
+                                     .arg(proofApp->prettifiedApplicationName(), Proof::proofVersion());
         for (auto it = serverD->customHeaders.cbegin(); it != serverD->customHeaders.cend(); ++it)
             additionalHeadersList << QStringLiteral("%1: %2").arg(it.key(), it.value());
         for (auto it = headers.cbegin(); it != headers.cend(); ++it)
@@ -797,12 +804,10 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
                               "%4"
                               "%5"
                               "\r\n")
-                      .arg(QString::number(returnCode),
-                           reason,
-                           contentType,
-                           !body.isEmpty() ? QStringLiteral("Content-Length: %1\r\n").arg(body.size()) : QString(),
-                           additionalHeaders)
-                      .toUtf8());
+                          .arg(QString::number(returnCode), reason, contentType,
+                               !body.isEmpty() ? QStringLiteral("Content-Length: %1\r\n").arg(body.size()) : QString(),
+                               additionalHeaders)
+                          .toUtf8());
 
         socket->write(body);
         connect(socket, &QTcpSocket::bytesWritten, this, [socket] {
@@ -813,9 +818,7 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
 }
 
 MethodNode::MethodNode()
-{
-
-}
+{}
 
 bool MethodNode::contains(const QString &name) const
 {
@@ -832,12 +835,12 @@ MethodNode::operator QString()
     return m_value;
 }
 
-MethodNode &MethodNode::operator [](const QString &name)
+MethodNode &MethodNode::operator[](const QString &name)
 {
     return m_nodes[name];
 }
 
-const MethodNode MethodNode::operator [](const QString &name) const
+const MethodNode MethodNode::operator[](const QString &name) const
 {
     return m_nodes[name];
 }

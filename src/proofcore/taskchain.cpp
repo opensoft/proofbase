@@ -1,15 +1,13 @@
 #include "taskchain.h"
 
-#include <QTime>
-
-#include <QMap>
 #include <QCoreApplication>
+#include <QMap>
 #include <QMutex>
+#include <QTime>
 #include <QWaitCondition>
 
 static const qulonglong TASK_ADDING_SPIN_SLEEP_TIME_IN_MSECS = 1;
 static const qulonglong WAIT_FOR_TASK_SPIN_SLEEP_TIME_IN_MSECS = 1;
-
 
 namespace Proof {
 
@@ -26,17 +24,16 @@ class TaskChainPrivate
 
     QMap<qlonglong, FutureSP<bool>> futures;
     std::atomic_flag futuresLock = ATOMIC_FLAG_INIT;
-    std::atomic_llong lastUsedId {0};
+    std::atomic_llong lastUsedId{0};
     static std::atomic_llong chainsCounter;
 };
 
-std::atomic_llong TaskChainPrivate::chainsCounter {0};
-}
+std::atomic_llong TaskChainPrivate::chainsCounter{0};
+} // namespace Proof
 
 using namespace Proof;
 
-TaskChain::TaskChain()
-    : QThread(nullptr), d_ptr(new TaskChainPrivate)
+TaskChain::TaskChain() : QThread(nullptr), d_ptr(new TaskChainPrivate)
 {
     Q_D(TaskChain);
     d->q_ptr = this;
@@ -106,7 +103,7 @@ qlonglong TaskChain::addTaskPrivate(const FutureSP<bool> &taskFuture)
     qCDebug(proofCoreTaskChainExtraLog) << "Chain" << this << ": task added" << &taskFuture;
     d->futures[id] = taskFuture;
     d->releaseFutures();
-    taskFuture->recover([](const auto &){return true;})->onSuccess([self = d->weakSelf, id](bool) {
+    taskFuture->recover([](const auto &) { return true; })->onSuccess([self = d->weakSelf, id](bool) {
         auto strongSelf = self.toStrongRef();
         if (!strongSelf)
             return;

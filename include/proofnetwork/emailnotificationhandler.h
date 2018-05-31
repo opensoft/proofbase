@@ -2,6 +2,7 @@
 #define PROOF_EMAILNOTIFICATIONHANDLER_H
 
 #include "proofcore/abstractnotificationhandler.h"
+
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
 
@@ -11,12 +12,14 @@
 namespace Proof {
 
 class EmailNotificationHandlerPrivate;
-class PROOF_NETWORK_EXPORT EmailNotificationHandler : public AbstractNotificationHandler // clazy:exclude=ctor-missing-parent-argument
+class PROOF_NETWORK_EXPORT EmailNotificationHandler
+    : public AbstractNotificationHandler // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(EmailNotificationHandler)
 public:
-    EmailNotificationHandler(const SmtpClientSP &smtpClient, const QString &from, const QStringList &to, const QString &appId);
+    EmailNotificationHandler(const SmtpClientSP &smtpClient, const QString &from, const QStringList &to,
+                             const QString &appId);
     void notify(const QString &message, ErrorNotifier::Severity severity, const QString &packId) override;
 
     static QString id();

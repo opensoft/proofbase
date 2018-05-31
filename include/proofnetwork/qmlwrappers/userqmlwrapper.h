@@ -1,9 +1,9 @@
 #ifndef USERQMLWRAPPER_H
 #define USERQMLWRAPPER_H
 
-#include "proofnetwork/qmlwrappers/networkdataentityqmlwrapper.h"
-#include "proofnetwork/proofnetwork_types.h"
 #include "proofnetwork/proofnetwork_global.h"
+#include "proofnetwork/proofnetwork_types.h"
+#include "proofnetwork/qmlwrappers/networkdataentityqmlwrapper.h"
 
 namespace Proof {
 class UserQmlWrapperPrivate;
@@ -31,6 +31,6 @@ protected:
     explicit UserQmlWrapper(const UserSP &user, UserQmlWrapperPrivate &dd, QObject *parent = nullptr);
     void setupEntity(const QSharedPointer<NetworkDataEntity> &old = QSharedPointer<NetworkDataEntity>()) override;
 };
-}
+} // namespace Proof
 
 #endif // USERQMLWRAPPER_H

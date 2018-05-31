@@ -4,10 +4,8 @@
 
 using namespace Proof;
 
-Humanizer::Humanizer(QObject *parent)
-    : ProofObject(parent)
-{
-}
+Humanizer::Humanizer(QObject *parent) : ProofObject(parent)
+{}
 
 QString Proof::Humanizer::humanizeTime(qlonglong seconds, Proof::Humanizer::TimeCategory stopAt)
 {
