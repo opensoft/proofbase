@@ -15,6 +15,15 @@
 #include <QJsonParseError>
 
 namespace Proof {
+struct PROOF_NETWORK_EXPORT RestApiReply
+{
+    static RestApiReply fromQNetworkReply(QNetworkReply *qReply);
+    QByteArray data;
+    QHash<QByteArray, QByteArray> headers;
+    QByteArray httpReason;
+    int httpStatus = 0;
+};
+
 class BaseRestApi;
 class PROOF_NETWORK_EXPORT BaseRestApiPrivate : public ProofObjectPrivate
 {
@@ -22,17 +31,17 @@ class PROOF_NETWORK_EXPORT BaseRestApiPrivate : public ProofObjectPrivate
 public:
     BaseRestApiPrivate() : ProofObjectPrivate() {}
 
-    CancelableFuture<QByteArray> get(const QString &method, const QUrlQuery &query = QUrlQuery());
-    CancelableFuture<QByteArray> post(const QString &method, const QUrlQuery &query = QUrlQuery(),
-                                      const QByteArray &body = "");
-    CancelableFuture<QByteArray> post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts);
-    CancelableFuture<QByteArray> put(const QString &method, const QUrlQuery &query = QUrlQuery(),
-                                     const QByteArray &body = "");
-    CancelableFuture<QByteArray> patch(const QString &method, const QUrlQuery &query = QUrlQuery(),
+    CancelableFuture<RestApiReply> get(const QString &method, const QUrlQuery &query = QUrlQuery());
+    CancelableFuture<RestApiReply> post(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                                        const QByteArray &body = "");
+    CancelableFuture<RestApiReply> post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts);
+    CancelableFuture<RestApiReply> put(const QString &method, const QUrlQuery &query = QUrlQuery(),
                                        const QByteArray &body = "");
-    CancelableFuture<QByteArray> deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery());
+    CancelableFuture<RestApiReply> patch(const QString &method, const QUrlQuery &query = QUrlQuery(),
+                                         const QByteArray &body = "");
+    CancelableFuture<RestApiReply> deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery());
 
-    CancelableFuture<QByteArray> configureReply(CancelableFuture<QNetworkReply *> replyFuture);
+    CancelableFuture<RestApiReply> configureReply(CancelableFuture<QNetworkReply *> replyFuture);
 
     template <typename Result>
     CancelableFuture<Result> invalidArgumentsFailure(Failure &&f = Failure(QStringLiteral("Invalid arguments"),
@@ -44,11 +53,11 @@ public:
         return CancelableFuture<Result>(promise);
     }
 
-    template <typename Unmarshaller, typename T = typename std::result_of<Unmarshaller(QByteArray)>::type>
-    CancelableFuture<T> unmarshalReply(const CancelableFuture<QByteArray> &reply, Unmarshaller &&unmarshaller) const
+    template <typename Unmarshaller, typename T = typename std::result_of<Unmarshaller(RestApiReply)>::type>
+    CancelableFuture<T> unmarshalReply(const CancelableFuture<RestApiReply> &reply, Unmarshaller &&unmarshaller) const
     {
         auto promise = PromiseSP<T>::create();
-        reply->onSuccess([promise, unmarshaller = std::forward<Unmarshaller>(unmarshaller)](const QByteArray &data) {
+        reply->onSuccess([promise, unmarshaller = std::forward<Unmarshaller>(unmarshaller)](const RestApiReply &data) {
             promise->success(unmarshaller(data));
         });
         reply->onFailure([promise](const Failure &f) { promise->failure(f); });
@@ -56,8 +65,8 @@ public:
         return CancelableFuture<T>(promise);
     }
 
-    virtual void processSuccessfulReply(QNetworkReply *reply, const PromiseSP<QByteArray> &promise);
-    virtual void processErroredReply(QNetworkReply *reply, const PromiseSP<QByteArray> &promise);
+    virtual void processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise);
+    virtual void processErroredReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise);
 
     bool replyShouldBeHandledByError(QNetworkReply *reply) const;
 
@@ -67,10 +76,10 @@ public:
     template <typename Entity, typename Cache, typename KeyFunc, typename Key = typename Cache::key_type>
     auto entityUnmarshaller(Cache &cache, KeyFunc &&keyFunc) const
         -> decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
-                    std::function<QSharedPointer<Entity>(const QByteArray &)>())
+                    std::function<QSharedPointer<Entity>(const RestApiReply &)>())
     {
-        return [this, &cache, keyFunc = std::function<Key(Entity *)>(keyFunc)](const QByteArray &data) {
-            auto entity = parseEntity<Entity>(data);
+        return [this, &cache, keyFunc = std::function<Key(Entity *)>(keyFunc)](const RestApiReply &reply) {
+            auto entity = parseEntity<Entity>(reply.data);
             if (!entity)
                 return entity;
             auto fromCache = cache.add(keyFunc(entity.data()), entity);
@@ -83,18 +92,18 @@ public:
     }
 
     template <typename Entity>
-    std::function<QSharedPointer<Entity>(const QByteArray &)> entityUnmarshaller() const
+    std::function<QSharedPointer<Entity>(const RestApiReply &)> entityUnmarshaller() const
     {
-        return [this](const QByteArray &data) { return parseEntity<Entity>(data); };
+        return [this](const RestApiReply &reply) { return parseEntity<Entity>(reply.data); };
     }
 
     template <typename Entity, typename Cache, typename KeyFunc, typename Key = typename Cache::key_type>
     auto entitiesArrayUnmarshaller(Cache &cache, KeyFunc &&keyFunc, const QString &attributeName = QString()) const
         -> decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
-                    std::function<QList<QSharedPointer<Entity>>(const QByteArray &)>())
+                    std::function<QList<QSharedPointer<Entity>>(const RestApiReply &)>())
     {
-        return [this, attributeName, &cache, keyFunc = std::function<Key(Entity *)>(keyFunc)](const QByteArray &data) {
-            auto arr = parseEntitiesArray(data, attributeName);
+        return [this, attributeName, &cache, keyFunc = std::function<Key(Entity *)>(keyFunc)](const RestApiReply &reply) {
+            auto arr = parseEntitiesArray(reply.data, attributeName);
             QList<QSharedPointer<Entity>> result;
             result.reserve(arr.count());
             for (const QJsonValue &v : qAsConst(arr)) {
@@ -113,11 +122,11 @@ public:
     }
 
     template <typename Entity>
-    std::function<QList<QSharedPointer<Entity>>(const QByteArray &)>
+    std::function<QList<QSharedPointer<Entity>>(const RestApiReply &)>
     entitiesArrayUnmarshaller(const QString &attributeName = QString()) const
     {
-        return [this, attributeName](const QByteArray &data) {
-            auto arr = parseEntitiesArray(data, attributeName);
+        return [this, attributeName](const RestApiReply &reply) {
+            auto arr = parseEntitiesArray(reply.data, attributeName);
             QList<QSharedPointer<Entity>> result;
             result.reserve(arr.count());
             for (const QJsonValue &v : qAsConst(arr)) {
@@ -130,10 +139,11 @@ public:
         };
     }
 
-    std::function<QList<QString>(const QByteArray &)> stringsArrayUnmarshaller(const QString &attributeName = QString()) const
+    std::function<QList<QString>(const RestApiReply &)>
+    stringsArrayUnmarshaller(const QString &attributeName = QString()) const
     {
-        return [this, attributeName](const QByteArray &data) {
-            auto arr = parseEntitiesArray(data, attributeName);
+        return [this, attributeName](const RestApiReply &reply) {
+            auto arr = parseEntitiesArray(reply.data, attributeName);
             QList<QString> result;
             result.reserve(arr.count());
             for (const QJsonValue &v : qAsConst(arr)) {
@@ -145,10 +155,10 @@ public:
         };
     }
 
-    std::function<QList<qlonglong>(const QByteArray &)> intsArrayUnmarshaller(const QString &attributeName = QString()) const
+    std::function<QList<qlonglong>(const RestApiReply &)> intsArrayUnmarshaller(const QString &attributeName = QString()) const
     {
-        return [this, attributeName](const QByteArray &data) {
-            auto arr = parseEntitiesArray(data, attributeName);
+        return [this, attributeName](const RestApiReply &reply) {
+            auto arr = parseEntitiesArray(reply.data, attributeName);
             QList<qint64> result;
             result.reserve(arr.count());
             for (const QJsonValue &v : qAsConst(arr)) {
@@ -159,9 +169,9 @@ public:
         };
     }
 
-    std::function<bool(const QByteArray &)> discardingUnmarshaller() const
+    std::function<bool(const RestApiReply &)> discardingUnmarshaller() const
     {
-        return [](const QByteArray &) { return true; };
+        return [](const RestApiReply &) { return true; };
     }
 
     QJsonArray parseEntitiesArray(const QByteArray &data, const QString &attributeName = QLatin1String()) const
@@ -193,7 +203,7 @@ public:
                            NetworkErrorCode::InvalidReply);
     }
 
-    void rememberReply(const CancelableFuture<QByteArray> &reply);
+    void rememberReply(const CancelableFuture<RestApiReply> &reply);
     void abortAllReplies();
 
     RestClientSP restClient;
@@ -237,7 +247,7 @@ private:
         return entity;
     }
 
-    QHash<qint64, CancelableFuture<QByteArray>> allReplies;
+    QHash<qint64, CancelableFuture<RestApiReply>> allReplies;
     SpinLock allRepliesLock;
 };
 } // namespace Proof

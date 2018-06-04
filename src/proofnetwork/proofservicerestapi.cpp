@@ -21,7 +21,7 @@ ProofServiceRestApiPrivate::ProofServiceRestApiPrivate(const QSharedPointer<Erro
     : BaseRestApiPrivate(), errorsRegistry(errorsRegistry)
 {}
 
-void ProofServiceRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<QByteArray> &promise)
+void ProofServiceRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
 {
     Q_Q(ProofServiceRestApi);
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -82,11 +82,11 @@ void ProofServiceRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, co
     BaseRestApiPrivate::processSuccessfulReply(reply, promise);
 }
 
-std::function<bool(const QByteArray &)> ProofServiceRestApiPrivate::boolResultUnmarshaller()
+std::function<bool(const RestApiReply &)> ProofServiceRestApiPrivate::boolResultUnmarshaller()
 {
-    return [](const QByteArray &data) -> bool {
+    return [](const RestApiReply &reply) -> bool {
         QJsonParseError jsonError;
-        QJsonDocument doc = QJsonDocument::fromJson(data, &jsonError);
+        QJsonDocument doc = QJsonDocument::fromJson(reply.data, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
             return WithFailure(QStringLiteral("JSON error: %1").arg(jsonError.errorString()), NETWORK_MODULE_CODE,
                                NetworkErrorCode::InvalidReply, Failure::NoHint, jsonError.error);
