@@ -97,6 +97,35 @@ public:
         return [this](const RestApiReply &reply) { return parseEntity<Entity>(reply.data); };
     }
 
+    std::function<QString(const RestApiReply &)> stringUnmarshaller(const QString &attributeName) const
+    {
+        return [this, attributeName](const RestApiReply &reply) -> QString {
+            QJsonParseError jsonError;
+            QJsonDocument doc = QJsonDocument::fromJson(reply.data, &jsonError);
+            if (jsonError.error != QJsonParseError::NoError) {
+                return WithFailure(QStringLiteral("JSON error: %1").arg(jsonError.errorString()), NETWORK_MODULE_CODE,
+                                   NetworkErrorCode::InvalidReply, Failure::NoHint, jsonError.error);
+            }
+            if (doc.isObject()) {
+                QJsonObject obj = doc.object();
+                if (obj.value(attributeName).isUndefined() || !obj.value(attributeName).isString()) {
+                    QString errorAttribute = algorithms::findIf(serverErrorAttributes, [obj](const QString &attr) {
+                        return !obj.value(attr).isUndefined();
+                    });
+                    if (!errorAttribute.isEmpty()) {
+                        return WithFailure(obj.value(errorAttribute).toString(), NETWORK_MODULE_CODE,
+                                           NetworkErrorCode::InvalidReply);
+                    }
+                    return WithFailure(QStringLiteral("Can't fetch string from server response"), NETWORK_MODULE_CODE,
+                                       NetworkErrorCode::InvalidReply);
+                }
+                return obj.value(attributeName).toString();
+            }
+            return WithFailure(QStringLiteral("Can't fetch string from server response"), NETWORK_MODULE_CODE,
+                               NetworkErrorCode::InvalidReply);
+        };
+    }
+
     template <typename Entity, typename Cache, typename KeyFunc, typename Key = typename Cache::key_type>
     auto entitiesArrayUnmarshaller(Cache &cache, KeyFunc &&keyFunc, const QString &attributeName = QString()) const
         -> decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
