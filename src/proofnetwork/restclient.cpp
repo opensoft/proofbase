@@ -104,14 +104,6 @@ RestClient::RestClient(bool ignoreSslErrors) : ProofObject(*new RestClientPrivat
     Q_D(RestClient);
     moveToThread(NetworkScheduler::instance()->qnamThread);
     d->ignoreSslErrors = ignoreSslErrors;
-    connect(NetworkScheduler::instance()->qnam, &QNetworkAccessManager::finished, this, &RestClient::finished);
-    if (!ignoreSslErrors) {
-        connect(NetworkScheduler::instance()->qnam, &QNetworkAccessManager::sslErrors, this,
-                [this, d](QNetworkReply *reply, const QList<QSslError> &errors) {
-                    d->cleanupReplyHandler(reply);
-                    emit sslErrors(reply, errors);
-                });
-    }
 }
 
 RestClient::~RestClient()
@@ -560,8 +552,6 @@ QByteArray RestClientPrivate::generateWsseToken() const
 void RestClientPrivate::handleReply(QNetworkReply *reply)
 {
     Q_Q(RestClient);
-    if (ignoreSslErrors)
-        reply->ignoreSslErrors();
 
     QTimer *timer = new QTimer();
     timer->setSingleShot(true);
@@ -576,6 +566,13 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
     });
 
     timer->start(msecsForTimeout);
+
+    if (ignoreSslErrors) {
+        reply->ignoreSslErrors();
+    } else {
+        QObject::connect(reply, &QNetworkReply::sslErrors, q,
+                         [this, reply](const QList<QSslError> &) { cleanupReplyHandler(reply); });
+    }
 
     QObject::connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), q,
                      [this, reply](QNetworkReply::NetworkError e) {

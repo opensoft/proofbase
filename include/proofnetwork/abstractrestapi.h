@@ -51,54 +51,15 @@ struct PROOF_NETWORK_EXPORT RestApiError
     bool userFriendly = false;
 };
 
-class AbstractRestApiPrivate;
-class PROOF_NETWORK_EXPORT AbstractRestApi : public ProofObject
+class PROOF_NETWORK_EXPORT AbstractRestApi
 {
-    Q_OBJECT
-    Q_DECLARE_PRIVATE(AbstractRestApi)
 public:
-    RestClientSP restClient() const;
-    void setRestClient(const RestClientSP &client);
-
-    void abortRequest(qulonglong operationId);
-
-    virtual bool isLoggedOut() const;
-
     static qlonglong clientNetworkErrorOffset();
     static qlonglong clientSslErrorOffset();
 
-    template <class Result, class Signal>
-    static std::function<bool(qulonglong, Result)> generateSuccessCallback(qulonglong &currentOperationId,
-                                                                           Result &result, Signal)
-    {
-        return [&result, &currentOperationId](qulonglong operationId, Result received) {
-            if (currentOperationId != operationId)
-                return false;
-            result = received;
-            return true;
-        };
-    }
-    template <class... Types, class T, class... Args>
-    static std::function<bool(qulonglong, typename std::decay<Args>::type...)>
-    generateSuccessCallback(qulonglong &currentOperationId, std::tuple<Types &...> results,
-                            void (T::*)(qulonglong, Args...))
-    {
-        return
-            [results, &currentOperationId](qulonglong operationId, typename std::decay<Args>::type... received) mutable {
-                if (currentOperationId != operationId)
-                    return false;
-                results = std::tie(received...);
-                return true;
-            };
-    }
-
-    using ErrorCallbackType = std::function<bool(qulonglong, const RestApiError &)>;
-    static ErrorCallbackType generateErrorCallback(qulonglong &currentOperationId, RestApiError &error);
-    static ErrorCallbackType generateErrorCallback(qulonglong &currentOperationId, QString &errorMessage);
-
     template <class Callee, class Result, class Method, class Signal, class... Args>
-    static auto chainedApiCall(const TaskChainSP &, Callee *callee, Method method, Signal, Result &&result, Args... args)
-        -> decltype(callee->itIsBase(), RestApiError())
+    static RestApiError chainedApiCall(const TaskChainSP &, Callee *callee, Method method, Signal, Result &&result,
+                                       Args... args)
     {
         auto f = (*callee.*method)(args...);
         f->wait();
@@ -108,39 +69,6 @@ public:
             result = f->result();
             return RestApiError();
         }
-    }
-
-    template <class Callee, class Result, class Method, class Signal, class... Args>
-    static auto chainedApiCall(const TaskChainSP &taskChain, Callee *callee, Method method, Signal signal,
-                               Result &&result, Args... args) -> decltype(callee->abortRequest(42), RestApiError())
-    {
-        qulonglong currentOperationId = 0;
-        auto callback = generateSuccessCallback(currentOperationId, std::forward<Result>(result), signal);
-        RestApiError error;
-        if (!callee->isLoggedOut()) {
-            taskChain->addSignalWaiter(callee, signal, callback);
-            taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::apiErrorOccurred,
-                                       generateErrorCallback(currentOperationId, error));
-            currentOperationId = (*callee.*method)(args...);
-            if (!currentOperationId) {
-                error.level = RestApiError::Level::ClientError;
-                error.code = 0;
-                error.proofModuleCode = NETWORK_MODULE_CODE;
-                error.proofErrorCode = NetworkErrorCode::InvalidRequest;
-                error.message = QStringLiteral("Invalid arguments");
-                error.userFriendly = false;
-            } else {
-                taskChain->fireSignalWaiters();
-            }
-        } else {
-            error.level = RestApiError::Level::AuthCredentialsError;
-            error.code = 0;
-            error.proofModuleCode = NETWORK_MODULE_CODE;
-            error.proofErrorCode = NetworkErrorCode::AuthCredentialsError;
-            error.message = QStringLiteral("API is not logged in");
-            error.userFriendly = false;
-        }
-        return error;
     }
 
     template <class Callee, class Result, class Method, class Signal, class... Args>
@@ -157,47 +85,12 @@ public:
     }
 
     template <class Callee, class Method, class Signal, class... Args>
-    static auto chainedApiCallWithoutResult(const TaskChainSP &, Callee *callee, Method method, Signal, Args... args)
-        -> decltype(callee->itIsBase(), RestApiError())
+    static RestApiError chainedApiCallWithoutResult(const TaskChainSP &, Callee *callee, Method method, Signal,
+                                                    Args... args)
     {
         auto f = (*callee.*method)(args...);
         f->wait();
         return f->failed() ? RestApiError::fromFailure(f->failureReason()) : RestApiError();
-    }
-
-    template <class Callee, class Method, class Signal, class... Args>
-    static auto chainedApiCallWithoutResult(const TaskChainSP &taskChain, Callee *callee, Method method, Signal signal,
-                                            Args... args) -> decltype(callee->abortRequest(42), RestApiError())
-    {
-        qulonglong currentOperationId = 0;
-        std::function<bool(qulonglong)> callback = [&currentOperationId](qulonglong operationId) {
-            return (currentOperationId == operationId);
-        };
-        RestApiError error;
-        if (!callee->isLoggedOut()) {
-            taskChain->addSignalWaiter(callee, signal, callback);
-            taskChain->addSignalWaiter(callee, &Proof::AbstractRestApi::apiErrorOccurred,
-                                       generateErrorCallback(currentOperationId, error));
-            currentOperationId = (*callee.*method)(args...);
-            if (!currentOperationId) {
-                error.level = RestApiError::Level::ClientError;
-                error.code = 0;
-                error.proofModuleCode = NETWORK_MODULE_CODE;
-                error.proofErrorCode = NetworkErrorCode::InvalidRequest;
-                error.message = QStringLiteral("Invalid arguments");
-                error.userFriendly = false;
-            } else {
-                taskChain->fireSignalWaiters();
-            }
-        } else {
-            error.level = RestApiError::Level::AuthCredentialsError;
-            error.code = 0;
-            error.proofModuleCode = NETWORK_MODULE_CODE;
-            error.proofErrorCode = NetworkErrorCode::AuthCredentialsError;
-            error.message = QStringLiteral("API is not logged in");
-            error.userFriendly = false;
-        }
-        return error;
     }
 
     template <class Callee, class Method, class Signal, class... Args>
@@ -212,14 +105,6 @@ public:
         } while (--attempts > 0);
         return error;
     }
-
-signals:
-    void apiErrorOccurred(qulonglong operationId, const Proof::RestApiError &error);
-
-protected:
-    AbstractRestApi(const RestClientSP &restClient, AbstractRestApiPrivate &dd, QObject *parent = nullptr);
-    //Called before actual set is done
-    virtual void onRestClientChanging(const RestClientSP &client);
 };
 } // namespace Proof
 

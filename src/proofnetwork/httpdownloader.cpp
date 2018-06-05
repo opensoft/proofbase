@@ -1,6 +1,6 @@
 #include "httpdownloader.h"
 
-#include "proofnetwork/abstractrestapi_p.h"
+#include "proofcore/proofobject_p.h"
 
 #include <QNetworkReply>
 
@@ -41,7 +41,7 @@ FutureSP<QByteArray> HttpDownloader::download(const QUrl &url)
     d->restClient->get(url)->onSuccess([this, promise](QNetworkReply *reply) {
         auto errorHandler = [](QNetworkReply *reply, const PromiseSP<QByteArray> &promise) {
             int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            // TODO: See in AbstractRestApi if you need more detailed error message
+            // TODO: See in BaseRestApi if you need more detailed error message
             QString errorMessage = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed();
             if (errorMessage.isEmpty())
                 errorMessage = QStringLiteral("Download failed");

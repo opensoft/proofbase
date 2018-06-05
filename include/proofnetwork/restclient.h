@@ -94,9 +94,6 @@ signals:
     void authTypeChanged(Proof::RestAuthType arg);
     void msecsForTimeoutChanged(qlonglong arg);
     void followRedirectsChanged(bool arg);
-
-    void finished(QNetworkReply *reply); //Remove
-    void sslErrors(QNetworkReply *reply, const QList<QSslError> &errors); //Remove
 };
 
 } // namespace Proof
