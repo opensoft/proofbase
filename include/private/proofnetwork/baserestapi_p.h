@@ -235,11 +235,6 @@ public:
     void rememberReply(const CancelableFuture<RestApiReply> &reply);
     void abortAllReplies();
 
-    RestClientSP restClient;
-    QString vendor;
-    QStringList serverErrorAttributes;
-
-private:
     template <typename Entity>
     QSharedPointer<Entity> parseEntity(const QByteArray &data) const
     {
@@ -275,6 +270,12 @@ private:
         }
         return entity;
     }
+
+    RestClientSP restClient;
+    QString vendor;
+    QStringList serverErrorAttributes;
+
+private:
 
     QHash<qint64, CancelableFuture<RestApiReply>> allReplies;
     SpinLock allRepliesLock;
