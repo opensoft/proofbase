@@ -15,16 +15,17 @@
 #include <QJsonParseError>
 
 namespace Proof {
+// Add headers later if ever will be needed.
+// They crash tests at old gcc (4.9.2) if are added as QHash<QByteArray, QByteArray> in FutureSP<RestApiReply> removal
+// Make sure that new headers implementation will not have such issues
 struct PROOF_NETWORK_EXPORT RestApiReply
 {
     RestApiReply() {}
-    explicit RestApiReply(const QByteArray &data, const QHash<QByteArray, QByteArray> &headers,
-                          const QByteArray &httpReason, int httpStatus)
-        : data(data), headers(headers), httpReason(httpReason), httpStatus(httpStatus)
+    explicit RestApiReply(const QByteArray &data, const QByteArray &httpReason, int httpStatus)
+        : data(data), httpReason(httpReason), httpStatus(httpStatus)
     {}
     static RestApiReply fromQNetworkReply(QNetworkReply *qReply);
     QByteArray data;
-    QHash<QByteArray, QByteArray> headers;
     QByteArray httpReason;
     int httpStatus = 0;
 };
@@ -281,7 +282,6 @@ public:
     QStringList serverErrorAttributes;
 
 private:
-
     QHash<qint64, CancelableFuture<RestApiReply>> allReplies;
     SpinLock allRepliesLock;
 };
