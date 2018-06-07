@@ -1,10 +1,6 @@
 include(proof.prf)
 
-win32 {
-    LIBS *= -lqamqp$${PROOF_VERSION_MAJOR}
-} else {
-    LIBS *= -lqamqp
-}
+LIBS *= -lqamqp
 
 msvc { 
     QMAKE_CXXFLAGS *= /wd4251 /wd4275

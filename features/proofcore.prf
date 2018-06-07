@@ -2,11 +2,7 @@ include(proof_common.prf)
 
 QT *= core
 
-win32 {
-    LIBS *= -lProofCore$${PROOF_VERSION_MAJOR}
-} else {
-    LIBS *= -lProofCore
-}
+LIBS *= -lProofCore
 
 android{
     ANDROID_EXTRA_LIBS *= $$(PROOF_PATH)/lib/libProofCore.so

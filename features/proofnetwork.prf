@@ -3,10 +3,6 @@ include(proofcore.prf)
 
 QT *= network
 
-win32 {
-    LIBS *= -lProofNetwork$${PROOF_VERSION_MAJOR}
-} else {
-    LIBS *= -lProofNetwork
-}
+LIBS *= -lProofNetwork
 
 android:ANDROID_EXTRA_LIBS *= $$(PROOF_PATH)/lib/libProofNetwork.so
