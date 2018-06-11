@@ -21,11 +21,13 @@ namespace Proof {
 struct PROOF_NETWORK_EXPORT RestApiReply
 {
     RestApiReply() {}
-    explicit RestApiReply(const QByteArray &data, const QByteArray &httpReason, int httpStatus)
-        : data(data), httpReason(httpReason), httpStatus(httpStatus)
+    explicit RestApiReply(const QByteArray &data, const QHash<QByteArray, QByteArray> &headers,
+                          const QByteArray &httpReason, int httpStatus)
+        : data(data), headers(headers), httpReason(httpReason), httpStatus(httpStatus)
     {}
     static RestApiReply fromQNetworkReply(QNetworkReply *qReply);
     QByteArray data;
+    QHash<QByteArray, QByteArray> headers;
     QByteArray httpReason;
     int httpStatus = 0;
 };

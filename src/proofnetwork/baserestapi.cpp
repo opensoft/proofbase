@@ -246,6 +246,11 @@ void BaseRestApiPrivate::abortAllReplies()
 
 RestApiReply RestApiReply::fromQNetworkReply(QNetworkReply *qReply)
 {
-    return RestApiReply{qReply->readAll(), qReply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toByteArray(),
-                        qReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()};
+    // Passing by value or explicit non-ref return type are required here,
+    // because rawHeaderPairs returns const&, but not the copy
+    auto headers = algorithms::map(qReply->rawHeaderPairs(), [](QNetworkReply::RawHeaderPair header) { return header; },
+                                   QHash<QByteArray, QByteArray>());
+    return RestApiReply(qReply->readAll(), headers,
+                        qReply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toByteArray(),
+                        qReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
 }
