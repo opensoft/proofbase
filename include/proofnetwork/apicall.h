@@ -3,6 +3,8 @@
 
 #include "proofcore/future.h"
 
+#include "proofnetwork/abstractrestapi.h"
+
 namespace Proof {
 //TODO: 1.0: Change whole network layer to Futures approach to make it more streamlined
 template <typename Result>
@@ -48,5 +50,39 @@ struct ApiCall<void>
         return exec(1, callee, method, signal, args...);
     }
 };
+
+//TODO: deprecated, remove when all clients will be moved to proper futures usage
+//Can be used anywhere instead of chainedApiCall because they already require a background thread
+template <typename T>
+RestApiError runApiCall(const FutureSP<T> &caller, T &result)
+{
+    caller->wait();
+    if (caller->failed()) {
+        return RestApiError::fromFailure(caller->failureReason());
+    } else {
+        result = caller->result();
+        return RestApiError();
+    }
+}
+
+template <typename T>
+RestApiError runApiCall(const FutureSP<T> &caller)
+{
+    caller->wait();
+    return caller->failed() ? RestApiError::fromFailure(caller->failureReason()) : RestApiError();
+}
+
+template <typename T>
+RestApiError runApiCall(const CancelableFuture<T> &caller, T &result)
+{
+    return runApiCall(caller.future(), result);
+}
+
+template <typename T>
+RestApiError runApiCall(const CancelableFuture<T> &caller)
+{
+    return runApiCall(caller.future());
+}
+
 } // namespace Proof
 #endif // PROOF_APICALL_H
