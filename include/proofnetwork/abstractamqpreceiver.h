@@ -1,7 +1,7 @@
 #ifndef PROOF_ABSTRACTAMQPRECEIVER_H
 #define PROOF_ABSTRACTAMQPRECEIVER_H
 
-#include "proofnetwork/3rdparty/qamqp/qamqpqueue.h"
+#include "proofnetwork/3rdparty/qamqp/src/qamqpqueue.h"
 #include "proofnetwork/abstractamqpclient.h"
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"

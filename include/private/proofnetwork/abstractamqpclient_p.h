@@ -5,9 +5,9 @@
 
 #include "proofcore/proofobject_p.h"
 
-#include "proofnetwork/3rdparty/qamqp/qamqpclient.h"
-#include "proofnetwork/3rdparty/qamqp/qamqpmessage.h"
-#include "proofnetwork/3rdparty/qamqp/qamqpqueue.h"
+#include "proofnetwork/3rdparty/qamqp/src/qamqpclient.h"
+#include "proofnetwork/3rdparty/qamqp/src/qamqpmessage.h"
+#include "proofnetwork/3rdparty/qamqp/src/qamqpqueue.h"
 #include "proofnetwork/proofnetwork_global.h"
 
 namespace Proof {
