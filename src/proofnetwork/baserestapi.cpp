@@ -175,18 +175,21 @@ void BaseRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, const Prom
     qCDebug(proofNetworkMiscLog) << "Network error occurred"
                                  << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                  << ": " << errorCode << message;
-    promise->failure(
-        Failure(message, NETWORK_MODULE_CODE, NetworkErrorCode::ServerError, Failure::UserFriendlyHint, errorCode));
+    int hints = Failure::UserFriendlyHint;
+    if (errorCode > 0)
+        hints |= Failure::DataIsHttpCodeHint;
+    promise->failure(Failure(message, NETWORK_MODULE_CODE, NetworkErrorCode::ServerError, hints, errorCode));
 }
 
 void BaseRestApiPrivate::processErroredReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
 {
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if (!errorCode)
+    bool errorCodeIsHttp = errorCode > 0;
+    if (!errorCodeIsHttp)
         errorCode = NETWORK_ERROR_OFFSET + static_cast<int>(reply->error());
     QString errorString = reply->errorString();
     long proofErrorCode = NetworkErrorCode::ServerError;
-    int hints = Failure::NoHint;
+    int hints = errorCodeIsHttp ? Failure::DataIsHttpCodeHint : Failure::NoHint;
     qCDebug(proofNetworkMiscLog) << "Error occurred for"
                                  << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                  << ": " << errorCode << errorString;
@@ -194,7 +197,7 @@ void BaseRestApiPrivate::processErroredReply(QNetworkReply *reply, const Promise
     case QNetworkReply::HostNotFoundError:
         errorString = QStringLiteral("Host %1 not found. Try again later").arg(reply->url().host());
         proofErrorCode = NetworkErrorCode::ServiceUnavailable;
-        hints = Failure::UserFriendlyHint;
+        hints |= Failure::UserFriendlyHint;
         break;
     case QNetworkReply::ConnectionRefusedError:
     case QNetworkReply::RemoteHostClosedError:
@@ -202,7 +205,7 @@ void BaseRestApiPrivate::processErroredReply(QNetworkReply *reply, const Promise
     case QNetworkReply::OperationCanceledError:
         errorString = QStringLiteral("Host %1 is unavailable. Try again later").arg(reply->url().host());
         proofErrorCode = NetworkErrorCode::ServiceUnavailable;
-        hints = Failure::UserFriendlyHint;
+        hints |= Failure::UserFriendlyHint;
         break;
     default:
         break;
