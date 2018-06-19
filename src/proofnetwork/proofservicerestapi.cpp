@@ -74,7 +74,7 @@ void ProofServiceRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, co
                     << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << ":"
                     << errorCode << error.proofModuleCode << error.proofErrorCode << error.message;
                 promise->failure(Failure(error.message, error.proofModuleCode, error.proofErrorCode,
-                                         error.userFriendly ? Failure::UserFriendlyHint : Failure::NoHint));
+                                         error.userFriendly ? Failure::UserFriendlyHint : Failure::NoHint, errorCode));
                 return;
             }
         }
