@@ -42,7 +42,7 @@ protected:
     QStringList availableLanguages;
     QVariantMap fullLanguageNames;
     QString currentLanguage = QStringLiteral("en");
-    QList<QTranslator *> installedTranslators;
+    QVector<QTranslator *> installedTranslators;
     bool initialized = false;
 #ifndef QCA_DISABLED
     QScopedPointer<QCA::Initializer> qcaInit;

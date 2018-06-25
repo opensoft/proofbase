@@ -415,17 +415,6 @@ public:
     }
 
     //This method was made non-template to restrict usage only to linear qt containers because of container copying
-    static FutureSP<QList<T>> sequence(QList<FutureSP<T>> container)
-    {
-        if (container.isEmpty())
-            return Future<QList<T>>::successful();
-        PromiseSP<QList<T>> promise = PromiseSP<QList<T>>::create();
-        QList<T> result;
-        result.reserve(container.count());
-        iterateSequence(std::move(container), container.cbegin(), std::move(result), promise);
-        return promise->future();
-    }
-
     static FutureSP<QVector<T>> sequence(QVector<FutureSP<T>> container)
     {
         if (container.isEmpty())

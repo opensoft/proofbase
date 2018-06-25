@@ -64,8 +64,8 @@ public:
     using Migration = std::function<void(quint64, quint64, Settings *)>;
     static void addMigration(quint64 maxRelatedVersion, Migration &&migration);
     static void addMigration(const QString &maxRelatedVersion, Migration &&migration);
-    static void addMigrations(const QMap<quint64, QList<Migration>> &migrations);
-    static void addMigrations(const QMap<QString, QList<Migration>> &migrations);
+    static void addMigrations(const QMap<quint64, QVector<Migration>> &migrations);
+    static void addMigrations(const QMap<QString, QVector<Migration>> &migrations);
 
 signals:
     void languageChanged(const QString &language);

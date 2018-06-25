@@ -137,16 +137,16 @@ public:
     template <typename Entity, typename Cache, typename KeyFunc, typename Key = typename Cache::key_type>
     auto entitiesArrayUnmarshaller(Cache &cache, KeyFunc &&keyFunc, const QString &attributeName = QString()) const
         -> decltype(std::function<Key(Entity *)>(keyFunc)(cache.value(Key()).data()) == Key(),
-                    std::function<QList<QSharedPointer<Entity>>(const RestApiReply &)>())
+                    std::function<QVector<QSharedPointer<Entity>>(const RestApiReply &)>())
     {
         return [this, attributeName, &cache, keyFunc = std::function<Key(Entity *)>(keyFunc)](const RestApiReply &reply) {
             auto arr = parseEntitiesArray(reply.data, attributeName);
-            QList<QSharedPointer<Entity>> result;
+            QVector<QSharedPointer<Entity>> result;
             result.reserve(arr.count());
             for (const QJsonValue &v : qAsConst(arr)) {
                 auto entity = parseEntity<Entity>(v.toObject());
                 if (!entity)
-                    return QList<QSharedPointer<Entity>>();
+                    return QVector<QSharedPointer<Entity>>();
                 auto fromCache = cache.add(keyFunc(entity.data()), entity);
                 if (entity != fromCache) {
                     fromCache->updateFrom(entity);
@@ -159,29 +159,29 @@ public:
     }
 
     template <typename Entity>
-    std::function<QList<QSharedPointer<Entity>>(const RestApiReply &)>
+    std::function<QVector<QSharedPointer<Entity>>(const RestApiReply &)>
     entitiesArrayUnmarshaller(const QString &attributeName = QString()) const
     {
         return [this, attributeName](const RestApiReply &reply) {
             auto arr = parseEntitiesArray(reply.data, attributeName);
-            QList<QSharedPointer<Entity>> result;
+            QVector<QSharedPointer<Entity>> result;
             result.reserve(arr.count());
             for (const QJsonValue &v : qAsConst(arr)) {
                 auto entity = parseEntity<Entity>(v.toObject());
                 if (!entity)
-                    return QList<QSharedPointer<Entity>>();
+                    return QVector<QSharedPointer<Entity>>();
                 result << entity;
             }
             return result;
         };
     }
 
-    std::function<QList<QString>(const RestApiReply &)>
+    std::function<QVector<QString>(const RestApiReply &)>
     stringsArrayUnmarshaller(const QString &attributeName = QString()) const
     {
         return [this, attributeName](const RestApiReply &reply) {
             auto arr = parseEntitiesArray(reply.data, attributeName);
-            QList<QString> result;
+            QVector<QString> result;
             result.reserve(arr.count());
             for (const QJsonValue &v : qAsConst(arr)) {
                 QString string = v.toString();
@@ -192,11 +192,11 @@ public:
         };
     }
 
-    std::function<QList<qlonglong>(const RestApiReply &)> intsArrayUnmarshaller(const QString &attributeName = QString()) const
+    std::function<QVector<qlonglong>(const RestApiReply &)> intsArrayUnmarshaller(const QString &attributeName = QString()) const
     {
         return [this, attributeName](const RestApiReply &reply) {
             auto arr = parseEntitiesArray(reply.data, attributeName);
-            QList<qint64> result;
+            QVector<qint64> result;
             result.reserve(arr.count());
             for (const QJsonValue &v : qAsConst(arr)) {
                 if (v.isDouble())

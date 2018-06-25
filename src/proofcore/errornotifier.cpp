@@ -7,7 +7,7 @@
 
 namespace Proof {
 
-using StartBuffer = QList<std::tuple<QString, ErrorNotifier::Severity, QString>>;
+using StartBuffer = QVector<std::tuple<QString, ErrorNotifier::Severity, QString>>;
 
 class ErrorNotifierPrivate : public ProofObjectPrivate
 {

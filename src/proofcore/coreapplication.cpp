@@ -38,9 +38,9 @@ QVector<std::function<void()>> &initializers()
     static QVector<std::function<void()>> obj;
     return obj;
 }
-QMap<quint64, QList<Proof::CoreApplication::Migration>> &migrations()
+QMap<quint64, QVector<Proof::CoreApplication::Migration>> &migrations()
 {
-    static QMap<quint64, QList<Proof::CoreApplication::Migration>> obj;
+    static QMap<quint64, QVector<Proof::CoreApplication::Migration>> obj;
     return obj;
 }
 } // namespace
@@ -294,7 +294,7 @@ void CoreApplication::addMigration(const QString &maxRelatedVersion, CoreApplica
     addMigration(packVersion(maxRelatedVersion), std::forward<Migration>(migration));
 }
 
-void CoreApplication::addMigrations(const QMap<quint64, QList<CoreApplication::Migration>> &migrations)
+void CoreApplication::addMigrations(const QMap<quint64, QVector<CoreApplication::Migration>> &migrations)
 {
     for (auto it = migrations.cbegin(); it != migrations.cend(); ++it) {
         quint64 version = it.key();
@@ -303,7 +303,7 @@ void CoreApplication::addMigrations(const QMap<quint64, QList<CoreApplication::M
     }
 }
 
-void CoreApplication::addMigrations(const QMap<QString, QList<CoreApplication::Migration>> &migrations)
+void CoreApplication::addMigrations(const QMap<QString, QVector<CoreApplication::Migration>> &migrations)
 {
     for (auto it = migrations.cbegin(); it != migrations.cend(); ++it) {
         quint64 packedVersion = packVersion(it.key());

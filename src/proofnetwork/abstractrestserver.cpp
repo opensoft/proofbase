@@ -54,6 +54,7 @@ private:
 
 struct WorkerThreadInfo
 {
+    WorkerThreadInfo() {}
     explicit WorkerThreadInfo(WorkerThread *thread, long long socketCount) : thread(thread)
     {
         this->socketCount = socketCount;
@@ -141,7 +142,7 @@ private:
     QString pathPrefix;
     QStringList splittedPathPrefix;
     QThread *serverThread = nullptr;
-    QList<WorkerThreadInfo> threadPool;
+    QVector<WorkerThreadInfo> threadPool;
     QReadWriteLock threadPoolLock;
     QSet<QTcpSocket *> sockets;
     QMutex socketsMutex;
