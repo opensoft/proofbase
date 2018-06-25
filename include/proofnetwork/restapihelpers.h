@@ -1,0 +1,4 @@
+#ifndef RESTAPIHELPERS_H
+#define RESTAPIHELPERS_H
+
+#endif // RESTAPIHELPERS_H
