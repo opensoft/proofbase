@@ -17,13 +17,9 @@ ProofServiceRestApi::ProofServiceRestApi(const RestClientSP &restClient, ProofSe
     : BaseRestApi(restClient, dd, parent)
 {}
 
-ProofServiceRestApiPrivate::ProofServiceRestApiPrivate(const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry)
-    : BaseRestApiPrivate(), errorsRegistry(errorsRegistry)
-{}
-
-void ProofServiceRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
+void ProofServiceRestApi::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
 {
-    Q_Q(ProofServiceRestApi);
+    Q_D(ProofServiceRestApi);
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     QString serviceName;
     QString serviceVersion;
@@ -42,7 +38,7 @@ void ProofServiceRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, co
             QString typeString =
                 (versionHeaderRegExp.cap(3).isEmpty() ? versionHeaderRegExp.cap(2) : versionHeaderRegExp.cap(3)).toLower();
             auto type = VERSIONED_ENTITY_TYPES.value(typeString, VersionedEntityType::Unknown);
-            emit q->versionFetched(type, versionHeaderRegExp.cap(1).toLower(), header.second);
+            emit versionFetched(type, versionHeaderRegExp.cap(1).toLower(), header.second);
             switch (type) {
             case VersionedEntityType::Service:
                 serviceVersion = header.second;
@@ -68,7 +64,7 @@ void ProofServiceRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, co
             if (serviceErrorCode.isDouble()) {
                 QJsonArray jsonArgs = content.object().value(QStringLiteral("message_args")).toArray();
                 auto args = algorithms::map(jsonArgs, [](const auto &x) { return x.toString(); }, QVector<QString>());
-                ErrorInfo error = errorsRegistry->infoForCode(serviceErrorCode.toInt(), args);
+                ErrorInfo error = d->errorsRegistry->infoForCode(serviceErrorCode.toInt(), args);
                 qCWarning(proofNetworkMiscLog)
                     << "Error occurred"
                     << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << ":"
@@ -79,8 +75,12 @@ void ProofServiceRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, co
             }
         }
     }
-    BaseRestApiPrivate::processSuccessfulReply(reply, promise);
+    BaseRestApi::processSuccessfulReply(reply, promise);
 }
+
+ProofServiceRestApiPrivate::ProofServiceRestApiPrivate(const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry)
+    : BaseRestApiPrivate(), errorsRegistry(errorsRegistry)
+{}
 
 std::function<bool(const RestApiReply &)> ProofServiceRestApiPrivate::boolResultUnmarshaller()
 {

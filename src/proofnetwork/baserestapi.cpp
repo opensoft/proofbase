@@ -18,6 +18,10 @@ BaseRestApi::BaseRestApi(const RestClientSP &restClient, BaseRestApiPrivate &dd,
     d->restClient = restClient;
 }
 
+BaseRestApi::BaseRestApi(const RestClientSP &restClient, QObject *parent)
+    : BaseRestApi(restClient, *new BaseRestApiPrivate, parent)
+{}
+
 RestClientSP BaseRestApi::restClient() const
 {
     Q_D(const BaseRestApi);
@@ -51,97 +55,53 @@ qlonglong BaseRestApi::clientSslErrorOffset()
     return NETWORK_SSL_ERROR_OFFSET;
 }
 
-CancelableFuture<RestApiReply> BaseRestApiPrivate::get(const QString &method, const QUrlQuery &query)
+void BaseRestApi::abortAllRequests()
 {
-    return configureReply(restClient->get(method, query, vendor));
+    Q_D(BaseRestApi);
+    d->allRepliesLock.lock();
+    const QVector<CancelableFuture<RestApiReply>> snapshot = algorithms::toValuesVector(d->allReplies);
+    d->allRepliesLock.unlock();
+    for (const auto &reply : snapshot)
+        reply.cancel();
 }
 
-CancelableFuture<RestApiReply> BaseRestApiPrivate::post(const QString &method, const QUrlQuery &query,
-                                                        const QByteArray &body)
+CancelableFuture<RestApiReply> BaseRestApi::get(const QString &method, const QUrlQuery &query)
 {
-    return configureReply(restClient->post(method, query, body, vendor));
+    Q_D(BaseRestApi);
+    return d->configureReply(d->restClient->get(method, query, vendor()));
 }
 
-CancelableFuture<RestApiReply> BaseRestApiPrivate::post(const QString &method, const QUrlQuery &query,
-                                                        QHttpMultiPart *multiParts)
+CancelableFuture<RestApiReply> BaseRestApi::post(const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
-    return configureReply(restClient->post(method, query, multiParts));
+    Q_D(BaseRestApi);
+    return d->configureReply(d->restClient->post(method, query, body, vendor()));
 }
 
-CancelableFuture<RestApiReply> BaseRestApiPrivate::put(const QString &method, const QUrlQuery &query,
-                                                       const QByteArray &body)
+CancelableFuture<RestApiReply> BaseRestApi::post(const QString &method, const QUrlQuery &query, QHttpMultiPart *multiParts)
 {
-    return configureReply(restClient->put(method, query, body, vendor));
+    Q_D(BaseRestApi);
+    return d->configureReply(d->restClient->post(method, query, multiParts));
 }
 
-CancelableFuture<RestApiReply> BaseRestApiPrivate::patch(const QString &method, const QUrlQuery &query,
-                                                         const QByteArray &body)
+CancelableFuture<RestApiReply> BaseRestApi::put(const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
-    return configureReply(restClient->patch(method, query, body, vendor));
+    Q_D(BaseRestApi);
+    return d->configureReply(d->restClient->put(method, query, body, vendor()));
 }
 
-CancelableFuture<RestApiReply> BaseRestApiPrivate::deleteResource(const QString &method, const QUrlQuery &query)
+CancelableFuture<RestApiReply> BaseRestApi::patch(const QString &method, const QUrlQuery &query, const QByteArray &body)
 {
-    return configureReply(restClient->deleteResource(method, query, vendor));
+    Q_D(BaseRestApi);
+    return d->configureReply(d->restClient->patch(method, query, body, vendor()));
 }
 
-CancelableFuture<RestApiReply> BaseRestApiPrivate::configureReply(CancelableFuture<QNetworkReply *> replyFuture)
+CancelableFuture<RestApiReply> BaseRestApi::deleteResource(const QString &method, const QUrlQuery &query)
 {
-    Q_Q(BaseRestApi);
-    auto promise = PromiseSP<RestApiReply>::create();
-    promise->future()->onFailure([replyFuture](const Failure &) { replyFuture.cancel(); });
-
-    replyFuture->onSuccess([this, q, promise](QNetworkReply *reply) {
-        if (promise->filled()) {
-            reply->abort();
-            reply->deleteLater();
-            return;
-        }
-
-        promise->future()->onFailure([reply](const Failure &) {
-            if (reply->isRunning())
-                reply->abort();
-        });
-
-        QObject::connect(reply, &QNetworkReply::finished, q, [this, promise, reply]() {
-            if (promise->filled() || replyShouldBeHandledByError(reply))
-                return;
-            processSuccessfulReply(reply, promise);
-            reply->deleteLater();
-        });
-
-        QObject::connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), q,
-                         [this, promise, reply](QNetworkReply::NetworkError) {
-                             if (promise->filled() || !replyShouldBeHandledByError(reply))
-                                 return;
-                             processErroredReply(reply, promise);
-                             reply->deleteLater();
-                         });
-
-        QObject::connect(reply, &QNetworkReply::sslErrors, q, [promise, reply](const QList<QSslError> &errors) {
-            for (const QSslError &error : errors) {
-                if (error.error() != QSslError::SslError::NoError) {
-                    int errorCode = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
-                    qCWarning(proofNetworkMiscLog)
-                        << "SSL error occurred"
-                        << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << ": "
-                        << errorCode << error.errorString();
-                    if (promise->filled())
-                        continue;
-                    promise->failure(Failure(error.errorString(), NETWORK_MODULE_CODE, NetworkErrorCode::SslError,
-                                             Failure::UserFriendlyHint, errorCode));
-                }
-            }
-            reply->deleteLater();
-        });
-    });
-
-    auto result = CancelableFuture<RestApiReply>(promise);
-    rememberReply(result);
-    return result;
+    Q_D(BaseRestApi);
+    return d->configureReply(d->restClient->deleteResource(method, query, vendor()));
 }
 
-void BaseRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
+void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
 {
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (ALLOWED_HTTP_STATUSES.contains(errorCode)) {
@@ -181,7 +141,7 @@ void BaseRestApiPrivate::processSuccessfulReply(QNetworkReply *reply, const Prom
     promise->failure(Failure(message, NETWORK_MODULE_CODE, NetworkErrorCode::ServerError, hints, errorCode));
 }
 
-void BaseRestApiPrivate::processErroredReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
+void BaseRestApi::processErroredReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
 {
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     bool errorCodeIsHttp = errorCode > 0;
@@ -214,6 +174,72 @@ void BaseRestApiPrivate::processErroredReply(QNetworkReply *reply, const Promise
     promise->failure(Failure(errorString, NETWORK_MODULE_CODE, proofErrorCode, hints, errorCode));
 }
 
+QVector<QString> BaseRestApi::serverErrorAttributes() const
+{
+    return QVector<QString>{};
+}
+
+QString BaseRestApi::vendor() const
+{
+    return QLatin1String();
+}
+
+CancelableFuture<RestApiReply> BaseRestApiPrivate::configureReply(CancelableFuture<QNetworkReply *> replyFuture)
+{
+    Q_Q(BaseRestApi);
+    auto promise = PromiseSP<RestApiReply>::create();
+    promise->future()->onFailure([replyFuture](const Failure &) { replyFuture.cancel(); });
+
+    replyFuture->onSuccess([this, q, promise](QNetworkReply *reply) {
+        if (promise->filled()) {
+            reply->abort();
+            reply->deleteLater();
+            return;
+        }
+
+        promise->future()->onFailure([reply](const Failure &) {
+            if (reply->isRunning())
+                reply->abort();
+        });
+
+        QObject::connect(reply, &QNetworkReply::finished, q, [this, q, promise, reply]() {
+            if (promise->filled() || replyShouldBeHandledByError(reply))
+                return;
+            q->processSuccessfulReply(reply, promise);
+            reply->deleteLater();
+        });
+
+        QObject::connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), q,
+                         [this, q, promise, reply](QNetworkReply::NetworkError) {
+                             if (promise->filled() || !replyShouldBeHandledByError(reply))
+                                 return;
+                             q->processErroredReply(reply, promise);
+                             reply->deleteLater();
+                         });
+
+        QObject::connect(reply, &QNetworkReply::sslErrors, q, [promise, reply](const QList<QSslError> &errors) {
+            for (const QSslError &error : errors) {
+                if (error.error() != QSslError::SslError::NoError) {
+                    int errorCode = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
+                    qCWarning(proofNetworkMiscLog)
+                        << "SSL error occurred"
+                        << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << ": "
+                        << errorCode << error.errorString();
+                    if (promise->filled())
+                        continue;
+                    promise->failure(Failure(error.errorString(), NETWORK_MODULE_CODE, NetworkErrorCode::SslError,
+                                             Failure::UserFriendlyHint, errorCode));
+                }
+            }
+            reply->deleteLater();
+        });
+    });
+
+    auto result = CancelableFuture<RestApiReply>(promise);
+    rememberReply(result);
+    return result;
+}
+
 bool BaseRestApiPrivate::replyShouldBeHandledByError(QNetworkReply *reply) const
 {
     if (reply->error() == QNetworkReply::NetworkError::NoError)
@@ -238,14 +264,10 @@ void BaseRestApiPrivate::rememberReply(const CancelableFuture<RestApiReply> &rep
     reply->onSuccess([cleaner](const RestApiReply &) { cleaner(); })->onFailure([cleaner](const Failure &) { cleaner(); });
 }
 
-void BaseRestApiPrivate::abortAllReplies()
-{
-    allRepliesLock.lock();
-    const QList<CancelableFuture<RestApiReply>> snapshot = allReplies.values();
-    allRepliesLock.unlock();
-    for (const auto &reply : snapshot)
-        reply.cancel();
-}
+RestApiReply::RestApiReply(const QByteArray &data, const QHash<QByteArray, QByteArray> &headers,
+                           const QByteArray &httpReason, int httpStatus)
+    : data(data), headers(headers), httpReason(httpReason), httpStatus(httpStatus)
+{}
 
 RestApiReply RestApiReply::fromQNetworkReply(QNetworkReply *qReply)
 {

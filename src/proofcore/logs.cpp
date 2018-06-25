@@ -27,7 +27,7 @@ static const QMap<QtMsgType, QString> STRINGIFIED_TYPES = {{QtDebugMsg, "D"},
 
 static const QSet<QtMsgType> TYPES_FOR_NOTIFIER = {QtWarningMsg, QtCriticalMsg, QtFatalMsg};
 static const QVector<QLatin1String> NOTIFIER_EXCLUDES = {QLatin1String("QML Image"), QLatin1String("Binding loop"),
-                                                       QLatin1String("QEGLPlatformContext")};
+                                                         QLatin1String("QEGLPlatformContext")};
 
 static bool isConsoleOutputEnabled = true;
 static QString logsStoragePath;

@@ -15,7 +15,6 @@ class PROOF_NETWORK_EXPORT ProofServiceRestApiPrivate : public BaseRestApiPrivat
     Q_DECLARE_PUBLIC(ProofServiceRestApi)
 public:
     ProofServiceRestApiPrivate(const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry);
-    void processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise) override;
 
     std::function<bool(const RestApiReply &)> boolResultUnmarshaller();
 

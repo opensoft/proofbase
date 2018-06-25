@@ -25,6 +25,8 @@ signals:
 
 protected:
     ProofServiceRestApi(const RestClientSP &restClient, ProofServiceRestApiPrivate &dd, QObject *parent = nullptr);
+
+    void processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise) override;
 };
 
 } // namespace NetworkServices
