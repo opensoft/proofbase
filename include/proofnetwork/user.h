@@ -29,7 +29,8 @@ signals:
 
 protected:
     explicit User(const QString &userName);
-    User(UserPrivate &dd, QObject *parent = nullptr);
+    User(UserPrivate &dd);
+    void updateSelf(const Proof::NetworkDataEntitySP &other) override;
 };
 } // namespace Proof
 

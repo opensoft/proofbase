@@ -4,7 +4,7 @@
 
 using namespace Proof;
 
-NetworkDataEntity::NetworkDataEntity(NetworkDataEntityPrivate &dd, QObject *parent) : ProofObject(dd, parent)
+NetworkDataEntity::NetworkDataEntity(NetworkDataEntityPrivate &dd) : ProofObject(dd, nullptr)
 {}
 
 bool NetworkDataEntity::isFetched() const
@@ -12,6 +12,9 @@ bool NetworkDataEntity::isFetched() const
     Q_D(const NetworkDataEntity);
     return d->isFetched;
 }
+
+NetworkDataEntity::NetworkDataEntity() : NetworkDataEntity(*new NetworkDataEntityPrivate)
+{}
 
 void NetworkDataEntity::updateFrom(const Proof::NetworkDataEntitySP &other)
 {
@@ -31,7 +34,7 @@ void NetworkDataEntity::updateFrom(const Proof::NetworkDataEntitySP &other)
         QThread::yieldCurrentThread();
     }
 
-    d->updateFrom(other);
+    updateSelf(other);
     d->setDirty(constOther->d_func()->isDirtyItself());
 
     constOther->d_func()->spinLock.unlock();
@@ -47,15 +50,26 @@ void NetworkDataEntity::setFetched(bool fetched)
     }
 }
 
+NetworkDataEntitySP NetworkDataEntity::selfPtr() const
+{
+    Q_D(const NetworkDataEntity);
+    return d->weakSelf.toStrongRef();
+}
+
 void NetworkDataEntity::initSelfWeakPtr(const NetworkDataEntitySP &entity)
 {
     const NetworkDataEntity *constEntity = entity.data();
     constEntity->d_func()->weakSelf = entity;
 }
 
-void NetworkDataEntityPrivate::updateFrom(const NetworkDataEntitySP &other)
+void NetworkDataEntity::updateSelf(const NetworkDataEntitySP &other)
 {
-    Q_Q(NetworkDataEntity);
     if (other->isFetched())
-        q->setFetched(other->isFetched());
+        setFetched(other->isFetched());
 }
+
+NetworkDataEntityPrivate::NetworkDataEntityPrivate() : ProofObjectPrivate()
+{}
+
+NetworkDataEntityPrivate::~NetworkDataEntityPrivate()
+{}

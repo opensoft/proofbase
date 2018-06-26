@@ -7,21 +7,19 @@
 
 #include <QSharedPointer>
 
-#define PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(Nde, Type, Getter) \
-    Type Nde##QmlWrapper::Getter() const                     \
-    {                                                        \
-        Q_D(const Nde##QmlWrapper);                          \
-        const QSharedPointer<Nde> entity = d->entity<Nde>(); \
-        Q_ASSERT(entity);                                    \
-        return entity->Getter();                             \
+#define PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(Nde, Type, Getter)    \
+    Type Nde##QmlWrapper::Getter() const                        \
+    {                                                           \
+        const QSharedPointer<Nde> entity = this->entity<Nde>(); \
+        Q_ASSERT(entity);                                       \
+        return entity->Getter();                                \
     }
 
 #define PROOF_NDE_WRAPPER_PROPERTY_IMPL_RW(Nde, Type, Getter, Setter) \
     PROOF_NDE_WRAPPER_PROPERTY_IMPL_R(Nde, Type, Getter)              \
     void Nde##QmlWrapper::Setter(const Type &arg)                     \
     {                                                                 \
-        Q_D(Nde##QmlWrapper);                                         \
-        QSharedPointer<Nde> entity = d->entity<Nde>();                \
+        QSharedPointer<Nde> entity = this->entity<Nde>();             \
         Q_ASSERT(entity);                                             \
         if (arg != entity->Getter()) {                                \
             entity->Setter(arg);                                      \
@@ -34,8 +32,7 @@
 #define PROOF_NDE_WRAPPER_TOOLS_IMPL(Nde)                              \
     Proof::NetworkDataEntityQmlWrapper *Nde##QmlWrapper::clone() const \
     {                                                                  \
-        Q_D(const Nde##QmlWrapper);                                    \
-        const QSharedPointer<Nde> entity = d->entity<Nde>();           \
+        const QSharedPointer<Nde> entity = this->entity<Nde>();        \
         Q_ASSERT(entity);                                              \
         return new Nde##QmlWrapper(entity);                            \
     }
@@ -75,9 +72,13 @@ signals:
 protected:
     NetworkDataEntityQmlWrapper() = delete;
     explicit NetworkDataEntityQmlWrapper(const QSharedPointer<NetworkDataEntity> &networkDataEntity,
+                                         QObject *parent = nullptr);
+    explicit NetworkDataEntityQmlWrapper(const QSharedPointer<NetworkDataEntity> &networkDataEntity,
                                          NetworkDataEntityQmlWrapperPrivate &dd, QObject *parent = nullptr);
 
     virtual void setupEntity(const QSharedPointer<NetworkDataEntity> &old = QSharedPointer<NetworkDataEntity>()) = 0;
+
+    QObject *entityConnectContext() const;
 };
 } // namespace Proof
 

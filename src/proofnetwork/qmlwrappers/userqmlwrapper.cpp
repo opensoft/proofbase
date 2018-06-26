@@ -23,8 +23,7 @@ PROOF_NDE_WRAPPER_TOOLS_IMPL(User)
 
 void UserQmlWrapper::setupEntity(const QSharedPointer<NetworkDataEntity> &old)
 {
-    Q_D(UserQmlWrapper);
-    UserSP user = d->entity<User>();
+    UserSP user = entity<User>();
     Q_ASSERT(user);
 
     connect(user.data(), &User::userNameChanged, this, &UserQmlWrapper::userNameChanged);

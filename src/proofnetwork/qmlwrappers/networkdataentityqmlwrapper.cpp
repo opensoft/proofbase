@@ -14,7 +14,18 @@ NetworkDataEntityQmlWrapper::NetworkDataEntityQmlWrapper(const QSharedPointer<Ne
 {
     Q_D(NetworkDataEntityQmlWrapper);
     d->dataEntity = networkDataEntity;
-    d->lambdaConnectContext = new QObject(this);
+    d->entityConnectContext = new QObject(this);
+}
+
+NetworkDataEntityQmlWrapper::NetworkDataEntityQmlWrapper(const QSharedPointer<NetworkDataEntity> &networkDataEntity,
+                                                         QObject *parent)
+    : NetworkDataEntityQmlWrapper(networkDataEntity, *new NetworkDataEntityQmlWrapperPrivate, parent)
+{}
+
+QObject *NetworkDataEntityQmlWrapper::entityConnectContext() const
+{
+    Q_D(const NetworkDataEntityQmlWrapper);
+    return d->entityConnectContext;
 }
 
 bool NetworkDataEntityQmlWrapper::isFetched() const
@@ -42,9 +53,9 @@ void NetworkDataEntityQmlWrapper::setEntity(const QSharedPointer<NetworkDataEnti
         return;
     Q_D(NetworkDataEntityQmlWrapper);
     if (d->dataEntity)
-        disconnect(d->dataEntity.data(), 0, this, 0);
-    d->lambdaConnectContext->deleteLater();
-    d->lambdaConnectContext = new QObject(this);
+        disconnect(d->dataEntity.data(), nullptr, this, nullptr);
+    d->entityConnectContext->deleteLater();
+    d->entityConnectContext = new QObject(this);
     QSharedPointer<NetworkDataEntity> old = d->dataEntity;
     d->dataEntity = networkDataEntity;
     setupEntity(old);

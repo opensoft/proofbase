@@ -3,6 +3,7 @@
 
 #include "proofcore/proofobject.h"
 
+#include "proofnetwork/networkdataentityhelpers.h"
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
 
@@ -15,6 +16,7 @@ class PROOF_NETWORK_EXPORT NetworkDataEntity : public ProofObject
     Q_OBJECT
     Q_DECLARE_PRIVATE(NetworkDataEntity)
 public:
+    using NDE = NetworkDataEntityHelpers;
     bool isFetched() const;
 
     template <class Argument>
@@ -31,9 +33,20 @@ signals:
     void isFetchedChanged(bool arg);
 
 protected:
-    NetworkDataEntity() = delete;
-    NetworkDataEntity(NetworkDataEntityPrivate &dd, QObject *parent = nullptr);
+    NetworkDataEntity();
+    NetworkDataEntity(NetworkDataEntityPrivate &dd);
     void setFetched(bool fetched);
+
+    virtual void updateSelf(const Proof::NetworkDataEntitySP &other);
+
+    NetworkDataEntitySP selfPtr() const;
+
+    template <typename Entity>
+    QSharedPointer<Entity> castedSelfPtr() const
+    {
+        auto self = selfPtr();
+        return self ? qSharedPointerCast<Entity>(self) : QSharedPointer<Entity>();
+    }
 
     static void initSelfWeakPtr(const NetworkDataEntitySP &entity);
 };

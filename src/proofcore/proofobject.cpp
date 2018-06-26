@@ -22,7 +22,7 @@ ProofObject::~ProofObject()
 bool ProofObject::isDirty() const
 {
     Q_D(const ProofObject);
-    return d->isDirty();
+    return d->isDirtyItself() || algorithms::exists(d->childrenDirtyCheckers, [](const auto &f) { return f(); });
 }
 
 void ProofObject::emitError(const Failure &failure, Failure::Hints forceHints)
@@ -48,25 +48,24 @@ ProofObject *ProofObject::defaultInvoker()
     return ProofObjectPrivate::defaultInvoker;
 }
 
+void ProofObject::addDirtyChecker(const std::function<bool()> &checker) const
+{
+    Q_D(const ProofObject);
+    d->childrenDirtyCheckers << checker;
+}
+
 ProofObjectPrivate::ProofObjectPrivate()
 {}
 
 ProofObjectPrivate::~ProofObjectPrivate()
 {}
 
-bool ProofObjectPrivate::isDirty() const
-{
-    return dirtyFlag
-           || std::any_of(childrenDirtyCheckers.begin(), childrenDirtyCheckers.end(),
-                          [](const std::function<bool()> &func) { return func(); });
-}
-
 bool ProofObjectPrivate::isDirtyItself() const
 {
     return dirtyFlag;
 }
 
-void ProofObjectPrivate::setDirty(bool arg)
+void ProofObjectPrivate::setDirty(bool arg) const
 {
     dirtyFlag = arg;
 }

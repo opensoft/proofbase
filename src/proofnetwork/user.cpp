@@ -7,7 +7,7 @@ using namespace Proof;
 User::User(const QString &userName) : User(*new UserPrivate(userName))
 {}
 
-User::User(Proof::UserPrivate &dd, QObject *parent) : NetworkDataEntity(dd, parent)
+User::User(Proof::UserPrivate &dd) : NetworkDataEntity(dd)
 {}
 
 QString User::userName() const
@@ -30,8 +30,7 @@ QString User::email() const
 
 UserQmlWrapper *User::toQmlWrapper(QObject *parent) const
 {
-    Q_D(const User);
-    UserSP castedSelf = qSharedPointerCast<User>(d->weakSelf);
+    UserSP castedSelf = castedSelfPtr<User>();
     Q_ASSERT(castedSelf);
     return new UserQmlWrapper(castedSelf, parent);
 }
@@ -48,14 +47,15 @@ UserPrivate::UserPrivate(const QString &userName) : userName(userName)
     setDirty(!userName.isEmpty());
 }
 
-void UserPrivate::updateFrom(const NetworkDataEntitySP &other)
+void User::updateSelf(const NetworkDataEntitySP &other)
 {
+    Q_D(User);
     UserSP castedOther = qSharedPointerCast<User>(other);
-    setUserName(castedOther->userName());
-    setFullName(castedOther->fullName());
-    setEmail(castedOther->email());
+    d->setUserName(castedOther->userName());
+    d->setFullName(castedOther->fullName());
+    d->setEmail(castedOther->email());
 
-    NetworkDataEntityPrivate::updateFrom(other);
+    NetworkDataEntity::updateSelf(other);
 }
 
 void UserPrivate::setUserName(const QString &arg)
