@@ -55,8 +55,7 @@ void UrlQueryBuilder::setCustomParam(const QString &name, const QDateTime &value
     if (result.lastIndexOf(QRegExp("[-+]\\d\\d:?\\d\\d")) == -1) {
         if (result.endsWith(QLatin1String("Z")))
             result.chop(1);
-        result +=
-            value.timeZone().displayName(value, QTimeZone::OffsetName).replace(QLatin1String("UTC"), QLatin1String(""));
+        result += value.timeZone().displayName(value, QTimeZone::OffsetName).replace(QLatin1String("UTC"), QString());
     }
     result.replace(QRegExp("([-+])(\\d\\d):?(\\d\\d)"), QStringLiteral("\\1\\2\\3"));
     setCustomParam(name, result);

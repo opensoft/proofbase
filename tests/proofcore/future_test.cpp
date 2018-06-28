@@ -131,7 +131,7 @@ TEST(FutureTest, withFailure)
     EXPECT_FALSE(future->succeeded());
     EXPECT_TRUE(future->failed());
     EXPECT_TRUE(future->failureReason().exists);
-    EXPECT_EQ(QLatin1String(), future->failureReason().message);
+    EXPECT_EQ(QString(), future->failureReason().message);
     EXPECT_EQ(0, future->failureReason().moduleCode);
     EXPECT_EQ(0, future->failureReason().errorCode);
     EXPECT_EQ("failed4", future->failureReason().data);

@@ -80,13 +80,13 @@ void EmailNotificationHandler::notify(const QString &message, ErrorNotifier::Sev
         }
     }
 
-    QString fullMessage = QString("Application: %1 (%2)\n"
-                                  "Version: %3\n"
-                                  "Proof version: %4\n"
-                                  "OS: %5\n"
-                                  "IP: %6\n"
-                                  "Time: %7\n\n"
-                                  "%8")
+    QString fullMessage = QStringLiteral("Application: %1 (%2)\n"
+                                         "Version: %3\n"
+                                         "Proof version: %4\n"
+                                         "OS: %5\n"
+                                         "IP: %6\n"
+                                         "Time: %7\n\n"
+                                         "%8")
                               .arg(qApp->applicationName(), d->appId, qApp->applicationVersion(), Proof::proofVersion(),
                                    QSysInfo::prettyProductName(), ipsList.join(QStringLiteral("; ")),
                                    QDateTime::currentDateTime().toString(Qt::ISODate), message);

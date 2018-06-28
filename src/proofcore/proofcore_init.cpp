@@ -29,9 +29,8 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
     Proof::CoreApplication::addInitializer([]() {
         Proof::SettingsGroup *notifierGroup = proofApp->settings()->group(QStringLiteral("error_notifier"),
                                                                           Proof::Settings::NotFoundPolicy::Add);
-        QString appId = notifierGroup
-                            ->value(QStringLiteral("app_id"), QStringLiteral(""), Proof::Settings::NotFoundPolicy::Add)
-                            .toString();
+        QString appId =
+            notifierGroup->value(QStringLiteral("app_id"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
         Proof::ErrorNotifier::instance()->registerHandler(new Proof::MemoryStorageNotificationHandler(appId));
     });
 

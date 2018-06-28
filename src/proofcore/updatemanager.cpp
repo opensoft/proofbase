@@ -160,7 +160,7 @@ QString UpdateManager::packageName() const
 QString UpdateManager::newVersion() const
 {
     Q_D(const UpdateManager);
-    return d->newVersion ? unpackVersionToString(d->newVersion) : QLatin1String("");
+    return d->newVersion ? unpackVersionToString(d->newVersion) : QString();
 }
 
 bool UpdateManager::newVersionInstallable() const
@@ -213,7 +213,7 @@ void UpdateManagerPrivate::checkPassword(const QString &password)
 #ifdef Q_OS_LINUX
     QScopedPointer<QProcess> checker(new QProcess);
     checker->setProcessChannelMode(QProcess::MergedChannels);
-    checker->start(QString("sudo -S -k pwd"));
+    checker->start(QStringLiteral("sudo -S -k pwd"));
     if (checker->error() == QProcess::UnknownError) {
         if (!checker->waitForReadyRead()) {
             qCDebug(proofCoreUpdatesLog) << "No answer from command. Returning";
@@ -227,7 +227,7 @@ void UpdateManagerPrivate::checkPassword(const QString &password)
         readBuffer.append(currentRead);
         currentRead = currentRead.trimmed();
         if (currentRead.contains("[sudo]") || currentRead.contains("password for")) {
-            checker->write(QString("%1\n").arg(password).toLatin1());
+            checker->write(QStringLiteral("%1\n").arg(password).toLatin1());
             if (!checker->waitForReadyRead()) {
                 qCDebug(proofCoreUpdatesLog) << "No answer from command. Returning";
                 emit q->passwordChecked(false);
@@ -270,8 +270,9 @@ void UpdateManagerPrivate::checkForUpdates()
     if (aptSourcesListFilePath.isEmpty())
         updater->start("sudo -S apt-get update");
     else
-        updater->start(QString("sudo -S apt-get update -o Dir::Etc::sourcelist=\"%1\" -o Dir::Etc::sourceparts=\"-\"")
-                           .arg(aptSourcesListFilePath));
+        updater->start(
+            QStringLiteral("sudo -S apt-get update -o Dir::Etc::sourcelist=\"%1\" -o Dir::Etc::sourceparts=\"-\"")
+                .arg(aptSourcesListFilePath));
     updater->waitForStarted();
     if (updater->error() == QProcess::UnknownError) {
         bool errorSent = false;
@@ -279,8 +280,8 @@ void UpdateManagerPrivate::checkForUpdates()
             QByteArray data = updater->readAll().trimmed();
             if (data.contains("sudo") || data.contains("password for")) {
                 qCDebug(proofCoreUpdatesLog) << "apt-get update process asked for sudo password";
-                ErrorNotifier::instance()->notify(QString(
-                    "Error occurred during looking for updates.\nApt-get update process asked for sudo password"));
+                ErrorNotifier::instance()->notify(QStringLiteral("Error occurred during looking for updates.\n"
+                                                                 "Apt-get update process asked for sudo password"));
                 errorSent = true;
                 updater->kill();
             }
@@ -288,28 +289,28 @@ void UpdateManagerPrivate::checkForUpdates()
         updater->waitForFinished(-1);
         qCDebug(proofCoreUpdatesLog) << "apt-get update process finished with code =" << updater->exitCode();
         if (updater->exitCode() && !errorSent) {
-            ErrorNotifier::instance()->notify(
-                QString("Error occurred during looking for updates.\nApt-get process returned with exit code - %1.")
-                    .arg(updater->exitCode()));
+            ErrorNotifier::instance()->notify(QStringLiteral("Error occurred during looking for updates.\n"
+                                                             "Apt-get process returned with exit code - %1.")
+                                                  .arg(updater->exitCode()));
         }
     } else {
         qCWarning(proofCoreUpdatesLog) << "apt-get update process couldn't be started" << updater->error()
                                        << updater->errorString();
         ErrorNotifier::instance()->notify(
-            QString("Error occurred during looking for updates.\nApt-get couldn't be started.\n%1 - %2")
+            QStringLiteral("Error occurred during looking for updates.\nApt-get couldn't be started.\n%1 - %2")
                 .arg(updater->error())
                 .arg(updater->errorString()));
     }
 
     QScopedPointer<QProcess> checker(new QProcess);
-    checker->start(QString("apt-cache --no-all-versions show %1").arg(packageName));
+    checker->start(QStringLiteral("apt-cache --no-all-versions show %1").arg(packageName));
     checker->waitForStarted();
     if (checker->error() == QProcess::UnknownError) {
         checker->waitForFinished();
         if (checker->exitCode()) {
-            ErrorNotifier::instance()->notify(
-                QString("Error occurred during looking for updates.\nApt-cache process returned with exit code - %1.")
-                    .arg(checker->exitCode()));
+            ErrorNotifier::instance()->notify(QStringLiteral("Error occurred during looking for updates.\n"
+                                                             "Apt-cache process returned with exit code - %1.")
+                                                  .arg(checker->exitCode()));
         }
         QList<QByteArray> lines = checker->readAll().trimmed().split('\n');
         QString version;
@@ -325,9 +326,9 @@ void UpdateManagerPrivate::checkForUpdates()
         }
         int foundVersionMajor = splittedVersion[0].toInt();
         quint64 foundVersion = packVersion(splittedVersion);
-        qCDebug(proofCoreUpdatesLog) << "Version found:" << QString("0x%1").arg(foundVersion, 16, 16, QLatin1Char('0'))
-                                     << "; Current version is:"
-                                     << QString("0x%1").arg(currentVersion, 16, 16, QLatin1Char('0'));
+        qCDebug(proofCoreUpdatesLog)
+            << "Version found:" << QStringLiteral("0x%1").arg(foundVersion, 16, 16, QLatin1Char('0'))
+            << "; Current version is:" << QStringLiteral("0x%1").arg(currentVersion, 16, 16, QLatin1Char('0'));
         if (foundVersion > currentVersion) {
             if (foundVersionMajor > currentVersionMajor)
                 qCDebug(proofCoreUpdatesLog) << "Manual update needed because of different major version";
@@ -352,11 +353,12 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
     QScopedPointer<QProcess> updater(new QProcess);
     updater->setProcessChannelMode(QProcess::MergedChannels);
     bool isUpdate = version.isEmpty();
-    QString package = isUpdate ? packageName : QString("%1=%2").arg(packageName, version);
+    QString package = isUpdate ? packageName : QStringLiteral("%1=%2").arg(packageName, version);
     auto successSignal = isUpdate ? &UpdateManager::updateSucceeded : &UpdateManager::installationSucceeded;
     auto failSignal = isUpdate ? &UpdateManager::updateFailed : &UpdateManager::installationFailed;
-    updater->start(
-        QString("sudo -S -k apt-get --quiet --assume-yes --force-yes --allow-unauthenticated install %1").arg(package));
+    updater->start(QStringLiteral("sudo -S -k apt-get --quiet --assume-yes "
+                                  "--force-yes --allow-unauthenticated install %1")
+                       .arg(package));
     updater->waitForStarted();
     if (updater->error() == QProcess::UnknownError) {
         if (!updater->waitForReadyRead()) {
@@ -371,7 +373,7 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
         readBuffer.append(currentRead);
         currentRead = currentRead.trimmed();
         if (currentRead.contains("[sudo]") || currentRead.contains("password for")) {
-            updater->write(QString("%1\n").arg(password).toLatin1());
+            updater->write(QStringLiteral("%1\n").arg(password).toLatin1());
             if (!updater->waitForReadyRead()) {
                 qCWarning(proofCoreUpdatesLog) << "No answer from apt-get. Returning";
                 emit(q->*failSignal)();
@@ -397,7 +399,8 @@ void UpdateManagerPrivate::installVersion(QString version, const QString &passwo
         readBuffer.append(updater->readAll().trimmed());
         qCDebug(proofCoreUpdatesLog) << "Updated with exitcode =" << updater->exitCode() << "; log:\n" << readBuffer;
         if (updater->exitCode()) {
-            ErrorNotifier::instance()->notify(QString("Error occurred during update.\n\n%1").arg(readBuffer.constData()));
+            ErrorNotifier::instance()->notify(
+                QStringLiteral("Error occurred during update.\n\n%1").arg(readBuffer.constData()));
             emit(q->*failSignal)();
         } else {
             emit(q->*successSignal)();

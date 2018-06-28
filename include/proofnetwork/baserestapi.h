@@ -217,7 +217,7 @@ protected:
         return [](const RestApiReply &) { return true; };
     }
 
-    QJsonArray parseEntitiesArray(const QByteArray &data, const QString &attributeName = QLatin1String()) const
+    QJsonArray parseEntitiesArray(const QByteArray &data, const QString &attributeName = QString()) const
     {
         QJsonParseError jsonError;
         QJsonDocument doc = QJsonDocument::fromJson(data, &jsonError);

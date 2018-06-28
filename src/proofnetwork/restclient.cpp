@@ -335,7 +335,7 @@ CancelableFuture<QNetworkReply *> RestClient::get(const QString &method, const Q
 
     return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, vendor](QNetworkAccessManager *qnam) {
         qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
-        QNetworkReply *reply = qnam->get(d->createNetworkRequest(d->createUrl(method, query), "", vendor));
+        QNetworkReply *reply = qnam->get(d->createNetworkRequest(d->createUrl(method, query), QByteArray(), vendor));
         d->handleReply(reply);
         return reply;
     });
@@ -363,7 +363,7 @@ CancelableFuture<QNetworkReply *> RestClient::post(const QString &method, const 
 
     return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, multiParts](QNetworkAccessManager *qnam) {
         qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
-        QNetworkRequest request = d->createNetworkRequest(d->createUrl(method, query), "", QLatin1String(""));
+        QNetworkRequest request = d->createNetworkRequest(d->createUrl(method, query), QByteArray(), QString());
         request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
                           QStringLiteral("multipart/form-data; boundary=%1").arg(QString(multiParts->boundary())));
         QNetworkReply *reply = qnam->post(request, multiParts);
@@ -425,10 +425,9 @@ CancelableFuture<QNetworkReply *> RestClient::get(const QUrl &url)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << url;
-    // TODO: warning QStringLiteral() macro without parameters. Also check variations QStringLiteral(""), QLatin1String(), QLatin1String("")
     return NetworkScheduler::instance()->addRequest(url.host(), [d, url](QNetworkAccessManager *qnam) {
         qCDebug(proofNetworkMiscLog) << url << "started";
-        QNetworkReply *reply = qnam->get(d->createNetworkRequest(url, QByteArray(), QStringLiteral()));
+        QNetworkReply *reply = qnam->get(d->createNetworkRequest(url, QByteArray(), QString()));
         d->handleReply(reply);
         return reply;
     });
@@ -537,7 +536,7 @@ QByteArray RestClientPrivate::generateWsseToken() const
     }
 
     QString createdAt = QDateTime::currentDateTime().toString(Qt::ISODate);
-    QString nonce = QUuid::createUuid().toString().replace(QLatin1String("-"), QLatin1String(""));
+    QString nonce = QUuid::createUuid().toString().replace(QLatin1String("-"), QString());
 
     QCryptographicHash hasher(QCryptographicHash::Sha1);
     hasher.addData(nonce.toLatin1());

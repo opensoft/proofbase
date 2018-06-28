@@ -23,8 +23,8 @@ public:
 protected:
     void SetUp() override
     {
-        qApp->setOrganizationName(QString("Opensoft_test_%1").arg(counter));
-        qApp->setApplicationName(QString("proofcore_tests_%1").arg(counter));
+        qApp->setOrganizationName(QStringLiteral("Opensoft_test_%1").arg(counter));
+        qApp->setApplicationName(QStringLiteral("proofcore_tests_%1").arg(counter));
         ++counter;
         QDir(QFileInfo(Settings::filePath(Settings::Storage::Local)).absolutePath()).removeRecursively();
     }

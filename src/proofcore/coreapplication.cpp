@@ -373,7 +373,7 @@ bool CoreApplicationPrivate::daemonizeIfNeeded()
 void CoreApplicationPrivate::initLogs(bool daemonized)
 {
     bool consoleOutputEnabled = true;
-    QString storagePath = QLatin1String("");
+    QString storagePath;
     QString logFileName = qApp->applicationName();
     Settings::NotFoundPolicy policy = Proof::proofUsesSettings() ? Settings::NotFoundPolicy::Add
                                                                  : Settings::NotFoundPolicy::DoNothing;

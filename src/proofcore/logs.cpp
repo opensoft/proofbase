@@ -86,7 +86,7 @@ void baseHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
             break;
         }
         if (!Proof::algorithms::exists(NOTIFIER_EXCLUDES, [message](const auto &x) { return message.contains(x); }))
-            Proof::ErrorNotifier::instance()->notify(QString("%1: %2").arg(context.category).arg(message), severity);
+            Proof::ErrorNotifier::instance()->notify(QStringLiteral("%1: %2").arg(context.category, message), severity);
     }
 }
 
@@ -145,7 +145,7 @@ void Proof::Logs::setup(const QStringList &defaultLoggingRules)
     //Windows already gives us org/app as part of conf location
     QString configPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
 #elif defined Q_OS_ANDROID
-    QString configPath = QString("%1/%2")
+    QString configPath = QStringLiteral("%1/%2")
                              .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
                              .arg(qApp->organizationName());
 #else
@@ -156,13 +156,13 @@ void Proof::Logs::setup(const QStringList &defaultLoggingRules)
     if (!configPath.isEmpty() && QDir::root().mkpath(configPath)) {
         QFile loggingRulesFile(QDir(configPath).absoluteFilePath(qApp->applicationName() + ".qtlogging.rules"));
         if (!loggingRulesFile.exists()) {
-            QString defaultRules = QString("proof.core.cache=false\n"
-                                           "proof.core.taskchain.extra=false\n"
-                                           "proof.core.taskchain.stats=false\n"
-                                           "proof.core.tasks.extra=false\n"
-                                           "proof.core.tasks.stats=false\n"
-                                           "proof.core.futures.*=false\n"
-                                           "%1\n")
+            QString defaultRules = QStringLiteral("proof.core.cache=false\n"
+                                                  "proof.core.taskchain.extra=false\n"
+                                                  "proof.core.taskchain.stats=false\n"
+                                                  "proof.core.tasks.extra=false\n"
+                                                  "proof.core.tasks.stats=false\n"
+                                                  "proof.core.futures.*=false\n"
+                                                  "%1\n")
                                        .arg(defaultLoggingRules.join(QStringLiteral("\n")));
             if (loggingRulesFile.open(QFile::WriteOnly | QFile::Append))
                 loggingRulesFile.write(defaultRules.toLatin1());

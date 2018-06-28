@@ -39,14 +39,14 @@ struct Failure
         : exists(true), moduleCode(moduleCode), errorCode(errorCode), hints(hints), message(message), data(data)
     {}
     explicit Failure(const QVariant &data)
-        : exists(true), moduleCode(0), errorCode(0), hints(NoHint), message(QLatin1String()), data(data)
+        : exists(true), data(data)
     {}
     Failure() : exists(false), moduleCode(0), errorCode(0), hints(NoHint) {}
     operator QString() { return message; }
     bool exists = false;
     long moduleCode = 0;
     long errorCode = 0;
-    long hints = 0;
+    long hints = NoHint;
     QString message;
     QVariant data;
 };

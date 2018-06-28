@@ -32,8 +32,8 @@ using namespace Proof;
 Settings::Settings(QObject *parent) : ProofObject(*new SettingsPrivate, parent)
 {
     Q_D(Settings);
-    d->mainGlobalGroup = new SettingsGroup(QLatin1String(""), nullptr, nullptr);
-    d->mainLocalGroup = new SettingsGroup(QLatin1String(""), d->mainGlobalGroup, nullptr);
+    d->mainGlobalGroup = new SettingsGroup(QString(), nullptr, nullptr);
+    d->mainLocalGroup = new SettingsGroup(QString(), d->mainGlobalGroup, nullptr);
     connect(d->mainLocalGroup, &SettingsGroup::valueChanged, this,
             [d](const QVector<QString> &key, const QVariant &value, bool inherited) {
                 if (!inherited)
@@ -112,14 +112,12 @@ QString SettingsPrivate::filePath(Settings::Storage storage)
     QString appName = storage == Settings::Storage::Local ? qApp->applicationName() : QStringLiteral("proof-common");
 #if defined Q_OS_WIN
     //Windows already gives us org/app as part of conf location
-    QString configPath = QStringLiteral("%1/%2/%3.conf")
-                             .arg(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation),
-                                  qApp->organizationName(),
-                                  appName
-                                      + (storage == Settings::Storage::Local ? QStringLiteral("/%1").arg(appName)
-                                                                             : QStringLiteral("")));
+    QString configPath =
+        QStringLiteral("%1/%2/%3.conf")
+            .arg(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation), qApp->organizationName(),
+                 appName + (storage == Settings::Storage::Local ? QStringLiteral("/%1").arg(appName) : QString()));
 #elif defined Q_OS_ANDROID
-    QString configPath = QString("%1/%2/%3.conf")
+    QString configPath = QStringLiteral("%1/%2/%3.conf")
                              .arg(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation),
                                   qApp->organizationName(), appName);
 #else

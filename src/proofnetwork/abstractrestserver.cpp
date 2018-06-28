@@ -156,11 +156,10 @@ private:
 
 using namespace Proof;
 
-AbstractRestServer::AbstractRestServer() : AbstractRestServer(*new AbstractRestServerPrivate, QLatin1String(""), 80)
+AbstractRestServer::AbstractRestServer() : AbstractRestServer(*new AbstractRestServerPrivate, QString(), 80)
 {}
 
-AbstractRestServer::AbstractRestServer(int port)
-    : AbstractRestServer(*new AbstractRestServerPrivate, QLatin1String(""), port)
+AbstractRestServer::AbstractRestServer(int port) : AbstractRestServer(*new AbstractRestServerPrivate, QString(), port)
 {}
 
 AbstractRestServer::AbstractRestServer(const QString &pathPrefix, int port)
@@ -407,8 +406,8 @@ void AbstractRestServer::rest_get_System_RecentErrors(QTcpSocket *socket, const 
     auto notificationsMemoryStorage = ErrorNotifier::instance()->handler<MemoryStorageNotificationHandler>();
     auto lastErrors = notificationsMemoryStorage
                           ? notificationsMemoryStorage->messages()
-                          : QMultiMap<QDateTime, QString>{
-                                {QDateTime::currentDateTimeUtc(), QString("Memory storage error handler not set")}};
+                          : QMultiMap<QDateTime, QString>{{QDateTime::currentDateTimeUtc(),
+                                                           QStringLiteral("Memory storage error handler not set")}};
 
     auto errorObjectBuilder = [](const QDateTime &time, const QString &error) -> QJsonObject {
         return QJsonObject{{"timestamp", time.toString(Qt::ISODate)}, {"message", error}};
@@ -673,7 +672,8 @@ void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray 
     } else {
         qCDebug(proofNetworkMiscLog).noquote()
             << "Wanted to reply" << returnCode << ":" << reason << "at socket"
-            << QString("QTcpSocket(%1)").arg(reinterpret_cast<quint64>(socket), 0, 16) << "but it is dead already";
+            << QStringLiteral("QTcpSocket(%1)").arg(reinterpret_cast<quint64>(socket), 0, 16)
+            << "but it is dead already";
     }
 }
 
@@ -798,13 +798,13 @@ void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const 
         QString additionalHeaders = additionalHeadersList.join(QStringLiteral("\r\n")) + "\r\n";
 
         //TODO: Add support for keep-alive
-        socket->write(QString("HTTP/1.1 %1 %2\r\n"
-                              "Server: proof\r\n"
-                              "Connection: closed\r\n"
-                              "Content-Type: %3\r\n"
-                              "%4"
-                              "%5"
-                              "\r\n")
+        socket->write(QStringLiteral("HTTP/1.1 %1 %2\r\n"
+                                     "Server: proof\r\n"
+                                     "Connection: closed\r\n"
+                                     "Content-Type: %3\r\n"
+                                     "%4"
+                                     "%5"
+                                     "\r\n")
                           .arg(QString::number(returnCode), reason, contentType,
                                !body.isEmpty() ? QStringLiteral("Content-Length: %1\r\n").arg(body.size()) : QString(),
                                additionalHeaders)
