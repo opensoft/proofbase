@@ -5,8 +5,6 @@
 
 #include "proofcore/proofobject.h"
 
-#include <QStringList>
-
 namespace Proof {
 
 class UpdateManagerPrivate;

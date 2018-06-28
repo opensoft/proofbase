@@ -6,7 +6,6 @@
 #include <QHash>
 #include <QPair>
 #include <QString>
-#include <QStringList>
 
 #include <initializer_list>
 

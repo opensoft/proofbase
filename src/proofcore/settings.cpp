@@ -18,7 +18,7 @@ class SettingsPrivate : public ProofObjectPrivate
     void openSettings();
     void readSettings();
     void fillGroupFromSettings(SettingsGroup *groupToFill, const QSharedPointer<QSettings> &settings);
-    void groupValueChanged(const QStringList &key, const QVariant &value, const QSharedPointer<QSettings> &settings);
+    void groupValueChanged(const QVector<QString> &key, const QVariant &value, const QSharedPointer<QSettings> &settings);
 
     SettingsGroup *mainLocalGroup;
     QSharedPointer<QSettings> localSettings;
@@ -35,12 +35,14 @@ Settings::Settings(QObject *parent) : ProofObject(*new SettingsPrivate, parent)
     d->mainGlobalGroup = new SettingsGroup(QLatin1String(""), nullptr, nullptr);
     d->mainLocalGroup = new SettingsGroup(QLatin1String(""), d->mainGlobalGroup, nullptr);
     connect(d->mainLocalGroup, &SettingsGroup::valueChanged, this,
-            [d](const QStringList &key, const QVariant &value, bool inherited) {
+            [d](const QVector<QString> &key, const QVariant &value, bool inherited) {
                 if (!inherited)
                     d->groupValueChanged(key, value, d->localSettings);
             });
     connect(d->mainGlobalGroup, &SettingsGroup::valueChanged, this,
-            [d](const QStringList &key, const QVariant &value) { d->groupValueChanged(key, value, d->globalSettings); });
+            [d](const QVector<QString> &key, const QVariant &value) {
+                d->groupValueChanged(key, value, d->globalSettings);
+            });
     d->readSettings();
 }
 
@@ -170,13 +172,13 @@ void SettingsPrivate::fillGroupFromSettings(SettingsGroup *groupToFill, const QS
         groupToFill->deleteGroup(key);
 }
 
-void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &value,
+void SettingsPrivate::groupValueChanged(const QVector<QString> &key, const QVariant &value,
                                         const QSharedPointer<QSettings> &settings)
 {
     Q_ASSERT_X(key.count(), Q_FUNC_INFO, "key list can't be empty");
 
     QString groupPathToRestore = settings->group();
-    QStringList groupsToRestore;
+    QVector<QString> groupsToRestore;
     while (!settings->group().isEmpty()) {
         settings->endGroup();
         QString newPath = settings->group();
@@ -195,6 +197,6 @@ void SettingsPrivate::groupValueChanged(const QStringList &key, const QVariant &
     for (int i = 0; i < key.count() - 1; ++i)
         settings->endGroup();
 
-    for (const QString &groupToRestore : groupsToRestore)
+    for (const QString &groupToRestore : qAsConst(groupsToRestore))
         settings->beginGroup(groupToRestore);
 }

@@ -34,7 +34,7 @@ SettingsGroup::SettingsGroup(const QString &name, SettingsGroup *globalGroup, QO
         d->valuesNames = d->globalGroup->values();
         d->groupsNames = d->globalGroup->groups();
         connect(d->globalGroup, &Proof::SettingsGroup::valueChanged, this,
-                [this, d](const QStringList &key, const QVariant &value) {
+                [this, d](const QVector<QString> &key, const QVariant &value) {
                     // We don't care about sub values
                     if (key.count() > 1)
                         return;
@@ -128,8 +128,8 @@ SettingsGroup *SettingsGroup::addGroup(const QString &groupName)
         d->groups[groupName] = newGroup;
         d->groupsNames << groupName;
         connect(newGroup, &SettingsGroup::valueChanged, this,
-                [this, groupName](const QStringList &key, const QVariant &value, bool inherited) {
-                    QStringList newKey{groupName};
+                [this, groupName](const QVector<QString> &key, const QVariant &value, bool inherited) {
+                    QVector<QString> newKey{groupName};
                     newKey.append(key);
                     emit valueChanged(newKey, value, inherited);
                 });

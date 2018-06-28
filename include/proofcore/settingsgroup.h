@@ -37,7 +37,7 @@ public:
 signals:
     void groupAdded(const QString &groupName);
     void groupRemoved(const QString &groupName);
-    void valueChanged(const QStringList &key, const QVariant &value, bool inherited);
+    void valueChanged(const QVector<QString> &key, const QVariant &value, bool inherited);
 
 private:
     friend class Settings;
