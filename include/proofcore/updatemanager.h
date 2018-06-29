@@ -11,16 +11,17 @@ class UpdateManagerPrivate;
 class PROOF_CORE_EXPORT UpdateManager : public ProofObject
 {
     Q_OBJECT
+    // clang-format off
     Q_PROPERTY(bool supported READ supported CONSTANT)
     Q_PROPERTY(bool autoUpdateEnabled READ autoUpdateEnabled WRITE setAutoUpdateEnabled NOTIFY autoUpdateEnabledChanged)
     Q_PROPERTY(int timeout READ timeout WRITE setTimeout NOTIFY timeoutChanged)
-    Q_PROPERTY(QString aptSourcesListFilePath READ aptSourcesListFilePath WRITE setAptSourcesListFilePath NOTIFY
-                   aptSourcesListFilePathChanged)
+    Q_PROPERTY(QString aptSourcesListFilePath READ aptSourcesListFilePath WRITE setAptSourcesListFilePath NOTIFY aptSourcesListFilePathChanged)
     Q_PROPERTY(QString currentVersion READ currentVersion WRITE setCurrentVersion NOTIFY currentVersionChanged)
     Q_PROPERTY(QString packageName READ packageName WRITE setPackageName NOTIFY packageNameChanged)
     Q_PROPERTY(QString newVersion READ newVersion NOTIFY newVersionChanged)
     Q_PROPERTY(bool newVersionInstallable READ newVersionInstallable NOTIFY newVersionInstallableChanged)
     Q_DECLARE_PRIVATE(UpdateManager)
+    // clang-format on
 
 public:
     explicit UpdateManager(QObject *parent = nullptr);

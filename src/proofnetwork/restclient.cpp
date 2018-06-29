@@ -637,7 +637,7 @@ NetworkScheduler::addRequest(const QString &host, std::function<QNetworkReply *(
 {
     auto promise = PromiseSP<QNetworkReply *>::create();
     promise->future()
-        ->flatMap([this, host](QNetworkReply *reply) {
+        ->flatMap([host](QNetworkReply *reply) {
             auto checker = PromiseSP<bool>::create();
             QObject::connect(reply, &QNetworkReply::finished, reply, [checker]() { checker->success(true); });
             QObject::connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), reply,

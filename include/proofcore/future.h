@@ -38,9 +38,7 @@ struct Failure
             const QVariant &data = QVariant())
         : exists(true), moduleCode(moduleCode), errorCode(errorCode), hints(hints), message(message), data(data)
     {}
-    explicit Failure(const QVariant &data)
-        : exists(true), data(data)
-    {}
+    explicit Failure(const QVariant &data) : exists(true), data(data) {}
     Failure() : exists(false), moduleCode(0), errorCode(0), hints(NoHint) {}
     operator QString() { return message; }
     bool exists = false;
@@ -151,7 +149,7 @@ public:
     using value_type = Future<T>;
     explicit CancelableFuture() { m_promise = PromiseSP<T>::create(); }
     explicit CancelableFuture(const PromiseSP<T> &promise) { m_promise = promise; }
-    void cancel(const Failure &failure = Failure("Canceled", 0, 0)) const
+    void cancel(const Failure &failure = Failure(QStringLiteral("Canceled"), 0, 0)) const
     {
         if (!m_promise->filled())
             m_promise->failure(failure);

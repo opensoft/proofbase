@@ -645,10 +645,12 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
             isAuthenticationSuccessful = (!encryptedAuth.isEmpty() && q->checkBasicAuth(encryptedAuth));
         }
         if (isAuthenticationSuccessful) {
+            // clang-format off
             QMetaObject::invokeMethod(q, methodName.toLatin1().constData(), Qt::DirectConnection,
-                                      Q_ARG(QTcpSocket *, socket), Q_ARG(const QStringList &, headers),
-                                      Q_ARG(const QStringList &, methodVariableParts),
-                                      Q_ARG(const QUrlQuery &, queryParams), Q_ARG(const QByteArray &, body));
+                                      Q_ARG(QTcpSocket*, socket), Q_ARG(QStringList, headers),
+                                      Q_ARG(QStringList, methodVariableParts), Q_ARG(QUrlQuery, queryParams),
+                                      Q_ARG(QByteArray, body));
+            // clang-format on
         } else {
             q->sendNotAuthorized(socket);
         }
@@ -688,7 +690,7 @@ void AbstractRestServerPrivate::deleteSocket(QTcpSocket *socket, WorkerThread *w
     {
         QMutexLocker lock(&socketsMutex);
         auto iter = sockets.constFind(socket);
-        if (iter != sockets.end())
+        if (iter != sockets.cend())
             sockets.erase(iter);
         else
             return;

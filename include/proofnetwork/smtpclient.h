@@ -48,7 +48,7 @@ signals:
     void passwordChanged(const QString &arg);
     void hostChanged(const QString &arg);
     void portChanged(int arg);
-    void connectionTypeChanged(ConnectionType arg);
+    void connectionTypeChanged(Proof::SmtpClient::ConnectionType arg);
 };
 
 } // namespace Proof
