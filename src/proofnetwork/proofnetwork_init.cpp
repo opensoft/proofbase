@@ -75,6 +75,7 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
 
             QStringList to;
             const auto splittedTo = toString.split(QStringLiteral("|"), QString::SkipEmptyParts);
+            to.reserve(splittedTo.count());
             for (const auto &address : splittedTo) {
                 QString trimmed = address.trimmed();
                 if (!trimmed.isEmpty())

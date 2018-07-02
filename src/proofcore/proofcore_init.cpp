@@ -100,7 +100,7 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
                                                                        "updates/sources_list_file"};
 
                                              for (const QString &fullKey : keys) {
-                                                 QStringList keyPath = fullKey.split("/");
+                                                 QStringList keyPath = fullKey.split(QStringLiteral("/"));
                                                  auto group = settings->mainGroup();
                                                  for (int i = 0; i < keyPath.count() - 1 && group; ++i)
                                                      group = group->group(keyPath[i]);

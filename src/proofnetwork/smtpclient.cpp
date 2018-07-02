@@ -4,6 +4,7 @@
 #include "proofcore/proofobject_p.h"
 #include "proofcore/tasks.h"
 
+#include <QLinkedList>
 #include <QSslSocket>
 #include <QTcpSocket>
 
@@ -126,7 +127,7 @@ bool SmtpClientPrivate::sendTextMail(const QString &subject, const QString &body
     }
 
     QByteArray message;
-    QStringList mutableTo;
+    QLinkedList<QString> mutableTo;
     for (const auto &recv : to) {
         QString recvEmail = recv;
         if (addressParser.exactMatch(recv))

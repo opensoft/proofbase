@@ -4,6 +4,8 @@
 #include "proofnetwork/abstractrestapi.h"
 #include "proofnetwork/proofnetwork_global.h"
 
+#include <qglobal.h>
+
 #include <functional>
 
 namespace Proof {
@@ -11,6 +13,7 @@ struct RestApiError;
 
 class PROOF_NETWORK_EXPORT RestApiConsumer
 {
+    Q_DISABLE_COPY(RestApiConsumer)
 public:
     template <class Callee, class Result, class Method, class Signal, class... Args>
     Proof::RestApiError chainedApiCall(const Proof::TaskChainSP &taskChain, Callee *callee, Method method,

@@ -10,7 +10,7 @@
 #include <QTimer>
 
 namespace {
-class WorkerThread : public QThread // clazy:exclude=ctor-missing-parent-argument
+class WorkerThread : public QThread
 {
     Q_OBJECT
 public:
@@ -268,7 +268,7 @@ void UpdateManagerPrivate::checkForUpdates()
     QScopedPointer<QProcess> updater(new QProcess);
     updater->setProcessChannelMode(QProcess::MergedChannels);
     if (aptSourcesListFilePath.isEmpty())
-        updater->start("sudo -S apt-get update");
+        updater->start(QStringLiteral("sudo -S apt-get update"));
     else
         updater->start(
             QStringLiteral("sudo -S apt-get update -o Dir::Etc::sourcelist=\"%1\" -o Dir::Etc::sourceparts=\"-\"")
@@ -317,9 +317,9 @@ void UpdateManagerPrivate::checkForUpdates()
         for (const QByteArray &line : lines) {
             if (line.startsWith("Version: "))
                 version = line;
-            version.remove("Version: ");
+            version.remove(QStringLiteral("Version: "));
         }
-        QStringList splittedVersion = version.split(".");
+        QStringList splittedVersion = version.split(QStringLiteral("."));
         if (splittedVersion.count() < 4) {
             qCDebug(proofCoreUpdatesLog) << "Strange version found" << version << ". Returning.";
             return;
@@ -337,7 +337,7 @@ void UpdateManagerPrivate::checkForUpdates()
             setNewVersionInstallable(foundVersionMajor <= currentVersionMajor);
             setNewVersion(foundVersion);
             if (autoUpdateEnabled)
-                installVersion("", "");
+                installVersion(QString(), QString());
         }
     } else {
         qCWarning(proofCoreUpdatesLog) << "apt-get process couldn't be started" << checker->error()

@@ -15,7 +15,7 @@ class UpdateManager;
 class Settings;
 class CoreApplicationPrivate;
 
-class PROOF_CORE_EXPORT CoreApplication : public ProofObject // clazy:exclude=ctor-missing-parent-argument
+class PROOF_CORE_EXPORT CoreApplication : public ProofObject
 {
     Q_OBJECT
     Q_PROPERTY(QString prettifiedApplicationName READ prettifiedApplicationName CONSTANT)

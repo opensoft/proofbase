@@ -12,8 +12,7 @@
 namespace Proof {
 
 class EmailNotificationHandlerPrivate;
-class PROOF_NETWORK_EXPORT EmailNotificationHandler
-    : public AbstractNotificationHandler // clazy:exclude=ctor-missing-parent-argument
+class PROOF_NETWORK_EXPORT EmailNotificationHandler : public AbstractNotificationHandler
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(EmailNotificationHandler)

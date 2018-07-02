@@ -8,7 +8,7 @@
 
 namespace Proof {
 class UserPrivate;
-class PROOF_NETWORK_EXPORT User : public NetworkDataEntity // clazy:exclude=ctor-missing-parent-argument
+class PROOF_NETWORK_EXPORT User : public NetworkDataEntity
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(User)

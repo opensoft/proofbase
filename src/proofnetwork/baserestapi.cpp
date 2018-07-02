@@ -118,7 +118,7 @@ void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<R
 
     QString message;
     QStringList contentType =
-        reply->header(QNetworkRequest::ContentTypeHeader).toString().split(";", QString::SkipEmptyParts);
+        reply->header(QNetworkRequest::ContentTypeHeader).toString().split(QStringLiteral(";"), QString::SkipEmptyParts);
     for (QString &str : contentType)
         str = str.trimmed();
     if (contentType.contains(QLatin1String("text/plain"))) {

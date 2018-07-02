@@ -55,6 +55,7 @@ private:
 struct WorkerThreadInfo
 {
     WorkerThreadInfo() {}
+    ~WorkerThreadInfo() {}
     explicit WorkerThreadInfo(WorkerThread *thread, long long socketCount) : thread(thread)
     {
         this->socketCount = socketCount;
@@ -107,7 +108,7 @@ namespace Proof {
 
 //TODO: refactor to remove qobject parent
 //it is possible now to call methods of any class, not only qobjects
-class AbstractRestServerPrivate : public QObject // clazy:exclude=ctor-missing-parent-argument
+class AbstractRestServerPrivate : public QObject
 {
     Q_OBJECT
     Q_DECLARE_PUBLIC(AbstractRestServer)
