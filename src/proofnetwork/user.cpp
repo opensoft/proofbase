@@ -12,19 +12,19 @@ User::User(Proof::UserPrivate &dd) : NetworkDataEntity(dd)
 
 QString User::userName() const
 {
-    Q_D(const User);
+    Q_D_CONST(User);
     return d->userName;
 }
 
 QString User::fullName() const
 {
-    Q_D(const User);
+    Q_D_CONST(User);
     return d->fullName;
 }
 
 QString User::email() const
 {
-    Q_D(const User);
+    Q_D_CONST(User);
     return d->email;
 }
 

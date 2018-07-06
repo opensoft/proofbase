@@ -2,6 +2,8 @@
 
 #include "urlquerybuilder_p.h"
 
+#include "proofcore/proofglobal.h"
+
 #include <QTimeZone>
 
 namespace Proof {
@@ -78,13 +80,13 @@ void UrlQueryBuilder::setCustomParam(const QString &name, double value)
 
 bool UrlQueryBuilder::containsCustomParam(const QString &name) const
 {
-    Q_D(const UrlQueryBuilder);
+    Q_D_CONST(UrlQueryBuilder);
     return d->params.contains(name);
 }
 
 QString UrlQueryBuilder::customParam(const QString &name) const
 {
-    Q_D(const UrlQueryBuilder);
+    Q_D_CONST(UrlQueryBuilder);
     return d->params.value(name, QString());
 }
 
@@ -96,7 +98,7 @@ void UrlQueryBuilder::unsetCustomParam(const QString &name)
 
 QUrlQuery UrlQueryBuilder::toUrlQuery() const
 {
-    Q_D(const UrlQueryBuilder);
+    Q_D_CONST(UrlQueryBuilder);
     QUrlQuery urlQuery;
     for (auto it = d->params.cbegin(); it != d->params.cend(); ++it) {
         QString value = it.value();

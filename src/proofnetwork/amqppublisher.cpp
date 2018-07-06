@@ -40,7 +40,7 @@ AmqpPublisher::AmqpPublisher(QObject *parent) : AbstractAmqpClient(*new AmqpPubl
 
 QString AmqpPublisher::exchangeName() const
 {
-    Q_D(const AmqpPublisher);
+    Q_D_CONST(AmqpPublisher);
     return d->exchangeName;
 }
 
@@ -60,13 +60,13 @@ qulonglong AmqpPublisher::publishMessage(const QString &message, const QString &
 
 QAmqpExchange::ExchangeOptions AmqpPublisher::exchangeOptions() const
 {
-    Q_D(const AmqpPublisher);
+    Q_D_CONST(AmqpPublisher);
     return d->exchangeOptions;
 }
 
 bool AmqpPublisher::createExchangeIfNotExists() const
 {
-    Q_D(const AmqpPublisher);
+    Q_D_CONST(AmqpPublisher);
     return d->createdExchangeIfNotExists;
 }
 

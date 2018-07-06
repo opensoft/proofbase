@@ -205,31 +205,31 @@ AbstractRestServer::~AbstractRestServer()
 
 QString AbstractRestServer::userName() const
 {
-    Q_D(const AbstractRestServer);
+    Q_D_CONST(AbstractRestServer);
     return d->userName;
 }
 
 QString AbstractRestServer::password() const
 {
-    Q_D(const AbstractRestServer);
+    Q_D_CONST(AbstractRestServer);
     return d->password;
 }
 
 QString AbstractRestServer::pathPrefix() const
 {
-    Q_D(const AbstractRestServer);
+    Q_D_CONST(AbstractRestServer);
     return d->pathPrefix;
 }
 
 int AbstractRestServer::port() const
 {
-    Q_D(const AbstractRestServer);
+    Q_D_CONST(AbstractRestServer);
     return d->port;
 }
 
 RestAuthType AbstractRestServer::authType() const
 {
-    Q_D(const AbstractRestServer);
+    Q_D_CONST(AbstractRestServer);
     return d->authType;
 }
 
@@ -302,13 +302,13 @@ void AbstractRestServer::setCustomHeader(const QString &header, const QString &v
 
 QString AbstractRestServer::customHeader(const QString &header) const
 {
-    Q_D(const AbstractRestServer);
+    Q_D_CONST(AbstractRestServer);
     return d->customHeaders.value(header);
 }
 
 bool AbstractRestServer::containsCustomHeader(const QString &header) const
 {
-    Q_D(const AbstractRestServer);
+    Q_D_CONST(AbstractRestServer);
     return d->customHeaders.contains(header);
 }
 
@@ -493,7 +493,7 @@ void AbstractRestServer::sendErrorCode(QTcpSocket *socket, int returnCode, const
 
 bool AbstractRestServer::checkBasicAuth(const QString &encryptedAuth) const
 {
-    Q_D(const AbstractRestServer);
+    Q_D_CONST(AbstractRestServer);
     QByteArray auth = QStringLiteral("%1:%2").arg(d->userName, d->password).toLatin1().toBase64();
     if (encryptedAuth == auth)
         return true;

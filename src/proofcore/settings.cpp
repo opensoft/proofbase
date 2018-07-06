@@ -72,7 +72,7 @@ SettingsGroup *Settings::mainGroup()
 
 QSet<QString> Settings::groups() const
 {
-    Q_D(const Settings);
+    Q_D_CONST(Settings);
     return d->mainLocalGroup->groups();
 }
 

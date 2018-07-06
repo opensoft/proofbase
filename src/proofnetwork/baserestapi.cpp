@@ -24,7 +24,7 @@ BaseRestApi::BaseRestApi(const RestClientSP &restClient, QObject *parent)
 
 RestClientSP BaseRestApi::restClient() const
 {
-    Q_D(const BaseRestApi);
+    Q_D_CONST(BaseRestApi);
     return d->restClient;
 }
 

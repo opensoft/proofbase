@@ -71,13 +71,13 @@ SettingsGroup::~SettingsGroup()
 
 QSet<QString> SettingsGroup::groups() const
 {
-    Q_D(const SettingsGroup);
+    Q_D_CONST(SettingsGroup);
     return d->groupsNames;
 }
 
 QSet<QString> SettingsGroup::values() const
 {
-    Q_D(const SettingsGroup);
+    Q_D_CONST(SettingsGroup);
     return d->valuesNames;
 }
 
@@ -234,6 +234,6 @@ void SettingsGroup::copyTo(SettingsGroup *destination)
 
 QString SettingsGroup::name() const
 {
-    Q_D(const SettingsGroup);
+    Q_D_CONST(SettingsGroup);
     return d->name;
 }

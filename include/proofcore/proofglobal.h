@@ -28,6 +28,9 @@ static constexpr int round(double d)
 } // namespace math
 } // namespace Proof
 
+#define Q_D_CONST(Class) const Class##Private *const d = const_cast<const Class *>(this)->d_func()
+#define Q_Q_CONST(Class) const Class *const q = const_cast<const Class##Private *>(this)->q_func()
+
 #ifdef Q_CC_MSVC
 #    include <SDKDDKVer.h>
 #    define WIN32_LEAN_AND_MEAN

@@ -21,7 +21,7 @@ ProofObject::~ProofObject()
 
 bool ProofObject::isDirty() const
 {
-    Q_D(const ProofObject);
+    Q_D_CONST(ProofObject);
     return d->isDirtyItself() || algorithms::exists(d->childrenDirtyCheckers, [](const auto &f) { return f(); });
 }
 
@@ -39,7 +39,7 @@ std::function<void(const Failure &)> ProofObject::simpleFailureHandler(Failure::
 
 qulonglong ProofObject::nextQueuedCallId() const
 {
-    Q_D(const ProofObject);
+    Q_D_CONST(ProofObject);
     return ++d->nextDelayedCallId;
 }
 
@@ -50,7 +50,7 @@ ProofObject *ProofObject::defaultInvoker()
 
 void ProofObject::addDirtyChecker(const std::function<bool()> &checker) const
 {
-    Q_D(const ProofObject);
+    Q_D_CONST(ProofObject);
     d->childrenDirtyCheckers << checker;
 }
 

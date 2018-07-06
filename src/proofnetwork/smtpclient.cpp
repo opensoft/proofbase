@@ -31,7 +31,7 @@ SmtpClient::SmtpClient() : ProofObject(*new SmtpClientPrivate)
 
 QString SmtpClient::userName() const
 {
-    Q_D(const SmtpClient);
+    Q_D_CONST(SmtpClient);
     return d->userName;
 }
 
@@ -46,7 +46,7 @@ void SmtpClient::setUserName(const QString &arg)
 
 QString SmtpClient::password() const
 {
-    Q_D(const SmtpClient);
+    Q_D_CONST(SmtpClient);
     return d->password;
 }
 
@@ -61,7 +61,7 @@ void SmtpClient::setPassword(const QString &arg)
 
 QString SmtpClient::host() const
 {
-    Q_D(const SmtpClient);
+    Q_D_CONST(SmtpClient);
     return d->host;
 }
 
@@ -76,7 +76,7 @@ void SmtpClient::setHost(const QString &arg)
 
 int SmtpClient::port() const
 {
-    Q_D(const SmtpClient);
+    Q_D_CONST(SmtpClient);
     return d->port;
 }
 
@@ -90,7 +90,7 @@ void SmtpClient::setPort(int arg)
 }
 SmtpClient::ConnectionType SmtpClient::connectionType() const
 {
-    Q_D(const SmtpClient);
+    Q_D_CONST(SmtpClient);
     return d->connectionType;
 }
 

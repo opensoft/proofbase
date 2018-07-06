@@ -9,7 +9,7 @@ NetworkDataEntity::NetworkDataEntity(NetworkDataEntityPrivate &dd) : ProofObject
 
 bool NetworkDataEntity::isFetched() const
 {
-    Q_D(const NetworkDataEntity);
+    Q_D_CONST(NetworkDataEntity);
     return d->isFetched;
 }
 
@@ -52,7 +52,7 @@ void NetworkDataEntity::setFetched(bool fetched)
 
 NetworkDataEntitySP NetworkDataEntity::selfPtr() const
 {
-    Q_D(const NetworkDataEntity);
+    Q_D_CONST(NetworkDataEntity);
     return d->weakSelf.toStrongRef();
 }
 

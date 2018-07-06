@@ -85,7 +85,7 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
 
 quint16 AbstractAmqpClient::port() const
 {
-    Q_D(const AbstractAmqpClient);
+    Q_D_CONST(AbstractAmqpClient);
     return d->rabbitClient->port();
 }
 
@@ -97,7 +97,7 @@ void AbstractAmqpClient::setPort(quint16 port)
 
 QString AbstractAmqpClient::host() const
 {
-    Q_D(const AbstractAmqpClient);
+    Q_D_CONST(AbstractAmqpClient);
     return d->rabbitClient->host();
 }
 
@@ -109,7 +109,7 @@ void AbstractAmqpClient::setHost(const QString &host)
 
 QString AbstractAmqpClient::virtualHost() const
 {
-    Q_D(const AbstractAmqpClient);
+    Q_D_CONST(AbstractAmqpClient);
     return d->rabbitClient->virtualHost();
 }
 
@@ -121,7 +121,7 @@ void AbstractAmqpClient::setVirtualHost(const QString &virtualHost)
 
 QString AbstractAmqpClient::userName() const
 {
-    Q_D(const AbstractAmqpClient);
+    Q_D_CONST(AbstractAmqpClient);
     return d->rabbitClient->username();
 }
 
@@ -133,7 +133,7 @@ void AbstractAmqpClient::setUserName(const QString &username)
 
 QString AbstractAmqpClient::password() const
 {
-    Q_D(const AbstractAmqpClient);
+    Q_D_CONST(AbstractAmqpClient);
     return d->rabbitClient->password();
 }
 
@@ -145,7 +145,7 @@ void AbstractAmqpClient::setPassword(const QString &password)
 
 bool AbstractAmqpClient::autoReconnect() const
 {
-    Q_D(const AbstractAmqpClient);
+    Q_D_CONST(AbstractAmqpClient);
     return d->rabbitClient->autoReconnect();
 }
 
@@ -157,7 +157,7 @@ void AbstractAmqpClient::setAutoReconnect(bool value)
 
 qint16 AbstractAmqpClient::channelMax() const
 {
-    Q_D(const AbstractAmqpClient);
+    Q_D_CONST(AbstractAmqpClient);
     return d->rabbitClient->channelMax();
 }
 
@@ -169,7 +169,7 @@ void AbstractAmqpClient::setChannelMax(qint16 channelMax)
 
 qint32 AbstractAmqpClient::frameMax() const
 {
-    Q_D(const AbstractAmqpClient);
+    Q_D_CONST(AbstractAmqpClient);
     return d->rabbitClient->frameMax();
 }
 
@@ -181,7 +181,7 @@ void AbstractAmqpClient::setFrameMax(qint32 frameMax)
 
 qint16 AbstractAmqpClient::heartbeatDelay() const
 {
-    Q_D(const AbstractAmqpClient);
+    Q_D_CONST(AbstractAmqpClient);
     return d->rabbitClient->heartbeatDelay();
 }
 
@@ -193,7 +193,7 @@ void AbstractAmqpClient::setHeartbeatDelay(qint16 delay)
 
 QSslConfiguration AbstractAmqpClient::sslConfiguration() const
 {
-    Q_D(const AbstractAmqpClient);
+    Q_D_CONST(AbstractAmqpClient);
     return d->rabbitClient->sslConfiguration();
 }
 
@@ -205,7 +205,7 @@ void AbstractAmqpClient::setSslConfiguration(const QSslConfiguration &config)
 
 bool AbstractAmqpClient::isConnected() const
 {
-    Q_D(const AbstractAmqpClient);
+    Q_D_CONST(AbstractAmqpClient);
     return d->rabbitClient->isConnected();
 }
 

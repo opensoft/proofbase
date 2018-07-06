@@ -43,14 +43,14 @@ MemoryStorageNotificationHandler::MemoryStorageNotificationHandler(const QString
 
 QMultiMap<QDateTime, QString> MemoryStorageNotificationHandler::messages() const
 {
-    Q_D(const MemoryStorageNotificationHandler);
+    Q_D_CONST(MemoryStorageNotificationHandler);
     QMutexLocker locker(&d->mutex);
     return d->messages;
 }
 
 QPair<QDateTime, QString> MemoryStorageNotificationHandler::lastMessage() const
 {
-    Q_D(const MemoryStorageNotificationHandler);
+    Q_D_CONST(MemoryStorageNotificationHandler);
     QMutexLocker locker(&d->mutex);
     return d->lastMessage;
 }

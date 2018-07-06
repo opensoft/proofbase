@@ -205,19 +205,19 @@ CoreApplication::~CoreApplication()
 
 QString CoreApplication::prettifiedApplicationName() const
 {
-    Q_D(const CoreApplication);
+    Q_D_CONST(CoreApplication);
     return d->prettifiedApplicationName;
 }
 
 QStringList CoreApplication::availableLanguages() const
 {
-    Q_D(const CoreApplication);
+    Q_D_CONST(CoreApplication);
     return d->availableLanguages;
 }
 
 QVariantMap CoreApplication::fullLanguageNames() const
 {
-    Q_D(const CoreApplication);
+    Q_D_CONST(CoreApplication);
     return d->fullLanguageNames;
 }
 
@@ -230,31 +230,31 @@ void CoreApplication::setLanguage(const QString &language)
 
 QString CoreApplication::language() const
 {
-    Q_D(const CoreApplication);
+    Q_D_CONST(CoreApplication);
     return d->currentLanguage;
 }
 
 int CoreApplication::languageIndex() const
 {
-    Q_D(const CoreApplication);
+    Q_D_CONST(CoreApplication);
     return d->availableLanguages.indexOf(d->currentLanguage);
 }
 
 UpdateManager *CoreApplication::updateManager() const
 {
-    Q_D(const CoreApplication);
+    Q_D_CONST(CoreApplication);
     return d->updateManager;
 }
 
 QDateTime CoreApplication::startedAt() const
 {
-    Q_D(const CoreApplication);
+    Q_D_CONST(CoreApplication);
     return d->startedAt;
 }
 
 Settings *CoreApplication::settings() const
 {
-    Q_D(const CoreApplication);
+    Q_D_CONST(CoreApplication);
     return d->settings;
 }
 

@@ -3,6 +3,7 @@
 
 #include "proofcore/proofalgorithms.h"
 #include "proofcore/proofcore_global.h"
+#include "proofcore/proofglobal.h"
 #include "proofcore/proofobject.h"
 
 #include <QtGlobal>
@@ -20,7 +21,6 @@ public:
     ProofObjectPrivate();
     virtual ~ProofObjectPrivate();
 
-    bool isDirty() const;
     bool isDirtyItself() const;
     void setDirty(bool arg) const;
 

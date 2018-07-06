@@ -24,26 +24,26 @@ NetworkDataEntityQmlWrapper::NetworkDataEntityQmlWrapper(const QSharedPointer<Ne
 
 QObject *NetworkDataEntityQmlWrapper::entityConnectContext() const
 {
-    Q_D(const NetworkDataEntityQmlWrapper);
+    Q_D_CONST(NetworkDataEntityQmlWrapper);
     return d->entityConnectContext;
 }
 
 bool NetworkDataEntityQmlWrapper::isFetched() const
 {
-    Q_D(const NetworkDataEntityQmlWrapper);
+    Q_D_CONST(NetworkDataEntityQmlWrapper);
     Q_ASSERT(d->dataEntity);
     return d->dataEntity->isFetched();
 }
 
 QSharedPointer<NetworkDataEntity> NetworkDataEntityQmlWrapper::entity()
 {
-    Q_D(const NetworkDataEntityQmlWrapper);
+    Q_D_CONST(NetworkDataEntityQmlWrapper);
     return d->dataEntity;
 }
 
 const QSharedPointer<NetworkDataEntity> NetworkDataEntityQmlWrapper::entity() const
 {
-    Q_D(const NetworkDataEntityQmlWrapper);
+    Q_D_CONST(NetworkDataEntityQmlWrapper);
     return d->dataEntity;
 }
 

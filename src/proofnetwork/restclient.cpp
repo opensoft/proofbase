@@ -114,7 +114,7 @@ RestClient::~RestClient()
 
 QString RestClient::userName() const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->userName;
 }
 
@@ -129,7 +129,7 @@ void RestClient::setUserName(const QString &arg)
 
 QString RestClient::password() const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->password;
 }
 
@@ -144,7 +144,7 @@ void RestClient::setPassword(const QString &arg)
 
 QString RestClient::clientName() const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->clientName;
 }
 
@@ -159,7 +159,7 @@ void RestClient::setClientName(const QString &arg)
 
 QString RestClient::host() const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->host;
 }
 
@@ -176,7 +176,7 @@ void RestClient::setHost(const QString &arg)
 
 QString RestClient::postfix() const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->postfix;
 }
 
@@ -191,7 +191,7 @@ void RestClient::setPostfix(const QString &arg)
 
 int RestClient::port() const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->port;
 }
 
@@ -207,7 +207,7 @@ void RestClient::setPort(int arg)
 
 QString RestClient::scheme() const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->scheme;
 }
 
@@ -222,7 +222,7 @@ void RestClient::setScheme(const QString &arg)
 
 QString RestClient::token() const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->token;
 }
 
@@ -237,7 +237,7 @@ void RestClient::setToken(const QString &arg)
 
 RestAuthType RestClient::authType() const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->authType;
 }
 
@@ -252,7 +252,7 @@ void RestClient::setAuthType(RestAuthType arg)
 
 int RestClient::msecsForTimeout() const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->msecsForTimeout;
 }
 
@@ -267,7 +267,7 @@ void RestClient::setMsecsForTimeout(int arg)
 
 bool RestClient::followRedirects() const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->followRedirects;
 }
 
@@ -288,13 +288,13 @@ void RestClient::setCustomHeader(const QByteArray &header, const QByteArray &val
 
 QByteArray RestClient::customHeader(const QByteArray &header) const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->customHeaders.value(header);
 }
 
 bool RestClient::containsCustomHeader(const QByteArray &header) const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->customHeaders.contains(header);
 }
 
@@ -312,13 +312,13 @@ void RestClient::setCookie(const QNetworkCookie &cookie)
 
 QNetworkCookie RestClient::cookie(const QString &name) const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->cookies.value(name);
 }
 
 bool RestClient::containsCookie(const QString &name) const
 {
-    Q_D(const RestClient);
+    Q_D_CONST(RestClient);
     return d->cookies.contains(name);
 }
 

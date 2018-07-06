@@ -129,43 +129,43 @@ bool UpdateManager::supported() const
 
 bool UpdateManager::autoUpdateEnabled() const
 {
-    Q_D(const UpdateManager);
+    Q_D_CONST(UpdateManager);
     return d->autoUpdateEnabled;
 }
 
 int UpdateManager::timeout() const
 {
-    Q_D(const UpdateManager);
+    Q_D_CONST(UpdateManager);
     return d->timer->interval();
 }
 
 QString UpdateManager::aptSourcesListFilePath() const
 {
-    Q_D(const UpdateManager);
+    Q_D_CONST(UpdateManager);
     return d->aptSourcesListFilePath;
 }
 
 QString UpdateManager::currentVersion() const
 {
-    Q_D(const UpdateManager);
+    Q_D_CONST(UpdateManager);
     return unpackVersionToString(d->currentVersion);
 }
 
 QString UpdateManager::packageName() const
 {
-    Q_D(const UpdateManager);
+    Q_D_CONST(UpdateManager);
     return d->packageName;
 }
 
 QString UpdateManager::newVersion() const
 {
-    Q_D(const UpdateManager);
+    Q_D_CONST(UpdateManager);
     return d->newVersion ? unpackVersionToString(d->newVersion) : QString();
 }
 
 bool UpdateManager::newVersionInstallable() const
 {
-    Q_D(const UpdateManager);
+    Q_D_CONST(UpdateManager);
     return d->newVersionInstallable;
 }
 

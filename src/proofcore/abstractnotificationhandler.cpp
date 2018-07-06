@@ -13,6 +13,6 @@ AbstractNotificationHandler::AbstractNotificationHandler(AbstractNotificationHan
 
 QString AbstractNotificationHandler::appId() const
 {
-    Q_D(const AbstractNotificationHandler);
+    Q_D_CONST(AbstractNotificationHandler);
     return d->appId;
 }

@@ -10,7 +10,7 @@ AbstractAmqpReceiver::AbstractAmqpReceiver(AbstractAmqpReceiverPrivate &dd, QObj
 
 QString AbstractAmqpReceiver::queueName() const
 {
-    Q_D(const AbstractAmqpReceiver);
+    Q_D_CONST(AbstractAmqpReceiver);
     return d->queueName;
 }
 
@@ -22,13 +22,13 @@ void AbstractAmqpReceiver::setQueueName(const QString &queueName)
 
 bool AbstractAmqpReceiver::createQueueIfNotExists() const
 {
-    Q_D(const AbstractAmqpReceiver);
+    Q_D_CONST(AbstractAmqpReceiver);
     return d->createdQueueIfNotExists;
 }
 
 QAmqpQueue::QueueOptions AbstractAmqpReceiver::queueOptions() const
 {
-    Q_D(const AbstractAmqpReceiver);
+    Q_D_CONST(AbstractAmqpReceiver);
     return d->queueOptions;
 }
 

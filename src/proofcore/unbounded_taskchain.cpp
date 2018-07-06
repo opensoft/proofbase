@@ -1,5 +1,7 @@
 #include "unbounded_taskchain.h"
 
+#include "proofcore/proofglobal.h"
+
 #include <QTime>
 
 #include <map>
@@ -183,7 +185,7 @@ void TaskChain::addSignalWaiterPrivate(std::function<void(const QSharedPointer<Q
 
 bool TaskChain::eventLoopStarted() const
 {
-    Q_D(const TaskChain);
+    Q_D_CONST(TaskChain);
     return d->currentEventLoopStarted;
 }
 
