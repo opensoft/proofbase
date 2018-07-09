@@ -1,5 +1,5 @@
 #include "3rdparty/qamqp/src/qamqpglobal.h"
-#include "abstractrestapi.h"
+#include "apicall.h"
 #include "emailnotificationhandler.h"
 #include "proofnetwork_global.h"
 #include "proofnetwork_types.h"

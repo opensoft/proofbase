@@ -1,19 +1,8 @@
-#include "abstractrestapi.h"
+#include "apicall.h"
 
-static const int NETWORK_SSL_ERROR_OFFSET = 1500;
 static const int NETWORK_ERROR_OFFSET = 1000;
 
 using namespace Proof;
-
-qlonglong AbstractRestApi::clientNetworkErrorOffset()
-{
-    return NETWORK_ERROR_OFFSET;
-}
-
-qlonglong AbstractRestApi::clientSslErrorOffset()
-{
-    return NETWORK_SSL_ERROR_OFFSET;
-}
 
 QString RestApiError::toString() const
 {

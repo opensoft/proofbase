@@ -1,8 +1,12 @@
 #ifndef PROOF_HTTPDOWNLOADER_H
 #define PROOF_HTTPDOWNLOADER_H
 
-#include "proofnetwork/abstractrestapi.h"
+#include "proofcore/proofobject.h"
+
 #include "proofnetwork/proofnetwork_global.h"
+#include "proofnetwork/proofnetwork_types.h"
+
+#include <QUrl>
 
 namespace Proof {
 

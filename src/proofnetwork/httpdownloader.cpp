@@ -2,6 +2,8 @@
 
 #include "proofcore/proofobject_p.h"
 
+#include "proofnetwork/restclient.h"
+
 #include <QNetworkReply>
 
 namespace Proof {
