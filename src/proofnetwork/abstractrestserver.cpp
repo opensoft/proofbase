@@ -24,9 +24,7 @@
 
 #include <algorithm>
 
-static const QString REST_METHOD_PREFIX = QStringLiteral("rest_");
-static const QString NO_AUTH_TAG = QStringLiteral("NO_AUTH_REQUIRED");
-static const int MIN_THREADS_COUNT = 5;
+static constexpr int MIN_THREADS_COUNT = 5;
 
 namespace {
 class WorkerThread;
@@ -38,9 +36,8 @@ public:
     bool contains(const QString &name) const;
     void clear();
 
-    operator QString();
+    operator QString() const;
     MethodNode &operator[](const QString &name);
-    const MethodNode operator[](const QString &name) const;
     void setValue(const QString &value);
 
     QString tag() const;
@@ -106,19 +103,11 @@ private:
 
 namespace Proof {
 
-//TODO: refactor to remove qobject parent
-//it is possible now to call methods of any class, not only qobjects
-class AbstractRestServerPrivate : public QObject
+class AbstractRestServerPrivate
 {
-    Q_OBJECT
     Q_DECLARE_PUBLIC(AbstractRestServer)
     friend WorkerThread;
-
-public:
-    AbstractRestServerPrivate() {}
-    virtual ~AbstractRestServerPrivate() {}
-
-private:
+    AbstractRestServerPrivate() = default;
     AbstractRestServerPrivate(const AbstractRestServerPrivate &other) = delete;
     AbstractRestServerPrivate &operator=(const AbstractRestServerPrivate &other) = delete;
     AbstractRestServerPrivate(const AbstractRestServerPrivate &&other) = delete;
@@ -136,8 +125,11 @@ private:
     void registerSocket(QTcpSocket *socket);
     void deleteSocket(QTcpSocket *socket, WorkerThread *worker);
 
+    const QString restMethodPrefix = QStringLiteral("rest_");
+    const QString noAuthTag = QStringLiteral("NO_AUTH_REQUIRED");
+
     AbstractRestServer *q_ptr = nullptr;
-    int port = 0;
+    quint16 port = 0;
     QString userName;
     QString password;
     QString pathPrefix;
@@ -160,14 +152,15 @@ using namespace Proof;
 AbstractRestServer::AbstractRestServer() : AbstractRestServer(*new AbstractRestServerPrivate, QString(), 80)
 {}
 
-AbstractRestServer::AbstractRestServer(int port) : AbstractRestServer(*new AbstractRestServerPrivate, QString(), port)
+AbstractRestServer::AbstractRestServer(quint16 port)
+    : AbstractRestServer(*new AbstractRestServerPrivate, QString(), port)
 {}
 
-AbstractRestServer::AbstractRestServer(const QString &pathPrefix, int port)
+AbstractRestServer::AbstractRestServer(const QString &pathPrefix, quint16 port)
     : AbstractRestServer(*new AbstractRestServerPrivate, pathPrefix, port)
 {}
 
-AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QString &pathPrefix, int port)
+AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QString &pathPrefix, quint16 port)
     : QTcpServer(), d_ptr(&dd)
 {
     Q_D(AbstractRestServer);
@@ -262,7 +255,7 @@ void AbstractRestServer::setPathPrefix(const QString &pathPrefix)
     }
 }
 
-void AbstractRestServer::setPort(int port)
+void AbstractRestServer::setPort(quint16 port)
 {
     Q_D(AbstractRestServer);
     if (d->port != port) {
@@ -338,6 +331,8 @@ void AbstractRestServer::stopListen()
 void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStringList &, const QStringList &,
                                                 const QUrlQuery &query, const QByteArray &)
 {
+    auto maybeHealthStatus = healthStatus(query.hasQueryItem(QStringLiteral("quick")));
+
     QStringList ipsList;
     const auto allIfaces = QNetworkInterface::allInterfaces();
     for (const auto &interface : allIfaces) {
@@ -347,8 +342,6 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
                 ipsList << QStringLiteral("%1 (%2)").arg(address.ip().toString(), interface.humanReadableName());
         }
     }
-
-    bool quick = query.hasQueryItem(QStringLiteral("quick"));
 
     QString lastCrashAt(QStringLiteral("N/A"));
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
@@ -365,40 +358,45 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
     }
 #endif
 
-    QJsonObject statusObj{{"app_type", qApp->applicationName()},
-                          {"app_version", qApp->applicationVersion()},
-                          {"proof_version", Proof::proofVersion()},
-                          {"started_at", proofApp->startedAt().toString(Qt::ISODate)},
-                          {"last_crash_at", lastCrashAt},
-                          {"os", QSysInfo::prettyProductName()},
-                          {"network_addresses", QJsonArray::fromStringList(ipsList)}};
+    QJsonObject statusTemplate{{QStringLiteral("app_type"), qApp->applicationName()},
+                               {QStringLiteral("app_version"), qApp->applicationVersion()},
+                               {QStringLiteral("proof_version"), Proof::proofVersion()},
+                               {QStringLiteral("started_at"), proofApp->startedAt().toString(Qt::ISODate)},
+                               {QStringLiteral("last_crash_at"), lastCrashAt},
+                               {QStringLiteral("os"), QSysInfo::prettyProductName()},
+                               {QStringLiteral("network_addresses"), QJsonArray::fromStringList(ipsList)}};
+    maybeHealthStatus
+        ->onSuccess([this, socket, statusTemplate](const HealthStatusMap &healthStatus) {
+            auto statusObj = statusTemplate;
+            auto notificationsMemoryStorage = ErrorNotifier::instance()->handler<MemoryStorageNotificationHandler>();
+            QPair<QDateTime, QString> lastError;
+            if (notificationsMemoryStorage) {
+                statusObj[QStringLiteral("app_id")] = notificationsMemoryStorage->appId();
+                lastError = notificationsMemoryStorage->lastMessage();
+            } else {
+                lastError = qMakePair(QDateTime::currentDateTimeUtc(),
+                                      QStringLiteral("Memory storage error handler not set"));
+            }
 
-    auto notificationsMemoryStorage = ErrorNotifier::instance()->handler<MemoryStorageNotificationHandler>();
-    QPair<QDateTime, QString> lastError;
-    if (notificationsMemoryStorage) {
-        statusObj[QStringLiteral("app_id")] = notificationsMemoryStorage->appId();
-        lastError = notificationsMemoryStorage->lastMessage();
-    } else {
-        lastError = qMakePair(QDateTime::currentDateTimeUtc(), QStringLiteral("Memory storage error handler not set"));
-    }
+            statusObj[QStringLiteral("last_error")] = lastError.first.isValid()
+                                                          ? QJsonObject{{QStringLiteral("timestamp"),
+                                                                         lastError.first.toString(Qt::ISODate)},
+                                                                        {QStringLiteral("message"), lastError.second}}
+                                                          : QJsonValue();
 
-    statusObj[QStringLiteral("last_error")] = lastError.first.isValid()
-                                                  ? QJsonObject{{"timestamp", lastError.first.toString(Qt::ISODate)},
-                                                                {"message", lastError.second}}
-                                                  : QJsonValue();
-
-    QJsonArray healthArray;
-    const auto currentHealthStatus = healthStatus(quick);
-    for (auto it = currentHealthStatus.cbegin(); it != currentHealthStatus.cend(); ++it) {
-        healthArray.append(QJsonObject{{"name", it.key()},
-                                       {"value", QJsonValue::fromVariant(it.value().second)},
-                                       {"updated_at", it.value().first.toString(Qt::ISODate)}});
-    }
-    statusObj[QStringLiteral("health")] = healthArray;
-
-    statusObj[QStringLiteral("generated_at")] = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
-
-    sendAnswer(socket, QJsonDocument(statusObj).toJson(), QStringLiteral("text/json"));
+            auto healthMapper = [](const QString &name, const auto &data) {
+                return QJsonObject{{QStringLiteral("name"), name},
+                                   {QStringLiteral("value"), QJsonValue::fromVariant(data.second)},
+                                   {QStringLiteral("updated_at"), data.first.toString(Qt::ISODate)}};
+            };
+            statusObj[QStringLiteral("health")] = algorithms::map(healthStatus, healthMapper, QJsonArray());
+            statusObj[QStringLiteral("generated_at")] = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+            sendAnswer(socket, QJsonDocument(statusObj).toJson(), QStringLiteral("text/json"));
+        })
+        ->onFailure([this, socket](const Failure &f) {
+            qCDebug(proofNetworkMiscLog) << "Health status fetch failed with " << f.message << f.data;
+            sendInternalError(socket);
+        });
 }
 
 void AbstractRestServer::rest_get_System_RecentErrors(QTcpSocket *socket, const QStringList &, const QStringList &,
@@ -425,9 +423,9 @@ void AbstractRestServer::rest_get_System_RecentErrors(QTcpSocket *socket, const 
     sendAnswer(socket, QJsonDocument(recentErrorsArray).toJson(), QStringLiteral("text/json"));
 }
 
-QMap<QString, QPair<QDateTime, QVariant>> AbstractRestServer::healthStatus(bool) const
+FutureSP<HealthStatusMap> AbstractRestServer::healthStatus(bool) const
 {
-    return {};
+    return Future<HealthStatusMap>::successful();
 }
 
 void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
@@ -531,6 +529,11 @@ void AbstractRestServer::sendNotAuthorized(QTcpSocket *socket, const QString &re
     sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), 401, reason);
 }
 
+void AbstractRestServer::sendConflict(QTcpSocket *socket, const QString &reason)
+{
+    sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), 409, reason);
+}
+
 void AbstractRestServer::sendInternalError(QTcpSocket *socket)
 {
     sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), 500, QStringLiteral("Internal Server Error"));
@@ -587,7 +590,7 @@ void AbstractRestServerPrivate::fillMethods()
         QMetaMethod method = q->metaObject()->method(i);
         if (method.methodType() == QMetaMethod::Slot) {
             QString currentMethod = QString(method.name());
-            if (currentMethod.startsWith(REST_METHOD_PREFIX))
+            if (currentMethod.startsWith(restMethodPrefix))
                 addMethodToTree(currentMethod, method.tag());
         }
     }
@@ -595,7 +598,7 @@ void AbstractRestServerPrivate::fillMethods()
 
 void AbstractRestServerPrivate::addMethodToTree(const QString &realMethod, const QString &tag)
 {
-    QString method = realMethod.mid(QString(REST_METHOD_PREFIX).length());
+    QString method = realMethod.mid(QString(restMethodPrefix).length());
     for (int i = 0; i < method.length(); ++i) {
         if (method[i].isUpper()) {
             method[i] = method[i].toLower();
@@ -635,7 +638,7 @@ void AbstractRestServerPrivate::tryToCallMethod(QTcpSocket *socket, const QStrin
 
     if (methodNode) {
         bool isAuthenticationSuccessful = true;
-        if (authType == RestAuthType::Basic && methodNode->tag() != NO_AUTH_TAG) {
+        if (authType == RestAuthType::Basic && methodNode->tag() != noAuthTag) {
             QString encryptedAuth;
             for (int i = 0; i < headers.count(); ++i) {
                 if (headers.at(i).startsWith(QLatin1String("Authorization"), Qt::CaseInsensitive)) {
@@ -834,17 +837,12 @@ void MethodNode::clear()
     m_nodes.clear();
 }
 
-MethodNode::operator QString()
+MethodNode::operator QString() const
 {
     return m_value;
 }
 
 MethodNode &MethodNode::operator[](const QString &name)
-{
-    return m_nodes[name];
-}
-
-const MethodNode MethodNode::operator[](const QString &name) const
 {
     return m_nodes[name];
 }

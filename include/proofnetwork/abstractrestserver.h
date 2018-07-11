@@ -1,6 +1,8 @@
 #ifndef ABSTRACTRESTSERVER_H
 #define ABSTRACTRESTSERVER_H
 
+#include "proofcore/future.h"
+
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
 
@@ -14,6 +16,7 @@
 #endif
 
 namespace Proof {
+using HealthStatusMap = QMap<QString, QPair<QDateTime, QVariant>>;
 
 class AbstractRestServerPrivate;
 class PROOF_NETWORK_EXPORT AbstractRestServer : public QTcpServer
@@ -22,8 +25,8 @@ class PROOF_NETWORK_EXPORT AbstractRestServer : public QTcpServer
     Q_DECLARE_PRIVATE(AbstractRestServer)
 public:
     explicit AbstractRestServer();
-    explicit AbstractRestServer(int port);
-    explicit AbstractRestServer(const QString &pathPrefix, int port);
+    explicit AbstractRestServer(quint16 port);
+    explicit AbstractRestServer(const QString &pathPrefix, quint16 port);
     ~AbstractRestServer();
 
     QString userName() const;
@@ -35,7 +38,7 @@ public:
     void setUserName(const QString &userName);
     void setPassword(const QString &password);
     void setPathPrefix(const QString &pathPrefix);
-    void setPort(int port);
+    void setPort(quint16 port);
     void setSuggestedMaxThreadsCount(int count = -1);
     void setAuthType(RestAuthType authType);
 
@@ -63,7 +66,7 @@ protected slots:
                                                        const QByteArray &body);
 
 protected:
-    virtual QMap<QString, QPair<QDateTime, QVariant>> healthStatus(bool quick) const;
+    virtual FutureSP<HealthStatusMap> healthStatus(bool quick) const;
 
     void incomingConnection(qintptr socketDescriptor) override;
 
@@ -82,11 +85,12 @@ protected:
     void sendBadRequest(QTcpSocket *socket, const QString &reason = QStringLiteral("Bad Request"));
     void sendNotFound(QTcpSocket *socket, const QString &reason = QStringLiteral("Not Found"));
     void sendNotAuthorized(QTcpSocket *socket, const QString &reason = QStringLiteral("Unauthorized"));
+    void sendConflict(QTcpSocket *socket, const QString &reason = QStringLiteral("Conflict"));
     void sendInternalError(QTcpSocket *socket);
     bool checkBasicAuth(const QString &encryptedAuth) const;
     QString parseAuth(QTcpSocket *socket, const QString &header);
 
-    AbstractRestServer(AbstractRestServerPrivate &dd, const QString &pathPrefix, int port);
+    AbstractRestServer(AbstractRestServerPrivate &dd, const QString &pathPrefix, quint16 port);
     QScopedPointer<AbstractRestServerPrivate> d_ptr;
 };
 
