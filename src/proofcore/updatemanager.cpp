@@ -88,10 +88,10 @@ UpdateManager::UpdateManager(QObject *parent) : ProofObject(*new UpdateManagerPr
 UpdateManager::~UpdateManager()
 {
     Q_D(UpdateManager);
+    d->timer->deleteLater();
     d->thread->quit();
     d->thread->wait(1000);
     delete d->thread;
-    delete d->timer;
 }
 
 void UpdateManager::update(const QString &password)

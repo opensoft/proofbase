@@ -17,13 +17,9 @@
 
 #include <zlib.h>
 
-static const int COMPRESS_TIMEOUT = 24 * 60 * 60 * 1000; // 1 day
-
-static const QMap<QtMsgType, QString> STRINGIFIED_TYPES = {{QtDebugMsg, "D"},
-                                                           {QtWarningMsg, "W"},
-                                                           {QtCriticalMsg, "C"},
-                                                           {QtFatalMsg, "F"},
-                                                           {QtInfoMsg, "I"}};
+static constexpr int COMPRESS_TIMEOUT = 24 * 60 * 60 * 1000; // 1 day
+static constexpr char STRINGIFIED_TYPES[] = "DWCFI";
+static constexpr int STRINGIFIED_TYPES_MAX = 4;
 
 static const QSet<QtMsgType> TYPES_FOR_NOTIFIER = {QtWarningMsg, QtCriticalMsg, QtFatalMsg};
 static const QVector<QLatin1String> NOTIFIER_EXCLUDES = {QLatin1String("QML Image"), QLatin1String("Binding loop"),
@@ -109,16 +105,27 @@ void fileHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
                 return;
         }
 
-        QString logLine = QStringLiteral("[%1][%2][%3][%4@%5:%6] %7\n")
-                              .arg(QTime::currentTime().toString(QStringLiteral("hh:mm:ss.zzz")))
-                              .arg(STRINGIFIED_TYPES.value(type, QStringLiteral("D")))
-                              .arg(context.category)
-                              .arg(context.function) // clazy:exclude=qstring-arg
-                              .arg(QString(context.file).remove(QRegularExpression(QStringLiteral("^(\\.\\.[/\\\\])+"))))
-                              .arg(context.line)
-                              .arg(message);
+        const char *contextFile = context.file;
+        while (contextFile && (*contextFile == '.' || *contextFile == '/' || *contextFile == '\\'))
+            ++contextFile;
 
-        currentLogFile->write(logLine.toLocal8Bit());
+        currentLogFile->write(QByteArrayLiteral("["));
+        currentLogFile->write(QTime::currentTime().toString(QStringLiteral("hh:mm:ss.zzz")).toLatin1());
+        currentLogFile->write(QByteArrayLiteral("]["));
+        currentLogFile->write(&STRINGIFIED_TYPES[qBound(0, static_cast<int>(type), STRINGIFIED_TYPES_MAX)], 1);
+        currentLogFile->write(QByteArrayLiteral("]["));
+        currentLogFile->write(context.category);
+        currentLogFile->write(QByteArrayLiteral("]["));
+        currentLogFile->write(context.function);
+        if (contextFile) {
+            currentLogFile->write(QByteArrayLiteral("@"));
+            currentLogFile->write(contextFile);
+            currentLogFile->write(QByteArrayLiteral(":"));
+            currentLogFile->write(QByteArray::number(context.line));
+        }
+        currentLogFile->write(QByteArrayLiteral("] "));
+        currentLogFile->write(message.toLocal8Bit());
+        currentLogFile->write(QByteArrayLiteral("\n"));
         currentLogFile->flush();
     }
 }
