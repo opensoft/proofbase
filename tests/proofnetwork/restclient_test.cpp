@@ -148,7 +148,7 @@ TEST_P(RestClientTest, vendorTest)
     ASSERT_TRUE(spy.wait());
     EXPECT_EQ(1, spy.count());
 
-    const auto query = QString::fromLatin1(serverRunner->lastQuery());
+    const auto query = QString::fromLatin1(serverRunner->lastQueryRaw());
     const int position = expectedRegExp.indexIn(query);
 
     ASSERT_NE(-1, position);

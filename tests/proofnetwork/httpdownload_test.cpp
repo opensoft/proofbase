@@ -42,8 +42,13 @@ TEST_F(HttpDownloaderTest, download)
     FutureSP<QByteArray> future = httpDownloaderUT->download(QUrl("http://127.0.0.1:9091/test.jpg"));
     QTime timer;
     timer.start();
+
     while (!future->completed() && timer.elapsed() < TIMEOUT)
         qApp->processEvents();
+
+    EXPECT_EQ(FakeServer::Method::Get, serverRunner->lastQueryMethod());
+    EXPECT_EQ(QUrl("/test.jpg"), serverRunner->lastQueryUrl());
+    EXPECT_TRUE(serverRunner->lastQueryBody().isEmpty());
 
     ASSERT_TRUE(future->completed());
     EXPECT_TRUE(future->succeeded());
@@ -58,6 +63,7 @@ TEST_F(HttpDownloaderTest, failDownload)
     FutureSP<QByteArray> future = httpDownloaderUT->download(QUrl("http://127.0.0.1:9000/test.jpg"));
     QTime timer;
     timer.start();
+
     while (!future->completed() && timer.elapsed() < TIMEOUT)
         qApp->processEvents();
 
@@ -78,8 +84,13 @@ TEST_F(HttpDownloaderTest, failDownloadNotFound)
     FutureSP<QByteArray> future = httpDownloaderUT->download(QUrl("http://127.0.0.1:9091/test.jpg"));
     QTime timer;
     timer.start();
+
     while (!future->completed() && timer.elapsed() < TIMEOUT)
         qApp->processEvents();
+
+    EXPECT_EQ(FakeServer::Method::Get, serverRunner->lastQueryMethod());
+    EXPECT_EQ(QUrl("/test.jpg"), serverRunner->lastQueryUrl());
+    EXPECT_TRUE(serverRunner->lastQueryBody().isEmpty());
 
     ASSERT_TRUE(future->completed());
     EXPECT_FALSE(future->succeeded());
@@ -97,6 +108,7 @@ TEST_F(HttpDownloaderTest, wrongUrl)
     FutureSP<QByteArray> future = httpDownloaderUT->download(QUrl());
     QTime timer;
     timer.start();
+
     while (!future->completed() && timer.elapsed() < TIMEOUT)
         qApp->processEvents();
 
