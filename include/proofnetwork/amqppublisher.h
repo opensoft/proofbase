@@ -28,6 +28,7 @@ public:
 
     bool createExchangeIfNotExists() const;
     void setCreateExchangeIfNotExists(bool createExchangeIfNotExists,
+                                      QAmqpExchange::ExchangeType type = QAmqpExchange::Topic,
                                       QAmqpExchange::ExchangeOptions options = {QAmqpExchange::Durable});
 
 signals:
