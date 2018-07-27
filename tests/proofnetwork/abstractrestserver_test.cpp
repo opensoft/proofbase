@@ -5,7 +5,6 @@
 #include "proofnetwork/restclient.h"
 
 #include <QNetworkReply>
-#include <QSignalSpy>
 #include <QTest>
 
 #include "gtest/test_global.h"
@@ -108,15 +107,25 @@ public:
     {
         restServerUT = new TestRestServer();
         restServerUT->startListen();
-        QTest::qWait(300);
+        QTime timer;
+        timer.start();
+        while (!restServerUT->isListening() && timer.elapsed() < 10000)
+            QThread::msleep(50);
+        ASSERT_TRUE(restServerUT->isListening());
 
         restServerWithoutAuthUT = new TestRestServerWithoutAuth();
         restServerWithoutAuthUT->startListen();
-        QTest::qWait(300);
+        timer.start();
+        while (!restServerWithoutAuthUT->isListening() && timer.elapsed() < 10000)
+            QThread::msleep(50);
+        ASSERT_TRUE(restServerWithoutAuthUT->isListening());
 
         restServerWithPathPrefixUT = new TestRestServerWithPathPrefix();
         restServerWithPathPrefixUT->startListen();
-        QTest::qWait(300);
+        timer.start();
+        while (!restServerWithPathPrefixUT->isListening() && timer.elapsed() < 10000)
+            QThread::msleep(50);
+        ASSERT_TRUE(restServerWithPathPrefixUT->isListening());
     }
 
     static void TearDownTestCase()
@@ -190,11 +199,11 @@ TEST_F(RestServerMethodsTest, withoutAuth)
     ASSERT_TRUE(restServerWithoutAuthUT->isListening());
 
     QNetworkReply *reply = restClientWithoutAuthUT->get("/test-method")->result();
-
-    QSignalSpy spy(reply, &QNetworkReply::finished);
-
-    ASSERT_TRUE(spy.wait());
-    EXPECT_EQ(1, spy.count());
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
 
     EXPECT_EQ(200, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
 
@@ -209,11 +218,11 @@ TEST_F(RestServerMethodsTest, noAuthTag)
     ASSERT_TRUE(restServerUT->isListening());
 
     QNetworkReply *reply = restClientForNoAuthTagUT->get("/test-public-method")->result();
-
-    QSignalSpy spy(reply, &QNetworkReply::finished);
-
-    ASSERT_TRUE(spy.wait());
-    EXPECT_EQ(1, spy.count());
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
 
     EXPECT_EQ(200, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
 
@@ -228,11 +237,11 @@ TEST_F(RestServerMethodsTest, noAuthTagNegative)
     ASSERT_TRUE(restServerUT->isListening());
 
     QNetworkReply *reply = restClientForNoAuthTagUT->get("/test-method")->result();
-
-    QSignalSpy spy(reply, &QNetworkReply::finished);
-
-    ASSERT_TRUE(spy.wait());
-    EXPECT_EQ(1, spy.count());
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
 
     EXPECT_EQ(401, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
 
@@ -249,11 +258,11 @@ TEST_P(RestServerMethodsTest, methodsNames)
     ASSERT_TRUE(restServerUT->isListening());
 
     QNetworkReply *reply = isPost ? restClientUT->post(method)->result() : restClientUT->get(method)->result();
-
-    QSignalSpy spy(reply, &QNetworkReply::finished);
-
-    ASSERT_TRUE(spy.wait());
-    EXPECT_EQ(1, spy.count());
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
 
     EXPECT_EQ(resultCode, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
 
@@ -291,11 +300,11 @@ TEST_P(PathPrefixServerMethodsTest, methodsNames)
 
     QNetworkReply *reply = isPost ? restClientWithPrefixUT->post(method)->result()
                                   : restClientWithPrefixUT->get(method)->result();
-
-    QSignalSpy spy(reply, &QNetworkReply::finished);
-
-    ASSERT_TRUE(spy.wait());
-    EXPECT_EQ(1, spy.count());
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
 
     EXPECT_EQ(resultCode, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
 
@@ -335,11 +344,11 @@ TEST_P(AnotherRestServerMethodsTest, methodsParams)
 
     QNetworkReply *reply = isPost ? restClientUT->post(method, query)->result()
                                   : restClientUT->get(method, query)->result();
-
-    QSignalSpy spy(reply, &QNetworkReply::finished);
-
-    ASSERT_TRUE(spy.wait());
-    EXPECT_EQ(1, spy.count());
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
 
     EXPECT_EQ(resultCode, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
 
@@ -371,11 +380,11 @@ TEST_P(SomeMoreRestServerMethodsTest, methodsVariableParts)
     ASSERT_TRUE(restServerUT->isListening());
 
     QNetworkReply *reply = isPost ? restClientUT->post(method)->result() : restClientUT->get(method)->result();
-
-    QSignalSpy spy(reply, &QNetworkReply::finished);
-
-    ASSERT_TRUE(spy.wait());
-    EXPECT_EQ(1, spy.count());
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
 
     EXPECT_EQ(resultCode, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
 

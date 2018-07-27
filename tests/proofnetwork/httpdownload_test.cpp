@@ -1,6 +1,7 @@
 // clazy:skip
 
 #include "proofnetwork/httpdownloader.h"
+#include "proofnetwork/restclient.h"
 
 #include "gtest/test_global.h"
 
@@ -19,6 +20,11 @@ protected:
     {
         serverRunner = new FakeServerRunner;
         serverRunner->runServer();
+        QTime timer;
+        timer.start();
+        while (!serverRunner->serverIsRunning() && timer.elapsed() < 10000)
+            QThread::msleep(50);
+        ASSERT_TRUE(serverRunner->serverIsRunning());
 
         httpDownloaderUT = new Proof::HttpDownloader();
     }
@@ -59,6 +65,7 @@ TEST_F(HttpDownloaderTest, download)
 TEST_F(HttpDownloaderTest, failDownload)
 {
     ASSERT_TRUE(serverRunner->serverIsRunning());
+    httpDownloaderUT->restClient()->setMsecsForTimeout(TIMEOUT / 2);
 
     FutureSP<QByteArray> future = httpDownloaderUT->download(QUrl("http://127.0.0.1:9000/test.jpg"));
     QTime timer;

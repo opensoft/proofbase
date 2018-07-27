@@ -45,12 +45,12 @@ bool BaseRestApi::isLoggedOut() const
     }
 }
 
-qlonglong BaseRestApi::clientNetworkErrorOffset()
+int BaseRestApi::clientNetworkErrorOffset()
 {
     return NETWORK_ERROR_OFFSET;
 }
 
-qlonglong BaseRestApi::clientSslErrorOffset()
+int BaseRestApi::clientSslErrorOffset()
 {
     return NETWORK_SSL_ERROR_OFFSET;
 }
@@ -202,37 +202,47 @@ CancelableFuture<RestApiReply> BaseRestApiPrivate::configureReply(CancelableFutu
                 reply->abort();
         });
 
-        QObject::connect(reply, &QNetworkReply::finished, q, [this, q, promise, reply]() {
-            if (promise->filled() || replyShouldBeHandledByError(reply))
-                return;
-            q->processSuccessfulReply(reply, promise);
-            reply->deleteLater();
-        });
-
-        QObject::connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), q,
-                         [this, q, promise, reply](QNetworkReply::NetworkError) {
-                             if (promise->filled() || !replyShouldBeHandledByError(reply))
-                                 return;
-                             q->processErroredReply(reply, promise);
-                             reply->deleteLater();
-                         });
-
-        QObject::connect(reply, &QNetworkReply::sslErrors, q, [promise, reply](const QList<QSslError> &errors) {
-            for (const QSslError &error : errors) {
-                if (error.error() != QSslError::SslError::NoError) {
-                    int errorCode = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
-                    qCWarning(proofNetworkMiscLog)
-                        << "SSL error occurred"
-                        << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << ": "
-                        << errorCode << error.errorString();
-                    if (promise->filled())
-                        continue;
-                    promise->failure(Failure(error.errorString(), NETWORK_MODULE_CODE, NetworkErrorCode::SslError,
-                                             Failure::UserFriendlyHint, errorCode));
-                }
+        if (reply->isFinished()) {
+            if (!promise->filled()) {
+                if (replyShouldBeHandledByError(reply))
+                    q->processErroredReply(reply, promise);
+                else
+                    q->processSuccessfulReply(reply, promise);
             }
             reply->deleteLater();
-        });
+        } else {
+            QObject::connect(reply, &QNetworkReply::finished, q, [this, q, promise, reply]() {
+                if (promise->filled() || replyShouldBeHandledByError(reply))
+                    return;
+                q->processSuccessfulReply(reply, promise);
+                reply->deleteLater();
+            });
+
+            QObject::connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), q,
+                             [this, q, promise, reply](QNetworkReply::NetworkError) {
+                                 if (promise->filled() || !replyShouldBeHandledByError(reply))
+                                     return;
+                                 q->processErroredReply(reply, promise);
+                                 reply->deleteLater();
+                             });
+
+            QObject::connect(reply, &QNetworkReply::sslErrors, q, [promise, reply](const QList<QSslError> &errors) {
+                for (const QSslError &error : errors) {
+                    if (error.error() != QSslError::SslError::NoError) {
+                        int errorCode = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
+                        qCWarning(proofNetworkMiscLog)
+                            << "SSL error occurred"
+                            << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
+                            << ": " << errorCode << error.errorString();
+                        if (promise->filled())
+                            continue;
+                        promise->failure(Failure(error.errorString(), NETWORK_MODULE_CODE, NetworkErrorCode::SslError,
+                                                 Failure::UserFriendlyHint, errorCode));
+                    }
+                }
+                reply->deleteLater();
+            });
+        }
     });
 
     auto result = CancelableFuture<RestApiReply>(promise);

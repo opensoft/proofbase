@@ -20,6 +20,7 @@ class PROOF_NETWORK_EXPORT HttpDownloader : public ProofObject
 public:
     explicit HttpDownloader(const Proof::RestClientSP &restClient, QObject *parent = nullptr);
     explicit HttpDownloader(QObject *parent = nullptr);
+    Proof::RestClientSP restClient() const;
     FutureSP<QByteArray> download(const QUrl &url);
 };
 } // namespace Proof

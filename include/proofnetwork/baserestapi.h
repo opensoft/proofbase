@@ -36,8 +36,8 @@ public:
 
     virtual bool isLoggedOut() const;
 
-    static qlonglong clientNetworkErrorOffset();
-    static qlonglong clientSslErrorOffset();
+    static int clientNetworkErrorOffset();
+    static int clientSslErrorOffset();
 
     void abortAllRequests();
 

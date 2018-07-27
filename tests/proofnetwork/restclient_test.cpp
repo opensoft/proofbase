@@ -7,7 +7,6 @@
 #include <QNetworkReply>
 #include <QRegExp>
 #include <QScopedPointer>
-#include <QSignalSpy>
 
 #include "gtest/test_global.h"
 
@@ -31,6 +30,11 @@ protected:
     {
         serverRunner = new FakeServerRunner();
         serverRunner->runServer();
+        QTime timer;
+        timer.start();
+        while (!serverRunner->serverIsRunning() && timer.elapsed() < 10000)
+            QThread::msleep(50);
+        ASSERT_TRUE(serverRunner->serverIsRunning());
 
         restClient = Proof::RestClientSP::create();
         restClient->setAuthType(Proof::RestAuthType::NoAuth);
@@ -135,18 +139,17 @@ TEST_P(RestClientTest, vendorTest)
     const auto expected = std::get<2>(GetParam());
     const QRegExp expectedRegExp(QString("Content-Type:(\\s*)([^\r\n]*)\\r\\n"));
 
-    ASSERT_TRUE(serverRunner->serverIsRunning());
-
     const QByteArray body = file.isEmpty() ? QByteArray() : dataFromFile(file);
 
     QScopedPointer<QNetworkReply> reply(methodCall(*restClient, body)->result());
 
     ASSERT_NE(nullptr, reply);
 
-    QSignalSpy spy(reply.data(), &QNetworkReply::finished);
-
-    ASSERT_TRUE(spy.wait());
-    EXPECT_EQ(1, spy.count());
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
 
     const auto query = QString::fromLatin1(serverRunner->lastQueryRaw());
     const int position = expectedRegExp.indexIn(query);
