@@ -61,7 +61,7 @@ FutureSP<QByteArray> HttpDownloader::download(const QUrl &url)
             };
 
             if (reply->isFinished()) {
-                if (promise->filled()) {
+                if (!promise->filled()) {
                     if (reply->error() == QNetworkReply::NetworkError::NoError)
                         promise->success(reply->readAll());
                     else
