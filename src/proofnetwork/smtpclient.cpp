@@ -1,8 +1,9 @@
 #include "smtpclient.h"
 
-#include "proofcore/future.h"
+#include "proofseed/future.h"
+#include "proofseed/tasks.h"
+
 #include "proofcore/proofobject_p.h"
-#include "proofcore/tasks.h"
 
 #include <QLinkedList>
 #include <QSslSocket>

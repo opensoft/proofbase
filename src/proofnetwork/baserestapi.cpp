@@ -2,7 +2,7 @@
 
 #include "baserestapi_p.h"
 
-#include "proofcore/tasks.h"
+#include "proofseed/tasks.h"
 
 static const int NETWORK_SSL_ERROR_OFFSET = 1500;
 static const int NETWORK_ERROR_OFFSET = 1000;

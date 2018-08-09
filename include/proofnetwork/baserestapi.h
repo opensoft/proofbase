@@ -1,6 +1,7 @@
 #ifndef BASERESTAPI_H
 #define BASERESTAPI_H
-#include "proofcore/future.h"
+#include "proofseed/future.h"
+
 #include "proofcore/proofobject.h"
 
 #include "proofnetwork/proofnetwork_global.h"

@@ -1,9 +1,10 @@
 #ifndef TASKCHAIN_H
 #define TASKCHAIN_H
 
-#include "proofcore/future.h"
+#include "proofseed/future.h"
+#include "proofseed/tasks.h"
+
 #include "proofcore/proofcore_global.h"
-#include "proofcore/tasks.h"
 
 #include <QSharedPointer>
 #include <QThread>

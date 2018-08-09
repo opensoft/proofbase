@@ -3,13 +3,13 @@
 #include "proofcore/settings.h"
 #include "proofcore/settingsgroup.h"
 
+#include "gtest/test_global.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QSignalSpy>
-
-#include "gtest/test_global.h"
 
 using namespace Proof;
 

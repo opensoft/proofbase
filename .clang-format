@@ -57,23 +57,27 @@ ForEachMacros: [ foreach, Q_FOREACH, BOOST_FOREACH, forever, Q_FOREVER, QBENCHMA
 IncludeBlocks: Regroup
 IncludeCategories:
     - Regex: '^<Q.*' # Qt Headers
-      Priority: 10
-    - Regex: '^("|<)proofcore/' # Proof headers
+      Priority: 40
+    - Regex: '^("|<)proofseed/' # Proof headers
       Priority: 2
-    - Regex: '^("|<)proofnetwork/' # Proof headers
+    - Regex: '^("|<)proofcore/' # Proof headers
       Priority: 3
-    - Regex: '^("|<)proofutils/' # Proof headers
+    - Regex: '^("|<)proofnetwork/' # Proof headers
       Priority: 4
-    - Regex: '^("|<)proofgui/' # Proof headers
+    - Regex: '^("|<)proofutils/' # Proof headers
       Priority: 5
-    - Regex: '^("|<)proof.*/' # Proof headers
+    - Regex: '^("|<)proofgui/' # Proof headers
       Priority: 6
-    - Regex: '^"gtest.*' # gtest headers
+    - Regex: '^("|<)proof.*/' # Proof headers
+      Priority: 7
+    - Regex: '^("|<)3rdparty/' # 3rdparty headers
       Priority: 11
-    - Regex: '^(<|")opencv.*' # opencv headers
+    - Regex: '^"gtest.*' # gtest headers
       Priority: 12
+    - Regex: '^(<|")opencv.*' # opencv headers
+      Priority: 45
     - Regex: '^<.*' # stl/system headers
-      Priority: 13
+      Priority: 50
     - Regex: '.*' # everything else
       Priority: 1
 IncludeIsMainRegex: '$'

@@ -1,7 +1,8 @@
 #ifndef PROOFOBJECT_H
 #define PROOFOBJECT_H
 
-#include "proofcore/future.h"
+#include "proofseed/future.h"
+
 #include "proofcore/proofcore_global.h"
 #include "proofcore/proofobjectprivatepointer.h"
 

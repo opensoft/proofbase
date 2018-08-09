@@ -1,6 +1,6 @@
 #include "errormessagesregistry_p.h"
 
-#include "proofcore/proofalgorithms.h"
+#include "proofseed/proofalgorithms.h"
 
 namespace Proof {
 

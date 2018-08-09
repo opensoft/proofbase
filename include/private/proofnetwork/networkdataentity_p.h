@@ -1,8 +1,9 @@
 #ifndef NETWORKDATAENTITY_P_H
 #define NETWORKDATAENTITY_P_H
 
+#include "proofseed/spinlock.h"
+
 #include "proofcore/proofobject_p.h"
-#include "proofcore/spinlock.h"
 
 #include "proofnetwork/networkdataentity.h"
 #include "proofnetwork/proofnetwork_global.h"

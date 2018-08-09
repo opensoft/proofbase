@@ -9,8 +9,9 @@
 #include "proofglobal.h"
 #include "settings.h"
 #include "settingsgroup.h"
-#include "tasks.h"
 #include "updatemanager.h"
+
+#include "proofseed/tasks.h"
 
 #include <QDir>
 #include <QLocale>

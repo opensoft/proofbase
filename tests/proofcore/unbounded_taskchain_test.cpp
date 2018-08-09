@@ -2,11 +2,11 @@
 
 #include "proofcore/unbounded_taskchain.h"
 
+#include "gtest/test_global.h"
+
 #include <QDateTime>
 #include <QThread>
 #include <QTimer>
-
-#include "gtest/test_global.h"
 
 #include <thread>
 

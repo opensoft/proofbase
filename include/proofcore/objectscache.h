@@ -1,8 +1,9 @@
 #ifndef OBJECTSCACHE_H
 #define OBJECTSCACHE_H
 
+#include "proofseed/proofalgorithms.h"
+
 #include "proofcore/expirator.h"
-#include "proofcore/proofalgorithms.h"
 #include "proofcore/proofobject.h"
 
 #include <QHash>

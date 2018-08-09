@@ -1,14 +1,14 @@
 // clazy:skip
 
-#include <proofcore/future.h>
+#include "proofseed/future.h"
 
 #include "proofnetwork/restclient.h"
+
+#include "gtest/test_global.h"
 
 #include <QNetworkReply>
 #include <QRegExp>
 #include <QScopedPointer>
-
-#include "gtest/test_global.h"
 
 #include <functional>
 #include <tuple>

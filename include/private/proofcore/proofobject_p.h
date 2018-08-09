@@ -1,7 +1,8 @@
 #ifndef PROOFOBJECT_P_H
 #define PROOFOBJECT_P_H
 
-#include "proofcore/proofalgorithms.h"
+#include "proofseed/proofalgorithms.h"
+
 #include "proofcore/proofcore_global.h"
 #include "proofcore/proofglobal.h"
 #include "proofcore/proofobject.h"

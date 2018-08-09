@@ -1,7 +1,8 @@
 #ifndef BASERESTAPI_P_H
 #define BASERESTAPI_P_H
 
-#include "proofcore/future.h"
+#include "proofseed/future.h"
+
 #include "proofcore/objectscache.h"
 #include "proofcore/proofobject_p.h"
 

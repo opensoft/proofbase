@@ -1,9 +1,9 @@
 // clazy:skip
 #include "proofnetwork/urlquerybuilder.h"
 
-#include <QTimeZone>
-
 #include "gtest/test_global.h"
+
+#include <QTimeZone>
 
 using namespace Proof;
 

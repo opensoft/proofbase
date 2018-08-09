@@ -1,7 +1,7 @@
 #ifndef PROOF_APICALL_H
 #define PROOF_APICALL_H
 
-#include "proofcore/future.h"
+#include "proofseed/future.h"
 
 #include "proofnetwork/proofnetwork_global.h"
 

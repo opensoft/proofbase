@@ -1,7 +1,8 @@
 #ifndef RESTCLIENT_H
 #define RESTCLIENT_H
 
-#include "proofcore/future.h"
+#include "proofseed/future.h"
+
 #include "proofcore/proofobject.h"
 
 #include "proofnetwork/proofnetwork_global.h"

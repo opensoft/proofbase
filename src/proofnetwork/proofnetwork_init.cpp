@@ -1,4 +1,3 @@
-#include "3rdparty/qamqp/src/qamqpglobal.h"
 #include "apicall.h"
 #include "emailnotificationhandler.h"
 #include "proofnetwork_global.h"
@@ -11,6 +10,8 @@
 #include "proofcore/proofglobal.h"
 #include "proofcore/settings.h"
 #include "proofcore/settingsgroup.h"
+
+#include "3rdparty/qamqp/src/qamqpglobal.h"
 
 Q_LOGGING_CATEGORY(proofNetworkMiscLog, "proof.network.misc")
 Q_LOGGING_CATEGORY(proofNetworkExtraLog, "proof.network.extra")

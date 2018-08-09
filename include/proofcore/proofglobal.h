@@ -1,7 +1,8 @@
 #ifndef PROOFGLOBAL_H
 #define PROOFGLOBAL_H
 
-#include "proofcore/proofalgorithms.h"
+#include "proofseed/proofalgorithms.h"
+
 #include "proofcore/proofcore_global.h"
 
 #include <QString>

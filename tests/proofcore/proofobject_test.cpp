@@ -1,14 +1,15 @@
 // clazy:skip
 
-#include "proofcore/future.h"
+#include "proofseed/future.h"
+#include "proofseed/tasks.h"
+
 #include "proofcore/proofobject.h"
-#include "proofcore/tasks.h"
+
+#include "gtest/test_global.h"
 
 #include <QDateTime>
 #include <QThread>
 #include <QTimer>
-
-#include "gtest/test_global.h"
 
 #include <atomic>
 

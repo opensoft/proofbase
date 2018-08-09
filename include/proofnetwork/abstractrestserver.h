@@ -1,7 +1,7 @@
 #ifndef ABSTRACTRESTSERVER_H
 #define ABSTRACTRESTSERVER_H
 
-#include "proofcore/future.h"
+#include "proofseed/future.h"
 
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
