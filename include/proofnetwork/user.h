@@ -19,8 +19,7 @@ public:
 
     UserQmlWrapper *toQmlWrapper(QObject *parent = nullptr) const override;
 
-    static UserSP create(const QString &userName);
-    static UserSP defaultObject();
+    static UserSP create(const QString &userName = QString());
 
 signals:
     void userNameChanged(const QString &arg);

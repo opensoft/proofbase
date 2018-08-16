@@ -21,9 +21,9 @@ public:
 
     template <class Argument>
     static typename std::enable_if<std::is_base_of<NetworkDataEntity, Argument>::value, bool>::type
-    isValidAndNotDefault(const QSharedPointer<Argument> &sp)
+    isValidAndDirty(const QSharedPointer<Argument> &sp)
     {
-        return sp && (sp != Argument::defaultObject());
+        return sp && sp->isDirty();
     }
 
     void updateFrom(const Proof::NetworkDataEntitySP &other);
