@@ -19,6 +19,12 @@ public:
     QString queueName() const;
     void setQueueName(const QString &queueName);
 
+    QString newQueueBindingExchangeName() const;
+    void setNewQueueBindingExchangeName(const QString &exchangeName);
+
+    QStringList newQueueBindingRoutingKeys() const;
+    void setNewQueueBindingRoutingKeys(const QStringList &routingKeys);
+
     bool createQueueIfNotExists() const;
     QAmqpQueue::QueueOptions queueOptions() const;
 

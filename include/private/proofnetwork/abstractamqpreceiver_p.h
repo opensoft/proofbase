@@ -15,7 +15,6 @@ public:
     AbstractAmqpReceiverPrivate();
 
     void connected() override;
-    virtual void queueDeclared(QAmqpQueue *queue) = 0;
     virtual void amqpMessageReceived() = 0;
 
     enum class QueueState
@@ -29,6 +28,8 @@ public:
 
     QAmqpQueue *queue = nullptr;
     QString queueName;
+    QString newQueueBindingExchangeName;
+    QStringList newQueueBindingRoutingKeys;
     bool createdQueueIfNotExists = false;
     QAmqpQueue::QueueOptions queueOptions = {QAmqpQueue::Durable, QAmqpQueue::AutoDelete};
 

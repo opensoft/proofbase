@@ -10,12 +10,8 @@ class PROOF_NETWORK_EXPORT JsonAmqpClient : public AbstractAmqpReceiver
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(JsonAmqpClient)
-
-public:
-    explicit JsonAmqpClient(QObject *parent = nullptr);
-
 protected:
-    JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent = nullptr);
+    explicit JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent = nullptr);
 };
 
 } // namespace Proof

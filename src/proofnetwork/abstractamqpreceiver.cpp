@@ -20,6 +20,30 @@ void AbstractAmqpReceiver::setQueueName(const QString &queueName)
     d->queueName = queueName;
 }
 
+QString AbstractAmqpReceiver::newQueueBindingExchangeName() const
+{
+    Q_D_CONST(AbstractAmqpReceiver);
+    return d->newQueueBindingExchangeName;
+}
+
+void AbstractAmqpReceiver::setNewQueueBindingExchangeName(const QString &exchangeName)
+{
+    Q_D(AbstractAmqpReceiver);
+    d->newQueueBindingExchangeName = exchangeName;
+}
+
+QStringList AbstractAmqpReceiver::newQueueBindingRoutingKeys() const
+{
+    Q_D_CONST(AbstractAmqpReceiver);
+    return d->newQueueBindingRoutingKeys;
+}
+
+void AbstractAmqpReceiver::setNewQueueBindingRoutingKeys(const QStringList &routingKeys)
+{
+    Q_D(AbstractAmqpReceiver);
+    d->newQueueBindingRoutingKeys = routingKeys;
+}
+
 bool AbstractAmqpReceiver::createQueueIfNotExists() const
 {
     Q_D_CONST(AbstractAmqpReceiver);
@@ -79,7 +103,11 @@ void AbstractAmqpReceiverPrivate::connected()
 
         QObject::connect(queue, &QAmqpQueue::declared, q, [this]() {
             queueState = QueueState::Declared;
-            queueDeclared(queue);
+            startConsuming(queue);
+            if (!newQueueBindingExchangeName.isEmpty()) {
+                for (const auto &key : qAsConst(newQueueBindingRoutingKeys))
+                    queue->bind(newQueueBindingExchangeName, key);
+            }
         });
 
         QObject::connect(queue, &QAmqpQueue::opened, q, [this, q]() {

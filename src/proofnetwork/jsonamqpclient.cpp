@@ -10,9 +10,6 @@
 
 using namespace Proof;
 
-JsonAmqpClient::JsonAmqpClient(QObject *parent) : JsonAmqpClient(*new JsonAmqpClientPrivate, parent)
-{}
-
 JsonAmqpClient::JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent) : AbstractAmqpReceiver(dd, parent)
 {}
 
@@ -29,12 +26,6 @@ void JsonAmqpClientPrivate::amqpMessageReceived()
     } else {
         qCDebug(proofNetworkAmqpLog) << "Queue message is not valid: " << message.payload();
     }
-}
-
-void JsonAmqpClientPrivate::queueDeclared(QAmqpQueue *queue)
-{
-    Q_UNUSED(queue)
-    //Nothing there
 }
 
 void JsonAmqpClientPrivate::handleJsonMessage(const QJsonDocument &json, const QString &routingKey,
