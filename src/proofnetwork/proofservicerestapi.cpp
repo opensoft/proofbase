@@ -1,7 +1,7 @@
-#include "proofservicerestapi.h"
+#include "proofnetwork/proofservicerestapi.h"
 
-#include "proofnetwork_types.h"
-#include "proofservicerestapi_p.h"
+#include "proofnetwork/proofnetwork_types.h"
+#include "proofnetwork/proofservicerestapi_p.h"
 
 #include <QJsonDocument>
 #include <QJsonObject>

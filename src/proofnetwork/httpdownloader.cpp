@@ -1,4 +1,4 @@
-#include "httpdownloader.h"
+#include "proofnetwork/httpdownloader.h"
 
 #include "proofcore/proofobject_p.h"
 

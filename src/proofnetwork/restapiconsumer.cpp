@@ -1,4 +1,4 @@
-#include "restapiconsumer.h"
+#include "proofnetwork/restapiconsumer.h"
 
 using namespace Proof;
 

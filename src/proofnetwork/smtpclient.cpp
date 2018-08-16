@@ -1,4 +1,4 @@
-#include "smtpclient.h"
+#include "proofnetwork/smtpclient.h"
 
 #include "proofseed/future.h"
 #include "proofseed/tasks.h"

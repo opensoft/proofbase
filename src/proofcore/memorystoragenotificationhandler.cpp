@@ -1,4 +1,4 @@
-#include "memorystoragenotificationhandler.h"
+#include "proofcore/memorystoragenotificationhandler.h"
 
 #include "proofcore/abstractnotificationhandler_p.h"
 

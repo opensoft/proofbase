@@ -1,6 +1,6 @@
-#include "abstractamqpclient.h"
+#include "proofnetwork/abstractamqpclient.h"
 
-#include "abstractamqpclient_p.h"
+#include "proofnetwork/abstractamqpclient_p.h"
 
 #include <QJsonArray>
 #include <QJsonDocument>

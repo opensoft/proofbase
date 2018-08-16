@@ -1,4 +1,4 @@
-#include "abstractrestserver.h"
+#include "proofnetwork/abstractrestserver.h"
 
 #include "proofcore/coreapplication.h"
 #include "proofcore/errornotifier.h"

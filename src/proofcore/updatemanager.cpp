@@ -1,4 +1,4 @@
-#include "updatemanager.h"
+#include "proofcore/updatemanager.h"
 
 #include "proofcore/errornotifier.h"
 #include "proofcore/helpers/versionhelper.h"

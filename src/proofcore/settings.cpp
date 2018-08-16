@@ -1,7 +1,7 @@
-#include "settings.h"
+#include "proofcore/settings.h"
 
-#include "proofobject_p.h"
-#include "settingsgroup.h"
+#include "proofcore/proofobject_p.h"
+#include "proofcore/settingsgroup.h"
 
 #include <QCoreApplication>
 #include <QFileInfo>

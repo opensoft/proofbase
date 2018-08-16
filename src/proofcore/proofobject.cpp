@@ -1,6 +1,6 @@
-#include "proofobject.h"
+#include "proofcore/proofobject.h"
 
-#include "proofobject_p.h"
+#include "proofcore/proofobject_p.h"
 
 #include <algorithm>
 

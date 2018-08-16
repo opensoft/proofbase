@@ -1,10 +1,11 @@
 #ifndef PROOF_AMQPPUBLISHER_H
 #define PROOF_AMQPPUBLISHER_H
 
-#include "proofnetwork/3rdparty/qamqp/src/qamqpexchange.h"
 #include "proofnetwork/abstractamqpclient.h"
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
+
+#include "3rdparty/qamqp/src/qamqpexchange.h"
 
 #include <QSslConfiguration>
 

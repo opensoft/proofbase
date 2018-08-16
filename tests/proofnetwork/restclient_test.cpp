@@ -139,7 +139,11 @@ TEST_P(RestClientTest, vendorTest)
     const auto expected = std::get<2>(GetParam());
     const QRegExp expectedRegExp(QString("Content-Type:(\\s*)([^\r\n]*)\\r\\n"));
 
-    const QByteArray body = file.isEmpty() ? QByteArray() : dataFromFile(file);
+    QByteArray body;
+    if (!file.isEmpty()) {
+        body = dataFromFile(file);
+        ASSERT_FALSE(body.isEmpty());
+    }
 
     QScopedPointer<QNetworkReply> reply(methodCall(*restClient, body)->result());
 

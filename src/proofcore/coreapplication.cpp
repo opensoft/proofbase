@@ -1,17 +1,17 @@
-#include "coreapplication.h"
-
-#include "coreapplication_p.h"
-#include "errornotifier.h"
-#include "expirator.h"
-#include "helpers/versionhelper.h"
-#include "logs.h"
-#include "memorystoragenotificationhandler.h"
-#include "proofglobal.h"
-#include "settings.h"
-#include "settingsgroup.h"
-#include "updatemanager.h"
+#include "proofcore/coreapplication.h"
 
 #include "proofseed/tasks.h"
+
+#include "proofcore/coreapplication_p.h"
+#include "proofcore/errornotifier.h"
+#include "proofcore/expirator.h"
+#include "proofcore/helpers/versionhelper.h"
+#include "proofcore/logs.h"
+#include "proofcore/memorystoragenotificationhandler.h"
+#include "proofcore/proofglobal.h"
+#include "proofcore/settings.h"
+#include "proofcore/settingsgroup.h"
+#include "proofcore/updatemanager.h"
 
 #include <QDir>
 #include <QLocale>

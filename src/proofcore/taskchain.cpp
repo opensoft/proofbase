@@ -1,4 +1,4 @@
-#include "taskchain.h"
+#include "proofcore/taskchain.h"
 
 #include <QCoreApplication>
 #include <QMap>

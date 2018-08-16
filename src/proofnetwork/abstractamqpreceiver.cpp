@@ -1,6 +1,6 @@
-#include "abstractamqpreceiver.h"
+#include "proofnetwork/abstractamqpreceiver.h"
 
-#include "abstractamqpreceiver_p.h"
+#include "proofnetwork/abstractamqpreceiver_p.h"
 
 using namespace Proof;
 

@@ -1,6 +1,6 @@
-#include "proofobjectprivatepointer.h"
+#include "proofcore/proofobjectprivatepointer.h"
 
-#include "proofobject_p.h"
+#include "proofcore/proofobject_p.h"
 
 namespace Proof {
 

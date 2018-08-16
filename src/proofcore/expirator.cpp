@@ -1,6 +1,6 @@
-#include "expirator.h"
+#include "proofcore/expirator.h"
 
-#include "proofobject_p.h"
+#include "proofcore/proofobject_p.h"
 
 #include <QMultiMap>
 #include <QMutex>

@@ -1,6 +1,6 @@
-#include "abstractnotificationhandler.h"
+#include "proofcore/abstractnotificationhandler.h"
 
-#include "abstractnotificationhandler_p.h"
+#include "proofcore/abstractnotificationhandler_p.h"
 
 using namespace Proof;
 

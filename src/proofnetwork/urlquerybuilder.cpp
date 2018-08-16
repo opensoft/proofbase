@@ -1,8 +1,8 @@
-#include "urlquerybuilder.h"
-
-#include "urlquerybuilder_p.h"
+#include "proofnetwork/urlquerybuilder.h"
 
 #include "proofcore/proofglobal.h"
+
+#include "proofnetwork/urlquerybuilder_p.h"
 
 #include <QTimeZone>
 

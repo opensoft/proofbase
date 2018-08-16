@@ -1,6 +1,6 @@
-#include "user.h"
+#include "proofnetwork/user.h"
 
-#include "user_p.h"
+#include "proofnetwork/user_p.h"
 
 using namespace Proof;
 

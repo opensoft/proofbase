@@ -1,10 +1,11 @@
 #ifndef ABSTRACTAMQPRECEIVER_P_H
 #define ABSTRACTAMQPRECEIVER_P_H
 
-#include "proofnetwork/3rdparty/qamqp/src/qamqpqueue.h"
 #include "proofnetwork/abstractamqpclient_p.h"
 #include "proofnetwork/abstractamqpreceiver.h"
 #include "proofnetwork/proofnetwork_global.h"
+
+#include "3rdparty/qamqp/src/qamqpqueue.h"
 
 namespace Proof {
 class PROOF_NETWORK_EXPORT AbstractAmqpReceiverPrivate : public AbstractAmqpClientPrivate

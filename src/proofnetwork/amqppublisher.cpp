@@ -1,9 +1,10 @@
-#include "amqppublisher.h"
+#include "proofnetwork/amqppublisher.h"
 
-#include "proofnetwork/3rdparty/qamqp/src/qamqpclient.h"
-#include "proofnetwork/3rdparty/qamqp/src/qamqpexchange.h"
-#include "proofnetwork/3rdparty/qamqp/src/qamqpmessage.h"
 #include "proofnetwork/abstractamqpclient_p.h"
+
+#include "3rdparty/qamqp/src/qamqpclient.h"
+#include "3rdparty/qamqp/src/qamqpexchange.h"
+#include "3rdparty/qamqp/src/qamqpmessage.h"
 
 namespace Proof {
 

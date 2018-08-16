@@ -1,9 +1,9 @@
-#include "emailnotificationhandler.h"
-
-#include "smtpclient.h"
+#include "proofnetwork/emailnotificationhandler.h"
 
 #include "proofcore/abstractnotificationhandler_p.h"
 #include "proofcore/proofglobal.h"
+
+#include "proofnetwork/smtpclient.h"
 
 #include <QDateTime>
 #include <QNetworkInterface>

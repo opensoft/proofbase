@@ -1,8 +1,8 @@
-#include "baserestapi.h"
-
-#include "baserestapi_p.h"
+#include "proofnetwork/baserestapi.h"
 
 #include "proofseed/tasks.h"
+
+#include "proofnetwork/baserestapi_p.h"
 
 static const int NETWORK_SSL_ERROR_OFFSET = 1500;
 static const int NETWORK_ERROR_OFFSET = 1000;

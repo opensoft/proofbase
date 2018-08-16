@@ -1,4 +1,4 @@
-#include "unbounded_taskchain.h"
+#include "proofcore/unbounded_taskchain.h"
 
 #include "proofcore/proofglobal.h"
 

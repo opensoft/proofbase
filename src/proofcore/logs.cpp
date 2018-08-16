@@ -1,8 +1,8 @@
-#include "logs.h"
-
-#include "errornotifier.h"
+#include "proofcore/logs.h"
 
 #include "proofseed/proofalgorithms.h"
+
+#include "proofcore/errornotifier.h"
 
 #include <QCoreApplication>
 #include <QDateTime>

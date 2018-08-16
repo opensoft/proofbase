@@ -1,10 +1,9 @@
-#include "networkdataentityqmlwrapper.h"
-
-#include "networkdataentityqmlwrapper_p.h"
+#include "proofnetwork/qmlwrappers/networkdataentityqmlwrapper.h"
 
 #include "proofcore/proofobject_p.h"
 
 #include "proofnetwork/networkdataentity.h"
+#include "proofnetwork/qmlwrappers/networkdataentityqmlwrapper_p.h"
 
 using namespace Proof;
 

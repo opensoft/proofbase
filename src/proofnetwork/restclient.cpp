@@ -1,4 +1,4 @@
-#include "restclient.h"
+#include "proofnetwork/restclient.h"
 
 #include "proofcore/coreapplication.h"
 #include "proofcore/proofglobal.h"

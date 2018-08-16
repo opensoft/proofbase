@@ -1,7 +1,6 @@
-#include "userqmlwrapper.h"
+#include "proofnetwork/qmlwrappers/userqmlwrapper.h"
 
-#include "userqmlwrapper_p.h"
-
+#include "proofnetwork/qmlwrappers/userqmlwrapper_p.h"
 #include "proofnetwork/user.h"
 
 using namespace Proof;

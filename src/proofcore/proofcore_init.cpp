@@ -1,11 +1,10 @@
-#include "logs.h"
-#include "proofcore_global.h"
-#include "proofglobal.h"
-
 #include "proofcore/coreapplication.h"
 #include "proofcore/errornotifier.h"
 #include "proofcore/helpers/versionhelper.h"
+#include "proofcore/logs.h"
 #include "proofcore/memorystoragenotificationhandler.h"
+#include "proofcore/proofcore_global.h"
+#include "proofcore/proofglobal.h"
 #include "proofcore/settings.h"
 #include "proofcore/settingsgroup.h"
 

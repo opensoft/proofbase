@@ -1,6 +1,6 @@
-#include "networkdataentity.h"
+#include "proofnetwork/networkdataentity.h"
 
-#include "networkdataentity_p.h"
+#include "proofnetwork/networkdataentity_p.h"
 
 using namespace Proof;
 

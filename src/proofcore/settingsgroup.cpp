@@ -1,7 +1,7 @@
-#include "settingsgroup.h"
+#include "proofcore/settingsgroup.h"
 
-#include "proofobject_p.h"
-#include "settings.h"
+#include "proofcore/proofobject_p.h"
+#include "proofcore/settings.h"
 
 #include <QHash>
 

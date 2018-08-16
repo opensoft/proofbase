@@ -1,10 +1,9 @@
 #ifndef USER_P_H
 #define USER_P_H
 
-#include "networkdataentity_p.h"
-#include "user.h"
-
+#include "proofnetwork/networkdataentity_p.h"
 #include "proofnetwork/proofnetwork_global.h"
+#include "proofnetwork/user.h"
 
 namespace Proof {
 class PROOF_NETWORK_EXPORT UserPrivate : public NetworkDataEntityPrivate

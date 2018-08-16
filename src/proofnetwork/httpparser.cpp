@@ -1,4 +1,4 @@
-#include "httpparser_p.h"
+#include "proofnetwork/httpparser_p.h"
 
 #include <QObject>
 #include <QRegExp>

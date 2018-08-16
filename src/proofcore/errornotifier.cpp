@@ -1,7 +1,7 @@
-#include "errornotifier.h"
+#include "proofcore/errornotifier.h"
 
-#include "abstractnotificationhandler.h"
-#include "proofobject_p.h"
+#include "proofcore/abstractnotificationhandler.h"
+#include "proofcore/proofobject_p.h"
 
 #include <QMutex>
 

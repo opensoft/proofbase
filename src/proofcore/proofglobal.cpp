@@ -1,4 +1,4 @@
-#include "proofglobal.h"
+#include "proofcore/proofglobal.h"
 
 namespace Proof {
 static bool proofUsesSettingsValue = true;

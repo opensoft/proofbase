@@ -1,0 +1,4 @@
+[submodule "3rdparty/qamqp"]
+	path = 3rdparty/qamqp
+	url = https://github.com/opensoft/qamqp.git
+	branch = proofed

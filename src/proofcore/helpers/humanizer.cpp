@@ -1,4 +1,4 @@
-#include "humanizer.h"
+#include "proofcore/helpers/humanizer.h"
 
 #include <QStringList>
 

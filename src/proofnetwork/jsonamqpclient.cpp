@@ -1,4 +1,4 @@
-#include "jsonamqpclient.h"
+#include "proofnetwork/jsonamqpclient.h"
 
 #include "proofnetwork/jsonamqpclient_p.h"
 

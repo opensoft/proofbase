@@ -1,14 +1,14 @@
 #ifndef QABSTRACTAMQPCLIENT_P_H
 #define QABSTRACTAMQPCLIENT_P_H
 
-#include "abstractamqpclient.h"
-
 #include "proofcore/proofobject_p.h"
 
-#include "proofnetwork/3rdparty/qamqp/src/qamqpclient.h"
-#include "proofnetwork/3rdparty/qamqp/src/qamqpmessage.h"
-#include "proofnetwork/3rdparty/qamqp/src/qamqpqueue.h"
+#include "proofnetwork/abstractamqpclient.h"
 #include "proofnetwork/proofnetwork_global.h"
+
+#include "3rdparty/qamqp/src/qamqpclient.h"
+#include "3rdparty/qamqp/src/qamqpmessage.h"
+#include "3rdparty/qamqp/src/qamqpqueue.h"
 
 namespace Proof {
 

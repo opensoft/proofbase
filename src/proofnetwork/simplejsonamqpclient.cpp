@@ -1,6 +1,6 @@
-#include "simplejsonamqpclient.h"
+#include "proofnetwork/simplejsonamqpclient.h"
 
-#include "jsonamqpclient_p.h"
+#include "proofnetwork/jsonamqpclient_p.h"
 
 namespace Proof {
 class SimpleJsonAmqpClientPrivate : public JsonAmqpClientPrivate

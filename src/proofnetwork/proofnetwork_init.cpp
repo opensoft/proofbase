@@ -1,15 +1,15 @@
-#include "apicall.h"
-#include "emailnotificationhandler.h"
-#include "proofnetwork_global.h"
-#include "proofnetwork_types.h"
-#include "proofservicerestapi.h"
-#include "smtpclient.h"
-
 #include "proofcore/coreapplication.h"
 #include "proofcore/errornotifier.h"
 #include "proofcore/proofglobal.h"
 #include "proofcore/settings.h"
 #include "proofcore/settingsgroup.h"
+
+#include "proofnetwork/apicall.h"
+#include "proofnetwork/emailnotificationhandler.h"
+#include "proofnetwork/proofnetwork_global.h"
+#include "proofnetwork/proofnetwork_types.h"
+#include "proofnetwork/proofservicerestapi.h"
+#include "proofnetwork/smtpclient.h"
 
 #include "3rdparty/qamqp/src/qamqpglobal.h"
 
