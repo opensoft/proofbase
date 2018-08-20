@@ -2,7 +2,7 @@ include(proof.prf)
 
 LIBS *= -lqamqp
 
-msvc { 
+msvc {
     QMAKE_CXXFLAGS *= /wd4251 /wd4275
 }
 

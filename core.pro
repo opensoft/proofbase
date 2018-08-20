@@ -1,7 +1,7 @@
 TEMPLATE = lib
 TARGET = ProofCore
 QT -= gui
-include(../proof.pri)
+include(../proofboot/proof.pri)
 CONFIG += proofseed
 DESTDIR = $$BUILDPATH/lib
 
@@ -58,4 +58,4 @@ SOURCES += \
     src/proofcore/memorystoragenotificationhandler.cpp \
     src/proofcore/errornotifier.cpp
 
-include(../proof_translation.pri)
+include(../proofboot/proof_translation.pri)
