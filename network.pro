@@ -1,9 +1,10 @@
 TEMPLATE = lib
 TARGET = ProofNetwork
 QT += core network
-include(../proofboot/proof.pri)
-DESTDIR = $$BUILDPATH/lib
 
+PROOF_PRI_PATH = $$PWD/../proofboot
+!exists($$PROOF_PRI_PATH/proof.pri):PROOF_PRI_PATH = $$(PROOF_PATH)
+include($$PROOF_PRI_PATH/proof.pri)
 CONFIG += proofcore qamqp
 
 DEFINES += PROOF_NETWORK_LIB
@@ -69,4 +70,4 @@ SOURCES += \
     src/proofnetwork/apicall.cpp
 
 
-include(../proofboot/proof_translation.pri)
+include($$PROOF_PRI_PATH/proof_translation.pri)

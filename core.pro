@@ -1,9 +1,11 @@
 TEMPLATE = lib
 TARGET = ProofCore
 QT -= gui
-include(../proofboot/proof.pri)
+
+PROOF_PRI_PATH = $$PWD/../proofboot
+!exists($$PROOF_PRI_PATH/proof.pri):PROOF_PRI_PATH = $$(PROOF_PATH)
+include($$PROOF_PRI_PATH/proof.pri)
 CONFIG += proofseed
-DESTDIR = $$BUILDPATH/lib
 
 DEFINES += PROOF_CORE_LIB
 msvc {
@@ -58,4 +60,4 @@ SOURCES += \
     src/proofcore/memorystoragenotificationhandler.cpp \
     src/proofcore/errornotifier.cpp
 
-include(../proofboot/proof_translation.pri)
+include($$PROOF_PRI_PATH/proof_translation.pri)

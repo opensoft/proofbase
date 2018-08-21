@@ -1,4 +1,7 @@
-include (../tests/tests.pri)
+PROOF_PRI_PATH = $$PWD/../proofboot
+!exists($$PROOF_PRI_PATH/proof_tests.pri):PROOF_PRI_PATH = $$(PROOF_PATH)
+include($$PROOF_PRI_PATH/proof_tests.pri)
+
 QT += network
 CONFIG += proofnetwork
 

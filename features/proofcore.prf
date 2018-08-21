@@ -1,5 +1,7 @@
 include(proof_common.prf)
 include(proofseed.prf)
+include ($$(PROOF_PATH)/proof_functions.pri)
+add_proof_module_includes(proofbase)
 
 QT *= core
 

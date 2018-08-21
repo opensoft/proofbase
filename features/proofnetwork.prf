@@ -1,5 +1,7 @@
 include(qamqp.prf)
 include(proofcore.prf)
+include ($$(PROOF_PATH)/proof_functions.pri)
+add_proof_module_includes(proofbase)
 
 QT *= network
 
