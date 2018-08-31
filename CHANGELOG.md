@@ -4,6 +4,7 @@ ProofBase Changelog
 ## Not Released
 #### Features
  * Network: AbstractAmqpReceiver::newQueueBindingExchangeName and AbstractAmqpReceiver::newQueueBindingRoutingKeys properties as common approach for binding new queues instead of exchangeName/routingKeys pairs in each client
+ * Proof::tasks::unbounded::TaskChain gone
 
 #### Bug Fixing
  * --

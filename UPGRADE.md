@@ -7,7 +7,7 @@ Changes that one must make to applications based on Proof between versions.
  * --
 
 #### API modifications/removals/deprecations
- * --
+ * Proof::tasks::unbounded::TaskChain gone
 
 #### Config changes
  * --
