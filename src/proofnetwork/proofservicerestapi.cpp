@@ -13,6 +13,11 @@ static const QHash<QString, VersionedEntityType> VERSIONED_ENTITY_TYPES = {{"sta
                                                                            {"service", VersionedEntityType::Service},
                                                                            {"framework", VersionedEntityType::Framework}};
 
+ProofServiceRestApi::ProofServiceRestApi(const RestClientSP &restClient,
+                                         const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry, QObject *parent)
+    : ProofServiceRestApi(restClient, *new ProofServiceRestApiPrivate(errorsRegistry), parent)
+{}
+
 ProofServiceRestApi::ProofServiceRestApi(const RestClientSP &restClient, ProofServiceRestApiPrivate &dd, QObject *parent)
     : BaseRestApi(restClient, dd, parent)
 {}
@@ -78,11 +83,7 @@ void ProofServiceRestApi::processSuccessfulReply(QNetworkReply *reply, const Pro
     BaseRestApi::processSuccessfulReply(reply, promise);
 }
 
-ProofServiceRestApiPrivate::ProofServiceRestApiPrivate(const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry)
-    : BaseRestApiPrivate(), errorsRegistry(errorsRegistry)
-{}
-
-std::function<bool(const RestApiReply &)> ProofServiceRestApiPrivate::boolResultUnmarshaller()
+std::function<bool(const RestApiReply &)> ProofServiceRestApi::boolResultUnmarshaller()
 {
     return [](const RestApiReply &reply) -> bool {
         QJsonParseError jsonError;
@@ -103,3 +104,7 @@ std::function<bool(const RestApiReply &)> ProofServiceRestApiPrivate::boolResult
         return true;
     };
 }
+
+ProofServiceRestApiPrivate::ProofServiceRestApiPrivate(const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry)
+    : BaseRestApiPrivate(), errorsRegistry(errorsRegistry)
+{}

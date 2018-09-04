@@ -44,7 +44,8 @@ HEADERS += \
     include/proofnetwork/baserestapi.h \
     include/private/proofnetwork/baserestapi_p.h \
     include/proofnetwork/restapihelpers.h \
-    include/proofnetwork/networkdataentityhelpers.h
+    include/proofnetwork/networkdataentityhelpers.h \
+    include/proofnetwork/errormessagesregistry.h
 
 SOURCES += \
     src/proofnetwork/restclient.cpp \
@@ -67,7 +68,8 @@ SOURCES += \
     src/proofnetwork/httpdownloader.cpp \
     src/proofnetwork/simplejsonamqpclient.cpp \
     src/proofnetwork/baserestapi.cpp \
-    src/proofnetwork/apicall.cpp
+    src/proofnetwork/apicall.cpp \
+    src/proofnetwork/errormessagesregistry.cpp
 
 
 include($$PROOF_PRI_PATH/proof_translation.pri)

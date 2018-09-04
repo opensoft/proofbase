@@ -31,7 +31,6 @@ HEADERS += \
     include/private/proofcore/coreapplication_p.h \
     include/proofcore/updatemanager.h \
     include/proofcore/proofobjectprivatepointer.h \
-    include/private/proofcore/errormessagesregistry_p.h \
     include/proofcore/abstractnotificationhandler.h \
     include/private/proofcore/abstractnotificationhandler_p.h \
     include/proofcore/memorystoragenotificationhandler.h \
@@ -53,7 +52,6 @@ SOURCES += \
     src/proofcore/coreapplication.cpp \
     src/proofcore/updatemanager.cpp \
     src/proofcore/proofobjectprivatepointer.cpp \
-    src/proofcore/errormessagesregistry.cpp \
     src/proofcore/abstractnotificationhandler.cpp \
     src/proofcore/memorystoragenotificationhandler.cpp \
     src/proofcore/errornotifier.cpp

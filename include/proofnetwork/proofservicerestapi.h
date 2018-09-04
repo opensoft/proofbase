@@ -2,6 +2,7 @@
 #define PROOF_NETWORKSERVICES_PROOFSERVICERESTAPI_H
 
 #include "proofnetwork/baserestapi.h"
+#include "proofnetwork/errormessagesregistry.h"
 #include "proofnetwork/proofnetwork_global.h"
 
 namespace Proof {
@@ -24,9 +25,13 @@ signals:
     void versionFetched(Proof::NetworkServices::VersionedEntityType type, const QString &name, const QString &version);
 
 protected:
+    ProofServiceRestApi(const RestClientSP &restClient, const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry,
+                        QObject *parent = nullptr);
     ProofServiceRestApi(const RestClientSP &restClient, ProofServiceRestApiPrivate &dd, QObject *parent = nullptr);
 
     void processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise) override;
+
+    std::function<bool(const RestApiReply &)> boolResultUnmarshaller();
 };
 
 } // namespace NetworkServices

@@ -1,9 +1,8 @@
 #ifndef PROOFSERVICERESTAPI_P_H
 #define PROOFSERVICERESTAPI_P_H
 
-#include "proofcore/errormessagesregistry_p.h"
-
 #include "proofnetwork/baserestapi_p.h"
+#include "proofnetwork/errormessagesregistry.h"
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofservicerestapi.h"
 
@@ -15,9 +14,6 @@ class PROOF_NETWORK_EXPORT ProofServiceRestApiPrivate : public BaseRestApiPrivat
     Q_DECLARE_PUBLIC(ProofServiceRestApi)
 public:
     ProofServiceRestApiPrivate(const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry);
-
-    std::function<bool(const RestApiReply &)> boolResultUnmarshaller();
-
     QSharedPointer<ErrorMessagesRegistry> errorsRegistry;
 };
 } // namespace NetworkServices
