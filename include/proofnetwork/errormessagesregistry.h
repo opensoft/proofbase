@@ -1,7 +1,7 @@
 #ifndef PROOF_ERRORMESSAGESREGISTRY_H
 #define PROOF_ERRORMESSAGESREGISTRY_H
 
-#include "proofcore/proofcore_global.h"
+#include "proofnetwork/proofnetwork_global.h"
 
 #include <QHash>
 #include <QPair>
@@ -19,14 +19,17 @@ struct ErrorInfo
     bool userFriendly;
 };
 
-class PROOF_CORE_EXPORT ErrorMessagesRegistry
+class ErrorMessagesRegistryPrivate;
+class PROOF_NETWORK_EXPORT ErrorMessagesRegistry final
 {
+    Q_DECLARE_PRIVATE(ErrorMessagesRegistry)
 public:
-    ErrorMessagesRegistry(std::initializer_list<ErrorInfo> list);
+    ErrorMessagesRegistry(std::initializer_list<ErrorInfo> &&list);
+    ~ErrorMessagesRegistry();
     ErrorInfo infoForCode(int code, const QVector<QString> &args = QVector<QString>()) const;
 
 private:
-    QHash<long, ErrorInfo> m_infos;
+    QScopedPointer<ErrorMessagesRegistryPrivate> d_ptr;
 };
 
 } // namespace Proof
