@@ -25,6 +25,12 @@ bool ProofObject::isDirty() const
     return d->isDirtyItself() || algorithms::exists(d->childrenDirtyCheckers, [](const auto &f) { return f(); });
 }
 
+void ProofObject::markDirty(bool dirty) const
+{
+    Q_D_CONST(ProofObject);
+    d->setDirty(d->dirtyFlag | dirty);
+}
+
 void ProofObject::emitError(const Failure &failure, Failure::Hints forceHints)
 {
     emit errorOccurred(failure.moduleCode, failure.errorCode, failure.message,
