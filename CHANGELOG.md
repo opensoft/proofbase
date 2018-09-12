@@ -8,6 +8,7 @@ ProofBase Changelog
  * ErrorMessagesRegistry is now part of ProofNetwork lib
  * It is now possible to create app-based api support derived from proofservicerestapi
  * ErrorMessagesRegistry is public now
+ * setDirty available in protected section of ProofObject now
 
 #### Bug Fixing
  * --

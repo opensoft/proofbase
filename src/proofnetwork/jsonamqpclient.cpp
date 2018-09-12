@@ -13,6 +13,17 @@ using namespace Proof;
 JsonAmqpClient::JsonAmqpClient(JsonAmqpClientPrivate &dd, QObject *parent) : AbstractAmqpReceiver(dd, parent)
 {}
 
+JsonAmqpClient::JsonAmqpClient(QObject *parent) : JsonAmqpClient(*new JsonAmqpClientPrivate(), parent)
+{}
+
+void JsonAmqpClient::setCustomJsonMessageHandler(
+    const std::function<void(const QJsonDocument &, const QString &, const QHash<QString, QVariant> &)> &&handler)
+{
+    Q_D(JsonAmqpClient);
+    d->handler = handler;
+    d->customHandlerWasSet = true;
+}
+
 void JsonAmqpClientPrivate::amqpMessageReceived()
 {
     //HACK: Workaround for bug in QAQMP, sometimes after qamqp reconnect, signal messageReceived has been emitted, but queue actually is empty, so we check it here.
@@ -22,7 +33,10 @@ void JsonAmqpClientPrivate::amqpMessageReceived()
     if (message.isValid()) {
         QJsonDocument messageDocument = QJsonDocument::fromJson(message.payload());
         qCDebug(proofNetworkAmqpLog) << "Queue message: " << messageDocument;
-        handleJsonMessage(messageDocument, message.routingKey(), message.headers());
+        if (customHandlerWasSet)
+            handler(messageDocument, message.routingKey(), message.headers());
+        else
+            handleJsonMessage(messageDocument, message.routingKey(), message.headers());
     } else {
         qCDebug(proofNetworkAmqpLog) << "Queue message is not valid: " << message.payload();
     }

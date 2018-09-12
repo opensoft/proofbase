@@ -13,6 +13,9 @@ class PROOF_NETWORK_EXPORT JsonAmqpClientPrivate : public AbstractAmqpReceiverPr
     void amqpMessageReceived() override;
     virtual void handleJsonMessage(const QJsonDocument &json, const QString &routingKey,
                                    const QHash<QString, QVariant> &headers);
+
+    std::function<void(const QJsonDocument &, const QString &, const QHash<QString, QVariant> &)> handler;
+    bool customHandlerWasSet = false;
 };
 
 } // namespace Proof

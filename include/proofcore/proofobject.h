@@ -86,6 +86,8 @@ signals:
 protected:
     ProofObject(ProofObjectPrivate &dd, QObject *parent = nullptr);
 
+    void setDirty(bool dirty) const;
+
     virtual void emitError(const Failure &failure, Failure::Hints forceHints = Failure::NoHint);
     std::function<void(const Failure &)> simpleFailureHandler(Failure::Hints forceHints = Failure::NoHint);
 
