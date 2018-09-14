@@ -197,8 +197,10 @@ CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *a
     d->initTranslator();
     d->initUpdateManager();
 
-    qCDebug(proofCoreMiscLog).noquote() << QStringLiteral("%1 started").arg(qApp->applicationName()).toLatin1().constData()
-                                        << "with config at" << Proof::Settings::filePath();
+    qCDebug(proofCoreMiscLog).noquote().nospace()
+        << "\n\t" << qApp->applicationName() << " successfully started"
+        << "\n\tApp version: " << version << "\n\tProof version: " << Proof::proofVersion()
+        << "\n\tConfiguration file: " << Proof::Settings::filePath();
 }
 
 CoreApplication::~CoreApplication()
