@@ -1,10 +1,18 @@
 ProofBase Changelog
 ===================
 
+
 ## Not Released
 #### Features
+ * --
+
+#### Bug Fixing
+ * --
+
+## 0.18.9.23
+#### Features
  * Network: AbstractAmqpReceiver::newQueueBindingExchangeName and AbstractAmqpReceiver::newQueueBindingRoutingKeys properties as common approach for binding new queues instead of exchangeName/routingKeys pairs in each client
- * Proof::tasks::unbounded::TaskChain gone
+ * Proof::tasks::unbounded::TaskChain is gone
  * ErrorMessagesRegistry is now part of ProofNetwork lib
  * It is now possible to create app-based api support derived from proofservicerestapi
  * ErrorMessagesRegistry is public now
