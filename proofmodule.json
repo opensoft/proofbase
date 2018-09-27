@@ -1,0 +1,23 @@
+{
+    "name": "proofbase",
+    "has_tests": true,
+    "has_plugins": false,
+    "has_tools": false,
+    "bootstrap": {
+        "process_3rdparty": true,
+        "process_qml": false,
+        "custom_steps": []
+    },
+    "depends": ["proofseed"],
+    "affects": ["proofutils", "proofhardware", "proofnetworkjdf", "proofnetworkmms", "proofnetworkonp", "proofnetworktracker"],
+    "libraries": [
+        {
+            "name": "ProofCore",
+            "headers_subdir": "proofcore"
+        },
+        {
+            "name": "ProofNetwork",
+            "headers_subdir": "proofnetwork"
+        }
+    ]
+}
