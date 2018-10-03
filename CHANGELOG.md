@@ -4,7 +4,7 @@ ProofBase Changelog
 
 ## Not Released
 #### Features
- * --
+ * Bye-bye, taskchain
 
 #### Bug Fixing
  * --

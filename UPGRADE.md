@@ -8,7 +8,7 @@ Changes that one must make to applications based on Proof between versions.
  * --
 
 #### API modifications/removals/deprecations
- * --
+ * TaskChain finally removed
 
 #### Config changes
  * --

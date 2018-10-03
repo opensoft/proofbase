@@ -20,7 +20,6 @@ HEADERS += \
     include/proofcore/settings.h \
     include/proofcore/settingsgroup.h \
     include/proofcore/helpers/humanizer.h \
-    include/proofcore/taskchain.h \
     include/proofcore/proofobject.h \
     include/private/proofcore/proofobject_p.h \
     include/proofcore/proofglobal.h \
@@ -43,7 +42,6 @@ SOURCES += \
     src/proofcore/settings.cpp \
     src/proofcore/settingsgroup.cpp \
     src/proofcore/helpers/humanizer.cpp \
-    src/proofcore/taskchain.cpp \
     src/proofcore/proofobject.cpp \
     src/proofcore/proofcore_init.cpp \
     src/proofcore/proofglobal.cpp \

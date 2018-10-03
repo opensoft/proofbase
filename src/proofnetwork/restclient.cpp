@@ -27,7 +27,6 @@
 #include "proofcore/coreapplication.h"
 #include "proofcore/proofglobal.h"
 #include "proofcore/proofobject_p.h"
-#include "proofcore/taskchain.h"
 
 #include <QAuthenticator>
 #include <QBuffer>
