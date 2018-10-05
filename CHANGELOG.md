@@ -1,10 +1,16 @@
 ProofBase Changelog
 ===================
 
-
 ## Not Released
 #### Features
- * Bye-bye, taskchain
+ * --
+
+#### Bug Fixing
+ * --
+
+## 0.18.10.4
+#### Features
+ * Bye-bye, TaskChain
 
 #### Bug Fixing
  * --
