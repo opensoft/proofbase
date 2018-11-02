@@ -317,7 +317,7 @@ std::tuple<QString, NetworkErrorCode::Code> BaseRestApiPrivate::errorByCheckConn
     } else if (!internetConnectionEstablished()) {
         result = std::make_tuple(QStringLiteral("Your device seems to be in network without Internet connection. "
                                                 "Please, check if Internet is accessible and try again"),
-                                 NetworkErrorCode::Code::NoIternetConnection);
+                                 NetworkErrorCode::Code::NoInternetConnection);
     } else if (reply->error() == QNetworkReply::HostNotFoundError) {
         result = std::make_tuple(QStringLiteral("Host %1 not found. Please check your DNS settings and try again")
                                      .arg(reply->url().host()),
