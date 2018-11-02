@@ -50,7 +50,7 @@ enum Code
     InternalError = 7,
     AuthCredentialsError = 8,
     NoNetworkConnection = 9,
-    NoIternetConnection = 10,
+    NoInternetConnection = 10,
     HostNotFound = 11,
     MinCustomError = 100
 };
