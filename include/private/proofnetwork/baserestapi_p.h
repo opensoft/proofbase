@@ -50,6 +50,8 @@ public:
 
     CancelableFuture<RestApiReply> configureReply(CancelableFuture<QNetworkReply *> replyFuture);
     bool replyShouldBeHandledByError(QNetworkReply *reply) const;
+    std::tuple<QString, Proof::NetworkErrorCode::Code> errorByCheckConnection(QNetworkReply *reply);
+    bool internetConnectionEstablished();
     void rememberReply(const CancelableFuture<RestApiReply> &reply);
 
     RestClientSP restClient;

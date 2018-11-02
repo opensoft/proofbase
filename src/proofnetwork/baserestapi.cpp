@@ -28,8 +28,13 @@
 
 #include "proofnetwork/baserestapi_p.h"
 
+#include <QHostAddress>
+#include <QNetworkInterface>
+#include <QProcess>
+
 static const int NETWORK_SSL_ERROR_OFFSET = 1500;
 static const int NETWORK_ERROR_OFFSET = 1000;
+static const QString PING_ADDRESS = QStringLiteral("8.8.8.8");
 
 static const QSet<int> ALLOWED_HTTP_STATUSES = {200, 201, 202, 203, 204, 205, 206};
 
@@ -167,6 +172,7 @@ void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<R
 
 void BaseRestApi::processErroredReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
 {
+    Q_D(BaseRestApi);
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     bool errorCodeIsHttp = errorCode > 0;
     if (!errorCodeIsHttp)
@@ -179,18 +185,17 @@ void BaseRestApi::processErroredReply(QNetworkReply *reply, const PromiseSP<Rest
                                  << ": " << errorCode << errorString;
     switch (reply->error()) {
     case QNetworkReply::HostNotFoundError:
-        errorString = QStringLiteral("Host %1 not found. Try again later").arg(reply->url().host());
-        proofErrorCode = NetworkErrorCode::ServiceUnavailable;
-        hints |= Failure::UserFriendlyHint;
-        break;
     case QNetworkReply::ConnectionRefusedError:
     case QNetworkReply::RemoteHostClosedError:
     case QNetworkReply::TimeoutError:
     case QNetworkReply::OperationCanceledError:
-        errorString = QStringLiteral("Host %1 is unavailable. Try again later").arg(reply->url().host());
-        proofErrorCode = NetworkErrorCode::ServiceUnavailable;
+    case QNetworkReply::UnknownNetworkError: {
+        auto result = d->errorByCheckConnection(reply);
+        errorString = std::get<0>(result);
+        proofErrorCode = std::get<1>(result);
         hints |= Failure::UserFriendlyHint;
         break;
+    }
     default:
         break;
     }
@@ -280,6 +285,58 @@ bool BaseRestApiPrivate::replyShouldBeHandledByError(QNetworkReply *reply) const
         return false;
     int errorHundreds = reply->error() / 100;
     return (errorHundreds != 2 && errorHundreds != 4);
+}
+
+std::tuple<QString, NetworkErrorCode::Code> BaseRestApiPrivate::errorByCheckConnection(QNetworkReply *reply)
+{
+    QHostAddress host;
+    auto result = std::make_tuple(QStringLiteral("Host %1 is unavailable. Try again later").arg(reply->url().host()),
+                                  NetworkErrorCode::Code::ServiceUnavailable);
+
+    if (host.isLoopback() || QNetworkInterface::allAddresses().contains(host))
+        return result;
+
+    bool isIp = host.setAddress(reply->url().host());
+    if (isIp) {
+        const auto &interfaces = QNetworkInterface::allInterfaces();
+        bool atLeastOneInterfaceUp = false;
+        for (const auto &interface : interfaces) {
+            auto flags = interface.flags();
+            if (!(flags & QNetworkInterface::IsLoopBack) && (flags & QNetworkInterface::IsUp)
+                && interface.addressEntries().count() > 0) {
+                atLeastOneInterfaceUp = true;
+                break;
+            }
+        }
+
+        if (!atLeastOneInterfaceUp) {
+            result = std::make_tuple(QStringLiteral("You don't have network connection. Please, connect your device to "
+                                                    "network and try again"),
+                                     NetworkErrorCode::Code::NoNetworkConnection);
+        }
+    } else if (!internetConnectionEstablished()) {
+        result = std::make_tuple(QStringLiteral("Your device seems to be in network without Internet connection. "
+                                                "Please, check if Internet is accessible and try again"),
+                                 NetworkErrorCode::Code::NoIternetConnection);
+    } else if (reply->error() == QNetworkReply::HostNotFoundError) {
+        result = std::make_tuple(QStringLiteral("Host %1 not found. Please check your DNS settings and try again")
+                                     .arg(reply->url().host()),
+                                 NetworkErrorCode::Code::HostNotFound);
+    }
+    return result;
+}
+
+bool BaseRestApiPrivate::internetConnectionEstablished()
+{
+#ifdef Q_OS_WIN
+    char countLiteral = 'n';
+#else
+    char countLiteral = 'c';
+#endif
+    QProcess pingProcess;
+    pingProcess.start(QStringLiteral("ping -%1 4 %2").arg(countLiteral).arg(PING_ADDRESS));
+    pingProcess.waitForFinished();
+    return !pingProcess.exitCode();
 }
 
 void BaseRestApiPrivate::rememberReply(const CancelableFuture<RestApiReply> &reply)

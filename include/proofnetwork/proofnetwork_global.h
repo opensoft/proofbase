@@ -49,6 +49,9 @@ enum Code
     InvalidUrl = 6,
     InternalError = 7,
     AuthCredentialsError = 8,
+    NoNetworkConnection = 9,
+    NoIternetConnection = 10,
+    HostNotFound = 11,
     MinCustomError = 100
 };
 }

@@ -3,7 +3,7 @@ ProofBase Changelog
 
 ## Not Released
 #### Features
- * --
+ * Network: Better network check and errors about it (Add check for network and internet availability)
 
 #### Bug Fixing
  * --
