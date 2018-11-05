@@ -192,6 +192,7 @@ void BaseRestApi::processErroredReply(QNetworkReply *reply, const PromiseSP<Rest
     case QNetworkReply::OperationCanceledError:
     case QNetworkReply::UnknownNetworkError:
         failure = d->buildReplyFailure(reply);
+        failure.data = errorCode;
         break;
     default:
         break;
