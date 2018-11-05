@@ -190,10 +190,9 @@ void BaseRestApi::processErroredReply(QNetworkReply *reply, const PromiseSP<Rest
     case QNetworkReply::RemoteHostClosedError:
     case QNetworkReply::TimeoutError:
     case QNetworkReply::OperationCanceledError:
-    case QNetworkReply::UnknownNetworkError: {
+    case QNetworkReply::UnknownNetworkError:
         failure = d->buildReplyFailure(reply);
         break;
-    }
     default:
         break;
     }
