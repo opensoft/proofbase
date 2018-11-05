@@ -291,7 +291,7 @@ Failure BaseRestApiPrivate::buildReplyFailure(QNetworkReply *reply)
                           NETWORK_MODULE_CODE, NetworkErrorCode::Code::ServiceUnavailable, Failure::UserFriendlyHint);
 
     if (host.isLoopback() || QNetworkInterface::allAddresses().contains(host)) {
-        qCDebug(proofNetworkMiscLog) << "Host %1 is unavailable." << reply->url().host();
+        qCDebug(proofNetworkMiscLog) << "Host is unavailable:" << reply->url().host();
         return result;
     }
 
@@ -318,12 +318,12 @@ Failure BaseRestApiPrivate::buildReplyFailure(QNetworkReply *reply)
         result.message = QObject::tr("Your device seems to be in network without Internet connection. "
                                      "Please, check if Internet is accessible and try again");
         result.errorCode = NetworkErrorCode::Code::NoInternetConnection;
-        qCDebug(proofNetworkMiscLog) << "Seems like internet connection is down, couldn't ping external resource"
+        qCDebug(proofNetworkMiscLog) << "Seems like internet connection is down, couldn't ping external resource:"
                                      << PING_ADDRESS;
     } else if (reply->error() == QNetworkReply::HostNotFoundError) {
         result.message = QObject::tr("Host %1 not found. Please, contact IT immediately.").arg(reply->url().host());
         result.errorCode = NetworkErrorCode::Code::HostNotFound;
-        qCDebug(proofNetworkMiscLog) << "Host %1 not found" << reply->url().host();
+        qCDebug(proofNetworkMiscLog) << "Host not found: " << reply->url().host();
     }
     return result;
 }
