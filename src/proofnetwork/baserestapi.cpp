@@ -183,6 +183,7 @@ void BaseRestApi::processErroredReply(QNetworkReply *reply, const PromiseSP<Rest
     qCDebug(proofNetworkMiscLog) << "Error occurred for"
                                  << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                  << ": " << errorCode << errorString;
+    auto failure = Failure(errorString, NETWORK_MODULE_CODE, proofErrorCode, hints, errorCode);
     switch (reply->error()) {
     case QNetworkReply::HostNotFoundError:
     case QNetworkReply::ConnectionRefusedError:
@@ -190,17 +191,14 @@ void BaseRestApi::processErroredReply(QNetworkReply *reply, const PromiseSP<Rest
     case QNetworkReply::TimeoutError:
     case QNetworkReply::OperationCanceledError:
     case QNetworkReply::UnknownNetworkError: {
-        auto result = d->errorByCheckConnection(reply);
-        errorString = std::get<0>(result);
-        proofErrorCode = std::get<1>(result);
-        hints |= Failure::UserFriendlyHint;
+        failure = d->buildReplyFailure(reply);
         break;
     }
     default:
         break;
     }
 
-    promise->failure(Failure(errorString, NETWORK_MODULE_CODE, proofErrorCode, hints, errorCode));
+    promise->failure(failure);
 }
 
 QVector<QString> BaseRestApi::serverErrorAttributes() const
@@ -287,14 +285,16 @@ bool BaseRestApiPrivate::replyShouldBeHandledByError(QNetworkReply *reply) const
     return (errorHundreds != 2 && errorHundreds != 4);
 }
 
-std::tuple<QString, NetworkErrorCode::Code> BaseRestApiPrivate::errorByCheckConnection(QNetworkReply *reply)
+Failure BaseRestApiPrivate::buildReplyFailure(QNetworkReply *reply)
 {
     QHostAddress host;
-    auto result = std::make_tuple(QStringLiteral("Host %1 is unavailable. Try again later").arg(reply->url().host()),
-                                  NetworkErrorCode::Code::ServiceUnavailable);
+    auto result = Failure(QObject::tr("Host %1 is unavailable. Try again later").arg(reply->url().host()),
+                          NETWORK_MODULE_CODE, NetworkErrorCode::Code::ServiceUnavailable, Failure::UserFriendlyHint);
 
-    if (host.isLoopback() || QNetworkInterface::allAddresses().contains(host))
+    if (host.isLoopback() || QNetworkInterface::allAddresses().contains(host)) {
+        qCDebug(proofNetworkMiscLog) << "Host %1 is unavailable." << reply->url().host();
         return result;
+    }
 
     bool isIp = host.setAddress(reply->url().host());
     if (isIp) {
@@ -310,23 +310,25 @@ std::tuple<QString, NetworkErrorCode::Code> BaseRestApiPrivate::errorByCheckConn
         }
 
         if (!atLeastOneInterfaceUp) {
-            result = std::make_tuple(QStringLiteral("You don't have network connection. Please, connect your device to "
-                                                    "network and try again"),
-                                     NetworkErrorCode::Code::NoNetworkConnection);
+            result.message = QObject::tr("You don't have network connection. Please, connect your device to "
+                                         "network and try again");
+            result.errorCode = NetworkErrorCode::Code::NoNetworkConnection;
+            qCDebug(proofNetworkMiscLog) << "Seems like all network interfaces is down";
         }
-    } else if (!internetConnectionEstablished()) {
-        result = std::make_tuple(QStringLiteral("Your device seems to be in network without Internet connection. "
-                                                "Please, check if Internet is accessible and try again"),
-                                 NetworkErrorCode::Code::NoInternetConnection);
+    } else if (!tryInternetConnection()) {
+        result.message = QObject::tr("Your device seems to be in network without Internet connection. "
+                                     "Please, check if Internet is accessible and try again");
+        result.errorCode = NetworkErrorCode::Code::NoInternetConnection;
+        qCDebug(proofNetworkMiscLog) << "Seems like internet connection is down, couldn't ping external resource";
     } else if (reply->error() == QNetworkReply::HostNotFoundError) {
-        result = std::make_tuple(QStringLiteral("Host %1 not found. Please check your DNS settings and try again")
-                                     .arg(reply->url().host()),
-                                 NetworkErrorCode::Code::HostNotFound);
+        result.message = QObject::tr("Host %1 not found. Please, contact IT immediately.").arg(reply->url().host());
+        result.errorCode = NetworkErrorCode::Code::HostNotFound;
+        qCDebug(proofNetworkMiscLog) << "Host %1 not found" << reply->url().host();
     }
     return result;
 }
 
-bool BaseRestApiPrivate::internetConnectionEstablished()
+bool BaseRestApiPrivate::tryInternetConnection()
 {
 #ifdef Q_OS_WIN
     char countLiteral = 'n';
