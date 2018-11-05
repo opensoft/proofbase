@@ -314,11 +314,12 @@ Failure BaseRestApiPrivate::buildReplyFailure(QNetworkReply *reply)
             result.errorCode = NetworkErrorCode::Code::NoNetworkConnection;
             qCDebug(proofNetworkMiscLog) << "Seems like all network interfaces is down";
         }
-    } else if (!tryInternetConnection()) {
+    } else if (!pingExternalResource(PING_ADDRESS)) {
         result.message = QObject::tr("Your device seems to be in network without Internet connection. "
                                      "Please, check if Internet is accessible and try again");
         result.errorCode = NetworkErrorCode::Code::NoInternetConnection;
-        qCDebug(proofNetworkMiscLog) << "Seems like internet connection is down, couldn't ping external resource";
+        qCDebug(proofNetworkMiscLog) << "Seems like internet connection is down, couldn't ping external resource"
+                                     << PING_ADDRESS;
     } else if (reply->error() == QNetworkReply::HostNotFoundError) {
         result.message = QObject::tr("Host %1 not found. Please, contact IT immediately.").arg(reply->url().host());
         result.errorCode = NetworkErrorCode::Code::HostNotFound;
@@ -327,7 +328,7 @@ Failure BaseRestApiPrivate::buildReplyFailure(QNetworkReply *reply)
     return result;
 }
 
-bool BaseRestApiPrivate::tryInternetConnection()
+bool BaseRestApiPrivate::pingExternalResource(const QString &address)
 {
 #ifdef Q_OS_WIN
     char countLiteral = 'n';
@@ -335,7 +336,7 @@ bool BaseRestApiPrivate::tryInternetConnection()
     char countLiteral = 'c';
 #endif
     QProcess pingProcess;
-    pingProcess.start(QStringLiteral("ping -%1 4 %2").arg(countLiteral).arg(PING_ADDRESS));
+    pingProcess.start(QStringLiteral("ping -%1 4 %2").arg(countLiteral).arg(address));
     pingProcess.waitForFinished();
     return !pingProcess.exitCode();
 }

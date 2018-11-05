@@ -51,7 +51,7 @@ public:
     CancelableFuture<RestApiReply> configureReply(CancelableFuture<QNetworkReply *> replyFuture);
     bool replyShouldBeHandledByError(QNetworkReply *reply) const;
     Failure buildReplyFailure(QNetworkReply *reply);
-    bool tryInternetConnection();
+    bool pingExternalResource(const QString &address);
     void rememberReply(const CancelableFuture<RestApiReply> &reply);
 
     RestClientSP restClient;
