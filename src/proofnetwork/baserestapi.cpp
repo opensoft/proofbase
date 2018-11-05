@@ -28,8 +28,13 @@
 
 #include "proofnetwork/baserestapi_p.h"
 
+#include <QHostAddress>
+#include <QNetworkInterface>
+#include <QProcess>
+
 static const int NETWORK_SSL_ERROR_OFFSET = 1500;
 static const int NETWORK_ERROR_OFFSET = 1000;
+static const QString PING_ADDRESS = QStringLiteral("8.8.8.8");
 
 static const QSet<int> ALLOWED_HTTP_STATUSES = {200, 201, 202, 203, 204, 205, 206};
 
@@ -167,6 +172,7 @@ void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<R
 
 void BaseRestApi::processErroredReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
 {
+    Q_D(BaseRestApi);
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     bool errorCodeIsHttp = errorCode > 0;
     if (!errorCodeIsHttp)
@@ -177,25 +183,21 @@ void BaseRestApi::processErroredReply(QNetworkReply *reply, const PromiseSP<Rest
     qCDebug(proofNetworkMiscLog) << "Error occurred for"
                                  << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                  << ": " << errorCode << errorString;
+    auto failure = Failure(errorString, NETWORK_MODULE_CODE, proofErrorCode, hints, errorCode);
     switch (reply->error()) {
     case QNetworkReply::HostNotFoundError:
-        errorString = QStringLiteral("Host %1 not found. Try again later").arg(reply->url().host());
-        proofErrorCode = NetworkErrorCode::ServiceUnavailable;
-        hints |= Failure::UserFriendlyHint;
-        break;
     case QNetworkReply::ConnectionRefusedError:
     case QNetworkReply::RemoteHostClosedError:
     case QNetworkReply::TimeoutError:
     case QNetworkReply::OperationCanceledError:
-        errorString = QStringLiteral("Host %1 is unavailable. Try again later").arg(reply->url().host());
-        proofErrorCode = NetworkErrorCode::ServiceUnavailable;
-        hints |= Failure::UserFriendlyHint;
+    case QNetworkReply::UnknownNetworkError:
+        failure = d->buildReplyFailure(reply);
         break;
     default:
         break;
     }
 
-    promise->failure(Failure(errorString, NETWORK_MODULE_CODE, proofErrorCode, hints, errorCode));
+    promise->failure(failure);
 }
 
 QVector<QString> BaseRestApi::serverErrorAttributes() const
@@ -280,6 +282,63 @@ bool BaseRestApiPrivate::replyShouldBeHandledByError(QNetworkReply *reply) const
         return false;
     int errorHundreds = reply->error() / 100;
     return (errorHundreds != 2 && errorHundreds != 4);
+}
+
+Failure BaseRestApiPrivate::buildReplyFailure(QNetworkReply *reply)
+{
+    QHostAddress host;
+    auto result = Failure(QObject::tr("Host %1 is unavailable. Try again later").arg(reply->url().host()),
+                          NETWORK_MODULE_CODE, NetworkErrorCode::Code::ServiceUnavailable, Failure::UserFriendlyHint);
+
+    if (host.isLoopback() || QNetworkInterface::allAddresses().contains(host)) {
+        qCDebug(proofNetworkMiscLog) << "Host is unavailable:" << reply->url().host();
+        return result;
+    }
+
+    bool isIp = host.setAddress(reply->url().host());
+    if (isIp) {
+        const auto &interfaces = QNetworkInterface::allInterfaces();
+        bool atLeastOneInterfaceUp = false;
+        for (const auto &interface : interfaces) {
+            auto flags = interface.flags();
+            if (!(flags & QNetworkInterface::IsLoopBack) && (flags & QNetworkInterface::IsUp)
+                && interface.addressEntries().count() > 0) {
+                atLeastOneInterfaceUp = true;
+                break;
+            }
+        }
+
+        if (!atLeastOneInterfaceUp) {
+            result.message = QObject::tr("You don't have network connection. Please, connect your device to "
+                                         "network and try again");
+            result.errorCode = NetworkErrorCode::Code::NoNetworkConnection;
+            qCDebug(proofNetworkMiscLog) << "Seems like all network interfaces is down";
+        }
+    } else if (!pingExternalResource(PING_ADDRESS)) {
+        result.message = QObject::tr("Your device seems to be in network without Internet connection. "
+                                     "Please, check if Internet is accessible and try again");
+        result.errorCode = NetworkErrorCode::Code::NoInternetConnection;
+        qCDebug(proofNetworkMiscLog) << "Seems like internet connection is down, couldn't ping external resource:"
+                                     << PING_ADDRESS;
+    } else if (reply->error() == QNetworkReply::HostNotFoundError) {
+        result.message = QObject::tr("Host %1 not found. Please, contact IT immediately.").arg(reply->url().host());
+        result.errorCode = NetworkErrorCode::Code::HostNotFound;
+        qCDebug(proofNetworkMiscLog) << "Host not found: " << reply->url().host();
+    }
+    return result;
+}
+
+bool BaseRestApiPrivate::pingExternalResource(const QString &address)
+{
+#ifdef Q_OS_WIN
+    char countLiteral = 'n';
+#else
+    char countLiteral = 'c';
+#endif
+    QProcess pingProcess;
+    pingProcess.start(QStringLiteral("ping -%1 4 %2").arg(countLiteral).arg(address));
+    pingProcess.waitForFinished();
+    return !pingProcess.exitCode();
 }
 
 void BaseRestApiPrivate::rememberReply(const CancelableFuture<RestApiReply> &reply)
