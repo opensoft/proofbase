@@ -31,11 +31,8 @@
 #include <QDateTime>
 #include <QSet>
 #include <QTranslator>
+#include <QtCrypto>
 #include <QtGlobal>
-
-#ifndef QCA_DISABLED
-#    include <QtCrypto>
-#endif
 
 namespace Proof {
 class Settings;
@@ -68,9 +65,7 @@ protected:
     QString currentLanguage = QStringLiteral("en");
     QVector<QTranslator *> installedTranslators;
     bool initialized = false;
-#ifndef QCA_DISABLED
     QScopedPointer<QCA::Initializer> qcaInit;
-#endif
 };
 } // namespace Proof
 

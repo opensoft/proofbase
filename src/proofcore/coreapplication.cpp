@@ -474,10 +474,8 @@ void CoreApplicationPrivate::execMigrations()
 
 void CoreApplicationPrivate::initQca()
 {
-#ifndef QCA_DISABLED
     qcaInit.reset(new QCA::Initializer);
     QCA::scanForPlugins();
-#endif
 }
 
 void CoreApplicationPrivate::initTranslator()
