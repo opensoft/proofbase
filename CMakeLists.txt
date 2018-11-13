@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.3)
+cmake_minimum_required(VERSION 3.12.0)
 if(NOT DEFINED PROOF_FULL_BUILD)
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_INSTALL_PREFIX}/lib/cmake/modules")
     include(ProofInternal)
