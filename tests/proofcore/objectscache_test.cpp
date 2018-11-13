@@ -1,7 +1,7 @@
 // clazy:skip
 #include "proofcore/objectscache.h"
 
-#include "gtest/test_global.h"
+#include "gtest/proof/test_global.h"
 
 using namespace Proof;
 

@@ -3,7 +3,7 @@
 #include "proofnetwork/httpdownloader.h"
 #include "proofnetwork/restclient.h"
 
-#include "gtest/test_global.h"
+#include "gtest/proof/test_global.h"
 
 using namespace Proof;
 using testing::Test;

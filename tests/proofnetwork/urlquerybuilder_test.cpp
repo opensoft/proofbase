@@ -1,7 +1,7 @@
 // clazy:skip
 #include "proofnetwork/urlquerybuilder.h"
 
-#include "gtest/test_global.h"
+#include "gtest/proof/test_global.h"
 
 #include <QTimeZone>
 

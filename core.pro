@@ -7,7 +7,7 @@ PROOF_PRI_PATH = $$PWD/../proofboot
 include($$PROOF_PRI_PATH/proof.pri)
 CONFIG += proofseed
 
-DEFINES += PROOF_CORE_LIB
+DEFINES += Proof_Core_EXPORTS
 msvc {
     CONFIG(debug, debug|release):LIBS += -lzlibd
     else:LIBS += -lzlib

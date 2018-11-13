@@ -5,7 +5,7 @@
 
 #include "proofcore/proofobject.h"
 
-#include "gtest/test_global.h"
+#include "gtest/proof/test_global.h"
 
 #include <QDateTime>
 #include <QThread>

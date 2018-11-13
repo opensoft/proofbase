@@ -2,7 +2,7 @@
 
 #include "proofcore/helpers/humanizer.h"
 
-#include "gtest/test_global.h"
+#include "gtest/proof/test_global.h"
 
 using std::tuple;
 using testing::TestWithParam;

@@ -1,7 +1,7 @@
 #include "proofcore/coreapplication.h"
 #include "proofcore/logs.h"
 
-#include "gtest/test_global.h"
+#include "gtest/proof/test_global.h"
 
 int main(int argc, char **argv)
 {

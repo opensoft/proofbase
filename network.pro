@@ -7,7 +7,7 @@ PROOF_PRI_PATH = $$PWD/../proofboot
 include($$PROOF_PRI_PATH/proof.pri)
 CONFIG += proofcore qamqp
 
-DEFINES += PROOF_NETWORK_LIB
+DEFINES += Proof_Network_EXPORTS
 msvc:DEFINES += QAMQP_SHARED
 
 HEADERS += \
