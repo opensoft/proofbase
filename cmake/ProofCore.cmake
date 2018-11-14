@@ -42,8 +42,10 @@ proof_add_target_private_headers(Core
     include/private/proofcore/abstractbarcodeconfigurator_p.h
 )
 
+find_package(ZLIB REQUIRED)
+
 proof_add_module(Core
     QT_LIBS Core
     PROOF_LIBS Seed
-    OTHER_LIBS qca-qt5 z
+    OTHER_LIBS qca-qt5 ZLIB::ZLIB
 )
