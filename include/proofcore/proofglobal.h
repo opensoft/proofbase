@@ -59,6 +59,7 @@ static constexpr int round(double d)
 #ifdef Q_CC_MSVC
 #    include <SDKDDKVer.h>
 #    define WIN32_LEAN_AND_MEAN
+#    define NOMINMAX
 #    include <windows.h>
 #    define PROOF_LIBRARY_INITIALIZER(X)                                                    \
         __pragma(warning(push)) __pragma(warning(disable : 4100)) static void X(void);      \
