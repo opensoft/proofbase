@@ -49,3 +49,10 @@ proof_add_module(Core
     PROOF_LIBS Seed
     OTHER_LIBS qca-qt5 ZLIB::ZLIB
 )
+
+target_compile_definitions(Core PRIVATE PROOF_VERSION=\"${PROJECT_VERSION}\")
+target_compile_definitions(Core PRIVATE PROOF_VERSION_MAJOR=${PROJECT_VERSION_MAJOR})
+target_compile_definitions(Core PRIVATE PROOF_VERSION_YEAR=${PROJECT_VERSION_MINOR})
+target_compile_definitions(Core PRIVATE PROOF_VERSION_MONTH=${PROJECT_VERSION_PATCH})
+target_compile_definitions(Core PRIVATE PROOF_VERSION_DAY=${PROJECT_VERSION_TWEAK})
+
