@@ -4,6 +4,7 @@ ProofBase Changelog
 ## Not Released
 #### Features
  * Network: Better network check and errors about it (Add check for network and internet availability)
+ * No logging through notifiers is done anymore if application instance doesn't exist (either not created or already dead)
 
 #### Bug Fixing
  * --

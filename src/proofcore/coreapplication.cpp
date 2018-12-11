@@ -52,6 +52,8 @@
 #endif
 
 namespace {
+static bool appExists = false;
+
 Proof::CoreApplication *&instance()
 {
     static Proof::CoreApplication *obj = nullptr;
@@ -220,6 +222,7 @@ CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *a
     d->initQca();
     d->initTranslator();
     d->initUpdateManager();
+    appExists = true;
 
     qCDebug(proofCoreMiscLog).noquote().nospace()
         << "\n\t" << qApp->applicationName() << " successfully started"
@@ -228,7 +231,9 @@ CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *a
 }
 
 CoreApplication::~CoreApplication()
-{}
+{
+    appExists = false;
+}
 
 QString CoreApplication::prettifiedApplicationName() const
 {
@@ -299,6 +304,11 @@ int CoreApplication::exec()
 CoreApplication *CoreApplication::instance()
 {
     return ::instance();
+}
+
+bool CoreApplication::exists()
+{
+    return appExists;
 }
 
 void CoreApplication::addInitializer(const std::function<void()> &initializer)
