@@ -77,6 +77,8 @@ public:
 
     static CoreApplication *instance();
 
+    static bool exists();
+
     static void addInitializer(const std::function<void()> &initializer);
     //Migration can't use qApp/proofApp since it is not guaranteed that they will exist or be properly configured during migration exec
     //All migrations should be added before app ctor is called

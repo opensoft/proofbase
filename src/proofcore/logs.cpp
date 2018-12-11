@@ -26,6 +26,7 @@
 
 #include "proofseed/proofalgorithms.h"
 
+#include "proofcore/coreapplication.h"
 #include "proofcore/errornotifier.h"
 
 #include <QCoreApplication>
@@ -94,6 +95,8 @@ void baseHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
     if (isConsoleOutputEnabled && defaultHandler)
         defaultHandler(type, context, message);
 
+    if (!Proof::CoreApplication::exists())
+        return;
     if (TYPES_FOR_NOTIFIER.contains(type)) {
         Proof::ErrorNotifier::Severity severity = Proof::ErrorNotifier::Severity::Warning;
         switch (type) {
