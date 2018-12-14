@@ -124,7 +124,7 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
     if (!backtraceArray) {
         if (crashFileDescriptor != -1)
             close(crashFileDescriptor);
-        exit(EXIT_FAILURE);
+        _Exit(EXIT_FAILURE);
     }
 
     for (int i = 0; i < size; ++i) {
@@ -177,7 +177,7 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
     free(backtraceArray);
     if (crashFileDescriptor != -1)
         close(crashFileDescriptor);
-    exit(EXIT_FAILURE);
+    _Exit(EXIT_FAILURE);
 }
 #endif
 
@@ -368,11 +368,21 @@ void CoreApplicationPrivate::initCrashHandler()
     static struct sigaction sigAbrtAction;
     sigAbrtAction.sa_sigaction = signalHandler;
     sigAbrtAction.sa_flags = SA_SIGINFO;
+    static struct sigaction sigFpeAction;
+    sigFpeAction.sa_sigaction = signalHandler;
+    sigFpeAction.sa_flags = SA_SIGINFO;
+    static struct sigaction sigIllAction;
+    sigIllAction.sa_sigaction = signalHandler;
+    sigIllAction.sa_flags = SA_SIGINFO;
 
     if (sigaction(SIGSEGV, &sigSegvAction, (struct sigaction *)NULL) != 0)
         qCWarning(proofCoreLoggerLog) << "No segfault handler is on your back.";
     if (sigaction(SIGABRT, &sigAbrtAction, (struct sigaction *)NULL) != 0)
         qCWarning(proofCoreLoggerLog) << "No abort handler is on your back.";
+    if (sigaction(SIGFPE, &sigFpeAction, (struct sigaction *)NULL) != 0)
+        qCWarning(proofCoreLoggerLog) << "No fp error handler is on your back.";
+    if (sigaction(SIGILL, &sigIllAction, (struct sigaction *)NULL) != 0)
+        qCWarning(proofCoreLoggerLog) << "No illegal instruction handler is on your back.";
 #endif
 }
 
