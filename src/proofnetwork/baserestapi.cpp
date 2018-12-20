@@ -94,6 +94,18 @@ void BaseRestApi::abortAllRequests()
         reply.cancel();
 }
 
+QString BaseRestApi::location() const
+{
+    Q_D_CONST(BaseRestApi);
+    return d->location;
+}
+
+void BaseRestApi::setLocation(const QString &location)
+{
+    Q_D(BaseRestApi);
+    d->location = location;
+}
+
 CancelableFuture<RestApiReply> BaseRestApi::get(const QString &method, const QUrlQuery &query)
 {
     Q_D(BaseRestApi);

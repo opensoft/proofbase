@@ -55,6 +55,7 @@ public:
     void rememberReply(const CancelableFuture<RestApiReply> &reply);
 
     RestClientSP restClient;
+    QString location;
 
 private:
     QHash<qint64, CancelableFuture<RestApiReply>> allReplies;

@@ -3,7 +3,7 @@ ProofBase Changelog
 
 ## Not Released
 #### Features
- * --
+ * Network: Add location to BaseRestApi
 
 #### Bug Fixing
  * --

@@ -66,6 +66,9 @@ public:
 
     void abortAllRequests();
 
+    QString location() const;
+    void setLocation(const QString &location);
+
 protected:
     BaseRestApi(const RestClientSP &restClient, QObject *parent = nullptr);
     BaseRestApi(const RestClientSP &restClient, BaseRestApiPrivate &dd, QObject *parent = nullptr);
