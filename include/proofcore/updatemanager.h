@@ -32,6 +32,7 @@
 namespace Proof {
 
 class UpdateManagerPrivate;
+//TODO: Deprecated, remove apt-related stuff completely due to no real application in production for it in last two years
 class PROOF_CORE_EXPORT UpdateManager : public ProofObject
 {
     Q_OBJECT
