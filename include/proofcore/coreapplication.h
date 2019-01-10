@@ -35,7 +35,6 @@
 class QCoreApplication;
 
 namespace Proof {
-class UpdateManager;
 class Settings;
 class CoreApplicationPrivate;
 
@@ -47,7 +46,6 @@ class PROOF_CORE_EXPORT CoreApplication : public ProofObject
     Q_PROPERTY(QVariantMap fullLanguageNames READ fullLanguageNames CONSTANT)
     Q_PROPERTY(QString language READ language WRITE setLanguage NOTIFY languageChanged)
     Q_PROPERTY(int languageIndex READ languageIndex NOTIFY languageChanged)
-    Q_PROPERTY(Proof::UpdateManager *updateManager READ updateManager CONSTANT)
     Q_PROPERTY(QDateTime startedAt READ startedAt CONSTANT)
     Q_DECLARE_PRIVATE(CoreApplication)
 public:
@@ -67,7 +65,6 @@ public:
     QString language() const;
     void setLanguage(const QString &language);
     int languageIndex() const;
-    UpdateManager *updateManager() const;
     QDateTime startedAt() const;
 
     Settings *settings() const;

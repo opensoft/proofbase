@@ -3,7 +3,7 @@ ProofBase Changelog
 
 ## Not Released
 #### Features
- * --
+ * UpdateManager class removed
 
 #### Bug Fixing
  * --

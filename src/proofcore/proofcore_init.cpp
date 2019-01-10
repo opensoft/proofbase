@@ -143,4 +143,14 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
                                                  group->setValue(key, value, Proof::Settings::Storage::Global);
                                              }
                                          });
+
+    //auto updates removal migration
+    Proof::CoreApplication::addMigration(Proof::packVersion(0, 18, 12, 25), [](quint64, quint64 oldProofVersion,
+                                                                               Proof::Settings *settings) {
+        if (oldProofVersion >= Proof::packVersion(0, 18, 12, 25))
+            return;
+
+        settings->deleteGroup(QStringLiteral("updates"), Proof::Settings::Storage::Local);
+        settings->deleteGroup(QStringLiteral("updates"), Proof::Settings::Storage::Global);
+    });
 }

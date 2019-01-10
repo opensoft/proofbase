@@ -35,7 +35,6 @@
 #include "proofcore/proofglobal.h"
 #include "proofcore/settings.h"
 #include "proofcore/settingsgroup.h"
-#include "proofcore/updatemanager.h"
 
 #include <QDir>
 #include <QLocale>
@@ -221,7 +220,6 @@ CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *a
     d->execMigrations();
     d->initQca();
     d->initTranslator();
-    d->initUpdateManager();
     appExists = true;
 
     qCDebug(proofCoreMiscLog).noquote().nospace()
@@ -270,12 +268,6 @@ int CoreApplication::languageIndex() const
 {
     Q_D_CONST(CoreApplication);
     return d->availableLanguages.indexOf(d->currentLanguage);
-}
-
-UpdateManager *CoreApplication::updateManager() const
-{
-    Q_D_CONST(CoreApplication);
-    return d->updateManager;
 }
 
 QDateTime CoreApplication::startedAt() const
@@ -351,8 +343,6 @@ void CoreApplication::addMigrations(const QMap<QString, QVector<CoreApplication:
 
 void CoreApplicationPrivate::postInit()
 {
-    updateManager->start();
-
     initialized = true;
     for (const auto &initializer : qAsConst(initializers()))
         initializer();
@@ -520,21 +510,6 @@ void CoreApplicationPrivate::initTranslator()
         QLocale locale(lang);
         fullLanguageNames[lang] = QLocale::languageToString(locale.language());
     }
-}
-
-void CoreApplicationPrivate::initUpdateManager()
-{
-    Q_Q(CoreApplication);
-    updateManager = new UpdateManager(q);
-#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
-    SettingsGroup *updatesGroup = settings->group("updates", Settings::NotFoundPolicy::Add);
-    updateManager->setAutoUpdateEnabled(updatesGroup->value("auto_update", false, Settings::NotFoundPolicy::Add).toBool());
-    updateManager->setAptSourcesListFilePath(
-        updatesGroup->value("sources_list_file", "", Settings::NotFoundPolicy::AddGlobal).toString());
-
-    updateManager->setCurrentVersion(qApp->applicationVersion());
-    updateManager->setPackageName(qApp->applicationName());
-#endif
 }
 
 void CoreApplicationPrivate::setLanguage(const QString &language)
