@@ -8,7 +8,6 @@ proof_add_target_sources(Core
     src/proofcore/expirator.cpp
     src/proofcore/logs.cpp
     src/proofcore/coreapplication.cpp
-    src/proofcore/updatemanager.cpp
     src/proofcore/proofobjectprivatepointer.cpp
     src/proofcore/abstractnotificationhandler.cpp
     src/proofcore/memorystoragenotificationhandler.cpp
@@ -26,7 +25,6 @@ proof_add_target_headers(Core
     include/proofcore/expirator.h
     include/proofcore/logs.h
     include/proofcore/coreapplication.h
-    include/proofcore/updatemanager.h
     include/proofcore/proofobjectprivatepointer.h
     include/proofcore/abstractnotificationhandler.h
     include/proofcore/memorystoragenotificationhandler.h

@@ -36,7 +36,6 @@
 
 namespace Proof {
 class Settings;
-class UpdateManager;
 class CoreApplication;
 class PROOF_CORE_EXPORT CoreApplicationPrivate : public ProofObjectPrivate
 {
@@ -51,14 +50,12 @@ protected:
     void execMigrations();
     void initQca();
     void initTranslator();
-    void initUpdateManager();
 
     void setLanguage(const QString &currentLanguage);
 
     QString prettifiedApplicationName;
     QDateTime startedAt = QDateTime::currentDateTimeUtc();
     Settings *settings = nullptr;
-    UpdateManager *updateManager = nullptr;
     QSet<QString> translationPrefixes;
     QStringList availableLanguages;
     QVariantMap fullLanguageNames;
