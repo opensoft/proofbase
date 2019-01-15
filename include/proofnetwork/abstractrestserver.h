@@ -111,6 +111,7 @@ protected:
     void sendNotAuthorized(QTcpSocket *socket, const QString &reason = QStringLiteral("Unauthorized"));
     void sendConflict(QTcpSocket *socket, const QString &reason = QStringLiteral("Conflict"));
     void sendInternalError(QTcpSocket *socket);
+    void sendNotImplemented(QTcpSocket *socket, const QString &reason = QStringLiteral("Not Implemented"));
     bool checkBasicAuth(const QString &encryptedAuth) const;
     QString parseAuth(QTcpSocket *socket, const QString &header);
 
