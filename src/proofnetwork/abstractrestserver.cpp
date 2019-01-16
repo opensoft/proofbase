@@ -563,6 +563,11 @@ void AbstractRestServer::sendInternalError(QTcpSocket *socket)
     sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), 500, QStringLiteral("Internal Server Error"));
 }
 
+void AbstractRestServer::sendNotImplemented(QTcpSocket *socket, const QString &reason)
+{
+    sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), 501, reason);
+}
+
 QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const QString &name)
 {
     QStringList splittedName = name.split(QStringLiteral("/"), QString::SkipEmptyParts);
