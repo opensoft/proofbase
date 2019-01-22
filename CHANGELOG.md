@@ -4,7 +4,8 @@ ProofBase Changelog
 ## Not Released
 #### Features
  * UpdateManager class removed
-
+ * Add email notifier for slow network requests
+ 
 #### Bug Fixing
  * --
 

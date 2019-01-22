@@ -27,6 +27,9 @@
 #include "proofcore/coreapplication.h"
 #include "proofcore/proofglobal.h"
 #include "proofcore/proofobject_p.h"
+#include "proofcore/settingsgroup.h"
+
+#include "proofnetwork/smtpclient.h"
 
 #include <QAuthenticator>
 #include <QBuffer>
@@ -42,7 +45,11 @@
 #include <QTimer>
 #include <QUuid>
 
+#include <chrono>
+
 static const int DEFAULT_REPLY_TIMEOUT = 5 * 60 * 1000; //5 minutes
+static const int SLOW_REPLY_TIMEOUT = 30 * 1000; //30 seconds
+static const int SLOW_NETWORK_CHECK_TIMEOUT = 12 * 60 * 60 * 1000; //12 hours
 
 namespace Proof {
 class NetworkScheduler
@@ -99,6 +106,9 @@ public:
     void cleanupReplyHandler(QNetworkReply *reply);
     void cleanupAll();
     QPair<QString, QString> parseHost(const QString &host);
+    void sendMailAboutSlowNetwork(QNetworkReply *reply, long timeout);
+    QStringList ipAddresses();
+    long extractRequestTimeout(QNetworkReply *reply) const;
 
     bool ignoreSslErrors = false;
     bool followRedirects = true;
@@ -116,6 +126,15 @@ public:
     QHash<QNetworkReply *, QTimer *> replyTimeouts;
     QHash<QByteArray, QByteArray> customHeaders;
     QHash<QString, QNetworkCookie> cookies;
+    SmtpClientSP slowNetworkMailer = SmtpClientSP::create();
+    bool slowNetworkCheckerIsEnabled = true;
+    std::chrono::system_clock::time_point slowNetworkLastTriggeringTimePoint = std::chrono::system_clock::time_point::max();
+    long slowNetworkReplyTimeout = SLOW_REPLY_TIMEOUT;
+    long slowNetworkCheckTimeout = SLOW_NETWORK_CHECK_TIMEOUT;
+    QString appId;
+    QString slowNetworkMailFromAddress;
+    QString slowNetworkMailToAddress;
+    QHash<QNetworkReply *, std::chrono::system_clock::time_point> networkRequestStartTimePoints;
 };
 
 } // namespace Proof
@@ -127,6 +146,60 @@ RestClient::RestClient(bool ignoreSslErrors) : ProofObject(*new RestClientPrivat
     Q_D(RestClient);
     moveToThread(NetworkScheduler::instance()->qnamThread);
     d->ignoreSslErrors = ignoreSslErrors;
+
+    d->appId = proofApp->settings()
+                   ->mainGroup()
+                   ->value(QStringLiteral("app_id"), QString(), Proof::Settings::NotFoundPolicy::Add)
+                   .toString();
+
+    Proof::SettingsGroup *notifierGroup = proofApp->settings()->group(QStringLiteral("slow_network_notifier"),
+                                                                      Proof::Settings::NotFoundPolicy::Add);
+
+    d->slowNetworkCheckerIsEnabled =
+        notifierGroup->value(QStringLiteral("enabled"), true, Proof::Settings::NotFoundPolicy::Add).toBool();
+    d->slowNetworkCheckTimeout = notifierGroup
+                                     ->value(QStringLiteral("check_timeout"), SLOW_NETWORK_CHECK_TIMEOUT,
+                                             Proof::Settings::NotFoundPolicy::Add)
+                                     .toInt();
+    d->slowNetworkReplyTimeout = notifierGroup
+                                     ->value(QStringLiteral("reply_timeout"), SLOW_REPLY_TIMEOUT,
+                                             Proof::Settings::NotFoundPolicy::Add)
+                                     .toInt();
+
+    Proof::SettingsGroup *emailGroup = notifierGroup->group(QStringLiteral("email"),
+                                                            Proof::Settings::NotFoundPolicy::Add);
+
+    d->slowNetworkMailFromAddress =
+        emailGroup->value(QStringLiteral("from"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
+    d->slowNetworkMailToAddress =
+        emailGroup->value(QStringLiteral("to"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
+    auto smtpHost = emailGroup->value(QStringLiteral("host"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
+
+    auto smtpPort = emailGroup->value(QStringLiteral("port"), 25, Proof::Settings::NotFoundPolicy::Add).toInt();
+
+    auto smtpUserName =
+        emailGroup->value(QStringLiteral("username"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
+
+    auto smtpPassword =
+        emailGroup->value(QStringLiteral("password"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
+
+    QString connectionTypeString = emailGroup
+                                       ->value(QStringLiteral("type"), QStringLiteral("starttls"),
+                                               Proof::Settings::NotFoundPolicy::AddGlobal)
+                                       .toString()
+                                       .toLower()
+                                       .trimmed();
+
+    d->slowNetworkMailer->setHost(smtpHost);
+    d->slowNetworkMailer->setPort(smtpPort);
+    d->slowNetworkMailer->setUserName(smtpUserName);
+    d->slowNetworkMailer->setPassword(smtpPassword);
+    auto connectionType = Proof::SmtpClient::ConnectionType::Plain;
+    if (connectionTypeString == QLatin1String("starttls"))
+        connectionType = Proof::SmtpClient::ConnectionType::Ssl;
+    else if (connectionTypeString == QLatin1String("ssl"))
+        connectionType = Proof::SmtpClient::ConnectionType::StartTls;
+    d->slowNetworkMailer->setConnectionType(connectionType);
 }
 
 RestClient::~RestClient()
@@ -470,6 +543,25 @@ QUrl RestClientPrivate::createUrl(QString method, const QUrlQuery &query) const
     return url;
 }
 
+QStringList RestClientPrivate::ipAddresses()
+{
+    QStringList ipAdresses;
+    const auto allAddresses = QNetworkInterface::allAddresses();
+    for (const auto &address : allAddresses) {
+        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress::LocalHost)
+            ipAdresses << address.toString();
+    }
+    return ipAdresses;
+}
+
+long RestClientPrivate::extractRequestTimeout(QNetworkReply *reply) const
+{
+    if (!networkRequestStartTimePoints.contains(reply))
+        return 0;
+    auto timePoint = networkRequestStartTimePoints.value(reply);
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - timePoint).count();
+}
+
 QNetworkRequest RestClientPrivate::createNetworkRequest(const QUrl &url, const QByteArray &body, const QString &vendor)
 {
     QNetworkRequest result(url);
@@ -512,14 +604,8 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QUrl &url, const Q
     result.setRawHeader(QStringLiteral("Proof-%1-Framework-Version").arg(proofApp->prettifiedApplicationName()).toLatin1(),
                         Proof::proofVersion().toLatin1());
 
-    QStringList ipAdresses;
-    const auto allAddresses = QNetworkInterface::allAddresses();
-    for (const auto &address : allAddresses) {
-        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress::LocalHost)
-            ipAdresses << address.toString();
-    }
     result.setRawHeader(QStringLiteral("Proof-IP-Addresses").toLatin1(),
-                        ipAdresses.join(QStringLiteral("; ")).toLatin1());
+                        ipAddresses().join(QStringLiteral("; ")).toLatin1());
 
     switch (authType) {
     case RestAuthType::Wsse:
@@ -578,10 +664,12 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
     QTimer *timer = new QTimer();
     timer->setSingleShot(true);
     replyTimeouts.insert(reply, timer);
-    QObject::connect(timer, &QTimer::timeout, q, [timer, reply]() {
+    networkRequestStartTimePoints.insert(reply, std::chrono::system_clock::now());
+
+    QObject::connect(timer, &QTimer::timeout, q, [timer, reply, this]() {
         qCWarning(proofNetworkMiscLog)
             << "Timed out:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
-            << reply->isRunning();
+            << reply->isRunning() << QStringLiteral("(%1ms)").arg(extractRequestTimeout(reply));
         if (reply->isRunning())
             reply->abort();
         timer->deleteLater();
@@ -600,13 +688,15 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
                      [this, reply](QNetworkReply::NetworkError e) {
                          qCWarning(proofNetworkMiscLog)
                              << "Error occurred:"
-                             << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << e;
+                             << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << e
+                             << QStringLiteral("(%1ms)").arg(extractRequestTimeout(reply));
                          cleanupReplyHandler(reply);
                      });
     QObject::connect(reply, &QNetworkReply::finished, q, [this, reply]() {
         qCDebug(proofNetworkMiscLog)
             << "Finished:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
-            << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()
+            << QStringLiteral("(%1ms)").arg(extractRequestTimeout(reply));
         cleanupReplyHandler(reply);
     });
 }
@@ -623,12 +713,23 @@ void RestClientPrivate::cleanupReplyHandler(QNetworkReply *reply)
         connectionTimer->stop();
         connectionTimer->deleteLater();
     }
+
+    if (networkRequestStartTimePoints.contains(reply)) {
+        auto timeout = extractRequestTimeout(reply);
+        networkRequestStartTimePoints.remove(reply);
+        auto checkTimeout = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+                                                                                  - slowNetworkLastTriggeringTimePoint)
+                                .count();
+        if (slowNetworkCheckerIsEnabled && checkTimeout >= slowNetworkCheckTimeout && timeout >= slowNetworkReplyTimeout)
+            sendMailAboutSlowNetwork(reply, timeout);
+    }
 }
 
 void RestClientPrivate::cleanupAll()
 {
     if (ProofObject::call(NetworkScheduler::instance()->qnam, this, &RestClientPrivate::cleanupAll, Call::BlockEvents))
         return;
+    networkRequestStartTimePoints.clear();
     algorithms::forEach(replyTimeouts, [](QNetworkReply *, QTimer *timer) {
         timer->stop();
         timer->deleteLater();
@@ -653,6 +754,21 @@ QPair<QString, QString> RestClientPrivate::parseHost(const QString &host)
     if (!parts.isEmpty())
         postfix = '/' + parts.join('/');
     return {newHost, postfix};
+}
+
+void RestClientPrivate::sendMailAboutSlowNetwork(QNetworkReply *reply, long timeout)
+{
+    auto ips = ipAddresses().join(QStringLiteral("; "));
+    auto subject = QObject::tr("Slow network access to %1").arg(reply->url().host());
+    auto text = QStringLiteral("Application: %1 (%2)\n"
+                               "OS: %3\n"
+                               "IP: %4\n"
+                               "Time: %5\n"
+                               "Full URL: %6\n"
+                               "Request completed in: %7ms")
+                    .arg(proofApp->prettifiedApplicationName(), appId, QSysInfo::prettyProductName(), ips,
+                         QDateTime::currentDateTimeUtc().toString(), reply->url().toString(), QString::number(timeout));
+    slowNetworkMailer->sendTextMail(subject, text, slowNetworkMailFromAddress, {slowNetworkMailToAddress});
 }
 
 CancelableFuture<QNetworkReply *>
