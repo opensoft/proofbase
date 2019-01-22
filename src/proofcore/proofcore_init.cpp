@@ -48,10 +48,10 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
     // clang-format on
 
     Proof::CoreApplication::addInitializer([]() {
-        Proof::SettingsGroup *notifierGroup = proofApp->settings()->group(QStringLiteral("error_notifier"),
-                                                                          Proof::Settings::NotFoundPolicy::Add);
-        QString appId =
-            notifierGroup->value(QStringLiteral("app_id"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
+        QString appId = proofApp->settings()
+                            ->mainGroup()
+                            ->value(QStringLiteral("app_id"), QString(), Proof::Settings::NotFoundPolicy::Add)
+                            .toString();
         Proof::ErrorNotifier::instance()->registerHandler(new Proof::MemoryStorageNotificationHandler(appId));
     });
 
@@ -152,5 +152,19 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
 
         settings->deleteGroup(QStringLiteral("updates"), Proof::Settings::Storage::Local);
         settings->deleteGroup(QStringLiteral("updates"), Proof::Settings::Storage::Global);
+    });
+
+    //app_id moving to main group
+    Proof::CoreApplication::addMigration(Proof::packVersion(0, 19, 1, 22), [](quint64, quint64 oldProofVersion,
+                                                                              Proof::Settings *settings) {
+        if (oldProofVersion >= Proof::packVersion(0, 19, 1, 22))
+            return;
+
+        Proof::SettingsGroup *oldGroup = proofApp->settings()->group("error_notifier");
+        if (oldGroup) {
+            auto appId = oldGroup->value("app_id", QString());
+            oldGroup->deleteValue("app_id");
+            proofApp->settings()->mainGroup()->setValue("app_id", appId);
+        }
     });
 }

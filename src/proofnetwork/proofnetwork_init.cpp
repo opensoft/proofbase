@@ -55,8 +55,10 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
         Proof::SettingsGroup *notifierGroup = proofApp->settings()->group(QStringLiteral("error_notifier"),
                                                                           Proof::Settings::NotFoundPolicy::Add);
 
-        QString appId =
-            notifierGroup->value(QStringLiteral("app_id"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
+        QString appId = proofApp->settings()
+                            ->mainGroup()
+                            ->value(QStringLiteral("app_id"), QString(), Proof::Settings::NotFoundPolicy::Add)
+                            .toString();
 
         Proof::SettingsGroup *emailNotifierGroup = notifierGroup->group(QStringLiteral("email"),
                                                                         Proof::Settings::NotFoundPolicy::AddGlobal);
