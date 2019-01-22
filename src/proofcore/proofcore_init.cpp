@@ -160,11 +160,12 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
         if (oldProofVersion >= Proof::packVersion(0, 19, 1, 22))
             return;
 
-        Proof::SettingsGroup *oldGroup = proofApp->settings()->group("error_notifier");
+        Proof::SettingsGroup *oldGroup = proofApp->settings()->group(QStringLiteral("error_notifier"));
         if (oldGroup) {
-            auto appId = oldGroup->value("app_id", QString());
-            oldGroup->deleteValue("app_id");
-            proofApp->settings()->mainGroup()->setValue("app_id", appId);
+            auto appId = oldGroup->value(QStringLiteral("app_id"), QString());
+            oldGroup->deleteValue(QStringLiteral("app_id"));
+            if (proofApp->settings()->mainGroup()->value(QStringLiteral("app_id")).toString().isEmpty())
+              proofApp->settings()->mainGroup()->setValue(QStringLiteral("app_id"), appId);
         }
     });
 }

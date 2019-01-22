@@ -760,12 +760,12 @@ void RestClientPrivate::sendMailAboutSlowNetwork(QNetworkReply *reply, long time
 {
     auto ips = ipAddresses().join("; ");
     auto subject = QObject::tr("Slow network access to %1").arg(reply->url().host());
-    auto text = QStringLiteral("Application: %1(%2)\n"
+    auto text = QStringLiteral("Application: %1 (%2)\n"
                                "OS: %3\n"
                                "IP: %4\n"
                                "Time: %5\n"
-                               "URL: %6\n"
-                               "Timeout: %7 msecs")
+                               "Full URL: %6\n"
+                               "Request completed in: %7ms")
                     .arg(proofApp->prettifiedApplicationName(), appId, QSysInfo::prettyProductName(), ips,
                          QDateTime::currentDateTimeUtc().toString(), reply->url().toString(), QString::number(timeout));
     slowNetworkMailer->sendTextMail(subject, text, slowNetworkMailFromAddress, {slowNetworkMailToAddress});
