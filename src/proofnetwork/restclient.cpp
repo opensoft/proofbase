@@ -758,8 +758,8 @@ QPair<QString, QString> RestClientPrivate::parseHost(const QString &host)
 
 void RestClientPrivate::sendMailAboutSlowNetwork(QNetworkReply *reply, long timeout)
 {
-    auto ips = ipAddresses().join("; ");
-    auto subject = QObject::tr("Slow network access to %1").arg(reply->url().host());
+    auto ips = ipAddresses().join(QStringLiteral("; "));
+    auto subject = QObject::tr(QStringLiteral("Slow network access to %1")).arg(reply->url().host());
     auto text = QStringLiteral("Application: %1 (%2)\n"
                                "OS: %3\n"
                                "IP: %4\n"

@@ -165,7 +165,7 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
             auto appId = oldGroup->value(QStringLiteral("app_id"), QString());
             oldGroup->deleteValue(QStringLiteral("app_id"));
             if (proofApp->settings()->mainGroup()->value(QStringLiteral("app_id")).toString().isEmpty())
-              proofApp->settings()->mainGroup()->setValue(QStringLiteral("app_id"), appId);
+                proofApp->settings()->mainGroup()->setValue(QStringLiteral("app_id"), appId);
         }
     });
 }
