@@ -10,10 +10,11 @@ Changes that one must make to applications based on Proof between versions.
  * UpdateManager removed
 
 #### Config changes
- * --
+ * `slow_network_notifier` section added to configure where emails about slow network requests should be sent
+ * `app_id` moved from `error_notifier` to general section
 
 #### Migrations
- * --
+ * `app_id` moved from `error_notifier` to general section
 
 ## 0.18.10.4
 #### IT issues
