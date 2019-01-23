@@ -8,6 +8,7 @@ Changes that one must make to applications based on Proof between versions.
 
 #### API modifications/removals/deprecations
  * UpdateManager removed
+ * RestApiConsumer removed
 
 #### Config changes
  * `slow_network_notifier` section added to configure where emails about slow network requests should be sent

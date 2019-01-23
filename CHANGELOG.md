@@ -4,8 +4,9 @@ ProofBase Changelog
 ## Not Released
 #### Features
  * UpdateManager class removed
+ * RestApiConsumer removed
  * Add email notifier for slow network requests
- 
+
 #### Bug Fixing
  * --
 
