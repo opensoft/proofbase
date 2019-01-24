@@ -667,7 +667,7 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
     networkRequestStartTimePoints.insert(reply, std::chrono::system_clock::now());
 
     QObject::connect(timer, &QTimer::timeout, q, [timer, reply, this]() {
-        qCWarning(proofNetworkMiscLog)
+        qCWarning(proofNetworkMiscLog).noquote()
             << "Timed out:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
             << reply->isRunning() << QStringLiteral("(%1ms)").arg(extractRequestTimeout(reply));
         if (reply->isRunning())
@@ -684,16 +684,16 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
                          [this, reply](const QList<QSslError> &) { cleanupReplyHandler(reply); });
     }
 
-    QObject::connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), q,
+    QObject::connect(reply, qOverload<QNetworkReply::NetworkError>(&QNetworkReply::error), q,
                      [this, reply](QNetworkReply::NetworkError e) {
-                         qCWarning(proofNetworkMiscLog)
+                         qCWarning(proofNetworkMiscLog).noquote()
                              << "Error occurred:"
                              << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << e
                              << QStringLiteral("(%1ms)").arg(extractRequestTimeout(reply));
                          cleanupReplyHandler(reply);
                      });
     QObject::connect(reply, &QNetworkReply::finished, q, [this, reply]() {
-        qCDebug(proofNetworkMiscLog)
+        qCDebug(proofNetworkMiscLog).noquote()
             << "Finished:" << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
             << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()
             << QStringLiteral("(%1ms)").arg(extractRequestTimeout(reply));
