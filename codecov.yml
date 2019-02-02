@@ -1,0 +1,4 @@
+ignore:
+- "*amqp*" # not really possible to verify by unit-tests without mocking rabbitmq server
+- "*restapi*" # are verified by other modules. Real coverage can be seen in proof repo
+- "*apicall*" # deprecated
