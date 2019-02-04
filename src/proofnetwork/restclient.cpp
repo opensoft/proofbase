@@ -720,8 +720,13 @@ void RestClientPrivate::cleanupReplyHandler(QNetworkReply *reply)
         auto checkTimeout = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
                                                                                   - slowNetworkLastTriggeringTimePoint)
                                 .count();
-        if (slowNetworkCheckerIsEnabled && checkTimeout >= slowNetworkCheckTimeout && timeout >= slowNetworkReplyTimeout)
+        if (slowNetworkCheckerIsEnabled
+            && (checkTimeout >= slowNetworkCheckTimeout
+                || slowNetworkLastTriggeringTimePoint == std::chrono::system_clock::time_point::max())
+            && timeout >= slowNetworkReplyTimeout) {
             sendMailAboutSlowNetwork(reply, timeout);
+            slowNetworkLastTriggeringTimePoint = std::chrono::system_clock::now();
+        }
     }
 }
 
