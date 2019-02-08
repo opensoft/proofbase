@@ -51,17 +51,15 @@ QNetworkReply::NetworkError RestApiError::toNetworkError() const
 {
     if (isNetworkError())
         return (QNetworkReply::NetworkError)(code - NETWORK_ERROR_OFFSET);
-    else
-        return QNetworkReply::UnknownNetworkError;
+    return QNetworkReply::UnknownNetworkError;
 }
 
 Failure RestApiError::toFailure() const
 {
     if (level == Level::NoError)
         return Failure();
-    else
-        return Failure(message, proofModuleCode, proofErrorCode,
-                       userFriendly ? Failure::UserFriendlyHint : Failure::NoHint, code ? code : QVariant());
+    return Failure(message, proofModuleCode, proofErrorCode, userFriendly ? Failure::UserFriendlyHint : Failure::NoHint,
+                   code ? code : QVariant());
 }
 
 RestApiError RestApiError::fromFailure(const Failure &f)

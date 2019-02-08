@@ -49,6 +49,10 @@ class PROOF_NETWORK_EXPORT RestClient : public ProofObject
     Q_DECLARE_PRIVATE(RestClient)
 public:
     explicit RestClient(bool ignoreSslErrors = false);
+    RestClient(const RestClient &) = delete;
+    RestClient(RestClient &&) = delete;
+    RestClient &operator=(const RestClient &) = delete;
+    RestClient &operator=(RestClient &&) = delete;
     ~RestClient();
 
     QString userName() const;

@@ -39,7 +39,7 @@ class PROOF_CORE_EXPORT MemoryStorageNotificationHandler : public AbstractNotifi
     Q_OBJECT
     Q_DECLARE_PRIVATE(MemoryStorageNotificationHandler)
 public:
-    MemoryStorageNotificationHandler(const QString &appId);
+    explicit MemoryStorageNotificationHandler(const QString &appId);
 
     QMultiMap<QDateTime, QString> messages() const;
     QPair<QDateTime, QString> lastMessage() const;

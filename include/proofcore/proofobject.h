@@ -54,7 +54,12 @@ class PROOF_CORE_EXPORT ProofObject : public QObject
     Q_OBJECT
     Q_DECLARE_PRIVATE(ProofObject)
 public:
+    ProofObject() = delete;
     explicit ProofObject(QObject *parent);
+    ProofObject(const ProofObject &) = delete;
+    ProofObject(ProofObject &&) = delete;
+    ProofObject &operator=(const ProofObject &) = delete;
+    ProofObject &operator=(ProofObject &&) = delete;
     ~ProofObject();
 
     bool isDirty() const;
@@ -108,7 +113,7 @@ signals:
                        bool fatal = false);
 
 protected:
-    ProofObject(ProofObjectPrivate &dd, QObject *parent = nullptr);
+    explicit ProofObject(ProofObjectPrivate &dd, QObject *parent = nullptr);
 
     void markDirty(bool dirty = true) const;
 
@@ -124,8 +129,6 @@ protected:
     ProofObjectPrivatePointer d_ptr;
 
 private:
-    ProofObject() = delete;
-
     qulonglong nextQueuedCallId() const;
     static ProofObject *defaultInvoker();
 

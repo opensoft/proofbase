@@ -47,8 +47,8 @@ struct PROOF_NETWORK_EXPORT RestApiError
         JsonServerError,
         JsonDataError
     };
-    RestApiError(Level _level = Level::NoError, qlonglong _code = 0, long _proofModuleCode = NETWORK_MODULE_CODE,
-                 long _proofErrorCode = 0, const QString &_message = QString(), bool _userFriendly = false)
+    explicit RestApiError(Level _level = Level::NoError, qlonglong _code = 0, long _proofModuleCode = NETWORK_MODULE_CODE,
+                          long _proofErrorCode = 0, const QString &_message = QString(), bool _userFriendly = false)
         : level(_level), code(_code), proofModuleCode(_proofModuleCode), proofErrorCode(_proofErrorCode),
           message(_message), userFriendly(_userFriendly)
     {}
@@ -75,12 +75,10 @@ template <typename T>
 RestApiError runApiCall(const FutureSP<T> &caller, T &result)
 {
     caller->wait();
-    if (caller->failed()) {
+    if (caller->failed())
         return RestApiError::fromFailure(caller->failureReason());
-    } else {
-        result = caller->result();
-        return RestApiError();
-    }
+    result = caller->result();
+    return RestApiError();
 }
 
 template <typename T>

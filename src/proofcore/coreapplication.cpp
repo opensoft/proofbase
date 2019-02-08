@@ -40,18 +40,18 @@
 #include <QLocale>
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
+#    include <csignal>
+#    include <cstdio>
 #    include <ctime>
 #    include <cxxabi.h>
 #    include <execinfo.h>
 #    include <fcntl.h>
-#    include <signal.h>
-#    include <stdio.h>
 #    include <sys/ucontext.h>
 #    include <unistd.h>
 #endif
 
 namespace {
-static bool appExists = false;
+bool appExists = false;
 
 Proof::CoreApplication *&instance()
 {
@@ -84,8 +84,8 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
     alarm(10);
     char *homeDir = getenv("HOME");
     QString crashFileName =
-        QStringLiteral("%1/proof_crash_%2").arg(homeDir ? homeDir : "/tmp").arg(time(0)); // clazy:skip=qstring-allocations
-    int crashFileDescriptor = open(crashFileName.toLatin1().constData(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
+        QStringLiteral("%1/proof_crash_%2").arg(homeDir ? homeDir : "/tmp").arg(time(nullptr)); // clazy:skip=qstring-allocations
+    int crashFileDescriptor = open(crashFileName.toLatin1().constData(), O_WRONLY | O_TRUNC | O_CREAT, 0644); // NOLINT
     ucontext_t *uc = (ucontext_t *)context;
 #    ifdef Q_OS_LINUX
     void *caller = (void *)uc->uc_mcontext.fpregs->rip;
@@ -103,7 +103,7 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
     toLog = QStringLiteral("signal %1 (%2), address is 0x%3 from 0x%4")
                 .arg(sig)
                 .arg(strsignal(sig))
-                .arg((unsigned long long)info->si_addr, 0, 16)
+                .arg((unsigned long long)info->si_addr, 0, 16) // NOLINT
                 .arg((unsigned long long)caller, 0, 16);
     if (crashFileDescriptor != -1) {
         write(crashFileDescriptor, toLog.toLatin1().constData(), toLog.length());
@@ -128,9 +128,9 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
 
     for (int i = 0; i < size; ++i) {
 #    ifdef Q_OS_LINUX
-        QRegExp re("^(.+)\\((.*)\\+([x0-9a-fA-F]*)\\)\\s+\\[(.+)\\]\\s*$");
+        QRegExp re("^(.+)\\((.*)\\+([x0-9a-fA-F]*)\\)\\s+\\[(.+)\\]\\s*$"); // NOLINT
 #    else
-        QRegExp re("^\\d*\\s+(.+)\\s+(.+)\\s+(.+)\\s+\\+\\s+(\\d*)\\s*$");
+        QRegExp re("^\\d*\\s+(.+)\\s+(.+)\\s+(.+)\\s+\\+\\s+(\\d*)\\s*$"); // NOLINT
 #    endif
 
         if (re.indexIn(backtraceArray[i]) < 0) {
@@ -147,7 +147,7 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
 #    else
             QString mangledName = re.cap(3).trimmed();
 #    endif
-            char *name = abi::__cxa_demangle(mangledName.toLatin1().constData(), 0, 0, 0);
+            char *name = abi::__cxa_demangle(mangledName.toLatin1().constData(), 0, 0, 0); // NOLINT
 #    ifdef Q_OS_LINUX
             toLog = QString("[trace] #%1) %2 : %3+%4 (%5)")
                         .arg(i)
@@ -169,11 +169,11 @@ static void signalHandler(int sig, siginfo_t *info, void *context)
             }
             write(STDOUT_FILENO, toLog.toLatin1().constData(), toLog.length());
             write(STDOUT_FILENO, "\n", 1);
-            free(name);
+            free(name); // NOLINT
         }
     }
 
-    free(backtraceArray);
+    free(backtraceArray); // NOLINT
     if (crashFileDescriptor != -1)
         close(crashFileDescriptor);
     _Exit(EXIT_FAILURE);
@@ -187,14 +187,14 @@ using namespace Proof;
 CoreApplication::CoreApplication(int &argc, char **argv, const QString &orgName, const QString &appName,
                                  const QString &version, const QStringList &defaultLoggingRules)
     : CoreApplication(new QCoreApplication(argc, argv), orgName, appName, version, defaultLoggingRules)
-{}
+{} // NOLINT
 
 CoreApplication::CoreApplication(QCoreApplication *app, const QString &orgName, const QString &appName,
                                  const QString &version, const QStringList &defaultLoggingRules)
     : CoreApplication(*new CoreApplicationPrivate, app, orgName, appName, version, defaultLoggingRules)
 {}
 
-CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *app, const QString &orgName,
+CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *, const QString &orgName,
                                  const QString &appName, const QString &version, const QStringList &defaultLoggingRules)
     : ProofObject(dd)
 {
@@ -205,9 +205,9 @@ CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *a
     ::instance() = this;
     tasks::TasksDispatcher::instance();
 
-    app->setOrganizationName(orgName);
-    app->setApplicationName(appName);
-    app->setApplicationVersion(version);
+    QCoreApplication::setOrganizationName(orgName);
+    QCoreApplication::setApplicationName(appName);
+    QCoreApplication::setApplicationVersion(version);
 
     Logs::setup(defaultLoggingRules);
 
@@ -353,25 +353,25 @@ void CoreApplicationPrivate::initCrashHandler()
 {
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_MAC)
     static struct sigaction sigSegvAction;
-    sigSegvAction.sa_sigaction = signalHandler;
+    sigSegvAction.sa_sigaction = signalHandler; // NOLINT
     sigSegvAction.sa_flags = SA_SIGINFO;
     static struct sigaction sigAbrtAction;
-    sigAbrtAction.sa_sigaction = signalHandler;
+    sigAbrtAction.sa_sigaction = signalHandler; // NOLINT
     sigAbrtAction.sa_flags = SA_SIGINFO;
     static struct sigaction sigFpeAction;
-    sigFpeAction.sa_sigaction = signalHandler;
+    sigFpeAction.sa_sigaction = signalHandler; // NOLINT
     sigFpeAction.sa_flags = SA_SIGINFO;
     static struct sigaction sigIllAction;
-    sigIllAction.sa_sigaction = signalHandler;
+    sigIllAction.sa_sigaction = signalHandler; // NOLINT
     sigIllAction.sa_flags = SA_SIGINFO;
 
-    if (sigaction(SIGSEGV, &sigSegvAction, (struct sigaction *)NULL) != 0)
+    if (sigaction(SIGSEGV, &sigSegvAction, (struct sigaction *)nullptr) != 0)
         qCWarning(proofCoreLoggerLog) << "No segfault handler is on your back.";
-    if (sigaction(SIGABRT, &sigAbrtAction, (struct sigaction *)NULL) != 0)
+    if (sigaction(SIGABRT, &sigAbrtAction, (struct sigaction *)nullptr) != 0)
         qCWarning(proofCoreLoggerLog) << "No abort handler is on your back.";
-    if (sigaction(SIGFPE, &sigFpeAction, (struct sigaction *)NULL) != 0)
+    if (sigaction(SIGFPE, &sigFpeAction, (struct sigaction *)nullptr) != 0)
         qCWarning(proofCoreLoggerLog) << "No fp error handler is on your back.";
-    if (sigaction(SIGILL, &sigIllAction, (struct sigaction *)NULL) != 0)
+    if (sigaction(SIGILL, &sigIllAction, (struct sigaction *)nullptr) != 0)
         qCWarning(proofCoreLoggerLog) << "No illegal instruction handler is on your back.";
 #endif
 }

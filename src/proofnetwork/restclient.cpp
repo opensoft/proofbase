@@ -62,6 +62,11 @@ public:
         qnamThread->start();
         qnam->moveToThread(qnamThread);
     }
+    NetworkScheduler(const NetworkScheduler &) = delete;
+    NetworkScheduler &operator=(const NetworkScheduler &) = delete;
+    NetworkScheduler(NetworkScheduler &&) = delete;
+    NetworkScheduler &operator=(NetworkScheduler &&) = delete;
+
     ~NetworkScheduler()
     {
         qnam->deleteLater();
@@ -568,7 +573,7 @@ QNetworkRequest RestClientPrivate::createNetworkRequest(const QUrl &url, const Q
     result.setAttribute(QNetworkRequest::FollowRedirectsAttribute, followRedirects);
 
     if (!body.isEmpty()) {
-        QJsonParseError error;
+        QJsonParseError error{};
         QJsonDocument::fromJson(body, &error);
 
         QString contentTypePattern = vendor.isEmpty() ? QStringLiteral("application/%1")
@@ -817,7 +822,7 @@ void NetworkScheduler::schedule()
     if (ProofObject::call(qnam, this, &NetworkScheduler::schedule))
         return;
     qCDebug(proofNetworkExtraLog) << "Scheduling network requests with queue size =" << requests.size();
-    while (requests.size()) {
+    while (!requests.empty()) {
         bool found = false;
         requestsLock.lock();
         RequestDescriptor candidate;

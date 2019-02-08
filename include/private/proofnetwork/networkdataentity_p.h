@@ -44,6 +44,10 @@ class PROOF_NETWORK_EXPORT NetworkDataEntityPrivate : public ProofObjectPrivate
 public:
     using NDE = NetworkDataEntity::NDE;
     NetworkDataEntityPrivate();
+    NetworkDataEntityPrivate(const NetworkDataEntityPrivate &) = delete;
+    NetworkDataEntityPrivate &operator=(const NetworkDataEntityPrivate &) = delete;
+    NetworkDataEntityPrivate(NetworkDataEntityPrivate &&) = delete;
+    NetworkDataEntityPrivate &operator=(NetworkDataEntityPrivate &&) = delete;
     ~NetworkDataEntityPrivate();
 
     bool isFetched = false;

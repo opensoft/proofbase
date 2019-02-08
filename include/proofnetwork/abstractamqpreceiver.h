@@ -57,7 +57,7 @@ public:
                                    QAmqpQueue::QueueOptions options = {QAmqpQueue::Durable, QAmqpQueue::AutoDelete});
 
 protected:
-    AbstractAmqpReceiver(AbstractAmqpReceiverPrivate &dd, QObject *parent = nullptr);
+    explicit AbstractAmqpReceiver(AbstractAmqpReceiverPrivate &dd, QObject *parent = nullptr);
 };
 
 } // namespace Proof

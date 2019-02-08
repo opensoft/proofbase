@@ -58,6 +58,11 @@ public:
     using cached_type = T;
     using Creator = std::function<QSharedPointer<T>()>;
 
+    ObjectsCache(const ObjectsCache &other) = delete;
+    ObjectsCache &operator=(const ObjectsCache &other) = delete;
+    ObjectsCache(ObjectsCache &&other) = delete;
+    ObjectsCache &operator=(ObjectsCache &&other) = delete;
+
     virtual QSharedPointer<T> add(const Key &key, const QSharedPointer<T> &object, bool overwriteCurrent = false) = 0;
     virtual QSharedPointer<T> add(const Key &key, Creator creator) = 0;
     virtual void remove(const Key &key) = 0;
@@ -70,10 +75,6 @@ public:
 protected:
     ObjectsCache() {}
     virtual ~ObjectsCache() {}
-    ObjectsCache(const ObjectsCache &other) = delete;
-    ObjectsCache &operator=(const ObjectsCache &other) = delete;
-    ObjectsCache(const ObjectsCache &&other) = delete;
-    ObjectsCache &operator=(const ObjectsCache &&other) = delete;
 
     template <typename U = T>
     QString valueTypeName(typename std::enable_if<!std::is_base_of<QObject, U>::value>::type * = nullptr) const
@@ -93,6 +94,11 @@ class WeakObjectsCache : public ObjectsCache<Key, T>
 {
 public:
     using typename ObjectsCache<Key, T>::Creator;
+
+    WeakObjectsCache(const WeakObjectsCache &other) = delete;
+    WeakObjectsCache &operator=(const WeakObjectsCache &other) = delete;
+    WeakObjectsCache(WeakObjectsCache &&other) = delete;
+    WeakObjectsCache &operator=(WeakObjectsCache &&other) = delete;
 
     static ObjectsCache<Key, T> &instance()
     {
@@ -209,12 +215,6 @@ private:
         return object;
     }
 
-private:
-    WeakObjectsCache(const WeakObjectsCache &other) = delete;
-    WeakObjectsCache &operator=(const WeakObjectsCache &other) = delete;
-    WeakObjectsCache(const WeakObjectsCache &&other) = delete;
-    WeakObjectsCache &operator=(const WeakObjectsCache &&other) = delete;
-
     QHash<Key, QWeakPointer<T>> m_cache;
     mutable QReadWriteLock m_cacheLock;
 };
@@ -227,6 +227,11 @@ class GuaranteedLifeTimeObjectsCache<Key, T, typename std::enable_if<!std::is_ba
 {
 public:
     using typename ObjectsCache<Key, T>::Creator;
+
+    GuaranteedLifeTimeObjectsCache(const GuaranteedLifeTimeObjectsCache &other) = delete;
+    GuaranteedLifeTimeObjectsCache &operator=(const GuaranteedLifeTimeObjectsCache &other) = delete;
+    GuaranteedLifeTimeObjectsCache(GuaranteedLifeTimeObjectsCache &&other) = delete;
+    GuaranteedLifeTimeObjectsCache &operator=(GuaranteedLifeTimeObjectsCache &&other) = delete;
 
     static ObjectsCache<Key, T> &instance()
     {
@@ -259,10 +264,6 @@ public:
 private:
     GuaranteedLifeTimeObjectsCache() : ObjectsCache<Key, T>() {}
     ~GuaranteedLifeTimeObjectsCache() {}
-    GuaranteedLifeTimeObjectsCache(const GuaranteedLifeTimeObjectsCache &other) = delete;
-    GuaranteedLifeTimeObjectsCache &operator=(const GuaranteedLifeTimeObjectsCache &other) = delete;
-    GuaranteedLifeTimeObjectsCache(const GuaranteedLifeTimeObjectsCache &&other) = delete;
-    GuaranteedLifeTimeObjectsCache &operator=(const GuaranteedLifeTimeObjectsCache &&other) = delete;
 };
 
 template <class Key, class T>
@@ -271,6 +272,11 @@ class GuaranteedLifeTimeObjectsCache<Key, T, typename std::enable_if<std::is_bas
 {
 public:
     using typename ObjectsCache<Key, T>::Creator;
+
+    GuaranteedLifeTimeObjectsCache(const GuaranteedLifeTimeObjectsCache &other) = delete;
+    GuaranteedLifeTimeObjectsCache &operator=(const GuaranteedLifeTimeObjectsCache &other) = delete;
+    GuaranteedLifeTimeObjectsCache(GuaranteedLifeTimeObjectsCache &&other) = delete;
+    GuaranteedLifeTimeObjectsCache &operator=(GuaranteedLifeTimeObjectsCache &&other) = delete;
 
     static GuaranteedLifeTimeObjectsCache<Key, T> &instance()
     {
@@ -316,10 +322,6 @@ protected:
 private:
     GuaranteedLifeTimeObjectsCache() : WeakObjectsCache<Key, T>() {}
     ~GuaranteedLifeTimeObjectsCache() {}
-    GuaranteedLifeTimeObjectsCache(const GuaranteedLifeTimeObjectsCache &other) = delete;
-    GuaranteedLifeTimeObjectsCache &operator=(const GuaranteedLifeTimeObjectsCache &other) = delete;
-    GuaranteedLifeTimeObjectsCache(const GuaranteedLifeTimeObjectsCache &&other) = delete;
-    GuaranteedLifeTimeObjectsCache &operator=(const GuaranteedLifeTimeObjectsCache &&other) = delete;
 
     void addObjectToExpirator(const QSharedPointer<ProofObject> &object)
     {
@@ -337,6 +339,11 @@ class StrongObjectsCache : public ObjectsCache<Key, T>
 {
 public:
     using typename ObjectsCache<Key, T>::Creator;
+
+    StrongObjectsCache(const StrongObjectsCache &other) = delete;
+    StrongObjectsCache &operator=(const StrongObjectsCache &other) = delete;
+    StrongObjectsCache(StrongObjectsCache &&other) = delete;
+    StrongObjectsCache &operator=(StrongObjectsCache &&other) = delete;
 
     static ObjectsCache<Key, T> &instance()
     {
@@ -414,10 +421,6 @@ public:
 private:
     StrongObjectsCache() : ObjectsCache<Key, T>() {}
     ~StrongObjectsCache() {}
-    StrongObjectsCache(const StrongObjectsCache &other) = delete;
-    StrongObjectsCache &operator=(const StrongObjectsCache &other) = delete;
-    StrongObjectsCache(const StrongObjectsCache &&other) = delete;
-    StrongObjectsCache &operator=(const StrongObjectsCache &&other) = delete;
 
     template <class F>
     QSharedPointer<T> addPrivate(const Key &key, F &&creator, bool overwriteCurrent)

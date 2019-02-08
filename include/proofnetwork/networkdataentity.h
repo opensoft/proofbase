@@ -58,7 +58,7 @@ signals:
 
 protected:
     NetworkDataEntity();
-    NetworkDataEntity(NetworkDataEntityPrivate &dd);
+    explicit NetworkDataEntity(NetworkDataEntityPrivate &dd);
     void setFetched(bool fetched);
 
     virtual void updateSelf(const Proof::NetworkDataEntitySP &other);

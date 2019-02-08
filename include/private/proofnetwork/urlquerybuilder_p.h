@@ -36,12 +36,15 @@ class UrlQueryBuilder;
 class PROOF_NETWORK_EXPORT UrlQueryBuilderPrivate
 {
     Q_DECLARE_PUBLIC(UrlQueryBuilder)
-    Q_DISABLE_COPY(UrlQueryBuilderPrivate)
 public:
     UrlQueryBuilderPrivate() = default;
+    UrlQueryBuilderPrivate(const UrlQueryBuilderPrivate &) = delete;
+    UrlQueryBuilderPrivate &operator=(const UrlQueryBuilderPrivate &) = delete;
+    UrlQueryBuilderPrivate(UrlQueryBuilderPrivate &&) = delete;
+    UrlQueryBuilderPrivate &operator=(UrlQueryBuilderPrivate &&) = delete;
     virtual ~UrlQueryBuilderPrivate() {}
 
-    UrlQueryBuilder *q_ptr;
+    UrlQueryBuilder *q_ptr = nullptr;
 
     QHash<QString, QString> params;
 };

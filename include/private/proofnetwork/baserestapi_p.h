@@ -48,7 +48,7 @@ class PROOF_NETWORK_EXPORT BaseRestApiPrivate : public ProofObjectPrivate
 public:
     BaseRestApiPrivate() : ProofObjectPrivate() {}
 
-    CancelableFuture<RestApiReply> configureReply(CancelableFuture<QNetworkReply *> replyFuture);
+    CancelableFuture<RestApiReply> configureReply(const CancelableFuture<QNetworkReply *> &replyFuture);
     bool replyShouldBeHandledByError(QNetworkReply *reply) const;
     Failure buildReplyFailure(QNetworkReply *reply);
     bool pingExternalResource(const QString &address);

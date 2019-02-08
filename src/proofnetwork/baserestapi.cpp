@@ -153,7 +153,7 @@ void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<R
     if (contentType.contains(QLatin1String("text/plain"))) {
         message = reply->readAll().trimmed();
     } else if (contentType.contains(QLatin1String("application/json"))) {
-        QJsonParseError jsonError;
+        QJsonParseError jsonError{};
         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll(), &jsonError);
         if (jsonError.error == QJsonParseError::NoError && doc.isObject())
             message = doc.object()[QStringLiteral("message")].toString();
@@ -164,7 +164,7 @@ void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<R
     qCDebug(proofNetworkMiscLog) << "Network error occurred"
                                  << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                  << ": " << errorCode << message;
-    int hints = Failure::UserFriendlyHint;
+    unsigned hints = Failure::UserFriendlyHint;
     if (errorCode > 0)
         hints |= Failure::DataIsHttpCodeHint;
     promise->failure(Failure(message, NETWORK_MODULE_CODE, NetworkErrorCode::ServerError, hints, errorCode));
@@ -179,7 +179,7 @@ void BaseRestApi::processErroredReply(QNetworkReply *reply, const PromiseSP<Rest
         errorCode = NETWORK_ERROR_OFFSET + static_cast<int>(reply->error());
     QString errorString = reply->errorString();
     long proofErrorCode = NetworkErrorCode::ServerError;
-    int hints = errorCodeIsHttp ? Failure::DataIsHttpCodeHint : Failure::NoHint;
+    unsigned int hints = errorCodeIsHttp ? Failure::DataIsHttpCodeHint : Failure::NoHint;
     qCDebug(proofNetworkMiscLog) << "Error occurred for"
                                  << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                  << ": " << errorCode << errorString;
@@ -211,7 +211,7 @@ QString BaseRestApi::vendor() const
     return QLatin1String();
 }
 
-CancelableFuture<RestApiReply> BaseRestApiPrivate::configureReply(CancelableFuture<QNetworkReply *> replyFuture)
+CancelableFuture<RestApiReply> BaseRestApiPrivate::configureReply(const CancelableFuture<QNetworkReply *> &replyFuture)
 {
     Q_Q(BaseRestApi);
     auto promise = PromiseSP<RestApiReply>::create();

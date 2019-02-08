@@ -86,7 +86,7 @@ void ProofServiceRestApi::processSuccessfulReply(QNetworkReply *reply, const Pro
     }
 
     if (400 <= errorCode && errorCode < 600) {
-        QJsonParseError jsonError;
+        QJsonParseError jsonError{};
         QJsonDocument content = QJsonDocument::fromJson(reply->readAll(), &jsonError);
         if (jsonError.error == QJsonParseError::NoError && content.isObject()) {
             QJsonValue serviceErrorCode = content.object().value(QStringLiteral("error_code"));
@@ -110,7 +110,7 @@ void ProofServiceRestApi::processSuccessfulReply(QNetworkReply *reply, const Pro
 std::function<bool(const RestApiReply &)> ProofServiceRestApi::boolResultUnmarshaller()
 {
     return [](const RestApiReply &reply) -> bool {
-        QJsonParseError jsonError;
+        QJsonParseError jsonError{};
         QJsonDocument doc = QJsonDocument::fromJson(reply.data, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
             return WithFailure(QStringLiteral("JSON error: %1").arg(jsonError.errorString()), NETWORK_MODULE_CODE,

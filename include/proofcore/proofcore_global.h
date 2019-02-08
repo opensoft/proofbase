@@ -46,5 +46,5 @@ PROOF_CORE_EXPORT Q_DECLARE_LOGGING_CATEGORY(proofCoreCacheLog);
 
 namespace Proof {
 constexpr long CORE_MODULE_CODE = 100;
-}
+} // namespace Proof
 #endif // PROOFCORE_GLOBAL_H

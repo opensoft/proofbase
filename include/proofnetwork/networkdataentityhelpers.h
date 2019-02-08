@@ -33,6 +33,13 @@
 namespace Proof {
 struct NetworkDataEntityHelpers
 {
+    NetworkDataEntityHelpers() = delete;
+    NetworkDataEntityHelpers(const NetworkDataEntityHelpers &) = delete;
+    NetworkDataEntityHelpers &operator=(const NetworkDataEntityHelpers &) = delete;
+    NetworkDataEntityHelpers(NetworkDataEntityHelpers &&) = delete;
+    NetworkDataEntityHelpers &operator=(NetworkDataEntityHelpers &&) = delete;
+    ~NetworkDataEntityHelpers() = delete;
+
     template <typename Q, typename Entity, typename Key, typename KeyFunc, typename NotifySignal, typename Creator>
     static auto updateEntityField(QWeakPointer<Entity> &storedEntity, Key &storedKey, const Key &key,
                                   ObjectsCache<Key, Entity> &cache, KeyFunc &&keyFunc, Q *notifier,
@@ -94,10 +101,6 @@ struct NetworkDataEntityHelpers
         return updateEntityField(storedEntity, key, cache, std::forward<KeyFunc>(keyFunc), notifier,
                                  std::forward<NotifySignal>(notifySignal), std::bind(&Entity::create, key));
     }
-
-private:
-    NetworkDataEntityHelpers() = delete;
-    ~NetworkDataEntityHelpers() = delete;
 };
 } // namespace Proof
 #endif // NETWORKDATAENTITYHELPERS_H
