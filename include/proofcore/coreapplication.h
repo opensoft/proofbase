@@ -53,9 +53,13 @@ public:
                     const QString &version = QStringLiteral("0.0.0.0"),
                     const QStringList &defaultLoggingRules = QStringList());
 
-    CoreApplication(QCoreApplication *app, const QString &orgName = QString(), const QString &appName = QString(),
-                    const QString &version = QStringLiteral("0.0.0.0"),
-                    const QStringList &defaultLoggingRules = QStringList());
+    explicit CoreApplication(QCoreApplication *app, const QString &orgName = QString(),
+                             const QString &appName = QString(), const QString &version = QStringLiteral("0.0.0.0"),
+                             const QStringList &defaultLoggingRules = QStringList());
+    CoreApplication(const CoreApplication &) = delete;
+    CoreApplication(CoreApplication &&) = delete;
+    CoreApplication &operator=(const CoreApplication &) = delete;
+    CoreApplication &operator=(CoreApplication &&) = delete;
 
     ~CoreApplication();
 

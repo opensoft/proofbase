@@ -54,7 +54,7 @@ enum Code
     HostNotFound = 11,
     MinCustomError = 100
 };
-}
+} // namespace NetworkErrorCode
 constexpr long NETWORK_MODULE_CODE = 300;
 } // namespace Proof
 #endif // PROOFNETWORK_GLOBAL_H

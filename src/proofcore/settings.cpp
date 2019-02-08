@@ -44,9 +44,9 @@ class SettingsPrivate : public ProofObjectPrivate
     void fillGroupFromSettings(SettingsGroup *groupToFill, const QSharedPointer<QSettings> &settings);
     void groupValueChanged(const QVector<QString> &key, const QVariant &value, const QSharedPointer<QSettings> &settings);
 
-    SettingsGroup *mainLocalGroup;
+    SettingsGroup *mainLocalGroup = nullptr;
     QSharedPointer<QSettings> localSettings;
-    SettingsGroup *mainGlobalGroup;
+    SettingsGroup *mainGlobalGroup = nullptr;
     QSharedPointer<QSettings> globalSettings;
 };
 } // namespace Proof

@@ -15,7 +15,9 @@ if(NOT PROOF_FULL_BUILD)
     enable_testing()
 endif()
 
-add_subdirectory(3rdparty/qamqp)
+if (NOT PROOF_CLANG_TIDY)
+    add_subdirectory(3rdparty/qamqp)
+endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ProofCore)

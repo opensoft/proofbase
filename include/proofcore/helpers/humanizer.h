@@ -44,7 +44,7 @@ public:
     };
     Q_ENUM(TimeCategory)
 
-    Humanizer(QObject *parent = nullptr);
+    explicit Humanizer(QObject *parent = nullptr);
 
     Q_INVOKABLE QString humanizeTime(qlonglong seconds,
                                      Humanizer::TimeCategory stopAt = Humanizer::TimeCategory::StopAtSeconds);

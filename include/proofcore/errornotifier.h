@@ -44,6 +44,11 @@ public:
         Critical
     };
 
+    ErrorNotifier(const ErrorNotifier &) = delete;
+    ErrorNotifier &operator=(const ErrorNotifier &) = delete;
+    ErrorNotifier(ErrorNotifier &&) = delete;
+    ErrorNotifier &operator=(ErrorNotifier &&) = delete;
+
     static ErrorNotifier *instance();
     void notify(const QString &message, Severity severity = Severity::Error, const QString &packId = QString());
 

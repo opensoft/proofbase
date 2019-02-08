@@ -37,10 +37,10 @@ namespace Proof {
 
 struct ErrorInfo
 {
-    long proofModuleCode;
-    long proofErrorCode;
+    long proofModuleCode = 0;
+    long proofErrorCode = 0;
     QString message;
-    bool userFriendly;
+    bool userFriendly = false;
 };
 
 class ErrorMessagesRegistryPrivate;
@@ -49,6 +49,10 @@ class PROOF_NETWORK_EXPORT ErrorMessagesRegistry final
     Q_DECLARE_PRIVATE(ErrorMessagesRegistry)
 public:
     ErrorMessagesRegistry(std::initializer_list<ErrorInfo> &&list);
+    ErrorMessagesRegistry(const ErrorMessagesRegistry &) = delete;
+    ErrorMessagesRegistry &operator=(const ErrorMessagesRegistry &) = delete;
+    ErrorMessagesRegistry(ErrorMessagesRegistry &&) = delete;
+    ErrorMessagesRegistry &operator=(ErrorMessagesRegistry &&) = delete;
     ~ErrorMessagesRegistry();
     ErrorInfo infoForCode(int code, const QVector<QString> &args = QVector<QString>()) const;
 

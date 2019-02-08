@@ -35,13 +35,13 @@ class ProofObjectPrivate;
 class PROOF_CORE_EXPORT ProofObjectPrivatePointer
 {
 public:
-    ProofObjectPrivatePointer(ProofObjectPrivate *d);
+    explicit ProofObjectPrivatePointer(ProofObjectPrivate *d);
     ProofObjectPrivatePointer(const ProofObjectPrivatePointer &) = delete;
-    ProofObjectPrivatePointer(ProofObjectPrivatePointer &&) = default;
+    ProofObjectPrivatePointer(ProofObjectPrivatePointer &&) noexcept = default;
     ~ProofObjectPrivatePointer();
 
     ProofObjectPrivatePointer &operator=(const ProofObjectPrivatePointer &) = delete;
-    ProofObjectPrivatePointer &operator=(ProofObjectPrivatePointer &&) = default;
+    ProofObjectPrivatePointer &operator=(ProofObjectPrivatePointer &&) noexcept = default;
 
     ProofObjectPrivate *data();
     const ProofObjectPrivate *data() const;

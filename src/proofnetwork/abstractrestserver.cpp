@@ -60,7 +60,7 @@ public:
     bool contains(const QString &name) const;
     void clear();
 
-    operator QString() const;
+    operator QString() const; // NOLINT(google-explicit-constructor)
     MethodNode &operator[](const QString &name);
     void setValue(const QString &value);
 
@@ -76,15 +76,21 @@ private:
 struct WorkerThreadInfo
 {
     WorkerThreadInfo() {}
-    ~WorkerThreadInfo() {}
     explicit WorkerThreadInfo(WorkerThread *thread, long long socketCount) : thread(thread)
     {
         this->socketCount = socketCount;
     }
+    ~WorkerThreadInfo() {}
 
     WorkerThreadInfo(const WorkerThreadInfo &other) { *this = other; }
-
     WorkerThreadInfo &operator=(const WorkerThreadInfo &other)
+    {
+        thread = other.thread;
+        socketCount.store(other.socketCount);
+        return *this;
+    }
+    WorkerThreadInfo(WorkerThreadInfo &&other) noexcept { *this = other; }
+    WorkerThreadInfo &operator=(WorkerThreadInfo &&other) noexcept
     {
         thread = other.thread;
         socketCount.store(other.socketCount);
@@ -109,7 +115,11 @@ class WorkerThread : public QThread
 {
     Q_OBJECT
 public:
-    WorkerThread(Proof::AbstractRestServerPrivate *const _serverD);
+    explicit WorkerThread(Proof::AbstractRestServerPrivate *serverD);
+    WorkerThread(const WorkerThread &) = delete;
+    WorkerThread &operator=(const WorkerThread &) = delete;
+    WorkerThread(WorkerThread &&) = delete;
+    WorkerThread &operator=(WorkerThread &&) = delete;
     ~WorkerThread();
 
     void sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
@@ -131,11 +141,14 @@ class AbstractRestServerPrivate
 {
     Q_DECLARE_PUBLIC(AbstractRestServer)
     friend WorkerThread;
+
+public:
     AbstractRestServerPrivate() = default;
     AbstractRestServerPrivate(const AbstractRestServerPrivate &other) = delete;
     AbstractRestServerPrivate &operator=(const AbstractRestServerPrivate &other) = delete;
-    AbstractRestServerPrivate(const AbstractRestServerPrivate &&other) = delete;
-    AbstractRestServerPrivate &operator=(const AbstractRestServerPrivate &&other) = delete;
+    AbstractRestServerPrivate(AbstractRestServerPrivate &&other) = delete;
+    AbstractRestServerPrivate &operator=(AbstractRestServerPrivate &&other) = delete;
+    ~AbstractRestServerPrivate() = default;
 
     void tryToCallMethod(QTcpSocket *socket, const QString &type, const QString &method, const QStringList &headers,
                          const QByteArray &body);
@@ -517,9 +530,7 @@ bool AbstractRestServer::checkBasicAuth(const QString &encryptedAuth) const
 {
     Q_D_CONST(AbstractRestServer);
     QByteArray auth = QStringLiteral("%1:%2").arg(d->userName, d->password).toLatin1().toBase64();
-    if (encryptedAuth == auth)
-        return true;
-    return false;
+    return encryptedAuth == auth;
 }
 
 QString AbstractRestServer::parseAuth(QTcpSocket *socket, const QString &header)
@@ -577,7 +588,7 @@ QStringList AbstractRestServerPrivate::makeMethodName(const QString &type, const
                                              [](const QString &prefixPart, const QString &namePart) {
                                                  return prefixPart == namePart.toLower();
                                              });
-    if (isStartedWithPrefix == false)
+    if (!isStartedWithPrefix)
         return QStringList();
     splittedName.erase(splittedName.begin(), splittedName.begin() + splittedPathPrefix.size());
     splittedName.prepend(type.toLower());
@@ -737,7 +748,7 @@ void AbstractRestServerPrivate::deleteSocket(QTcpSocket *socket, WorkerThread *w
     threadPoolLock.unlock();
 }
 
-WorkerThread::WorkerThread(Proof::AbstractRestServerPrivate *const _server_d) : serverD(_server_d)
+WorkerThread::WorkerThread(Proof::AbstractRestServerPrivate *const serverD) : serverD(serverD)
 {
     moveToThread(this);
 }

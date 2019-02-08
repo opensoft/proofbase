@@ -51,6 +51,10 @@ public:
     explicit AbstractRestServer();
     explicit AbstractRestServer(quint16 port);
     explicit AbstractRestServer(const QString &pathPrefix, quint16 port);
+    AbstractRestServer(const AbstractRestServer &) = delete;
+    AbstractRestServer &operator=(const AbstractRestServer &) = delete;
+    AbstractRestServer(AbstractRestServer &&) = delete;
+    AbstractRestServer &operator=(AbstractRestServer &&) = delete;
     ~AbstractRestServer();
 
     QString userName() const;

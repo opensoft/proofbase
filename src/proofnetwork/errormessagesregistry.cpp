@@ -31,7 +31,7 @@ namespace Proof {
 class ErrorMessagesRegistryPrivate
 {
     Q_DECLARE_PUBLIC(ErrorMessagesRegistry)
-    ErrorMessagesRegistry *q_ptr;
+    ErrorMessagesRegistry *q_ptr = nullptr;
     QHash<long, ErrorInfo> m_infos;
 };
 
@@ -56,9 +56,8 @@ ErrorInfo ErrorMessagesRegistry::infoForCode(int code, const QVector<QString> &a
         info.message = algorithms::reduce(args, [](const QString &acc, const QString &x) { return acc.arg(x); },
                                           info.message);
         return info;
-    } else {
-        return ErrorInfo{0, 0, QObject::tr("Unknown error"), true};
     }
+    return ErrorInfo{0, 0, QObject::tr("Unknown error"), true};
 }
 
 } // namespace Proof

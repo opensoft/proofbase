@@ -39,6 +39,12 @@ class PROOF_CORE_EXPORT SettingsGroup : public ProofObject
     Q_OBJECT
     Q_DECLARE_PRIVATE(SettingsGroup)
 public:
+    SettingsGroup() = delete;
+    SettingsGroup(const SettingsGroup &) = delete;
+    SettingsGroup(SettingsGroup &&) = delete;
+    SettingsGroup &operator=(const SettingsGroup &) = delete;
+    SettingsGroup &operator=(SettingsGroup &&) = delete;
+
     QSet<QString> groups() const;
     QSet<QString> values() const;
 
@@ -65,7 +71,6 @@ signals:
 
 private:
     friend class Settings;
-    SettingsGroup() = delete;
     SettingsGroup(const QString &name, SettingsGroup *globalGroup, QObject *parent);
     ~SettingsGroup();
 };

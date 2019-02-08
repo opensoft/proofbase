@@ -37,7 +37,7 @@ class PROOF_NETWORK_EXPORT ProofServiceRestApiPrivate : public BaseRestApiPrivat
 {
     Q_DECLARE_PUBLIC(ProofServiceRestApi)
 public:
-    ProofServiceRestApiPrivate(const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry);
+    explicit ProofServiceRestApiPrivate(const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry);
     QSharedPointer<ErrorMessagesRegistry> errorsRegistry;
 };
 } // namespace NetworkServices

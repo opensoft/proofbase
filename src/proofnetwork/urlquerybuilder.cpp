@@ -78,12 +78,12 @@ void UrlQueryBuilder::setCustomParam(const QString &name, const QDateTime &value
 {
     //ProFIT supports slightly different format from ISO8601 so we need to modify it accordingly
     QString result = value.toString(Qt::ISODate).replace(QLatin1String("T"), QLatin1String(" "));
-    if (result.lastIndexOf(QRegExp("[-+]\\d\\d:?\\d\\d")) == -1) {
+    if (result.lastIndexOf(QRegExp(R"([-+]\d\d:?\d\d)")) == -1) {
         if (result.endsWith(QLatin1String("Z")))
             result.chop(1);
         result += value.timeZone().displayName(value, QTimeZone::OffsetName).replace(QLatin1String("UTC"), QString());
     }
-    result.replace(QRegExp("([-+])(\\d\\d):?(\\d\\d)"), QStringLiteral("\\1\\2\\3"));
+    result.replace(QRegExp(R"(([-+])(\d\d):?(\d\d))"), QStringLiteral(R"(\1\2\3)"));
     setCustomParam(name, result);
 }
 

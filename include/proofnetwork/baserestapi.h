@@ -67,7 +67,7 @@ public:
     void abortAllRequests();
 
 protected:
-    BaseRestApi(const RestClientSP &restClient, QObject *parent = nullptr);
+    explicit BaseRestApi(const RestClientSP &restClient, QObject *parent = nullptr);
     BaseRestApi(const RestClientSP &restClient, BaseRestApiPrivate &dd, QObject *parent = nullptr);
 
     CancelableFuture<RestApiReply> get(const QString &method, const QUrlQuery &query = QUrlQuery());
@@ -138,7 +138,7 @@ protected:
     std::function<QString(const RestApiReply &)> stringUnmarshaller(const QString &attributeName) const
     {
         return [this, attributeName](const RestApiReply &reply) -> QString {
-            QJsonParseError jsonError;
+            QJsonParseError jsonError{};
             QJsonDocument doc = QJsonDocument::fromJson(reply.data, &jsonError);
             if (jsonError.error != QJsonParseError::NoError) {
                 return WithFailure(QStringLiteral("JSON error: %1").arg(jsonError.errorString()), NETWORK_MODULE_CODE,
@@ -244,7 +244,7 @@ protected:
 
     QJsonArray parseEntitiesArray(const QByteArray &data, const QString &attributeName = QString()) const
     {
-        QJsonParseError jsonError;
+        QJsonParseError jsonError{};
         QJsonDocument doc = QJsonDocument::fromJson(data, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
             return WithFailure(QStringLiteral("JSON error: %1").arg(jsonError.errorString()), NETWORK_MODULE_CODE,
@@ -274,7 +274,7 @@ protected:
     template <typename Entity>
     QSharedPointer<Entity> parseEntity(const QByteArray &data) const
     {
-        QJsonParseError jsonError;
+        QJsonParseError jsonError{};
         QJsonDocument doc = QJsonDocument::fromJson(data, &jsonError);
         if (jsonError.error != QJsonParseError::NoError) {
             return WithFailure(QStringLiteral("JSON error: %1").arg(jsonError.errorString()), NETWORK_MODULE_CODE,

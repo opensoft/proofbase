@@ -64,9 +64,13 @@ static QDate currentLogFileDate;
 namespace {
 class DetachedArchiver : public QRunnable
 {
-    Q_DISABLE_COPY(DetachedArchiver)
 public:
-    DetachedArchiver(const QString &filePath) : m_filePath(filePath) {}
+    explicit DetachedArchiver(const QString &filePath) : m_filePath(filePath) {}
+    DetachedArchiver(const DetachedArchiver &other) = delete;
+    DetachedArchiver &operator=(const DetachedArchiver &other) = delete;
+    DetachedArchiver(DetachedArchiver &&other) = delete;
+    DetachedArchiver &operator=(DetachedArchiver &&other) = delete;
+    ~DetachedArchiver() = default;
 
     void run() override
     {
@@ -140,7 +144,9 @@ void fileHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
         currentLogFile->write(QByteArrayLiteral("["));
         currentLogFile->write(QTime::currentTime().toString(QStringLiteral("hh:mm:ss.zzz")).toLatin1());
         currentLogFile->write(QByteArrayLiteral("]["));
-        currentLogFile->write(&STRINGIFIED_TYPES[qBound(0, static_cast<int>(type), STRINGIFIED_TYPES_MAX)], 1);
+        // clang-format off
+        currentLogFile->write(&STRINGIFIED_TYPES[qBound(0, static_cast<int>(type), STRINGIFIED_TYPES_MAX)], 1); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+        // clang-format on
         currentLogFile->write(QByteArrayLiteral("]["));
         currentLogFile->write(context.category);
         currentLogFile->write(QByteArrayLiteral("]["));

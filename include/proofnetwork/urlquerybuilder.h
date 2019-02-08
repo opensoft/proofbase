@@ -40,6 +40,10 @@ class PROOF_NETWORK_EXPORT UrlQueryBuilder
     Q_DECLARE_PRIVATE(UrlQueryBuilder)
 public:
     UrlQueryBuilder();
+    UrlQueryBuilder(const UrlQueryBuilder &other) = delete;
+    UrlQueryBuilder &operator=(const UrlQueryBuilder &other) = delete;
+    UrlQueryBuilder(UrlQueryBuilder &&other) = delete;
+    UrlQueryBuilder &operator=(UrlQueryBuilder &&other) = delete;
     virtual ~UrlQueryBuilder();
 
     void setCustomParam(const QString &name, const QString &value);
@@ -59,7 +63,7 @@ public:
     QUrlQuery toUrlQuery() const;
 
 protected:
-    UrlQueryBuilder(UrlQueryBuilderPrivate &dd);
+    explicit UrlQueryBuilder(UrlQueryBuilderPrivate &dd);
     QScopedPointer<UrlQueryBuilderPrivate> d_ptr;
 };
 

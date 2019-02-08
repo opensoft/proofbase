@@ -38,6 +38,11 @@ class PROOF_CORE_EXPORT Expirator : public ProofObject
     Q_OBJECT
     Q_DECLARE_PRIVATE(Expirator)
 public:
+    Expirator(const Expirator &) = delete;
+    Expirator &operator=(const Expirator &) = delete;
+    Expirator(Expirator &&) = delete;
+    Expirator &operator=(Expirator &&) = delete;
+
     static Expirator *instance();
     void addObject(const QSharedPointer<ProofObject> &object, const QDateTime &expirationTime);
 
@@ -47,10 +52,6 @@ protected:
 private:
     Expirator();
     ~Expirator();
-    Expirator(const Expirator &other) = delete;
-    Expirator &operator=(const Expirator &other) = delete;
-    Expirator(const Expirator &&other) = delete;
-    Expirator &operator=(const Expirator &&other) = delete;
 };
 } // namespace Proof
 

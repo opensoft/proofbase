@@ -31,25 +31,25 @@
 namespace Proof {
 constexpr quint64 packVersion(quint16 major, quint16 year, quint16 month, quint16 day)
 {
-    return ((quint64)major << 48) | ((quint64)year << 32) | ((quint64)month << 16) | ((quint64)day);
+    return ((quint64)major << 48u) | ((quint64)year << 32u) | ((quint64)month << 16u) | ((quint64)day);
 }
 
 constexpr quint16 majorVersionPart(quint64 version)
 {
-    return version >> 48;
+    return version >> 48u;
 }
 
 constexpr quint64 dateVersionPart(quint64 version)
 {
-    return version & ~(0xFFFFull << 48);
+    return version & ~(0xFFFFull << 48u);
 }
 
 inline quint64 packVersion(const QStringList &version)
 {
     if (version.count() < 4)
         return 0x0;
-    return ((quint64)version[0].toShort() << 48) | ((quint64)version[1].toShort() << 32)
-           | ((quint64)version[2].toShort() << 16) | ((quint64)version[3].toShort());
+    return ((quint64)version[0].toShort() << 48u) | ((quint64)version[1].toShort() << 32u)
+           | ((quint64)version[2].toShort() << 16u) | ((quint64)version[3].toShort());
 }
 
 inline quint64 packVersion(const QString &version)
@@ -60,10 +60,10 @@ inline quint64 packVersion(const QString &version)
 inline QString unpackVersionToString(quint64 version)
 {
     return QStringLiteral("%1.%2.%3.%4")
-        .arg(version >> 48)
-        .arg((version >> 32) & 0xFFFF)
-        .arg((version >> 16) & 0xFFFF)
-        .arg(version & 0xFFFF);
+        .arg(version >> 48u)
+        .arg((version >> 32u) & 0xFFFFu)
+        .arg((version >> 16u) & 0xFFFFu)
+        .arg(version & 0xFFFFu);
 }
 } // namespace Proof
 

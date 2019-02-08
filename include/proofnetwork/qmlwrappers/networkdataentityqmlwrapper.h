@@ -51,7 +51,12 @@
         }                                                             \
     }
 
-#define PROOF_NDE_WRAPPER_TOOLS(Nde) Proof::NetworkDataEntityQmlWrapper *clone() const override;
+#define PROOF_NDE_WRAPPER_TOOLS(Nde)                              \
+    Nde##QmlWrapper(const Nde##QmlWrapper &) = delete;            \
+    Nde##QmlWrapper &operator=(const Nde##QmlWrapper &) = delete; \
+    Nde##QmlWrapper(Nde##QmlWrapper &&) = delete;                 \
+    Nde##QmlWrapper &operator=(Nde##QmlWrapper &&) = delete;      \
+    Proof::NetworkDataEntityQmlWrapper *clone() const override;
 
 #define PROOF_NDE_WRAPPER_TOOLS_IMPL(Nde)                              \
     Proof::NetworkDataEntityQmlWrapper *Nde##QmlWrapper::clone() const \
@@ -70,6 +75,8 @@ class PROOF_NETWORK_EXPORT NetworkDataEntityQmlWrapper : public ProofObject
     Q_PROPERTY(bool isFetched READ isFetched NOTIFY isFetchedChanged)
     Q_DECLARE_PRIVATE(NetworkDataEntityQmlWrapper)
 public:
+    NetworkDataEntityQmlWrapper() = delete;
+
     Q_INVOKABLE virtual Proof::NetworkDataEntityQmlWrapper *clone() const = 0;
     bool isFetched() const;
 
@@ -94,7 +101,6 @@ signals:
     void isFetchedChanged(bool isFetched);
 
 protected:
-    NetworkDataEntityQmlWrapper() = delete;
     explicit NetworkDataEntityQmlWrapper(const QSharedPointer<NetworkDataEntity> &networkDataEntity,
                                          QObject *parent = nullptr);
     explicit NetworkDataEntityQmlWrapper(const QSharedPointer<NetworkDataEntity> &networkDataEntity,

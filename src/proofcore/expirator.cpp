@@ -38,8 +38,8 @@ class ExpiratorPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(Expirator)
     QMultiMap<QDateTime, QSharedPointer<ProofObject>> m_controlledObjects;
-    QMutex *m_mutex;
-    QThread *m_thread;
+    QMutex *m_mutex = nullptr;
+    QThread *m_thread = nullptr;
     int m_timerId = 0;
 };
 } // namespace Proof

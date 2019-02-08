@@ -80,7 +80,7 @@ signals:
     void disconnected();
 
 protected:
-    AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *parent = nullptr);
+    explicit AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *parent = nullptr);
 };
 
 } // namespace Proof

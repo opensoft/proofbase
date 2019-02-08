@@ -44,6 +44,10 @@ class PROOF_CORE_EXPORT ProofObjectPrivate
     Q_DECLARE_PUBLIC(ProofObject)
 public:
     ProofObjectPrivate();
+    ProofObjectPrivate(const ProofObjectPrivate &other) = delete;
+    ProofObjectPrivate &operator=(const ProofObjectPrivate &other) = delete;
+    ProofObjectPrivate(ProofObjectPrivate &&other) = delete;
+    ProofObjectPrivate &operator=(ProofObjectPrivate &&other) = delete;
     virtual ~ProofObjectPrivate();
 
     bool isDirtyItself() const;
@@ -58,11 +62,6 @@ public:
     ProofObject *q_ptr = nullptr;
 
 private:
-    ProofObjectPrivate(const ProofObjectPrivate &other) = delete;
-    ProofObjectPrivate &operator=(const ProofObjectPrivate &other) = delete;
-    ProofObjectPrivate(const ProofObjectPrivate &&other) = delete;
-    ProofObjectPrivate &operator=(const ProofObjectPrivate &&other) = delete;
-
     mutable QVector<std::function<bool()>> childrenDirtyCheckers;
     mutable std::atomic<qulonglong> nextDelayedCallId{0};
     static ProofObject *defaultInvoker;

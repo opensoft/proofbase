@@ -110,15 +110,19 @@ QString Proof::humanizeTime(qlonglong seconds, Humanizer::TimeCategory stopAt)
 
 QString Proof::humanizeBytesSize(qlonglong bytes)
 {
-    static const qlonglong bytesInKilobyte = 1ll << 10;
-    static const qlonglong bytesInMegabyte = bytesInKilobyte << 10;
-    static const qlonglong bytesInGigabyte = bytesInMegabyte << 10;
+    if (bytes < 0)
+        return QStringLiteral("%1 bytes").arg(bytes);
 
-    if (bytes >= bytesInGigabyte)
-        return QStringLiteral("%1G").arg((double)bytes / (double)bytesInGigabyte, 0, 'f', 2);
-    if (bytes >= bytesInMegabyte)
-        return QStringLiteral("%1M").arg((double)bytes / (double)bytesInMegabyte, 0, 'f', 2);
-    if (bytes >= bytesInKilobyte)
-        return QStringLiteral("%1K").arg((double)bytes / (double)bytesInKilobyte, 0, 'f', 2);
-    return QStringLiteral("%1 bytes").arg(bytes);
+    qulonglong uBytes = static_cast<qulonglong>(bytes);
+    static const qulonglong bytesInKilobyte = 1ull << 10u;
+    static const qulonglong bytesInMegabyte = bytesInKilobyte << 10u;
+    static const qulonglong bytesInGigabyte = bytesInMegabyte << 10u;
+
+    if (uBytes >= bytesInGigabyte)
+        return QStringLiteral("%1G").arg((double)uBytes / (double)bytesInGigabyte, 0, 'f', 2);
+    if (uBytes >= bytesInMegabyte)
+        return QStringLiteral("%1M").arg((double)uBytes / (double)bytesInMegabyte, 0, 'f', 2);
+    if (uBytes >= bytesInKilobyte)
+        return QStringLiteral("%1K").arg((double)uBytes / (double)bytesInKilobyte, 0, 'f', 2);
+    return QStringLiteral("%1 bytes").arg(uBytes);
 }
