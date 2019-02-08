@@ -47,10 +47,10 @@ struct PROOF_NETWORK_EXPORT RestApiError
         JsonServerError,
         JsonDataError
     };
-    explicit RestApiError(Level _level = Level::NoError, qlonglong _code = 0, long _proofModuleCode = NETWORK_MODULE_CODE,
-                          long _proofErrorCode = 0, const QString &_message = QString(), bool _userFriendly = false)
-        : level(_level), code(_code), proofModuleCode(_proofModuleCode), proofErrorCode(_proofErrorCode),
-          message(_message), userFriendly(_userFriendly)
+    explicit RestApiError(Level level = Level::NoError, qlonglong code = 0, long proofModuleCode = NETWORK_MODULE_CODE,
+                          long proofErrorCode = 0, const QString &message = QString(), bool userFriendly = false)
+        : level(level), code(code), proofModuleCode(proofModuleCode), proofErrorCode(proofErrorCode), message(message),
+          userFriendly(userFriendly)
     {}
 
     QString toString() const;
