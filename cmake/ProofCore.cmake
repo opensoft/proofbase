@@ -40,6 +40,11 @@ proof_add_target_private_headers(Core
     include/private/proofcore/abstractbarcodeconfigurator_p.h
 )
 
+if (ANDROID AND ANDROID_NDK_REVISION VERSION_GREATER_EQUAL 19)
+    set(ZLIB_LIBRARY "${ANDROID_SYSROOT}/usr/lib/${ANDROID_TOOLCHAIN_NAME}/${ANDROID_PLATFORM_LEVEL}/libz.so")
+    set(ZLIB_INCLUDE_DIR "${ANDROID_SYSROOT}/usr/include")
+endif()
+
 find_package(ZLIB REQUIRED)
 
 proof_add_module(Core
