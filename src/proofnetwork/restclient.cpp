@@ -154,7 +154,7 @@ RestClient::RestClient(bool ignoreSslErrors) : ProofObject(*new RestClientPrivat
 
     d->appId = proofApp->settings()
                    ->mainGroup()
-                   ->value(QStringLiteral("app_id"), QString(), Proof::Settings::NotFoundPolicy::Add)
+                   ->value(QStringLiteral("app_id"), "", Proof::Settings::NotFoundPolicy::Add)
                    .toString();
 
     Proof::SettingsGroup *notifierGroup = proofApp->settings()->group(QStringLiteral("slow_network_notifier"),
@@ -175,22 +175,20 @@ RestClient::RestClient(bool ignoreSslErrors) : ProofObject(*new RestClientPrivat
                                                             Proof::Settings::NotFoundPolicy::Add);
 
     d->slowNetworkMailFromAddress =
-        emailGroup->value(QStringLiteral("from"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
+        emailGroup->value(QStringLiteral("from"), "", Proof::Settings::NotFoundPolicy::Add).toString();
     d->slowNetworkMailToAddress =
-        emailGroup->value(QStringLiteral("to"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
-    auto smtpHost = emailGroup->value(QStringLiteral("host"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
+        emailGroup->value(QStringLiteral("to"), "", Proof::Settings::NotFoundPolicy::Add).toString();
+    auto smtpHost = emailGroup->value(QStringLiteral("host"), "", Proof::Settings::NotFoundPolicy::Add).toString();
 
     auto smtpPort = emailGroup->value(QStringLiteral("port"), 25, Proof::Settings::NotFoundPolicy::Add).toInt();
 
-    auto smtpUserName =
-        emailGroup->value(QStringLiteral("username"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
+    auto smtpUserName = emailGroup->value(QStringLiteral("username"), "", Proof::Settings::NotFoundPolicy::Add).toString();
 
-    auto smtpPassword =
-        emailGroup->value(QStringLiteral("password"), QString(), Proof::Settings::NotFoundPolicy::Add).toString();
+    auto smtpPassword = emailGroup->value(QStringLiteral("password"), "", Proof::Settings::NotFoundPolicy::Add).toString();
 
     QString connectionTypeString = emailGroup
-                                       ->value(QStringLiteral("type"), QStringLiteral("starttls"),
-                                               Proof::Settings::NotFoundPolicy::AddGlobal)
+                                       ->value(QStringLiteral("type"), QStringLiteral("ssl"),
+                                               Proof::Settings::NotFoundPolicy::Add)
                                        .toString()
                                        .toLower()
                                        .trimmed();
