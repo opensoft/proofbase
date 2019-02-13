@@ -172,23 +172,25 @@ RestClient::RestClient(bool ignoreSslErrors) : ProofObject(*new RestClientPrivat
                                      .toInt();
 
     Proof::SettingsGroup *emailGroup = notifierGroup->group(QStringLiteral("email"),
-                                                            Proof::Settings::NotFoundPolicy::Add);
+                                                            Proof::Settings::NotFoundPolicy::AddGlobal);
 
     d->slowNetworkMailFromAddress =
-        emailGroup->value(QStringLiteral("from"), "", Proof::Settings::NotFoundPolicy::Add).toString();
+        emailGroup->value(QStringLiteral("from"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString();
     d->slowNetworkMailToAddress =
-        emailGroup->value(QStringLiteral("to"), "", Proof::Settings::NotFoundPolicy::Add).toString();
-    auto smtpHost = emailGroup->value(QStringLiteral("host"), "", Proof::Settings::NotFoundPolicy::Add).toString();
+        emailGroup->value(QStringLiteral("to"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString();
+    auto smtpHost = emailGroup->value(QStringLiteral("host"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString();
 
-    auto smtpPort = emailGroup->value(QStringLiteral("port"), 25, Proof::Settings::NotFoundPolicy::Add).toInt();
+    auto smtpPort = emailGroup->value(QStringLiteral("port"), 25, Proof::Settings::NotFoundPolicy::AddGlobal).toInt();
 
-    auto smtpUserName = emailGroup->value(QStringLiteral("username"), "", Proof::Settings::NotFoundPolicy::Add).toString();
+    auto smtpUserName =
+        emailGroup->value(QStringLiteral("username"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString();
 
-    auto smtpPassword = emailGroup->value(QStringLiteral("password"), "", Proof::Settings::NotFoundPolicy::Add).toString();
+    auto smtpPassword =
+        emailGroup->value(QStringLiteral("password"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString();
 
     QString connectionTypeString = emailGroup
                                        ->value(QStringLiteral("type"), QStringLiteral("ssl"),
-                                               Proof::Settings::NotFoundPolicy::Add)
+                                               Proof::Settings::NotFoundPolicy::AddGlobal)
                                        .toString()
                                        .toLower()
                                        .trimmed();
