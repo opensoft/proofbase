@@ -6,7 +6,7 @@ ProofBase Changelog
  * --
 
 #### Bug Fixing
- * --
+ * Fix - all rows are not created in the slow network notifier config section
 
 ## 0.19.2.7
 #### Features

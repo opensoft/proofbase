@@ -57,7 +57,7 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
 
         QString appId = proofApp->settings()
                             ->mainGroup()
-                            ->value(QStringLiteral("app_id"), QString(), Proof::Settings::NotFoundPolicy::Add)
+                            ->value(QStringLiteral("app_id"), "", Proof::Settings::NotFoundPolicy::Add)
                             .toString();
 
         Proof::SettingsGroup *emailNotifierGroup = notifierGroup->group(QStringLiteral("email"),
@@ -67,15 +67,13 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
             auto smtpClient = Proof::SmtpClientSP::create();
 
             QString from = emailNotifierGroup
-                               ->value(QStringLiteral("from"), QString(), Proof::Settings::NotFoundPolicy::AddGlobal)
+                               ->value(QStringLiteral("from"), "", Proof::Settings::NotFoundPolicy::AddGlobal)
                                .toString();
-            QString toString = emailNotifierGroup
-                                   ->value(QStringLiteral("to"), QString(), Proof::Settings::NotFoundPolicy::AddGlobal)
-                                   .toString();
+            QString toString =
+                emailNotifierGroup->value(QStringLiteral("to"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString();
 
             smtpClient->setHost(
-                emailNotifierGroup->value(QStringLiteral("host"), QString(), Proof::Settings::NotFoundPolicy::AddGlobal)
-                    .toString());
+                emailNotifierGroup->value(QStringLiteral("host"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString());
             smtpClient->setPort(
                 emailNotifierGroup->value(QStringLiteral("port"), 25, Proof::Settings::NotFoundPolicy::AddGlobal).toInt());
             QString connectionType = emailNotifierGroup
@@ -92,12 +90,10 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
                 smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::Plain);
             }
             smtpClient->setUserName(
-                emailNotifierGroup
-                    ->value(QStringLiteral("username"), QString(), Proof::Settings::NotFoundPolicy::AddGlobal)
+                emailNotifierGroup->value(QStringLiteral("username"), "", Proof::Settings::NotFoundPolicy::AddGlobal)
                     .toString());
             smtpClient->setPassword(
-                emailNotifierGroup
-                    ->value(QStringLiteral("password"), QString(), Proof::Settings::NotFoundPolicy::AddGlobal)
+                emailNotifierGroup->value(QStringLiteral("password"), "", Proof::Settings::NotFoundPolicy::AddGlobal)
                     .toString());
 
             QStringList to;
