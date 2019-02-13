@@ -50,7 +50,7 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
     Proof::CoreApplication::addInitializer([]() {
         QString appId = proofApp->settings()
                             ->mainGroup()
-                            ->value(QStringLiteral("app_id"), QString(), Proof::Settings::NotFoundPolicy::Add)
+                            ->value(QStringLiteral("app_id"), "", Proof::Settings::NotFoundPolicy::Add)
                             .toString();
         Proof::ErrorNotifier::instance()->registerHandler(new Proof::MemoryStorageNotificationHandler(appId));
     });
