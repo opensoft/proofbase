@@ -107,7 +107,7 @@ void AmqpPublisher::setCreateExchangeIfNotExists(bool createExchangeIfNotExists,
 
 void AmqpPublisher::publishMessageImpl(const QString &message, const QString &routingKey, qulonglong publishId)
 {
-    if (call(this, &AmqpPublisher::publishMessageImpl, message, routingKey, publishId))
+    if (safeCall(this, &AmqpPublisher::publishMessageImpl, message, routingKey, publishId))
         return;
 
     Q_D(AmqpPublisher);

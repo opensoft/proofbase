@@ -65,7 +65,7 @@ ErrorNotifier *ErrorNotifier::instance()
 void ErrorNotifier::notify(const QString &message, Severity severity, const QString &packId)
 {
     Q_D(ErrorNotifier);
-    if (call(this, &ErrorNotifier::notify, message, severity, packId))
+    if (safeCall(this, &ErrorNotifier::notify, message, severity, packId))
         return;
     d->mutex.lock();
     if (d->handlers.isEmpty())

@@ -108,7 +108,7 @@ QSet<QString> SettingsGroup::values() const
 SettingsGroup *SettingsGroup::group(const QString &groupName, Settings::NotFoundPolicy notFoundPolicy)
 {
     SettingsGroup *result;
-    if (ProofObject::call(this, &SettingsGroup::group, Proof::Call::Block, result, groupName, notFoundPolicy))
+    if (ProofObject::safeCall(this, &SettingsGroup::group, Proof::Call::Block, result, groupName, notFoundPolicy))
         return result;
     Q_D(SettingsGroup);
     result = d->groups.value(groupName, nullptr);
@@ -127,7 +127,7 @@ SettingsGroup *SettingsGroup::group(const QString &groupName, Settings::NotFound
 QVariant SettingsGroup::value(const QString &key, const QVariant &defaultValue, Settings::NotFoundPolicy notFoundPolicy)
 {
     QVariant result;
-    if (ProofObject::call(this, &SettingsGroup::value, Proof::Call::Block, result, key, defaultValue, notFoundPolicy))
+    if (ProofObject::safeCall(this, &SettingsGroup::value, Proof::Call::Block, result, key, defaultValue, notFoundPolicy))
         return result;
     Q_D(SettingsGroup);
     if (!d->values.contains(key)) {
@@ -148,7 +148,7 @@ QVariant SettingsGroup::value(const QString &key, const QVariant &defaultValue, 
 SettingsGroup *SettingsGroup::addGroup(const QString &groupName)
 {
     SettingsGroup *result;
-    if (ProofObject::call(this, &SettingsGroup::addGroup, Proof::Call::Block, result, groupName))
+    if (ProofObject::safeCall(this, &SettingsGroup::addGroup, Proof::Call::Block, result, groupName))
         return result;
     Q_D(SettingsGroup);
     SettingsGroup *newGroup = d->groups.value(groupName, nullptr);
@@ -178,7 +178,7 @@ SettingsGroup *SettingsGroup::addGroup(const QString &groupName)
 
 void SettingsGroup::setValue(const QString &key, const QVariant &value, Settings::Storage storage)
 {
-    if (ProofObject::call(this, &SettingsGroup::setValue, Proof::Call::Block, key, value, storage))
+    if (ProofObject::safeCall(this, &SettingsGroup::setValue, Proof::Call::Block, key, value, storage))
         return;
     Q_D(SettingsGroup);
     if (storage == Settings::Storage::Global && d->globalGroup) {
@@ -209,7 +209,7 @@ void SettingsGroup::setValue(const QString &key, const QVariant &value, Settings
 
 void SettingsGroup::deleteGroup(const QString &groupName, Settings::Storage storage)
 {
-    if (ProofObject::call(this, &SettingsGroup::deleteGroup, Proof::Call::Block, groupName, storage))
+    if (ProofObject::safeCall(this, &SettingsGroup::deleteGroup, Proof::Call::Block, groupName, storage))
         return;
     Q_D(SettingsGroup);
     if (storage == Settings::Storage::Global && d->globalGroup) {
@@ -247,7 +247,7 @@ void SettingsGroup::deleteGroup(const QString &groupName, Settings::Storage stor
 
 void SettingsGroup::deleteValue(const QString &key, Settings::Storage storage)
 {
-    if (ProofObject::call(this, &SettingsGroup::deleteValue, Proof::Call::Block, key, storage))
+    if (ProofObject::safeCall(this, &SettingsGroup::deleteValue, Proof::Call::Block, key, storage))
         return;
     Q_D(SettingsGroup);
     if (storage == Settings::Storage::Global && d->globalGroup) {
@@ -260,7 +260,7 @@ void SettingsGroup::deleteValue(const QString &key, Settings::Storage storage)
 
 void SettingsGroup::copyTo(SettingsGroup *destination)
 {
-    if (ProofObject::call(this, &SettingsGroup::copyTo, Proof::Call::Block, destination))
+    if (ProofObject::safeCall(this, &SettingsGroup::copyTo, Proof::Call::Block, destination))
         return;
     Q_D(SettingsGroup);
     if (!destination || destination == this)

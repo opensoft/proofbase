@@ -79,7 +79,7 @@ TEST(ProofObjectTest, NonBlockingCall)
     testObj->moveToThread(thread);
     thread->start();
 
-    ProofObject::call(testObj, &TestProofObject::multiply, 42, 10);
+    ProofObject::safeCall(testObj, &TestProofObject::multiply, 42, 10);
     while (!testObj->started) {
         QThread::yieldCurrentThread();
         qApp->processEvents();
@@ -123,7 +123,7 @@ TEST(ProofObjectTest, BlockingCall)
     queuedRunner.start(0);
 
     EXPECT_FALSE(runnerExeced);
-    ProofObject::call(testObj, &TestProofObject::multiply, Call::Block, result, 42, 10);
+    ProofObject::safeCall(testObj, &TestProofObject::multiply, Call::Block, result, 42, 10);
 
     EXPECT_TRUE(runnerExeced);
     EXPECT_LE(50, timer.elapsed());
@@ -166,7 +166,7 @@ TEST(ProofObjectTest, EventsBlockingCall)
     queuedRunner.start(0);
 
     EXPECT_FALSE(runnerExeced);
-    ProofObject::call(testObj, &TestProofObject::multiply, Call::BlockEvents, result, 42, 10);
+    ProofObject::safeCall(testObj, &TestProofObject::multiply, Call::BlockEvents, result, 42, 10);
 
     EXPECT_FALSE(runnerExeced);
     EXPECT_LE(50, timer.elapsed());
@@ -188,7 +188,7 @@ TEST(ProofObjectTest, NonBlockingCallQObject)
     testObj->moveToThread(thread);
     thread->start();
 
-    ProofObject::call(testObj, &TestQObject::multiply, 42, 10);
+    ProofObject::safeCall(testObj, &TestQObject::multiply, 42, 10);
     while (!testObj->started) {
         QThread::yieldCurrentThread();
         qApp->processEvents();
@@ -232,7 +232,7 @@ TEST(ProofObjectTest, BlockingCallQObject)
     queuedRunner.start(0);
 
     EXPECT_FALSE(runnerExeced);
-    ProofObject::call(testObj, &TestQObject::multiply, Call::Block, result, 42, 10);
+    ProofObject::safeCall(testObj, &TestQObject::multiply, Call::Block, result, 42, 10);
 
     EXPECT_TRUE(runnerExeced);
     EXPECT_LE(50, timer.elapsed());
@@ -275,7 +275,7 @@ TEST(ProofObjectTest, EventsBlockingCallQObject)
     queuedRunner.start(0);
 
     EXPECT_FALSE(runnerExeced);
-    ProofObject::call(testObj, &TestQObject::multiply, Call::BlockEvents, result, 42, 10);
+    ProofObject::safeCall(testObj, &TestQObject::multiply, Call::BlockEvents, result, 42, 10);
 
     EXPECT_FALSE(runnerExeced);
     EXPECT_LE(50, timer.elapsed());
@@ -298,7 +298,7 @@ TEST(ProofObjectTest, NonBlockingCallPlainObjectWithContext)
     context->moveToThread(thread);
     thread->start();
 
-    ProofObject::call(context, testObj, &TestObject::multiply, 42, 10);
+    ProofObject::safeCall(context, testObj, &TestObject::multiply, 42, 10);
     while (!testObj->started) {
         QThread::yieldCurrentThread();
         qApp->processEvents();
@@ -344,7 +344,7 @@ TEST(ProofObjectTest, BlockingCallPlainObjectWithContext)
     queuedRunner.start(0);
 
     EXPECT_FALSE(runnerExeced);
-    ProofObject::call(context, testObj, &TestObject::multiply, Call::Block, result, 42, 10);
+    ProofObject::safeCall(context, testObj, &TestObject::multiply, Call::Block, result, 42, 10);
 
     EXPECT_TRUE(runnerExeced);
     EXPECT_LE(50, timer.elapsed());
@@ -389,7 +389,7 @@ TEST(ProofObjectTest, EventsBlockingCallPlainObjectWithContext)
     queuedRunner.start(0);
 
     EXPECT_FALSE(runnerExeced);
-    ProofObject::call(context, testObj, &TestObject::multiply, Call::BlockEvents, result, 42, 10);
+    ProofObject::safeCall(context, testObj, &TestObject::multiply, Call::BlockEvents, result, 42, 10);
 
     EXPECT_FALSE(runnerExeced);
     EXPECT_LE(50, timer.elapsed());
@@ -413,7 +413,7 @@ TEST(ProofObjectTest, NonBlockingCallWithContext)
     context->moveToThread(thread);
     thread->start();
 
-    ProofObject::call(context, testObj, &TestProofObject::multiply, 42, 10);
+    ProofObject::safeCall(context, testObj, &TestProofObject::multiply, 42, 10);
     while (!testObj->started) {
         QThread::yieldCurrentThread();
         qApp->processEvents();
@@ -459,7 +459,7 @@ TEST(ProofObjectTest, BlockingCallWithContext)
     queuedRunner.start(0);
 
     EXPECT_FALSE(runnerExeced);
-    ProofObject::call(context, testObj, &TestProofObject::multiply, Call::Block, result, 42, 10);
+    ProofObject::safeCall(context, testObj, &TestProofObject::multiply, Call::Block, result, 42, 10);
 
     EXPECT_TRUE(runnerExeced);
     EXPECT_LE(50, timer.elapsed());
@@ -504,7 +504,7 @@ TEST(ProofObjectTest, EventsBlockingCallWithContext)
     queuedRunner.start(0);
 
     EXPECT_FALSE(runnerExeced);
-    ProofObject::call(context, testObj, &TestProofObject::multiply, Call::BlockEvents, result, 42, 10);
+    ProofObject::safeCall(context, testObj, &TestProofObject::multiply, Call::BlockEvents, result, 42, 10);
 
     EXPECT_FALSE(runnerExeced);
     EXPECT_LE(50, timer.elapsed());

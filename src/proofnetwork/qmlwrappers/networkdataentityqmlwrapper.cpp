@@ -72,7 +72,7 @@ const QSharedPointer<NetworkDataEntity> NetworkDataEntityQmlWrapper::entity() co
 
 void NetworkDataEntityQmlWrapper::setEntity(const QSharedPointer<NetworkDataEntity> &networkDataEntity)
 {
-    if (call(this, &NetworkDataEntityQmlWrapper::setEntity, Call::Block, networkDataEntity))
+    if (safeCall(this, &NetworkDataEntityQmlWrapper::setEntity, Call::Block, networkDataEntity))
         return;
     Q_D(NetworkDataEntityQmlWrapper);
     if (d->dataEntity)

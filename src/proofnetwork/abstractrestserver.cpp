@@ -351,7 +351,7 @@ void AbstractRestServer::unsetCustomHeader(const QString &header)
 void AbstractRestServer::startListen()
 {
     Q_D(AbstractRestServer);
-    if (!ProofObject::call(this, &AbstractRestServer::startListen)) {
+    if (!ProofObject::safeCall(this, &AbstractRestServer::startListen)) {
         d->fillMethods();
         bool isListen = listen(QHostAddress::Any, d->port);
         if (!isListen)
@@ -361,7 +361,7 @@ void AbstractRestServer::startListen()
 
 void AbstractRestServer::stopListen()
 {
-    if (!ProofObject::call(this, &AbstractRestServer::stopListen, Proof::Call::Block))
+    if (!ProofObject::safeCall(this, &AbstractRestServer::stopListen, Proof::Call::Block))
         close();
 }
 
@@ -758,7 +758,7 @@ WorkerThread::~WorkerThread()
 
 void WorkerThread::handleNewConnection(qintptr socketDescriptor)
 {
-    if (Proof::ProofObject::call(this, &WorkerThread::handleNewConnection, socketDescriptor))
+    if (Proof::ProofObject::safeCall(this, &WorkerThread::handleNewConnection, socketDescriptor))
         return;
 
     QTcpSocket *tcpSocket = new QTcpSocket();
@@ -816,7 +816,7 @@ void WorkerThread::onReadyRead(QTcpSocket *socket)
 
 void WorkerThread::stop()
 {
-    if (!ProofObject::call(this, &WorkerThread::stop, Proof::Call::Block)) {
+    if (!ProofObject::safeCall(this, &WorkerThread::stop, Proof::Call::Block)) {
         const auto allKeys = sockets.keys();
         for (QTcpSocket *socket : allKeys)
             deleteSocket(socket);
@@ -826,7 +826,8 @@ void WorkerThread::stop()
 void WorkerThread::sendAnswer(QTcpSocket *socket, const QByteArray &body, const QString &contentType,
                               const QHash<QString, QString> &headers, int returnCode, const QString &reason)
 {
-    if (Proof::ProofObject::call(this, &WorkerThread::sendAnswer, socket, body, contentType, headers, returnCode, reason)) {
+    if (Proof::ProofObject::safeCall(this, &WorkerThread::sendAnswer, socket, body, contentType, headers, returnCode,
+                                     reason)) {
         return;
     }
 

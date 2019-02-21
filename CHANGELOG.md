@@ -3,7 +3,7 @@ ProofBase Changelog
 
 ## Not Released
 #### Features
- * --
+ * ProofObject::call is ProofObject::safeCall now
 
 #### Bug Fixing
  * Fix - empty settings parameters are not created in the slow network notifier config section

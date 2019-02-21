@@ -710,8 +710,8 @@ void RestClientPrivate::cleanupReplyHandler(QNetworkReply *reply)
 {
     //This call is only for compatibility with old stations where restclient was explicitly moved to some other thread
     //In proper workflow this call with not do anything since restclient is in the same thread
-    if (ProofObject::call(NetworkScheduler::instance()->qnam, this, &RestClientPrivate::cleanupReplyHandler,
-                          Call::Block, reply))
+    if (ProofObject::safeCall(NetworkScheduler::instance()->qnam, this, &RestClientPrivate::cleanupReplyHandler,
+                              Call::Block, reply))
         return;
     if (replyTimeouts.contains(reply)) {
         QTimer *connectionTimer = replyTimeouts.take(reply);
@@ -737,7 +737,7 @@ void RestClientPrivate::cleanupReplyHandler(QNetworkReply *reply)
 
 void RestClientPrivate::cleanupAll()
 {
-    if (ProofObject::call(NetworkScheduler::instance()->qnam, this, &RestClientPrivate::cleanupAll, Call::BlockEvents))
+    if (ProofObject::safeCall(NetworkScheduler::instance()->qnam, this, &RestClientPrivate::cleanupAll, Call::BlockEvents))
         return;
     networkRequestStartTimePoints.clear();
     algorithms::forEach(replyTimeouts, [](QNetworkReply *, QTimer *timer) {
@@ -819,7 +819,7 @@ NetworkScheduler::addRequest(const QString &host, std::function<QNetworkReply *(
 
 void NetworkScheduler::schedule()
 {
-    if (ProofObject::call(qnam, this, &NetworkScheduler::schedule))
+    if (ProofObject::safeCall(qnam, this, &NetworkScheduler::schedule))
         return;
     qCDebug(proofNetworkExtraLog) << "Scheduling network requests with queue size =" << requests.size();
     while (!requests.empty()) {

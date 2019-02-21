@@ -65,46 +65,64 @@ public:
     bool isDirty() const;
 
     template <typename Callee, typename Result, typename Method, typename... Args>
-    static auto call(Callee *callee, Method method, Proof::Call callType, Result &result, Args &&... args)
+    static auto safeCall(Callee *callee, Method method, Proof::Call callType, Result &result, Args &&... args)
         -> decltype((void)(result = (callee->*method)(std::forward<Args>(args)...)), bool{})
     {
-        return callPrivate(callee, callee, method, callType, &result, std::forward<Args>(args)...);
+        if (QThread::currentThread() == callee->thread())
+            return false;
+        callPrivate(callee, callee, method, callType, &result, std::forward<Args>(args)...);
+        return true;
     }
 
     template <typename Callee, typename Method, typename... Args>
-    static auto call(Callee *callee, Method method, Proof::Call callType, Args &&... args)
+    static auto safeCall(Callee *callee, Method method, Proof::Call callType, Args &&... args)
         -> decltype((void)(callee->*method)(std::forward<Args>(args)...), bool{})
     {
-        return callPrivate(callee, callee, method, callType, nullptr, std::forward<Args>(args)...);
+        if (QThread::currentThread() == callee->thread())
+            return false;
+        callPrivate(callee, callee, method, callType, nullptr, std::forward<Args>(args)...);
+        return true;
     }
 
     template <typename Callee, typename Method, typename... Args>
-    static auto call(Callee *callee, Method method, Args &&... args)
+    static auto safeCall(Callee *callee, Method method, Args &&... args)
         -> decltype((void)(callee->*method)(std::forward<Args>(args)...), bool{})
     {
-        return callPrivate(callee, callee, method, std::forward<Args>(args)...);
+        if (QThread::currentThread() == callee->thread())
+            return false;
+        callPrivate(callee, callee, method, std::forward<Args>(args)...);
+        return true;
     }
 
     template <typename Callee, typename Result, typename Method, typename... Args>
-    static auto call(QObject *context, Callee *callee, Method method, Proof::Call callType, Result &result,
-                     Args &&... args)
+    static auto safeCall(QObject *context, Callee *callee, Method method, Proof::Call callType, Result &result,
+                         Args &&... args)
         -> decltype((void)(result = (callee->*method)(std::forward<Args>(args)...)), bool{})
     {
-        return callPrivate(context, callee, method, callType, &result, std::forward<Args>(args)...);
+        if (QThread::currentThread() == context->thread())
+            return false;
+        callPrivate(context, callee, method, callType, &result, std::forward<Args>(args)...);
+        return true;
     }
 
     template <typename Callee, typename Method, typename... Args>
-    static auto call(QObject *context, Callee *callee, Method method, Proof::Call callType, Args &&... args)
+    static auto safeCall(QObject *context, Callee *callee, Method method, Proof::Call callType, Args &&... args)
         -> decltype((void)(callee->*method)(std::forward<Args>(args)...), bool{})
     {
-        return callPrivate(context, callee, method, callType, nullptr, std::forward<Args>(args)...);
+        if (QThread::currentThread() == context->thread())
+            return false;
+        callPrivate(context, callee, method, callType, nullptr, std::forward<Args>(args)...);
+        return true;
     }
 
     template <typename Callee, typename Method, typename... Args>
-    static auto call(QObject *context, Callee *callee, Method method, Args &&... args)
+    static auto safeCall(QObject *context, Callee *callee, Method method, Args &&... args)
         -> decltype((void)(callee->*method)(std::forward<Args>(args)...), bool{})
     {
-        return callPrivate(context, callee, method, std::forward<Args>(args)...);
+        if (QThread::currentThread() == context->thread())
+            return false;
+        callPrivate(context, callee, method, std::forward<Args>(args)...);
+        return true;
     }
 
 signals:
@@ -133,12 +151,9 @@ private:
     static ProofObject *defaultInvoker();
 
     template <typename Callee, typename ResultPtr, typename Method, typename... Args>
-    static bool callPrivate(QObject *context, Callee *callee, Method method, Proof::Call callType, ResultPtr resultPtr,
+    static void callPrivate(QObject *context, Callee *callee, Method method, Proof::Call callType, ResultPtr resultPtr,
                             Args &&... args)
     {
-        if (QThread::currentThread() == context->thread())
-            return false;
-
         ProofObject *invoker = invokerForCallee(callee);
         qulonglong currentId = invoker->nextQueuedCallId();
         auto conn = QSharedPointer<QMetaObject::Connection>::create();
@@ -161,15 +176,11 @@ private:
         while (!done)
             QCoreApplication::processEvents();
         disconnect(*conn);
-        return true;
     }
 
     template <typename Callee, typename Method, typename... Args>
-    static bool callPrivate(QObject *context, Callee *callee, Method method, Args &&... args)
+    static void callPrivate(QObject *context, Callee *callee, Method method, Args &&... args)
     {
-        if (QThread::currentThread() == context->thread())
-            return false;
-
         ProofObject *invoker = invokerForCallee(callee);
         qulonglong currentId = invoker->nextQueuedCallId();
         auto conn = QSharedPointer<QMetaObject::Connection>::create();
@@ -185,8 +196,6 @@ private:
             std::placeholders::_1, callee, conn, currentId, method, std::forward<Args>(args)...);
         *conn = connect(invoker, &ProofObject::queuedCallRequested, context, f, Qt::QueuedConnection);
         emit invoker->queuedCallRequested(currentId, QPrivateSignal{});
-
-        return true;
     }
 
     template <typename Callee, typename Result, typename Method, typename... Args>

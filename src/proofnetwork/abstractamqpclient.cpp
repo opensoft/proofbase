@@ -237,7 +237,7 @@ void AbstractAmqpClient::connectToHost()
 {
     Q_D(AbstractAmqpClient);
 
-    if (!call(this, &AbstractAmqpClient::connectToHost, Call::Block)) {
+    if (!safeCall(this, &AbstractAmqpClient::connectToHost, Call::Block)) {
         if (!isConnected())
             d->rabbitClient->connectToHost();
     }
@@ -247,7 +247,7 @@ void AbstractAmqpClient::disconnectFromHost()
 {
     Q_D(AbstractAmqpClient);
 
-    if (!call(this, &AbstractAmqpClient::disconnectFromHost, Call::Block)) {
+    if (!safeCall(this, &AbstractAmqpClient::disconnectFromHost, Call::Block)) {
         if (isConnected()) {
             d->rabbitClient->disconnectFromHost();
             QTime timer;
