@@ -3,7 +3,8 @@ ProofBase Changelog
 
 ## Not Released
 #### Features
- * ProofObject::call is ProofObject::safeCall now
+* ProofObject::call is ProofObject::safeCall now and calls method only if it is not in same thread
+* ProofObject::call introduced that always calls the method
 
 #### Bug Fixing
  * Fix - empty settings parameters are not created in the slow network notifier config section
