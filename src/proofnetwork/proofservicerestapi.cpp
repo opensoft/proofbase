@@ -99,7 +99,7 @@ void ProofServiceRestApi::processSuccessfulReply(QNetworkReply *reply, const Pro
                     << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << ":"
                     << errorCode << error.proofModuleCode << error.proofErrorCode << error.message;
                 promise.failure(Failure(error.message, error.proofModuleCode, error.proofErrorCode,
-                                         error.userFriendly ? Failure::UserFriendlyHint : Failure::NoHint, errorCode));
+                                        error.userFriendly ? Failure::UserFriendlyHint : Failure::NoHint, errorCode));
                 return;
             }
         }
