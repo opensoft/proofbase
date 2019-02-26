@@ -25,7 +25,7 @@
 #ifndef RESTCLIENT_H
 #define RESTCLIENT_H
 
-#include "proofseed/future.h"
+#include "proofseed/asynqro_extra.h"
 
 #include "proofcore/proofobject.h"
 

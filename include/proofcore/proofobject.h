@@ -25,7 +25,8 @@
 #ifndef PROOFOBJECT_H
 #define PROOFOBJECT_H
 
-#include "proofseed/future.h"
+#include "proofseed/asynqro_extra.h"
+#include "proofseed/proofalgorithms.h"
 
 #include "proofcore/proofcore_global.h"
 #include "proofcore/proofobjectprivatepointer.h"

@@ -24,7 +24,7 @@
  */
 #include "proofnetwork/baserestapi.h"
 
-#include "proofseed/tasks.h"
+#include "proofseed/asynqro_extra.h"
 
 #include "proofnetwork/baserestapi_p.h"
 
@@ -130,7 +130,7 @@ CancelableFuture<RestApiReply> BaseRestApi::deleteResource(const QString &method
     return d->configureReply(d->restClient->deleteResource(method, query, vendor()));
 }
 
-void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
+void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const Promise<RestApiReply> &promise)
 {
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (ALLOWED_HTTP_STATUSES.contains(errorCode)) {
@@ -141,7 +141,7 @@ void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<R
         //It also can be a bottleneck if a lot of requests are done in the same time with big responses
         //Moving readAll to task will mean more complex sync though
         RestApiReply data = RestApiReply::fromQNetworkReply(reply);
-        tasks::run([promise, data] { promise->success(data); });
+        tasks::run([promise, data] { promise.success(data); });
         return;
     }
 
@@ -167,10 +167,10 @@ void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<R
     unsigned hints = Failure::UserFriendlyHint;
     if (errorCode > 0)
         hints |= Failure::DataIsHttpCodeHint;
-    promise->failure(Failure(message, NETWORK_MODULE_CODE, NetworkErrorCode::ServerError, hints, errorCode));
+    promise.failure(Failure(message, NETWORK_MODULE_CODE, NetworkErrorCode::ServerError, hints, errorCode));
 }
 
-void BaseRestApi::processErroredReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
+void BaseRestApi::processErroredReply(QNetworkReply *reply, const Promise<RestApiReply> &promise)
 {
     Q_D(BaseRestApi);
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -198,7 +198,7 @@ void BaseRestApi::processErroredReply(QNetworkReply *reply, const PromiseSP<Rest
         break;
     }
 
-    promise->failure(failure);
+    promise.failure(failure);
 }
 
 QVector<QString> BaseRestApi::serverErrorAttributes() const
@@ -214,23 +214,23 @@ QString BaseRestApi::vendor() const
 CancelableFuture<RestApiReply> BaseRestApiPrivate::configureReply(const CancelableFuture<QNetworkReply *> &replyFuture)
 {
     Q_Q(BaseRestApi);
-    auto promise = PromiseSP<RestApiReply>::create();
-    promise->future()->onFailure([replyFuture](const Failure &) { replyFuture.cancel(); });
+    Promise<RestApiReply> promise;
+    promise.future().onFailure([replyFuture](const Failure &) { replyFuture.cancel(); });
 
-    replyFuture->onSuccess([this, q, promise](QNetworkReply *reply) {
-        if (promise->filled()) {
+    replyFuture.onSuccess([this, q, promise](QNetworkReply *reply) {
+        if (promise.isFilled()) {
             reply->abort();
             reply->deleteLater();
             return;
         }
 
-        promise->future()->onFailure([reply](const Failure &) {
+        promise.future().onFailure([reply](const Failure &) {
             if (reply->isRunning())
                 reply->abort();
         });
 
         if (reply->isFinished()) {
-            if (!promise->filled()) {
+            if (!promise.isFilled()) {
                 if (replyShouldBeHandledByError(reply))
                     q->processErroredReply(reply, promise);
                 else
@@ -239,7 +239,7 @@ CancelableFuture<RestApiReply> BaseRestApiPrivate::configureReply(const Cancelab
             reply->deleteLater();
         } else {
             QObject::connect(reply, &QNetworkReply::finished, q, [this, q, promise, reply]() {
-                if (promise->filled() || replyShouldBeHandledByError(reply))
+                if (promise.isFilled() || replyShouldBeHandledByError(reply))
                     return;
                 q->processSuccessfulReply(reply, promise);
                 reply->deleteLater();
@@ -247,7 +247,7 @@ CancelableFuture<RestApiReply> BaseRestApiPrivate::configureReply(const Cancelab
 
             QObject::connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), q,
                              [this, q, promise, reply](QNetworkReply::NetworkError) {
-                                 if (promise->filled() || !replyShouldBeHandledByError(reply))
+                                 if (promise.isFilled() || !replyShouldBeHandledByError(reply))
                                      return;
                                  q->processErroredReply(reply, promise);
                                  reply->deleteLater();
@@ -261,10 +261,10 @@ CancelableFuture<RestApiReply> BaseRestApiPrivate::configureReply(const Cancelab
                             << "SSL error occurred"
                             << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                             << ": " << errorCode << error.errorString();
-                        if (promise->filled())
+                        if (promise.isFilled())
                             continue;
-                        promise->failure(Failure(error.errorString(), NETWORK_MODULE_CODE, NetworkErrorCode::SslError,
-                                                 Failure::UserFriendlyHint, errorCode));
+                        promise.failure(Failure(error.errorString(), NETWORK_MODULE_CODE, NetworkErrorCode::SslError,
+                                                Failure::UserFriendlyHint, errorCode));
                     }
                 }
                 reply->deleteLater();
@@ -355,7 +355,7 @@ void BaseRestApiPrivate::rememberReply(const CancelableFuture<RestApiReply> &rep
         allReplies.remove(replyId);
         allRepliesLock.unlock();
     };
-    reply->onSuccess([cleaner](const RestApiReply &) { cleaner(); })->onFailure([cleaner](const Failure &) { cleaner(); });
+    reply.onSuccess([cleaner](const RestApiReply &) { cleaner(); }).onFailure([cleaner](const Failure &) { cleaner(); });
 }
 
 RestApiReply::RestApiReply(const QByteArray &data, const QHash<QByteArray, QByteArray> &headers,

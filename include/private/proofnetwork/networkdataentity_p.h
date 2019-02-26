@@ -25,7 +25,7 @@
 #ifndef NETWORKDATAENTITY_P_H
 #define NETWORKDATAENTITY_P_H
 
-#include "proofseed/spinlock.h"
+#include "proofseed/asynqro_extra.h"
 
 #include "proofcore/proofobject_p.h"
 

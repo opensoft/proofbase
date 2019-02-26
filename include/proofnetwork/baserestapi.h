@@ -24,7 +24,7 @@
  */
 #ifndef BASERESTAPI_H
 #define BASERESTAPI_H
-#include "proofseed/future.h"
+#include "proofseed/asynqro_extra.h"
 
 #include "proofcore/proofobject.h"
 
@@ -80,8 +80,8 @@ protected:
                                          const QByteArray &body = "");
     CancelableFuture<RestApiReply> deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery());
 
-    virtual void processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise);
-    virtual void processErroredReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise);
+    virtual void processSuccessfulReply(QNetworkReply *reply, const Promise<RestApiReply> &promise);
+    virtual void processErroredReply(QNetworkReply *reply, const Promise<RestApiReply> &promise);
 
     virtual QVector<QString> serverErrorAttributes() const;
     virtual QString vendor() const;
@@ -91,20 +91,20 @@ protected:
                                                                            NETWORK_MODULE_CODE,
                                                                            NetworkErrorCode::InvalidRequest)) const
     {
-        auto promise = PromiseSP<Result>::create();
-        promise->failure(std::move(f));
+        Promise<Result> promise;
+        promise.failure(std::move(f));
         return CancelableFuture<Result>(promise);
     }
 
     template <typename Unmarshaller, typename T = typename std::result_of<Unmarshaller(RestApiReply)>::type>
     CancelableFuture<T> unmarshalReply(const CancelableFuture<RestApiReply> &reply, Unmarshaller &&unmarshaller) const
     {
-        auto promise = PromiseSP<T>::create();
-        reply->onSuccess([promise, unmarshaller = std::forward<Unmarshaller>(unmarshaller)](const RestApiReply &data) {
-            promise->success(unmarshaller(data));
+        Promise<T> promise;
+        reply.onSuccess([promise, unmarshaller = std::forward<Unmarshaller>(unmarshaller)](const RestApiReply &data) {
+            promise.success(unmarshaller(data));
         });
-        reply->onFailure([promise](const Failure &f) { promise->failure(f); });
-        promise->future()->onFailure([reply](const Failure &) { reply.cancel(); });
+        reply.onFailure([promise](const Failure &f) { promise.failure(f); });
+        promise.future().onFailure([reply](const Failure &) { reply.cancel(); });
         return CancelableFuture<T>(promise);
     }
 

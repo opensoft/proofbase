@@ -403,7 +403,7 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
                                {QStringLiteral("os"), QSysInfo::prettyProductName()},
                                {QStringLiteral("network_addresses"), QJsonArray::fromStringList(ipsList)}};
     maybeHealthStatus
-        ->onSuccess([this, socket, statusTemplate](const HealthStatusMap &healthStatus) {
+        .onSuccess([this, socket, statusTemplate](const HealthStatusMap &healthStatus) {
             auto statusObj = statusTemplate;
             auto notificationsMemoryStorage = ErrorNotifier::instance()->handler<MemoryStorageNotificationHandler>();
             QPair<QDateTime, QString> lastError;
@@ -430,7 +430,7 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
             statusObj[QStringLiteral("generated_at")] = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
             sendAnswer(socket, QJsonDocument(statusObj).toJson(), QStringLiteral("text/json"));
         })
-        ->onFailure([this, socket](const Failure &f) {
+        .onFailure([this, socket](const Failure &f) {
             qCDebug(proofNetworkMiscLog) << "Health status fetch failed with " << f.message << f.data;
             sendInternalError(socket);
         });
@@ -460,7 +460,7 @@ void AbstractRestServer::rest_get_System_RecentErrors(QTcpSocket *socket, const 
     sendAnswer(socket, QJsonDocument(recentErrorsArray).toJson(), QStringLiteral("text/json"));
 }
 
-FutureSP<HealthStatusMap> AbstractRestServer::healthStatus(bool) const
+Future<HealthStatusMap> AbstractRestServer::healthStatus(bool) const
 {
     return Future<HealthStatusMap>::successful();
 }

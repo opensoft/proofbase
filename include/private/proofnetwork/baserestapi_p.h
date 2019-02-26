@@ -25,7 +25,7 @@
 #ifndef BASERESTAPI_P_H
 #define BASERESTAPI_P_H
 
-#include "proofseed/future.h"
+#include "proofseed/asynqro_extra.h"
 
 #include "proofcore/objectscache.h"
 #include "proofcore/proofobject_p.h"
