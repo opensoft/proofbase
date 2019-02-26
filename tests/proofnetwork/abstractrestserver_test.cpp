@@ -198,7 +198,7 @@ TEST_F(RestServerMethodsTest, withoutAuth)
 {
     ASSERT_TRUE(restServerWithoutAuthUT->isListening());
 
-    QNetworkReply *reply = restClientWithoutAuthUT->get("/test-method")->result();
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/test-method").result();
     QTime timer;
     timer.start();
     while (!reply->isFinished() && timer.elapsed() < 10000)
@@ -217,7 +217,7 @@ TEST_F(RestServerMethodsTest, noAuthTag)
 {
     ASSERT_TRUE(restServerUT->isListening());
 
-    QNetworkReply *reply = restClientForNoAuthTagUT->get("/test-public-method")->result();
+    QNetworkReply *reply = restClientForNoAuthTagUT->get("/test-public-method").result();
     QTime timer;
     timer.start();
     while (!reply->isFinished() && timer.elapsed() < 10000)
@@ -236,7 +236,7 @@ TEST_F(RestServerMethodsTest, noAuthTagNegative)
 {
     ASSERT_TRUE(restServerUT->isListening());
 
-    QNetworkReply *reply = restClientForNoAuthTagUT->get("/test-method")->result();
+    QNetworkReply *reply = restClientForNoAuthTagUT->get("/test-method").result();
     QTime timer;
     timer.start();
     while (!reply->isFinished() && timer.elapsed() < 10000)
@@ -257,7 +257,7 @@ TEST_P(RestServerMethodsTest, methodsNames)
 
     ASSERT_TRUE(restServerUT->isListening());
 
-    QNetworkReply *reply = isPost ? restClientUT->post(method)->result() : restClientUT->get(method)->result();
+    QNetworkReply *reply = isPost ? restClientUT->post(method).result() : restClientUT->get(method).result();
     QTime timer;
     timer.start();
     while (!reply->isFinished() && timer.elapsed() < 10000)
@@ -298,8 +298,8 @@ TEST_P(PathPrefixServerMethodsTest, methodsNames)
 
     ASSERT_TRUE(restServerWithPathPrefixUT->isListening());
 
-    QNetworkReply *reply = isPost ? restClientWithPrefixUT->post(method)->result()
-                                  : restClientWithPrefixUT->get(method)->result();
+    QNetworkReply *reply = isPost ? restClientWithPrefixUT->post(method).result()
+                                  : restClientWithPrefixUT->get(method).result();
     QTime timer;
     timer.start();
     while (!reply->isFinished() && timer.elapsed() < 10000)
@@ -342,8 +342,8 @@ TEST_P(AnotherRestServerMethodsTest, methodsParams)
 
     QUrlQuery query(params);
 
-    QNetworkReply *reply = isPost ? restClientUT->post(method, query)->result()
-                                  : restClientUT->get(method, query)->result();
+    QNetworkReply *reply = isPost ? restClientUT->post(method, query).result()
+                                  : restClientUT->get(method, query).result();
     QTime timer;
     timer.start();
     while (!reply->isFinished() && timer.elapsed() < 10000)
@@ -379,7 +379,7 @@ TEST_P(SomeMoreRestServerMethodsTest, methodsVariableParts)
 
     ASSERT_TRUE(restServerUT->isListening());
 
-    QNetworkReply *reply = isPost ? restClientUT->post(method)->result() : restClientUT->get(method)->result();
+    QNetworkReply *reply = isPost ? restClientUT->post(method).result() : restClientUT->get(method).result();
     QTime timer;
     timer.start();
     while (!reply->isFinished() && timer.elapsed() < 10000)

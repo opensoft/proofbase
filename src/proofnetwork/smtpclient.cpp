@@ -24,7 +24,7 @@
  */
 #include "proofnetwork/smtpclient.h"
 
-#include "proofseed/future.h"
+#include "proofseed/asynqro_extra.h"
 #include "proofseed/tasks.h"
 
 #include "proofcore/proofobject_p.h"

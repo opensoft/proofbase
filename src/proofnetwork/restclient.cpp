@@ -784,17 +784,17 @@ void RestClientPrivate::sendMailAboutSlowNetwork(QNetworkReply *reply, long time
 CancelableFuture<QNetworkReply *>
 NetworkScheduler::addRequest(const QString &host, std::function<QNetworkReply *(QNetworkAccessManager *)> &&request)
 {
-    auto promise = PromiseSP<QNetworkReply *>::create();
-    promise->future()
-        ->flatMap([host](QNetworkReply *reply) {
-            auto checker = PromiseSP<bool>::create();
-            QObject::connect(reply, &QNetworkReply::finished, reply, [checker]() { checker->success(true); });
+    Promise<QNetworkReply *> promise;
+    promise.future()
+        .flatMap([host](QNetworkReply *reply) {
+            Promise<bool> checker;
+            QObject::connect(reply, &QNetworkReply::finished, reply, [checker]() { checker.success(true); });
             QObject::connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), reply,
-                             [checker]() { checker->success(true); });
-            QObject::connect(reply, &QNetworkReply::sslErrors, reply, [checker]() { checker->success(true); });
-            return checker->future();
+                             [checker]() { checker.success(true); });
+            QObject::connect(reply, &QNetworkReply::sslErrors, reply, [checker]() { checker.success(true); });
+            return checker.future();
         })
-        ->onSuccess([this, host](bool) {
+        .onSuccess([this, host](bool) {
             decreaseUsage(host);
             schedule();
         });
@@ -802,14 +802,14 @@ NetworkScheduler::addRequest(const QString &host, std::function<QNetworkReply *(
     requestsLock.lock();
     qCDebug(proofNetworkExtraLog) << "Adding request for" << host << "with current usage =" << usages.value(host, 0);
     requests.emplace_back(host, [this, host, request, promise]() {
-        if (promise->filled()) {
+        if (promise.isFilled()) {
             qCDebug(proofNetworkExtraLog)
                 << "Request for" << host << "was ready to be sent, but is already canceled, skipping it";
             decreaseUsage(host);
             return;
         }
         qCDebug(proofNetworkExtraLog) << "Sending request for" << host;
-        promise->success(request(qnam));
+        promise.success(request(qnam));
     });
     requestsLock.unlock();
 

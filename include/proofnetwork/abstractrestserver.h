@@ -25,7 +25,7 @@
 #ifndef ABSTRACTRESTSERVER_H
 #define ABSTRACTRESTSERVER_H
 
-#include "proofseed/future.h"
+#include "proofseed/asynqro_extra.h"
 
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
@@ -94,7 +94,7 @@ protected slots:
                                                        const QByteArray &body);
 
 protected:
-    virtual FutureSP<HealthStatusMap> healthStatus(bool quick) const;
+    virtual Future<HealthStatusMap> healthStatus(bool quick) const;
 
     void incomingConnection(qintptr socketDescriptor) override;
 

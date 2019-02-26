@@ -1,6 +1,6 @@
 // clazy:skip
 
-#include "proofseed/future.h"
+#include "proofseed/asynqro_extra.h"
 
 #include "proofnetwork/restclient.h"
 
@@ -145,7 +145,7 @@ TEST_P(RestClientTest, vendorTest)
         ASSERT_FALSE(body.isEmpty());
     }
 
-    QScopedPointer<QNetworkReply> reply(methodCall(*restClient, body)->result());
+    QScopedPointer<QNetworkReply> reply(methodCall(*restClient, body).result());
 
     ASSERT_NE(nullptr, reply);
 

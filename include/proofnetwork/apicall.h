@@ -25,7 +25,7 @@
 #ifndef PROOF_APICALL_H
 #define PROOF_APICALL_H
 
-#include "proofseed/future.h"
+#include "proofseed/asynqro_extra.h"
 
 #include "proofnetwork/proofnetwork_global.h"
 
@@ -72,20 +72,20 @@ struct PROOF_NETWORK_EXPORT RestApiError
 //TODO: deprecated, remove when all clients will be moved to proper futures usage
 //Can be used anywhere instead of chainedApiCall because they already require a background thread
 template <typename T>
-RestApiError runApiCall(const FutureSP<T> &caller, T &result)
+RestApiError runApiCall(const Future<T> &caller, T &result)
 {
-    caller->wait();
-    if (caller->failed())
-        return RestApiError::fromFailure(caller->failureReason());
-    result = caller->result();
+    caller.wait();
+    if (caller.isFailed())
+        return RestApiError::fromFailure(caller.failureReason());
+    result = caller.result();
     return RestApiError();
 }
 
 template <typename T>
-RestApiError runApiCall(const FutureSP<T> &caller)
+RestApiError runApiCall(const Future<T> &caller)
 {
-    caller->wait();
-    return caller->failed() ? RestApiError::fromFailure(caller->failureReason()) : RestApiError();
+    caller.wait();
+    return caller.isFailed() ? RestApiError::fromFailure(caller.failureReason()) : RestApiError();
 }
 
 template <typename T>

@@ -45,7 +45,7 @@ public:
     explicit HttpDownloader(const Proof::RestClientSP &restClient, QObject *parent = nullptr);
     explicit HttpDownloader(QObject *parent = nullptr);
     Proof::RestClientSP restClient() const;
-    FutureSP<QByteArray> download(const QUrl &url);
+    Future<QByteArray> download(const QUrl &url);
 };
 } // namespace Proof
 #endif // PROOF_HTTPDOWNLOADER_H

@@ -24,7 +24,7 @@
  */
 #include "proofcore/coreapplication.h"
 
-#include "proofseed/tasks.h"
+#include "proofseed/asynqro_extra.h"
 
 #include "proofcore/coreapplication_p.h"
 #include "proofcore/errornotifier.h"
@@ -203,7 +203,7 @@ CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *,
 
     Q_ASSERT(::instance() == nullptr);
     ::instance() = this;
-    tasks::TasksDispatcher::instance();
+    asynqro::tasks::TasksDispatcher::instance();
 
     QCoreApplication::setOrganizationName(orgName);
     QCoreApplication::setApplicationName(appName);

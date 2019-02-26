@@ -53,7 +53,7 @@ protected:
                         QObject *parent = nullptr);
     ProofServiceRestApi(const RestClientSP &restClient, ProofServiceRestApiPrivate &dd, QObject *parent = nullptr);
 
-    void processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise) override;
+    void processSuccessfulReply(QNetworkReply *reply, const Promise<RestApiReply> &promise) override;
 
     std::function<bool(const RestApiReply &)> boolResultUnmarshaller();
 };

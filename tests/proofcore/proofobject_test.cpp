@@ -1,7 +1,6 @@
 // clazy:skip
 
-#include "proofseed/future.h"
-#include "proofseed/tasks.h"
+#include "proofseed/asynqro_extra.h"
 
 #include "proofcore/proofobject.h"
 
@@ -130,7 +129,7 @@ TEST(ProofObjectTest, BlockingCall)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(task->wait(100));
+    EXPECT_TRUE(task.wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -173,7 +172,7 @@ TEST(ProofObjectTest, EventsBlockingCall)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(task->wait(100));
+    EXPECT_TRUE(task.wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -239,7 +238,7 @@ TEST(ProofObjectTest, BlockingCallQObject)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(task->wait(100));
+    EXPECT_TRUE(task.wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -282,7 +281,7 @@ TEST(ProofObjectTest, EventsBlockingCallQObject)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(task->wait(100));
+    EXPECT_TRUE(task.wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -351,7 +350,7 @@ TEST(ProofObjectTest, BlockingCallPlainObjectWithContext)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(task->wait(100));
+    EXPECT_TRUE(task.wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -396,7 +395,7 @@ TEST(ProofObjectTest, EventsBlockingCallPlainObjectWithContext)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(task->wait(100));
+    EXPECT_TRUE(task.wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -466,7 +465,7 @@ TEST(ProofObjectTest, BlockingCallWithContext)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(task->wait(100));
+    EXPECT_TRUE(task.wait(100));
 
     thread->quit();
     thread->wait(1000);
@@ -511,7 +510,7 @@ TEST(ProofObjectTest, EventsBlockingCallWithContext)
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
 
-    EXPECT_TRUE(task->wait(100));
+    EXPECT_TRUE(task.wait(100));
 
     thread->quit();
     thread->wait(1000);

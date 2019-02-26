@@ -46,7 +46,7 @@ ProofServiceRestApi::ProofServiceRestApi(const RestClientSP &restClient, ProofSe
     : BaseRestApi(restClient, dd, parent)
 {}
 
-void ProofServiceRestApi::processSuccessfulReply(QNetworkReply *reply, const PromiseSP<RestApiReply> &promise)
+void ProofServiceRestApi::processSuccessfulReply(QNetworkReply *reply, const Promise<RestApiReply> &promise)
 {
     Q_D(ProofServiceRestApi);
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -98,7 +98,7 @@ void ProofServiceRestApi::processSuccessfulReply(QNetworkReply *reply, const Pro
                     << "Error occurred"
                     << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded)) << ":"
                     << errorCode << error.proofModuleCode << error.proofErrorCode << error.message;
-                promise->failure(Failure(error.message, error.proofModuleCode, error.proofErrorCode,
+                promise.failure(Failure(error.message, error.proofModuleCode, error.proofErrorCode,
                                          error.userFriendly ? Failure::UserFriendlyHint : Failure::NoHint, errorCode));
                 return;
             }
