@@ -33,6 +33,10 @@
 #include <QTimer>
 #include <QTimerEvent>
 
+//TODO: refactor it
+// Few improvements coming to the mind:
+// 1. map of sets + backward mapping from item to its time to check for doubles
+// 2. round time to next 5-10 seconds to make less buckets
 namespace Proof {
 class ExpiratorPrivate : public ProofObjectPrivate
 {
@@ -54,43 +58,49 @@ Expirator::Expirator() : ProofObject(*new ExpiratorPrivate)
     moveToThread(d->m_thread);
     d->m_thread->start();
 
-    QTimer *timer = new QTimer();
-    connect(timer, &QTimer::timeout, this,
-            [this, timer]() {
-                Q_D(Expirator);
-                d->m_timerId = startTimer(1000 * 60 * 10, Qt::VeryCoarseTimer);
-                qCDebug(proofCoreCacheLog) << "Cache expirator timer started";
-                timer->deleteLater();
-            },
-            Qt::QueuedConnection);
-    timer->setSingleShot(true);
-    timer->start();
+    setCleanupInterval(60 * 10);
 }
 
 Expirator::~Expirator()
 {
     Q_D(Expirator);
+    if (d->m_timerId)
+        call(this, &QObject::killTimer, Call::Block, d->m_timerId);
     d->m_thread->quit();
-    d->m_thread->wait(500);
-    d->m_thread->terminate();
+    if (!d->m_thread->wait(500))
+        d->m_thread->terminate();
 }
 
 Expirator *Expirator::instance()
 {
-    static Expirator *inst = nullptr;
-    if (!inst) {
-        inst = new Expirator;
-        qCDebug(proofCoreCacheLog) << "Cache expirator instantiated";
-    }
-    return inst;
+    static Expirator inst;
+    return &inst;
 }
 
 void Expirator::addObject(const QSharedPointer<ProofObject> &object, const QDateTime &expirationTime)
 {
     Q_D(Expirator);
     d->m_mutex->lock();
+    qCDebug(proofCoreCacheLog) << "Cache expirator adding object up to " << expirationTime;
     d->m_controlledObjects.insertMulti(expirationTime, object);
     d->m_mutex->unlock();
+}
+
+void Expirator::setCleanupInterval(int seconds)
+{
+    QTimer *timer = new QTimer();
+    connect(timer, &QTimer::timeout, this,
+            [this, timer, seconds]() {
+                Q_D(Expirator);
+                if (d->m_timerId)
+                    killTimer(d->m_timerId);
+                d->m_timerId = startTimer(1000 * seconds, Qt::VeryCoarseTimer);
+                qCDebug(proofCoreCacheLog) << "Cache expirator timer started";
+                timer->deleteLater();
+            },
+            Qt::QueuedConnection);
+    timer->setSingleShot(true);
+    timer->start();
 }
 
 void Expirator::timerEvent(QTimerEvent *ev)

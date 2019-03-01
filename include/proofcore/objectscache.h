@@ -72,21 +72,21 @@ public:
     virtual QSharedPointer<T> value(const Key &key, bool useOtherCaches = true) = 0;
     virtual QVector<Key> keys() const = 0;
 
-protected:
-    ObjectsCache() {}
-    virtual ~ObjectsCache() {}
-
     template <typename U = T>
-    QString valueTypeName(typename std::enable_if<!std::is_base_of<QObject, U>::value>::type * = nullptr) const
+    inline QString valueTypeName(typename std::enable_if_t<!std::is_base_of_v<QObject, U>> * = nullptr) const
     {
         return QString();
     }
 
     template <typename U = T>
-    QString valueTypeName(typename std::enable_if<std::is_base_of<QObject, U>::value>::type * = nullptr) const
+    inline QString valueTypeName(typename std::enable_if_t<std::is_base_of_v<QObject, U>> * = nullptr) const
     {
-        return U::staticMetaObject.className();
+        return T::staticMetaObject.className();
     }
+
+protected:
+    ObjectsCache() {}
+    virtual ~ObjectsCache() {}
 };
 
 template <class Key, class T>

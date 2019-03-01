@@ -6,6 +6,8 @@ proof_add_target_sources(core_tests
     objectscache_test.cpp
     settings_test.cpp
     proofobject_test.cpp
+    proofobject_dirty_test.cpp
+    memorystoragenotificationhandler_test.cpp
 )
 proof_add_target_resources(core_tests tests_resources.qrc)
 

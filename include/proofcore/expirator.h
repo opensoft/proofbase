@@ -46,6 +46,8 @@ public:
     static Expirator *instance();
     void addObject(const QSharedPointer<ProofObject> &object, const QDateTime &expirationTime);
 
+    void setCleanupInterval(int seconds);
+
 protected:
     void timerEvent(QTimerEvent *ev) override;
 

@@ -16,8 +16,16 @@ using namespace Proof;
 
 class TestProofObject : public ProofObject
 {
+    Q_OBJECT
 public:
     TestProofObject() : ProofObject(nullptr) {}
+
+    void decorateFutureWithFailureHandler(const Future<bool> &f, Failure::Hints hints)
+    {
+        f.onFailure(simpleFailureHandler(hints));
+    }
+
+    void shouldNotHappen() { shouldNotHappenHappened = true; }
 
     int multiply(int a, int b)
     {
@@ -31,12 +39,17 @@ public:
     QThread *methodThread = nullptr;
     std::atomic_bool started{false};
     std::atomic_bool canProceed{false};
+
+    std::atomic_bool shouldNotHappenHappened{false};
 };
 
 class TestQObject : public QObject
 {
+    Q_OBJECT
 public:
     TestQObject() : QObject(nullptr) {}
+
+    void shouldNotHappen() { shouldNotHappenHappened = true; }
 
     int multiply(int a, int b)
     {
@@ -50,6 +63,8 @@ public:
     QThread *methodThread = nullptr;
     std::atomic_bool started{false};
     std::atomic_bool canProceed{false};
+
+    std::atomic_bool shouldNotHappenHappened{false};
 };
 
 class TestObject
@@ -71,7 +86,7 @@ public:
     std::atomic_bool canProceed{false};
 };
 
-TEST(ProofObjectTest, NonBlockingCall)
+TEST(ProofObjectTest, nonBlockingSafeCall)
 {
     TestProofObject *testObj = new TestProofObject;
     QThread *thread = new QThread;
@@ -94,7 +109,7 @@ TEST(ProofObjectTest, NonBlockingCall)
     delete testObj;
 }
 
-TEST(ProofObjectTest, BlockingCall)
+TEST(ProofObjectTest, blockingSafeCall)
 {
     TestProofObject *testObj = new TestProofObject;
     QThread *thread = new QThread;
@@ -122,12 +137,13 @@ TEST(ProofObjectTest, BlockingCall)
     queuedRunner.start(0);
 
     EXPECT_FALSE(runnerExeced);
-    ProofObject::safeCall(testObj, &TestProofObject::multiply, Call::Block, result, 42, 10);
+    bool invoked = ProofObject::safeCall(testObj, &TestProofObject::multiply, Call::Block, result, 42, 10);
 
     EXPECT_TRUE(runnerExeced);
     EXPECT_LE(50, timer.elapsed());
     EXPECT_EQ(420, result);
     EXPECT_EQ(thread, testObj->methodThread);
+    EXPECT_TRUE(invoked);
 
     EXPECT_TRUE(task.wait(100));
 
@@ -137,7 +153,7 @@ TEST(ProofObjectTest, BlockingCall)
     delete testObj;
 }
 
-TEST(ProofObjectTest, EventsBlockingCall)
+TEST(ProofObjectTest, eventsBlockingSafeCall)
 {
     TestProofObject *testObj = new TestProofObject;
     QThread *thread = new QThread;
@@ -180,7 +196,7 @@ TEST(ProofObjectTest, EventsBlockingCall)
     delete testObj;
 }
 
-TEST(ProofObjectTest, NonBlockingCallQObject)
+TEST(ProofObjectTest, nonBlockingSafeCallQObject)
 {
     TestQObject *testObj = new TestQObject;
     QThread *thread = new QThread;
@@ -203,7 +219,7 @@ TEST(ProofObjectTest, NonBlockingCallQObject)
     delete testObj;
 }
 
-TEST(ProofObjectTest, BlockingCallQObject)
+TEST(ProofObjectTest, blockingSafeCallQObject)
 {
     TestQObject *testObj = new TestQObject;
     QThread *thread = new QThread;
@@ -246,7 +262,7 @@ TEST(ProofObjectTest, BlockingCallQObject)
     delete testObj;
 }
 
-TEST(ProofObjectTest, EventsBlockingCallQObject)
+TEST(ProofObjectTest, eventsBlockingSafeCallQObject)
 {
     TestQObject *testObj = new TestQObject;
     QThread *thread = new QThread;
@@ -289,7 +305,7 @@ TEST(ProofObjectTest, EventsBlockingCallQObject)
     delete testObj;
 }
 
-TEST(ProofObjectTest, NonBlockingCallPlainObjectWithContext)
+TEST(ProofObjectTest, nonBlockingSafeCallPlainObjectWithContext)
 {
     TestObject *testObj = new TestObject;
     QThread *thread = new QThread;
@@ -314,7 +330,7 @@ TEST(ProofObjectTest, NonBlockingCallPlainObjectWithContext)
     delete testObj;
 }
 
-TEST(ProofObjectTest, BlockingCallPlainObjectWithContext)
+TEST(ProofObjectTest, blockingSafeCallPlainObjectWithContext)
 {
     TestObject *testObj = new TestObject;
     QThread *thread = new QThread;
@@ -359,7 +375,7 @@ TEST(ProofObjectTest, BlockingCallPlainObjectWithContext)
     delete testObj;
 }
 
-TEST(ProofObjectTest, EventsBlockingCallPlainObjectWithContext)
+TEST(ProofObjectTest, eventsBlockingSafeCallPlainObjectWithContext)
 {
     TestObject *testObj = new TestObject;
     QThread *thread = new QThread;
@@ -404,7 +420,7 @@ TEST(ProofObjectTest, EventsBlockingCallPlainObjectWithContext)
     delete testObj;
 }
 
-TEST(ProofObjectTest, NonBlockingCallWithContext)
+TEST(ProofObjectTest, nonBlockingSafeCallWithContext)
 {
     TestProofObject *testObj = new TestProofObject;
     QThread *thread = new QThread;
@@ -429,7 +445,7 @@ TEST(ProofObjectTest, NonBlockingCallWithContext)
     delete testObj;
 }
 
-TEST(ProofObjectTest, BlockingCallWithContext)
+TEST(ProofObjectTest, blockingSafeCallWithContext)
 {
     TestProofObject *testObj = new TestProofObject;
     QThread *thread = new QThread;
@@ -474,7 +490,7 @@ TEST(ProofObjectTest, BlockingCallWithContext)
     delete testObj;
 }
 
-TEST(ProofObjectTest, EventsBlockingCallWithContext)
+TEST(ProofObjectTest, eventsBlockingSafeCallWithContext)
 {
     TestProofObject *testObj = new TestProofObject;
     QThread *thread = new QThread;
@@ -518,3 +534,212 @@ TEST(ProofObjectTest, EventsBlockingCallWithContext)
     delete context;
     delete testObj;
 }
+
+TEST(ProofObjectTest, call)
+{
+    TestProofObject *testObj = new TestProofObject;
+    QThread *thread = new QThread;
+    testObj->moveToThread(thread);
+    thread->start();
+
+    int result = 0;
+    auto task = tasks::run([testObj]() {
+        while (!testObj->started) {
+            QThread::yieldCurrentThread();
+            qApp->processEvents();
+        }
+        QThread::msleep(50);
+        testObj->canProceed = true;
+    });
+
+    QTime timer;
+    timer.start();
+
+    bool runnerExeced = false;
+    QTimer queuedRunner;
+    QObject::connect(&queuedRunner, &QTimer::timeout, &queuedRunner, [&runnerExeced]() { runnerExeced = true; },
+                     Qt::QueuedConnection);
+    queuedRunner.setSingleShot(true);
+    queuedRunner.start(0);
+
+    EXPECT_FALSE(runnerExeced);
+    ProofObject::call(testObj, &TestProofObject::multiply, Call::Block, result, 42, 10);
+
+    EXPECT_TRUE(runnerExeced);
+    EXPECT_LE(50, timer.elapsed());
+    EXPECT_EQ(420, result);
+    EXPECT_EQ(thread, testObj->methodThread);
+
+    EXPECT_TRUE(task.wait(100));
+
+    thread->quit();
+    thread->wait(1000);
+    delete thread;
+    delete testObj;
+}
+
+TEST(ProofObjectTest, callSameThread)
+{
+    TestProofObject *testObj = new TestProofObject;
+    testObj->canProceed = true;
+    int result = 0;
+    ProofObject::call(testObj, &TestProofObject::multiply, Call::Block, result, 42, 10);
+    EXPECT_EQ(420, result);
+    EXPECT_EQ(QThread::currentThread(), testObj->methodThread);
+    delete testObj;
+}
+
+TEST(ProofObjectTest, safeCallSameThread)
+{
+    TestProofObject *testObj = new TestProofObject;
+    bool invoked = ProofObject::safeCall(testObj, &TestProofObject::shouldNotHappen, Call::Block);
+    EXPECT_FALSE(invoked);
+    EXPECT_FALSE(testObj->shouldNotHappenHappened);
+    delete testObj;
+}
+
+TEST(ProofObjectTest, failureHandlerDefault)
+{
+    TestProofObject *testObj = new TestProofObject;
+    QString message;
+    long module = 0;
+    long error = 0;
+    bool wasFatal = false;
+    bool wasUserFriendly = false;
+    QObject::connect(testObj, &ProofObject::errorOccurred, testObj,
+                     [&message, &module, &error, &wasFatal, &wasUserFriendly](long moduleCode, long errorCode,
+                                                                              const QString &errorMessage,
+                                                                              bool userFriendly, bool fatal) {
+                         message = errorMessage;
+                         module = moduleCode;
+                         error = errorCode;
+                         wasUserFriendly = userFriendly;
+                         wasFatal = fatal;
+                     });
+    Promise<bool> p;
+    testObj->decorateFutureWithFailureHandler(p.future(), Failure::Hints::NoHint);
+    p.failure(Failure("Message", 42, 10));
+    EXPECT_EQ("Message", message);
+    EXPECT_EQ(42, module);
+    EXPECT_EQ(10, error);
+    EXPECT_FALSE(wasUserFriendly);
+    EXPECT_FALSE(wasFatal);
+    delete testObj;
+}
+
+TEST(ProofObjectTest, failureHandlerFriendly)
+{
+    TestProofObject *testObj = new TestProofObject;
+    QString message;
+    long module = 0;
+    long error = 0;
+    bool wasFatal = false;
+    bool wasUserFriendly = false;
+    QObject::connect(testObj, &ProofObject::errorOccurred, testObj,
+                     [&message, &module, &error, &wasFatal, &wasUserFriendly](long moduleCode, long errorCode,
+                                                                              const QString &errorMessage,
+                                                                              bool userFriendly, bool fatal) {
+                         message = errorMessage;
+                         module = moduleCode;
+                         error = errorCode;
+                         wasUserFriendly = userFriendly;
+                         wasFatal = fatal;
+                     });
+    Promise<bool> p;
+    testObj->decorateFutureWithFailureHandler(p.future(), Failure::Hints::NoHint);
+    p.failure(Failure("Message", 42, 10, Failure::Hints::UserFriendlyHint));
+    EXPECT_EQ("Message", message);
+    EXPECT_EQ(42, module);
+    EXPECT_EQ(10, error);
+    EXPECT_TRUE(wasUserFriendly);
+    EXPECT_FALSE(wasFatal);
+    delete testObj;
+}
+
+TEST(ProofObjectTest, failureHandlerCritical)
+{
+    TestProofObject *testObj = new TestProofObject;
+    QString message;
+    long module = 0;
+    long error = 0;
+    bool wasFatal = false;
+    bool wasUserFriendly = false;
+    QObject::connect(testObj, &ProofObject::errorOccurred, testObj,
+                     [&message, &module, &error, &wasFatal, &wasUserFriendly](long moduleCode, long errorCode,
+                                                                              const QString &errorMessage,
+                                                                              bool userFriendly, bool fatal) {
+                         message = errorMessage;
+                         module = moduleCode;
+                         error = errorCode;
+                         wasUserFriendly = userFriendly;
+                         wasFatal = fatal;
+                     });
+    Promise<bool> p;
+    testObj->decorateFutureWithFailureHandler(p.future(), Failure::Hints::NoHint);
+    p.failure(Failure("Message", 42, 10, Failure::Hints::CriticalHint));
+    EXPECT_EQ("Message", message);
+    EXPECT_EQ(42, module);
+    EXPECT_EQ(10, error);
+    EXPECT_FALSE(wasUserFriendly);
+    EXPECT_TRUE(wasFatal);
+    delete testObj;
+}
+
+TEST(ProofObjectTest, failureHandlerForceFriendly)
+{
+    TestProofObject *testObj = new TestProofObject;
+    QString message;
+    long module = 0;
+    long error = 0;
+    bool wasFatal = false;
+    bool wasUserFriendly = false;
+    QObject::connect(testObj, &ProofObject::errorOccurred, testObj,
+                     [&message, &module, &error, &wasFatal, &wasUserFriendly](long moduleCode, long errorCode,
+                                                                              const QString &errorMessage,
+                                                                              bool userFriendly, bool fatal) {
+                         message = errorMessage;
+                         module = moduleCode;
+                         error = errorCode;
+                         wasUserFriendly = userFriendly;
+                         wasFatal = fatal;
+                     });
+    Promise<bool> p;
+    testObj->decorateFutureWithFailureHandler(p.future(), Failure::Hints::UserFriendlyHint);
+    p.failure(Failure("Message", 42, 10));
+    EXPECT_EQ("Message", message);
+    EXPECT_EQ(42, module);
+    EXPECT_EQ(10, error);
+    EXPECT_TRUE(wasUserFriendly);
+    EXPECT_FALSE(wasFatal);
+    delete testObj;
+}
+
+TEST(ProofObjectTest, failureHandlerForceCritical)
+{
+    TestProofObject *testObj = new TestProofObject;
+    QString message;
+    long module = 0;
+    long error = 0;
+    bool wasFatal = false;
+    bool wasUserFriendly = false;
+    QObject::connect(testObj, &ProofObject::errorOccurred, testObj,
+                     [&message, &module, &error, &wasFatal, &wasUserFriendly](long moduleCode, long errorCode,
+                                                                              const QString &errorMessage,
+                                                                              bool userFriendly, bool fatal) {
+                         message = errorMessage;
+                         module = moduleCode;
+                         error = errorCode;
+                         wasUserFriendly = userFriendly;
+                         wasFatal = fatal;
+                     });
+    Promise<bool> p;
+    testObj->decorateFutureWithFailureHandler(p.future(), Failure::Hints::CriticalHint);
+    p.failure(Failure("Message", 42, 10));
+    EXPECT_EQ("Message", message);
+    EXPECT_EQ(42, module);
+    EXPECT_EQ(10, error);
+    EXPECT_FALSE(wasUserFriendly);
+    EXPECT_TRUE(wasFatal);
+    delete testObj;
+}
+#include "proofobject_test.moc"
