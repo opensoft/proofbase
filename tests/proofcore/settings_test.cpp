@@ -412,3 +412,45 @@ TEST_F(SettingsTest, signalsCheck)
     EXPECT_EQ(0, subGroup->values().count());
     EXPECT_EQ(1, mainGroupGroupRemovedSpy->count());
 }
+
+TEST_F(SettingsTest, copyTo)
+{
+    prepareSettingsFile();
+
+    Settings settings;
+    SettingsGroup *nestedGroup = settings.group("nested");
+
+    ASSERT_NE(nullptr, nestedGroup);
+
+    SettingsGroup *newNestedGroup = settings.group("newNested", Settings::NotFoundPolicy::Add);
+    ASSERT_EQ(0, newNestedGroup->groups().count());
+
+    nestedGroup->copyTo(newNestedGroup);
+
+    SettingsGroup *nestedNestedGroup = newNestedGroup->group("nested");
+    SettingsGroup *nestedAnotherGroup = newNestedGroup->group("another");
+    ASSERT_NE(nullptr, nestedNestedGroup);
+    ASSERT_NE(nullptr, nestedAnotherGroup);
+    SettingsGroup *nestedNestedMoreNestedGroup = nestedNestedGroup->group("more_nested");
+    ASSERT_NE(nullptr, nestedNestedMoreNestedGroup);
+    SettingsGroup *nestedNestedMoreNestedOneMoreLevelGroup = nestedNestedMoreNestedGroup->group("one_more_level");
+    ASSERT_NE(nullptr, nestedNestedMoreNestedOneMoreLevelGroup);
+
+    EXPECT_EQ(2, newNestedGroup->groups().count());
+    EXPECT_EQ(0, nestedAnotherGroup->groups().count());
+    EXPECT_EQ(1, nestedNestedGroup->groups().count());
+    EXPECT_EQ(1, nestedNestedMoreNestedGroup->groups().count());
+    EXPECT_EQ(0, nestedNestedMoreNestedOneMoreLevelGroup->groups().count());
+
+    EXPECT_EQ(1, newNestedGroup->values().count());
+    EXPECT_EQ(1, nestedNestedGroup->values().count());
+    EXPECT_EQ(1, nestedAnotherGroup->values().count());
+    EXPECT_EQ(1, nestedNestedMoreNestedGroup->values().count());
+    EXPECT_EQ(1, nestedNestedMoreNestedOneMoreLevelGroup->values().count());
+
+    EXPECT_EQ(123, nestedNestedGroup->value("param").toInt());
+    EXPECT_EQ(321, nestedAnotherGroup->value("param").toInt());
+    EXPECT_EQ(456, nestedNestedMoreNestedGroup->value("param").toInt());
+    EXPECT_EQ(654, nestedNestedMoreNestedOneMoreLevelGroup->value("param").toInt());
+    EXPECT_EQ(987, newNestedGroup->value("param").toInt());
+}

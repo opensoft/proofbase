@@ -366,13 +366,13 @@ void CoreApplicationPrivate::initCrashHandler()
     sigIllAction.sa_flags = SA_SIGINFO;
 
     if (sigaction(SIGSEGV, &sigSegvAction, (struct sigaction *)nullptr) != 0)
-        qCWarning(proofCoreLoggerLog) << "No segfault handler is on your back.";
+        qCWarning(proofCoreCrashLog) << "No segfault handler is on your back.";
     if (sigaction(SIGABRT, &sigAbrtAction, (struct sigaction *)nullptr) != 0)
-        qCWarning(proofCoreLoggerLog) << "No abort handler is on your back.";
+        qCWarning(proofCoreCrashLog) << "No abort handler is on your back.";
     if (sigaction(SIGFPE, &sigFpeAction, (struct sigaction *)nullptr) != 0)
-        qCWarning(proofCoreLoggerLog) << "No fp error handler is on your back.";
+        qCWarning(proofCoreCrashLog) << "No fp error handler is on your back.";
     if (sigaction(SIGILL, &sigIllAction, (struct sigaction *)nullptr) != 0)
-        qCWarning(proofCoreLoggerLog) << "No illegal instruction handler is on your back.";
+        qCWarning(proofCoreCrashLog) << "No illegal instruction handler is on your back.";
 #endif
 }
 
