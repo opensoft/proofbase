@@ -1,11 +1,16 @@
 // clazy:skip
 
+#include "proofcore/coreapplication.h"
+
 #include "proofnetwork/abstractrestserver.h"
 #include "proofnetwork/proofnetwork_types.h"
 #include "proofnetwork/restclient.h"
 
 #include "gtest/proof/test_global.h"
 
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QNetworkReply>
 #include <QTest>
 
@@ -26,49 +31,16 @@ public:
     }
 
 public slots:
-    NO_AUTH_REQUIRED void rest_get_TestPublicMethod(QTcpSocket *socket, const QStringList &headers,
+    NO_AUTH_REQUIRED void rest_get_TestPublicMethod(QTcpSocket *socket, const QStringList &,
                                                     const QStringList &methodVariableParts,
-                                                    const QUrlQuery &queryParams, const QByteArray &body)
+                                                    const QUrlQuery &queryParams, const QByteArray &)
     {
-        Q_UNUSED(headers)
-        Q_UNUSED(body)
         sendAnswer(socket, __func__, "text/plain", 200, methodVariableParts.join('/') + "|" + queryParams.toString());
     }
 
-    void rest_get_TestMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
-                             const QUrlQuery &queryParams, const QByteArray &body)
+    void rest_get_TestMethod(QTcpSocket *socket, const QStringList &, const QStringList &methodVariableParts,
+                             const QUrlQuery &queryParams, const QByteArray &)
     {
-        Q_UNUSED(headers)
-        Q_UNUSED(body)
-        sendAnswer(socket, __func__, "text/plain", 200, methodVariableParts.join('/') + "|" + queryParams.toString());
-    }
-
-    void rest_get_Testmethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
-                             const QUrlQuery &queryParams, const QByteArray &body)
-    {
-        Q_UNUSED(headers)
-        Q_UNUSED(methodVariableParts)
-        Q_UNUSED(queryParams)
-        Q_UNUSED(body)
-        sendAnswer(socket, __func__, "text/plain");
-    }
-
-    void rest_get_TestMethod_SubMethod(QTcpSocket *socket, const QStringList &headers,
-                                       const QStringList &methodVariableParts, const QUrlQuery &queryParams,
-                                       const QByteArray &body)
-    {
-        Q_UNUSED(headers)
-        Q_UNUSED(methodVariableParts)
-        Q_UNUSED(queryParams)
-        Q_UNUSED(body)
-        sendAnswer(socket, __func__, "text/plain");
-    }
-
-    void rest_post_TestMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
-                              const QUrlQuery &queryParams, const QByteArray &body)
-    {
-        Q_UNUSED(headers)
-        Q_UNUSED(body)
         sendAnswer(socket, __func__, "text/plain", 200, methodVariableParts.join('/') + "|" + queryParams.toString());
     }
 };
@@ -80,33 +52,72 @@ public:
     TestRestServerWithoutAuth() : Proof::AbstractRestServer(9092) {}
 
 public slots:
-    void rest_get_TestMethod(QTcpSocket *socket, const QStringList &headers, const QStringList &methodVariableParts,
-                             const QUrlQuery &queryParams, const QByteArray &body)
+    void rest_get_TestMethod(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &,
+                             const QByteArray &)
     {
-        Q_UNUSED(headers)
-        Q_UNUSED(methodVariableParts)
-        Q_UNUSED(queryParams)
-        Q_UNUSED(body)
         sendAnswer(socket, __func__, "text/plain");
+    }
+    void rest_get_Slow_TestMethod(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &,
+                                  const QByteArray &)
+    {
+        QThread::msleep(500);
+        sendAnswer(socket, __func__, "text/plain");
+    }
+
+    void rest_get_TestMethodWithCustomHeader(QTcpSocket *socket, const QStringList &, const QStringList &,
+                                             const QUrlQuery &, const QByteArray &)
+    {
+        sendAnswer(socket, __func__, "text/plain", QHash<QString, QString>{{"ExtraHeader", "extra header value"}});
+    }
+
+    void rest_get_Error_TestMethod(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &,
+                                   const QByteArray &)
+    {
+        sendErrorCode(socket, 500, "Some reason here", 42, {"arg1", "arg2"});
+    }
+
+    void rest_get_Error_BadRequest(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &,
+                                   const QByteArray &)
+    {
+        sendBadRequest(socket);
+    }
+    void rest_get_Error_NotFound(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &,
+                                 const QByteArray &)
+    {
+        sendNotFound(socket);
+    }
+    void rest_get_Error_Conflict(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &,
+                                 const QByteArray &)
+    {
+        sendConflict(socket);
+    }
+    void rest_get_Error_InternalError(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &,
+                                      const QByteArray &)
+    {
+        sendInternalError(socket);
+    }
+    void rest_get_Error_NotImplemented(QTcpSocket *socket, const QStringList &, const QStringList &, const QUrlQuery &,
+                                       const QByteArray &)
+    {
+        sendNotImplemented(socket);
     }
 };
 
-class TestRestServerWithPathPrefix : public TestRestServer
-{
-    Q_OBJECT
-public:
-    TestRestServerWithPathPrefix() : TestRestServer("/api", 9093) {}
-};
-
-class RestServerMethodsTest : public TestWithParam<std::tuple<QString, QString, int, bool>>
+class RestServerTest : public Test
 {
 public:
-    RestServerMethodsTest() {}
+    RestServerTest() {}
 
     static void SetUpTestCase()
     {
         restServerUT = new TestRestServer();
+        ASSERT_EQ("", restServerUT->pathPrefix());
+        ASSERT_EQ(9091, restServerUT->port());
+        ASSERT_EQ("username", restServerUT->userName());
+        ASSERT_EQ("password", restServerUT->password());
+        ASSERT_EQ(Proof::RestAuthType::Basic, restServerUT->authType());
         restServerUT->startListen();
+
         QTime timer;
         timer.start();
         while (!restServerUT->isListening() && timer.elapsed() < 10000)
@@ -119,18 +130,10 @@ public:
         while (!restServerWithoutAuthUT->isListening() && timer.elapsed() < 10000)
             QThread::msleep(50);
         ASSERT_TRUE(restServerWithoutAuthUT->isListening());
-
-        restServerWithPathPrefixUT = new TestRestServerWithPathPrefix();
-        restServerWithPathPrefixUT->startListen();
-        timer.start();
-        while (!restServerWithPathPrefixUT->isListening() && timer.elapsed() < 10000)
-            QThread::msleep(50);
-        ASSERT_TRUE(restServerWithPathPrefixUT->isListening());
     }
 
     static void TearDownTestCase()
     {
-        delete restServerWithPathPrefixUT;
         delete restServerWithoutAuthUT;
         delete restServerUT;
     }
@@ -160,15 +163,6 @@ protected:
         restClientWithoutAuthUT->setPort(9092);
         restClientWithoutAuthUT->setScheme("http");
         restClientWithoutAuthUT->setClientName("Proof-test");
-
-        restClientWithPrefixUT = Proof::RestClientSP::create();
-        restClientWithPrefixUT->setAuthType(Proof::RestAuthType::Basic);
-        restClientWithPrefixUT->setUserName("username");
-        restClientWithPrefixUT->setPassword("password");
-        restClientWithPrefixUT->setHost("127.0.0.1");
-        restClientWithPrefixUT->setPort(9093);
-        restClientWithPrefixUT->setScheme("http");
-        restClientWithPrefixUT->setClientName("Proof-test");
     }
 
 protected:
@@ -177,24 +171,89 @@ protected:
     static TestRestServer *restServerUT;
     Proof::RestClientSP restClientWithoutAuthUT;
     static TestRestServerWithoutAuth *restServerWithoutAuthUT;
-    Proof::RestClientSP restClientWithPrefixUT;
-    static TestRestServerWithPathPrefix *restServerWithPathPrefixUT;
 };
 
-TestRestServer *RestServerMethodsTest::restServerUT = nullptr;
-TestRestServerWithoutAuth *RestServerMethodsTest::restServerWithoutAuthUT = nullptr;
-TestRestServerWithPathPrefix *RestServerMethodsTest::restServerWithPathPrefixUT = nullptr;
+TestRestServer *RestServerTest::restServerUT = nullptr;
+TestRestServerWithoutAuth *RestServerTest::restServerWithoutAuthUT = nullptr;
 
-class PathPrefixServerMethodsTest : public RestServerMethodsTest
-{};
+TEST_F(RestServerTest, defaultCtor)
+{
+    std::unique_ptr<Proof::AbstractRestServer> server(new Proof::AbstractRestServer());
+    EXPECT_EQ(80, server->port());
+    EXPECT_EQ("", server->pathPrefix());
+    EXPECT_EQ("", server->userName());
+    EXPECT_EQ("", server->password());
+    EXPECT_EQ(Proof::RestAuthType::NoAuth, server->authType());
+}
 
-class AnotherRestServerMethodsTest : public RestServerMethodsTest
-{};
+TEST_F(RestServerTest, customServer)
+{
+    {
+        std::unique_ptr<Proof::AbstractRestServer> server(new Proof::AbstractRestServer(4096));
+        EXPECT_EQ(4096, server->port());
+        EXPECT_EQ("", server->pathPrefix());
+        EXPECT_EQ("", server->userName());
+        EXPECT_EQ("", server->password());
+        EXPECT_EQ(Proof::RestAuthType::NoAuth, server->authType());
+    }
+    {
+        std::unique_ptr<Proof::AbstractRestServer> server(new Proof::AbstractRestServer("api/internal", 4096));
+        EXPECT_EQ(4096, server->port());
+        EXPECT_EQ("api/internal", server->pathPrefix());
+        EXPECT_EQ("", server->userName());
+        EXPECT_EQ("", server->password());
+        EXPECT_EQ(Proof::RestAuthType::NoAuth, server->authType());
+    }
+    {
+        std::unique_ptr<Proof::AbstractRestServer> server(new Proof::AbstractRestServer());
+        server->setPort(5120);
+        EXPECT_EQ(5120, server->port());
+        server->setPathPrefix("api/internal");
+        EXPECT_EQ("api/internal", server->pathPrefix());
+        server->setUserName("user");
+        EXPECT_EQ("user", server->userName());
+        server->setPassword("secret phrase");
+        EXPECT_EQ("secret phrase", server->password());
+        server->setAuthType(Proof::RestAuthType::Basic);
+        EXPECT_EQ(Proof::RestAuthType::Basic, server->authType());
 
-class SomeMoreRestServerMethodsTest : public RestServerMethodsTest
-{};
+        EXPECT_EQ(5120, server->port());
+        EXPECT_EQ("api/internal", server->pathPrefix());
+        EXPECT_EQ("user", server->userName());
+        EXPECT_EQ("secret phrase", server->password());
+    }
+}
 
-TEST_F(RestServerMethodsTest, withoutAuth)
+TEST_F(RestServerTest, customHeadersSanity)
+{
+    std::unique_ptr<Proof::AbstractRestServer> server(new Proof::AbstractRestServer());
+    EXPECT_FALSE(server->containsCustomHeader("SpecialHeader"));
+    EXPECT_EQ(QString(), server->customHeader("SpecialHeader"));
+    server->setCustomHeader("SpecialHeader", "Some Value");
+    EXPECT_TRUE(server->containsCustomHeader("SpecialHeader"));
+    EXPECT_EQ("Some Value", server->customHeader("SpecialHeader"));
+    server->unsetCustomHeader("SpecialHeader");
+    EXPECT_FALSE(server->containsCustomHeader("SpecialHeader"));
+    EXPECT_EQ(QString(), server->customHeader("SpecialHeader"));
+    server->setCustomHeader("SpecialHeader", "Some Value");
+    server->setCustomHeader("OtherSpecialHeader", "Some Another Value");
+    EXPECT_TRUE(server->containsCustomHeader("SpecialHeader"));
+    EXPECT_EQ("Some Value", server->customHeader("SpecialHeader"));
+    EXPECT_TRUE(server->containsCustomHeader("OtherSpecialHeader"));
+    EXPECT_EQ("Some Another Value", server->customHeader("OtherSpecialHeader"));
+    server->unsetCustomHeader("SpecialHeader");
+    EXPECT_FALSE(server->containsCustomHeader("SpecialHeader"));
+    EXPECT_EQ(QString(), server->customHeader("SpecialHeader"));
+    EXPECT_TRUE(server->containsCustomHeader("OtherSpecialHeader"));
+    EXPECT_EQ("Some Another Value", server->customHeader("OtherSpecialHeader"));
+    server->unsetCustomHeader("OtherSpecialHeader");
+    EXPECT_FALSE(server->containsCustomHeader("SpecialHeader"));
+    EXPECT_EQ(QString(), server->customHeader("SpecialHeader"));
+    EXPECT_FALSE(server->containsCustomHeader("OtherSpecialHeader"));
+    EXPECT_EQ(QString(), server->customHeader("OtherSpecialHeader"));
+}
+
+TEST_F(RestServerTest, withoutAuth)
 {
     ASSERT_TRUE(restServerWithoutAuthUT->isListening());
 
@@ -213,7 +272,26 @@ TEST_F(RestServerMethodsTest, withoutAuth)
     delete reply;
 }
 
-TEST_F(RestServerMethodsTest, noAuthTag)
+TEST_F(RestServerTest, withAuth)
+{
+    ASSERT_TRUE(restServerUT->isListening());
+
+    QNetworkReply *reply = restClientUT->get("/test-method").result();
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
+
+    EXPECT_EQ(200, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+
+    const QString answer = QString(reply->readAll()).trimmed();
+    EXPECT_EQ("rest_get_TestMethod", answer);
+
+    delete reply;
+}
+
+TEST_F(RestServerTest, noAuthTag)
 {
     ASSERT_TRUE(restServerUT->isListening());
 
@@ -232,7 +310,7 @@ TEST_F(RestServerMethodsTest, noAuthTag)
     delete reply;
 }
 
-TEST_F(RestServerMethodsTest, noAuthTagNegative)
+TEST_F(RestServerTest, noAuthTagNegative)
 {
     ASSERT_TRUE(restServerUT->isListening());
 
@@ -248,163 +326,186 @@ TEST_F(RestServerMethodsTest, noAuthTagNegative)
     delete reply;
 }
 
-TEST_P(RestServerMethodsTest, methodsNames)
+TEST_F(RestServerTest, doubleRequest)
 {
-    QString method = std::get<0>(GetParam());
-    QString serverMethodName = std::get<1>(GetParam());
-    int resultCode = std::get<2>(GetParam());
-    bool isPost = std::get<3>(GetParam());
+    ASSERT_TRUE(restServerWithoutAuthUT->isListening());
 
-    ASSERT_TRUE(restServerUT->isListening());
+    QNetworkReply *slowReply = restClientWithoutAuthUT->get("/slow/test-method").result();
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/test-method").result();
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    EXPECT_TRUE(reply->isFinished());
+    while (!slowReply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    EXPECT_TRUE(slowReply->isFinished());
 
-    QNetworkReply *reply = isPost ? restClientUT->post(method).result() : restClientUT->get(method).result();
+    delete reply;
+    delete slowReply;
+}
+
+TEST_F(RestServerTest, dynamicHeaderRetrieve)
+{
+    ASSERT_TRUE(restServerWithoutAuthUT->isListening());
+
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/test-method-with-custom-header").result();
     QTime timer;
     timer.start();
     while (!reply->isFinished() && timer.elapsed() < 10000)
         QThread::msleep(5);
     ASSERT_TRUE(reply->isFinished());
 
-    EXPECT_EQ(resultCode, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+    EXPECT_EQ(200, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
 
-    if (resultCode == 200) {
-        QString methodName = QString(reply->readAll()).trimmed();
-        EXPECT_EQ(methodName, serverMethodName);
-    }
+    const QString answer = QString(reply->readAll()).trimmed();
+    EXPECT_EQ("rest_get_TestMethodWithCustomHeader", answer);
+    EXPECT_TRUE(reply->hasRawHeader("ExtraHeader"));
+    EXPECT_EQ("extra header value", reply->rawHeader("ExtraHeader"));
+
     delete reply;
 }
 
-INSTANTIATE_TEST_CASE_P(
-    RestServerMethodsTestInstance, RestServerMethodsTest,
-    testing::Values(std::tuple<QString, QString, int, bool>("/test-method", "rest_get_TestMethod", 200, false),
-                    std::tuple<QString, QString, int, bool>("/test-met-hod", "", 404, false),
-                    std::tuple<QString, QString, int, bool>("/tEst-meThoD", "rest_get_TestMethod", 200, false),
-                    std::tuple<QString, QString, int, bool>("/testmethod", "rest_get_Testmethod", 200, false),
-                    std::tuple<QString, QString, int, bool>("/test-method/sub-method", "rest_get_TestMethod_SubMethod",
-                                                            200, false),
-                    std::tuple<QString, QString, int, bool>("/test-method/sub-method/subsub",
-                                                            "rest_get_TestMethod_SubMethod", 200, false),
-                    std::tuple<QString, QString, int, bool>("/test-method", "rest_post_TestMethod", 200, true),
-                    std::tuple<QString, QString, int, bool>("/a/test-method", "", 404, true),
-                    std::tuple<QString, QString, int, bool>("/a/test-method", "", 404, false),
-                    std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, false),
-                    std::tuple<QString, QString, int, bool>("/wrong-method", "", 404, true)));
-
-TEST_P(PathPrefixServerMethodsTest, methodsNames)
+TEST_F(RestServerTest, predefinedHeaderRetrieve)
 {
-    QString method = std::get<0>(GetParam());
-    QString serverMethodName = std::get<1>(GetParam());
-    int resultCode = std::get<2>(GetParam());
-    bool isPost = std::get<3>(GetParam());
+    ASSERT_TRUE(restServerWithoutAuthUT->isListening());
+    restServerWithoutAuthUT->setCustomHeader("CustomHeader", "custom header value");
 
-    ASSERT_TRUE(restServerWithPathPrefixUT->isListening());
-
-    QNetworkReply *reply = isPost ? restClientWithPrefixUT->post(method).result()
-                                  : restClientWithPrefixUT->get(method).result();
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/test-method").result();
     QTime timer;
     timer.start();
     while (!reply->isFinished() && timer.elapsed() < 10000)
         QThread::msleep(5);
     ASSERT_TRUE(reply->isFinished());
 
-    EXPECT_EQ(resultCode, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+    EXPECT_EQ(200, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
 
-    if (resultCode == 200) {
-        QString methodName = QString(reply->readAll()).trimmed();
-        EXPECT_EQ(methodName, serverMethodName);
-    }
+    const QString answer = QString(reply->readAll()).trimmed();
+    EXPECT_EQ("rest_get_TestMethod", answer);
+    EXPECT_TRUE(reply->hasRawHeader("CustomHeader"));
+    EXPECT_EQ("custom header value", reply->rawHeader("CustomHeader"));
+
     delete reply;
 }
 
-INSTANTIATE_TEST_CASE_P(
-    PathPrefixServerMethodsTestInstance, PathPrefixServerMethodsTest,
-    testing::Values(std::tuple<QString, QString, int, bool>("/api/test-method", "rest_get_TestMethod", 200, false),
-                    std::tuple<QString, QString, int, bool>("/api/test-met-hod", "", 404, false),
-                    std::tuple<QString, QString, int, bool>("/api/tEst-meThoD", "rest_get_TestMethod", 200, false),
-                    std::tuple<QString, QString, int, bool>("/api/testmethod", "rest_get_Testmethod", 200, false),
-                    std::tuple<QString, QString, int, bool>("/api/test-method/sub-method",
-                                                            "rest_get_TestMethod_SubMethod", 200, false),
-                    std::tuple<QString, QString, int, bool>("/api/test-method/sub-method/subsub",
-                                                            "rest_get_TestMethod_SubMethod", 200, false),
-                    std::tuple<QString, QString, int, bool>("/api/test-method", "rest_post_TestMethod", 200, true),
-                    std::tuple<QString, QString, int, bool>("/api/wrong-method", "", 404, false),
-                    std::tuple<QString, QString, int, bool>("/api/wrong-method", "", 404, true),
-                    std::tuple<QString, QString, int, bool>("/test-method", "", 404, false),
-                    std::tuple<QString, QString, int, bool>("/test-method", "", 404, true)));
-
-TEST_P(AnotherRestServerMethodsTest, methodsParams)
+TEST_F(RestServerTest, bothHeadersRetrieve)
 {
-    QString method = std::get<0>(GetParam());
-    QString params = std::get<1>(GetParam());
-    int resultCode = std::get<2>(GetParam());
-    bool isPost = std::get<3>(GetParam());
+    ASSERT_TRUE(restServerWithoutAuthUT->isListening());
+    restServerWithoutAuthUT->setCustomHeader("CustomHeader", "custom header value");
 
-    ASSERT_TRUE(restServerUT->isListening());
-
-    QUrlQuery query(params);
-
-    QNetworkReply *reply = isPost ? restClientUT->post(method, query).result()
-                                  : restClientUT->get(method, query).result();
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/test-method-with-custom-header").result();
     QTime timer;
     timer.start();
     while (!reply->isFinished() && timer.elapsed() < 10000)
         QThread::msleep(5);
     ASSERT_TRUE(reply->isFinished());
 
-    EXPECT_EQ(resultCode, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+    EXPECT_EQ(200, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
 
-    QStringList reasonResult = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed().split('|');
-
-    ASSERT_EQ(2, reasonResult.count());
-
-    EXPECT_TRUE(method.endsWith(reasonResult.at(0)));
-    EXPECT_EQ(query, QUrlQuery(reasonResult.at(1)));
+    const QString answer = QString(reply->readAll()).trimmed();
+    EXPECT_EQ("rest_get_TestMethodWithCustomHeader", answer);
+    EXPECT_TRUE(reply->hasRawHeader("CustomHeader"));
+    EXPECT_EQ("custom header value", reply->rawHeader("CustomHeader"));
+    EXPECT_TRUE(reply->hasRawHeader("ExtraHeader"));
+    EXPECT_EQ("extra header value", reply->rawHeader("ExtraHeader"));
 
     delete reply;
 }
 
-INSTANTIATE_TEST_CASE_P(
-    AnotherRestServerMethodsTestInstance, AnotherRestServerMethodsTest,
-    testing::Values(std::tuple<QString, QString, int, bool>("/test-method/123", "", 200, false),
-                    std::tuple<QString, QString, int, bool>("/test-method", "param=123&another_param=true", 200, true),
-                    std::tuple<QString, QString, int, bool>("/test-method/", "param=hello&another_param=true", 200, false),
-                    std::tuple<QString, QString, int, bool>("/test-method/123/sub-method", "param=321&some_param=false",
-                                                            200, true)));
-
-TEST_P(SomeMoreRestServerMethodsTest, methodsVariableParts)
+TEST_F(RestServerTest, errorCode)
 {
-    QString method = std::get<0>(GetParam());
-    QString variablePart = std::get<1>(GetParam());
-    int resultCode = std::get<2>(GetParam());
-    bool isPost = std::get<3>(GetParam());
+    ASSERT_TRUE(restServerWithoutAuthUT->isListening());
 
-    ASSERT_TRUE(restServerUT->isListening());
-
-    QNetworkReply *reply = isPost ? restClientUT->post(method).result() : restClientUT->get(method).result();
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/error/test-method").result();
     QTime timer;
     timer.start();
     while (!reply->isFinished() && timer.elapsed() < 10000)
         QThread::msleep(5);
     ASSERT_TRUE(reply->isFinished());
 
-    EXPECT_EQ(resultCode, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+    EXPECT_EQ(500, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+    EXPECT_EQ("Some reason here", reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString());
 
-    QStringList reasonResult = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed().split('|');
-
-    ASSERT_EQ(2, reasonResult.count());
-
-    EXPECT_EQ(variablePart, reasonResult.at(0));
+    const QString answer = QString(reply->readAll()).trimmed();
+    QJsonDocument doc = QJsonDocument::fromJson(answer.toUtf8());
+    EXPECT_TRUE(doc.isObject());
+    EXPECT_EQ(42, doc.object().value("error_code").toInt());
+    QJsonArray args = doc.object().value("message_args").toArray();
+    ASSERT_EQ(2, args.count());
+    EXPECT_EQ("arg1", args[0].toString());
+    EXPECT_EQ("arg2", args[1].toString());
 
     delete reply;
 }
 
-INSTANTIATE_TEST_CASE_P(
-    SomeMoreRestServerMethodsTestInstance, SomeMoreRestServerMethodsTest,
-    testing::Values(std::tuple<QString, QString, int, bool>("/test-method/123", "123", 200, false),
-                    std::tuple<QString, QString, int, bool>("/test-method", "", 200, true),
-                    std::tuple<QString, QString, int, bool>("/test-method/", "", 200, false),
-                    std::tuple<QString, QString, int, bool>("/test-method////", "", 200, false),
-                    std::tuple<QString, QString, int, bool>("/test-method/\\`123", "\\`123", 200, false),
-                    std::tuple<QString, QString, int, bool>("/test-method/123/sub-method", "123/sub-method", 200, true),
-                    std::tuple<QString, QString, int, bool>("/test-method/CaSetEST", "CaSetEST", 200, false)));
+TEST_F(RestServerTest, badRequestHttpCode)
+{
+    ASSERT_TRUE(restServerWithoutAuthUT->isListening());
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/error/bad-request").result();
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
+    EXPECT_EQ(400, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+    EXPECT_EQ("Bad Request", reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString());
+    delete reply;
+}
+
+TEST_F(RestServerTest, notFoundHttpCode)
+{
+    ASSERT_TRUE(restServerWithoutAuthUT->isListening());
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/error/not-found").result();
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
+    EXPECT_EQ(404, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+    EXPECT_EQ("Not Found", reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString());
+    delete reply;
+}
+
+TEST_F(RestServerTest, conflictHttpCode)
+{
+    ASSERT_TRUE(restServerWithoutAuthUT->isListening());
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/error/conflict").result();
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
+    EXPECT_EQ(409, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+    EXPECT_EQ("Conflict", reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString());
+    delete reply;
+}
+
+TEST_F(RestServerTest, internalErrorHttpCode)
+{
+    ASSERT_TRUE(restServerWithoutAuthUT->isListening());
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/error/internal-error").result();
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
+    EXPECT_EQ(500, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+    EXPECT_EQ("Internal Server Error", reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString());
+    delete reply;
+}
+
+TEST_F(RestServerTest, notImplementedHttpCode)
+{
+    ASSERT_TRUE(restServerWithoutAuthUT->isListening());
+    QNetworkReply *reply = restClientWithoutAuthUT->get("/error/not-implemented").result();
+    QTime timer;
+    timer.start();
+    while (!reply->isFinished() && timer.elapsed() < 10000)
+        QThread::msleep(5);
+    ASSERT_TRUE(reply->isFinished());
+    EXPECT_EQ(501, reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
+    EXPECT_EQ("Not Implemented", reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString());
+    delete reply;
+}
 
 #include "abstractrestserver_test.moc"

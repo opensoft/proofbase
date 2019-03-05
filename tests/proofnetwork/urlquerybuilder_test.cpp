@@ -7,9 +7,39 @@
 
 using namespace Proof;
 
+TEST(UrlQueryBuilderTest, sanity)
+{
+    UrlQueryBuilderSP builder = UrlQueryBuilderSP::create();
+    EXPECT_FALSE(builder->containsCustomParam("FirstParam"));
+    EXPECT_EQ(QString(), builder->customParam("FirstParam"));
+    builder->setCustomParam("FirstParam", "Some Value");
+    EXPECT_TRUE(builder->containsCustomParam("FirstParam"));
+    EXPECT_EQ("Some Value", builder->customParam("FirstParam"));
+    builder->unsetCustomParam("FirstParam");
+    EXPECT_FALSE(builder->containsCustomParam("FirstParam"));
+    EXPECT_EQ(QString(), builder->customParam("FirstParam"));
+    builder->setCustomParam("FirstParam", "Some Value");
+    builder->setCustomParam("SecondParam", "Some Another Value");
+    EXPECT_TRUE(builder->containsCustomParam("FirstParam"));
+    EXPECT_EQ("Some Value", builder->customParam("FirstParam"));
+    EXPECT_TRUE(builder->containsCustomParam("SecondParam"));
+    EXPECT_EQ("Some Another Value", builder->customParam("SecondParam"));
+    builder->unsetCustomParam("FirstParam");
+    EXPECT_FALSE(builder->containsCustomParam("FirstParam"));
+    EXPECT_EQ(QString(), builder->customParam("FirstParam"));
+    EXPECT_TRUE(builder->containsCustomParam("SecondParam"));
+    EXPECT_EQ("Some Another Value", builder->customParam("SecondParam"));
+    builder->unsetCustomParam("SecondParam");
+    EXPECT_FALSE(builder->containsCustomParam("FirstParam"));
+    EXPECT_EQ(QString(), builder->customParam("FirstParam"));
+    EXPECT_FALSE(builder->containsCustomParam("SecondParam"));
+    EXPECT_EQ(QString(), builder->customParam("SecondParam"));
+}
+
 TEST(UrlQueryBuilderTest, toUrlQuery)
 {
     const QDateTime now = QDateTime::currentDateTime();
+    const QDateTime nowUtc = QDateTime::currentDateTime().toUTC();
 
     UrlQueryBuilderSP builder = UrlQueryBuilderSP::create();
     builder->setCustomParam("name1", "value");
@@ -23,6 +53,7 @@ TEST(UrlQueryBuilderTest, toUrlQuery)
     builder->setCustomParam("name9", true);
     builder->setCustomParam("name10", "value10");
     builder->setCustomParam("name11", 1.2);
+    builder->setCustomParam("name12", nowUtc);
 
     const QHash<QString, QString> expected{{"name1", "value"},
                                            {"name2", QString::number(qlonglong(-1))},
@@ -39,7 +70,13 @@ TEST(UrlQueryBuilderTest, toUrlQuery)
                                                                .replace("+", "%2B")},
                                            {"name9", "true"},
                                            {"name10", "value10"},
-                                           {"name11", QString::number(1.2, 'f', 3)}};
+                                           {"name11", QString::number(1.2, 'f', 3)},
+                                           {"name12", nowUtc.toString("yyyy-MM-dd HH:mm:ss")
+                                                          + nowUtc.timeZone()
+                                                                .displayName(now, QTimeZone::OffsetName)
+                                                                .replace("UTC", "")
+                                                                .replace(":", "")
+                                                                .replace("+", "%2B")}};
 
     const QUrlQuery result = builder->toUrlQuery();
 

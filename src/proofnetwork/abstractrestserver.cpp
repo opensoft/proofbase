@@ -204,7 +204,7 @@ AbstractRestServer::AbstractRestServer(AbstractRestServerPrivate &dd, const QStr
     d->q_ptr = this;
 
     d->serverThread = new QThread();
-    d->port = port;
+    setPort(port);
     setPathPrefix(pathPrefix);
 
     setSuggestedMaxThreadsCount();
