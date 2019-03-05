@@ -53,6 +53,101 @@ protected:
 
 using namespace std::placeholders;
 
+TEST(RestClientBasicsTest, fieldsSanity)
+{
+    Proof::RestClientSP restClient = Proof::RestClientSP::create();
+    restClient->setHost("127.0.0.1");
+    EXPECT_EQ("127.0.0.1", restClient->host());
+    restClient->setPort(9091);
+    EXPECT_EQ(9091, restClient->port());
+    restClient->setScheme("https");
+    EXPECT_EQ("https", restClient->scheme());
+    restClient->setClientName("Proof-test");
+    EXPECT_EQ("Proof-test", restClient->clientName());
+    restClient->setAuthType(Proof::RestAuthType::Basic);
+    EXPECT_EQ(Proof::RestAuthType::Basic, restClient->authType());
+    restClient->setToken("some token");
+    EXPECT_EQ("some token", restClient->token());
+    restClient->setUserName("user");
+    EXPECT_EQ("user", restClient->userName());
+    restClient->setPassword("secret phrase");
+    EXPECT_EQ("secret phrase", restClient->password());
+
+    EXPECT_EQ("127.0.0.1", restClient->host());
+    EXPECT_EQ(9091, restClient->port());
+    EXPECT_EQ("https", restClient->scheme());
+    EXPECT_EQ("Proof-test", restClient->clientName());
+    EXPECT_EQ(Proof::RestAuthType::Basic, restClient->authType());
+    EXPECT_EQ("some token", restClient->token());
+    EXPECT_EQ("user", restClient->userName());
+
+    restClient->setHost("127.0.0.1/api");
+    EXPECT_EQ("127.0.0.1", restClient->host());
+    EXPECT_EQ("/api", restClient->postfix());
+    restClient->setPostfix("");
+    EXPECT_EQ("", restClient->postfix());
+    restClient->setPostfix("v2");
+    EXPECT_EQ("v2", restClient->postfix());
+}
+
+TEST(RestClientBasicsTest, customHeadersSanity)
+{
+    Proof::RestClientSP restClient = Proof::RestClientSP::create();
+    EXPECT_FALSE(restClient->containsCustomHeader("SpecialHeader"));
+    EXPECT_EQ(QString(), restClient->customHeader("SpecialHeader"));
+    restClient->setCustomHeader("SpecialHeader", "Some Value");
+    EXPECT_TRUE(restClient->containsCustomHeader("SpecialHeader"));
+    EXPECT_EQ("Some Value", restClient->customHeader("SpecialHeader"));
+    restClient->unsetCustomHeader("SpecialHeader");
+    EXPECT_FALSE(restClient->containsCustomHeader("SpecialHeader"));
+    EXPECT_EQ(QString(), restClient->customHeader("SpecialHeader"));
+    restClient->setCustomHeader("SpecialHeader", "Some Value");
+    restClient->setCustomHeader("OtherSpecialHeader", "Some Another Value");
+    EXPECT_TRUE(restClient->containsCustomHeader("SpecialHeader"));
+    EXPECT_EQ("Some Value", restClient->customHeader("SpecialHeader"));
+    EXPECT_TRUE(restClient->containsCustomHeader("OtherSpecialHeader"));
+    EXPECT_EQ("Some Another Value", restClient->customHeader("OtherSpecialHeader"));
+    restClient->unsetCustomHeader("SpecialHeader");
+    EXPECT_FALSE(restClient->containsCustomHeader("SpecialHeader"));
+    EXPECT_EQ(QString(), restClient->customHeader("SpecialHeader"));
+    EXPECT_TRUE(restClient->containsCustomHeader("OtherSpecialHeader"));
+    EXPECT_EQ("Some Another Value", restClient->customHeader("OtherSpecialHeader"));
+    restClient->unsetCustomHeader("OtherSpecialHeader");
+    EXPECT_FALSE(restClient->containsCustomHeader("SpecialHeader"));
+    EXPECT_EQ(QString(), restClient->customHeader("SpecialHeader"));
+    EXPECT_FALSE(restClient->containsCustomHeader("OtherSpecialHeader"));
+    EXPECT_EQ(QString(), restClient->customHeader("OtherSpecialHeader"));
+}
+
+TEST(RestClientBasicsTest, cookiesSanity)
+{
+    Proof::RestClientSP restClient = Proof::RestClientSP::create();
+    EXPECT_FALSE(restClient->containsCookie("cookie1"));
+    EXPECT_EQ(QString(), restClient->cookie("cookie1").value());
+    restClient->setCookie(QNetworkCookie("cookie1", "value1"));
+    EXPECT_TRUE(restClient->containsCookie("cookie1"));
+    EXPECT_EQ("value1", restClient->cookie("cookie1").value());
+    restClient->unsetCookie("cookie1");
+    EXPECT_FALSE(restClient->containsCookie("cookie1"));
+    EXPECT_EQ(QString(), restClient->cookie("cookie1").value());
+    restClient->setCookie(QNetworkCookie("cookie1", "value1"));
+    restClient->setCookie(QNetworkCookie("cookie2", "value2"));
+    EXPECT_TRUE(restClient->containsCookie("cookie1"));
+    EXPECT_EQ("value1", restClient->cookie("cookie1").value());
+    EXPECT_TRUE(restClient->containsCookie("cookie2"));
+    EXPECT_EQ("value2", restClient->cookie("cookie2").value());
+    restClient->unsetCookie("cookie1");
+    EXPECT_FALSE(restClient->containsCookie("cookie1"));
+    EXPECT_EQ(QString(), restClient->cookie("cookie1").value());
+    EXPECT_TRUE(restClient->containsCookie("cookie2"));
+    EXPECT_EQ("value2", restClient->cookie("cookie2").value());
+    restClient->unsetCookie("cookie2");
+    EXPECT_FALSE(restClient->containsCookie("cookie1"));
+    EXPECT_EQ(QString(), restClient->cookie("cookie1").value());
+    EXPECT_FALSE(restClient->containsCookie("cookie2"));
+    EXPECT_EQ(QString(), restClient->cookie("cookie2").value());
+}
+
 INSTANTIATE_TEST_CASE_P(
     RestClientTestInstance, RestClientTest,
     testing::Values(
