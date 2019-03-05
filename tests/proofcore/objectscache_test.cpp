@@ -1,5 +1,7 @@
 // clazy:skip
-#define QT_NO_DEBUG
+#ifndef QT_NO_DEBUG
+#    define QT_NO_DEBUG
+#endif
 #include "proofcore/objectscache.h"
 
 #include "gtest/proof/test_global.h"
