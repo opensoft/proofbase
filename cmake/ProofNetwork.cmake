@@ -18,7 +18,6 @@ proof_add_target_sources(Network
     src/proofnetwork/httpdownloader.cpp
     src/proofnetwork/simplejsonamqpclient.cpp
     src/proofnetwork/baserestapi.cpp
-    src/proofnetwork/apicall.cpp
     src/proofnetwork/errormessagesregistry.cpp
 )
 
@@ -39,7 +38,6 @@ proof_add_target_headers(Network
     include/proofnetwork/emailnotificationhandler.h
     include/proofnetwork/amqppublisher.h
     include/proofnetwork/abstractamqpreceiver.h
-    include/proofnetwork/apicall.h
     include/proofnetwork/httpdownloader.h
     include/proofnetwork/simplejsonamqpclient.h
     include/proofnetwork/baserestapi.h
