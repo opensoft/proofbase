@@ -28,7 +28,6 @@
 #include "proofcore/settings.h"
 #include "proofcore/settingsgroup.h"
 
-#include "proofnetwork/apicall.h"
 #include "proofnetwork/emailnotificationhandler.h"
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
@@ -44,7 +43,6 @@ Q_LOGGING_CATEGORY(proofNetworkAmqpLog, "proof.network.amqp")
 PROOF_LIBRARY_INITIALIZER(libraryInit)
 {
     // clang-format off
-    qRegisterMetaType<Proof::RestApiError>("Proof::RestApiError");
     qRegisterMetaType<Proof::RestAuthType>("Proof::RestAuthType");
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType<QAMQP::Error>("QAMQP::Error");

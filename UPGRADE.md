@@ -9,6 +9,7 @@ Changes that one must make to applications based on Proof between versions.
 #### API modifications/removals/deprecations
  * ProofObject::call is ProofObject::safeCall now and calls method only if it is not in same thread
  * ProofObject::call introduced that always calls the method
+ * Proof::runApiCall and Proof::RestApiError removed
 
 #### Config changes
  * --
