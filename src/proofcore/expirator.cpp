@@ -65,7 +65,7 @@ Expirator::~Expirator()
 {
     Q_D(Expirator);
     if (d->m_timerId)
-        call(this, &QObject::killTimer, Call::Block, d->m_timerId);
+        call(this, &QObject::killTimer, Call::BlockEvents, d->m_timerId);
     d->m_thread->quit();
     if (!d->m_thread->wait(500))
         d->m_thread->terminate();
