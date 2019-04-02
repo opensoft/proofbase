@@ -3,6 +3,13 @@ ProofBase Changelog
 
 ## Not Released
 #### Features
+ * --
+
+#### Bug Fixing
+ * --
+
+## 0.19.4.2
+#### Features
  * ProofObject::call is ProofObject::safeCall now and calls method only if it is not in same thread
  * ProofObject::call introduced that always calls the method
  * Proof::runApiCall and Proof::RestApiError removed
