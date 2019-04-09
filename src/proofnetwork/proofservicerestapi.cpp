@@ -34,6 +34,7 @@ using namespace Proof;
 using namespace Proof::NetworkServices;
 
 using EntityTypeDict = QHash<QString, VersionedEntityType>;
+// NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
 Q_GLOBAL_STATIC_WITH_ARGS(EntityTypeDict, VERSIONED_ENTITY_TYPES,
                           ({{"station", VersionedEntityType::Station},
                             {"service", VersionedEntityType::Service},

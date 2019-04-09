@@ -36,6 +36,7 @@ static const int NETWORK_SSL_ERROR_OFFSET = 1500;
 static const int NETWORK_ERROR_OFFSET = 1000;
 static const QString PING_ADDRESS = QStringLiteral("8.8.8.8");
 
+// NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
 Q_GLOBAL_STATIC_WITH_ARGS(QSet<int>, ALLOWED_HTTP_STATUSES, ({200, 201, 202, 203, 204, 205, 206}))
 
 using namespace Proof;
