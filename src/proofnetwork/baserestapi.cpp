@@ -36,7 +36,7 @@ static const int NETWORK_SSL_ERROR_OFFSET = 1500;
 static const int NETWORK_ERROR_OFFSET = 1000;
 static const QString PING_ADDRESS = QStringLiteral("8.8.8.8");
 
-static const QSet<int> ALLOWED_HTTP_STATUSES = {200, 201, 202, 203, 204, 205, 206};
+Q_GLOBAL_STATIC_WITH_ARGS(QSet<int>, ALLOWED_HTTP_STATUSES, ({200, 201, 202, 203, 204, 205, 206}))
 
 using namespace Proof;
 
@@ -133,7 +133,7 @@ CancelableFuture<RestApiReply> BaseRestApi::deleteResource(const QString &method
 void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const Promise<RestApiReply> &promise)
 {
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if (ALLOWED_HTTP_STATUSES.contains(errorCode)) {
+    if (ALLOWED_HTTP_STATUSES->contains(errorCode)) {
         //TODO: move readAll to tasks too if will be needed
         //For now reading data from restclient is done at the same thread where all other reply related checks are done
         //And processing this data is done on separate thread

@@ -43,6 +43,8 @@
 
 #include <zlib.h>
 
+// clazy:excludeall=non-pod-global-static
+
 static constexpr int COMPRESS_TIMEOUT = 24 * 60 * 60 * 1000; // 1 day
 static constexpr char STRINGIFIED_TYPES[] = "DWCFI";
 static constexpr int STRINGIFIED_TYPES_MAX = 4;

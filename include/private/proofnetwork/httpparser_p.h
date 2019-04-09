@@ -65,6 +65,9 @@ private:
     QString m_uri;
     QStringList m_headers;
     QString m_error;
+
+    static const QRegExp FIRST_LINE_REG_EXP;
+    static const QRegExp HEADER_REG_EXP;
 };
 
 } // namespace Proof
