@@ -27,10 +27,10 @@
 #include <QObject>
 #include <QRegExp>
 
-static const QRegExp FIRST_LINE_REG_EXP("(.*) (.*) HTTP/1[.][01]\r\n");
-static const QRegExp HEADER_REG_EXP("((.*): (.*))\r\n");
-
 using namespace Proof;
+
+const QRegExp HttpParser::FIRST_LINE_REG_EXP{"(.*) (.*) HTTP/1[.][01]\r\n"};
+const QRegExp HttpParser::HEADER_REG_EXP{"((.*): (.*))\r\n"};
 
 HttpParser::HttpParser()
 {}

@@ -33,9 +33,12 @@
 using namespace Proof;
 using namespace Proof::NetworkServices;
 
-static const QHash<QString, VersionedEntityType> VERSIONED_ENTITY_TYPES = {{"station", VersionedEntityType::Station},
-                                                                           {"service", VersionedEntityType::Service},
-                                                                           {"framework", VersionedEntityType::Framework}};
+using EntityTypeDict = QHash<QString, VersionedEntityType>;
+// NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
+Q_GLOBAL_STATIC_WITH_ARGS(EntityTypeDict, VERSIONED_ENTITY_TYPES,
+                          ({{"station", VersionedEntityType::Station},
+                            {"service", VersionedEntityType::Service},
+                            {"framework", VersionedEntityType::Framework}}))
 
 ProofServiceRestApi::ProofServiceRestApi(const RestClientSP &restClient,
                                          const QSharedPointer<ErrorMessagesRegistry> &errorsRegistry, QObject *parent)
@@ -66,7 +69,7 @@ void ProofServiceRestApi::processSuccessfulReply(QNetworkReply *reply, const Pro
         if (versionHeaderRegExp.exactMatch(headerName)) {
             QString typeString =
                 (versionHeaderRegExp.cap(3).isEmpty() ? versionHeaderRegExp.cap(2) : versionHeaderRegExp.cap(3)).toLower();
-            auto type = VERSIONED_ENTITY_TYPES.value(typeString, VersionedEntityType::Unknown);
+            auto type = VERSIONED_ENTITY_TYPES->value(typeString, VersionedEntityType::Unknown);
             emit versionFetched(type, versionHeaderRegExp.cap(1).toLower(), header.second);
             switch (type) {
             case VersionedEntityType::Service:
