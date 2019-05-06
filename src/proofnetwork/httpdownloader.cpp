@@ -74,7 +74,6 @@ Future<QByteArray> HttpDownloader::download(const QUrl &url)
         .onSuccess([this, promise](QNetworkReply *reply) {
             auto errorHandler = [](QNetworkReply *reply, const Promise<QByteArray> &promise) {
                 int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-                // TODO: See in BaseRestApi if you need more detailed error message
                 QString errorMessage = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed();
                 if (errorMessage.isEmpty())
                     errorMessage = QStringLiteral("Download failed");

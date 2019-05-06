@@ -135,12 +135,6 @@ void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const Promise<Res
 {
     int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (ALLOWED_HTTP_STATUSES->contains(errorCode)) {
-        //TODO: move readAll to tasks too if will be needed
-        //For now reading data from restclient is done at the same thread where all other reply related checks are done
-        //And processing this data is done on separate thread
-        //It guarantees that we will not delete something that is still used by other thread
-        //It also can be a bottleneck if a lot of requests are done in the same time with big responses
-        //Moving readAll to task will mean more complex sync though
         RestApiReply data = RestApiReply::fromQNetworkReply(reply);
         tasks::run([promise, data] { promise.success(data); });
         return;

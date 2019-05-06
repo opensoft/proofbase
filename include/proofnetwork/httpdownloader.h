@@ -35,7 +35,7 @@
 namespace Proof {
 
 //This version downloads whole response before completing, don't use for big files
-//TODO: add streaming version if needed
+//TODO: add streaming
 class HttpDownloaderPrivate;
 class PROOF_NETWORK_EXPORT HttpDownloader : public ProofObject
 {

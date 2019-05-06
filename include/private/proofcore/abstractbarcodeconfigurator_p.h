@@ -31,7 +31,6 @@
 #include <QObject>
 
 namespace Proof {
-//TODO: Make it public if needed
 class PROOF_CORE_EXPORT AbstractBarcodeConfigurator : public QObject
 {
     Q_OBJECT

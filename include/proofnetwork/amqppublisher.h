@@ -46,7 +46,7 @@ public:
     QString exchangeName() const;
     void setExchangeName(const QString &exchangeName);
 
-    //TODO: add options if will be needed
+    //TODO: add options
     qulonglong publishMessage(const QString &message, const QString &routingKey);
 
     QAmqpExchange::ExchangeOptions exchangeOptions() const;
