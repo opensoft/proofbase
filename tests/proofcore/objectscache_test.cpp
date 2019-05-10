@@ -315,7 +315,7 @@ TEST_F(ObjectsCacheTest, guaranteedLifeTimeCacheExpiration)
     QTime timer;
     timer.start();
     while (cache.contains(42) && timer.elapsed() < 30000)
-        ;
+        qApp->processEvents();
     EXPECT_FALSE(cache.contains(42));
     EXPECT_FALSE(wp);
     EXPECT_TRUE(longerCache.contains("abc"));
