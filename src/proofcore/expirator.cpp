@@ -26,22 +26,18 @@
 
 #include "proofcore/proofobject_p.h"
 
-#include <QMultiMap>
+#include <QMap>
 #include <QMutex>
 #include <QSet>
 #include <QThread>
 #include <QTimer>
 #include <QTimerEvent>
 
-//TODO: refactor it
-// Few improvements coming to the mind:
-// 1. map of sets + backward mapping from item to its time to check for doubles
-// 2. round time to next 5-10 seconds to make less buckets
 namespace Proof {
 class ExpiratorPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(Expirator)
-    QMultiMap<QDateTime, QSharedPointer<ProofObject>> m_controlledObjects;
+    QMap<QDateTime, QSet<QSharedPointer<ProofObject>>> m_controlledObjects;
     QMutex *m_mutex = nullptr;
     QThread *m_thread = nullptr;
     int m_timerId = 0;
@@ -77,30 +73,26 @@ Expirator *Expirator::instance()
     return &inst;
 }
 
-void Expirator::addObject(const QSharedPointer<ProofObject> &object, const QDateTime &expirationTime)
+void Expirator::addObject(const QSharedPointer<ProofObject> &object, QDateTime expirationTime)
 {
+    expirationTime.setTime(
+        QTime(expirationTime.time().hour(), expirationTime.time().minute(), (expirationTime.time().second() / 5) * 5));
+    expirationTime = expirationTime.addSecs(5);
     Q_D(Expirator);
-    d->m_mutex->lock();
+    QMutexLocker lock(d->m_mutex);
     qCDebug(proofCoreCacheLog) << "Cache expirator adding object up to " << expirationTime;
-    d->m_controlledObjects.insertMulti(expirationTime, object);
-    d->m_mutex->unlock();
+    d->m_controlledObjects[expirationTime].insert(object);
 }
 
 void Expirator::setCleanupInterval(int seconds)
 {
-    QTimer *timer = new QTimer();
-    connect(timer, &QTimer::timeout, this,
-            [this, timer, seconds]() {
-                Q_D(Expirator);
-                if (d->m_timerId)
-                    killTimer(d->m_timerId);
-                d->m_timerId = startTimer(1000 * seconds, Qt::VeryCoarseTimer);
-                qCDebug(proofCoreCacheLog) << "Cache expirator timer started";
-                timer->deleteLater();
-            },
-            Qt::QueuedConnection);
-    timer->setSingleShot(true);
-    timer->start();
+    if (safeCall(this, &Expirator::setCleanupInterval, seconds))
+        return;
+    Q_D(Expirator);
+    if (d->m_timerId)
+        killTimer(d->m_timerId);
+    d->m_timerId = startTimer(1000 * seconds, Qt::VeryCoarseTimer);
+    qCDebug(proofCoreCacheLog) << "Cache expirator timer started";
 }
 
 void Expirator::timerEvent(QTimerEvent *ev)
@@ -108,16 +100,10 @@ void Expirator::timerEvent(QTimerEvent *ev)
     Q_D(Expirator);
     if (ev->timerId() != d->m_timerId)
         return;
-
-    d->m_mutex->lock();
-    QSet<QDateTime> toRemove;
-    for (auto it = d->m_controlledObjects.cbegin(); it != d->m_controlledObjects.cend(); ++it) {
+    QMutexLocker lock(d->m_mutex);
+    for (auto it = d->m_controlledObjects.begin(); it != d->m_controlledObjects.end();) {
         if (it.key() > QDateTime::currentDateTime())
             break;
-        toRemove << it.key();
+        it = d->m_controlledObjects.erase(it);
     }
-    qCDebug(proofCoreCacheLog) << "Cache expirator removing" << toRemove.count() << "objects";
-    for (const QDateTime &time : qAsConst(toRemove))
-        d->m_controlledObjects.remove(time);
-    d->m_mutex->unlock();
 }

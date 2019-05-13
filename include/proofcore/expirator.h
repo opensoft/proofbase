@@ -44,7 +44,7 @@ public:
     Expirator &operator=(Expirator &&) = delete;
 
     static Expirator *instance();
-    void addObject(const QSharedPointer<ProofObject> &object, const QDateTime &expirationTime);
+    void addObject(const QSharedPointer<ProofObject> &object, QDateTime expirationTime);
 
     void setCleanupInterval(int seconds);
 
