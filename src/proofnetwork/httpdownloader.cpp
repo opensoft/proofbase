@@ -218,7 +218,7 @@ Future<QIODevice *> HttpDownloader::downloadTo(const QUrl &url, QIODevice *dest)
 
 void HttpDownloaderPrivate::copyData(QNetworkReply *reply, QIODevice *dest) const
 {
-    const int LIMIT = 1 << 20;
+    const unsigned LIMIT = 1u << 20u;
     if (!reply->bytesAvailable())
         return;
     if (reply->bytesAvailable() < LIMIT) {
