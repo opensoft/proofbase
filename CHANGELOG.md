@@ -3,7 +3,7 @@ ProofBase Changelog
 
 ## Not Released
 #### Features
- * --
+ * HttpDownloader::downloadTo added for streaming downloads
 
 #### Bug Fixing
  * --

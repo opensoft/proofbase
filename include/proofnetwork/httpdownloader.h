@@ -34,8 +34,6 @@
 
 namespace Proof {
 
-//This version downloads whole response before completing, don't use for big files
-//TODO: add streaming
 class HttpDownloaderPrivate;
 class PROOF_NETWORK_EXPORT HttpDownloader : public ProofObject
 {
@@ -46,6 +44,7 @@ public:
     explicit HttpDownloader(QObject *parent = nullptr);
     Proof::RestClientSP restClient() const;
     Future<QByteArray> download(const QUrl &url);
+    Future<QIODevice *> downloadTo(const QUrl &url, QIODevice *dest);
 };
 } // namespace Proof
 #endif // PROOF_HTTPDOWNLOADER_H
