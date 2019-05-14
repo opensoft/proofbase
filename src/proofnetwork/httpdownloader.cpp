@@ -37,6 +37,8 @@ class HttpDownloaderPrivate : public ProofObjectPrivate
 {
     Q_DECLARE_PUBLIC(HttpDownloader)
 
+    void copyData(QNetworkReply *reply, QIODevice *dest) const;
+
     Proof::RestClientSP restClient;
 };
 } // namespace Proof
@@ -129,4 +131,104 @@ Future<QByteArray> HttpDownloader::download(const QUrl &url)
         })
         .onFailure([promise](const Failure &f) { promise.failure(f); });
     return promise.future();
+}
+
+Future<QIODevice *> HttpDownloader::downloadTo(const QUrl &url, QIODevice *dest)
+{
+    Q_D(HttpDownloader);
+
+    if (!url.isValid()) {
+        qCDebug(proofNetworkMiscLog) << "Url is not valid" << url;
+        return Future<QIODevice *>::failed(
+            Failure(QStringLiteral("Url is not valid"), NETWORK_MODULE_CODE, NetworkErrorCode::InvalidUrl));
+    }
+
+    Promise<QIODevice *> promise;
+    d->restClient->get(url)
+        .onSuccess([this, d, dest, promise](QNetworkReply *reply) {
+            auto errorHandler = [](QNetworkReply *reply, const Promise<QIODevice *> &promise) {
+                int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                QString errorMessage = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed();
+                if (errorMessage.isEmpty())
+                    errorMessage = QStringLiteral("Download failed");
+                else
+                    errorMessage = QStringLiteral("Download failed: %1").arg(errorMessage);
+                promise.failure(Failure(errorMessage, NETWORK_MODULE_CODE, NetworkErrorCode::ServerError,
+                                        Failure::NoHint, errorCode));
+            };
+
+            if (reply->isFinished()) {
+                if (!promise.isFilled()) {
+                    if (reply->error() == QNetworkReply::NetworkError::NoError) {
+                        d->copyData(reply, dest);
+                        promise.success(dest);
+                    } else {
+                        errorHandler(reply, promise);
+                    }
+                }
+                reply->deleteLater();
+            } else {
+                connect(reply, &QNetworkReply::downloadProgress, this,
+                        [d, dest, promise, reply](qint64, qint64) {
+                            if (promise.isFilled())
+                                return;
+                            d->copyData(reply, dest);
+                        },
+                        Qt::DirectConnection);
+                connect(reply, &QNetworkReply::finished, this, [d, dest, promise, reply, errorHandler]() {
+                    if (promise.isFilled())
+                        return;
+                    if (reply->error() == QNetworkReply::NetworkError::NoError) {
+                        d->copyData(reply, dest);
+                        promise.success(dest);
+                    } else {
+                        errorHandler(reply, promise);
+                    }
+                    reply->deleteLater();
+                });
+                connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
+                        this, [promise, reply, errorHandler](QNetworkReply::NetworkError) {
+                            if (promise.isFilled())
+                                return;
+                            errorHandler(reply, promise);
+                            reply->deleteLater();
+                        });
+
+                connect(reply, &QNetworkReply::sslErrors, this, [promise, reply](const QList<QSslError> &errors) {
+                    for (const QSslError &error : errors) {
+                        if (error.error() != QSslError::SslError::NoError) {
+                            int errorCode = BaseRestApi::clientSslErrorOffset() + static_cast<int>(error.error());
+                            qCWarning(proofNetworkMiscLog)
+                                << "SSL error occurred"
+                                << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
+                                << ": " << errorCode << error.errorString();
+                            if (promise.isFilled())
+                                continue;
+                            promise.failure(Failure(error.errorString(), NETWORK_MODULE_CODE,
+                                                    NetworkErrorCode::SslError, Failure::UserFriendlyHint, errorCode));
+                        }
+                    }
+                    reply->deleteLater();
+                });
+            }
+        })
+        .onFailure([promise](const Failure &f) { promise.failure(f); });
+    return promise.future();
+}
+
+void HttpDownloaderPrivate::copyData(QNetworkReply *reply, QIODevice *dest) const
+{
+    const unsigned LIMIT = 1u << 20u;
+    if (!reply->bytesAvailable())
+        return;
+    if (reply->bytesAvailable() < LIMIT) {
+        dest->write(reply->readAll());
+        return;
+    }
+    char buffer[LIMIT];
+    memset(buffer, 0, LIMIT);
+    while (reply->bytesAvailable()) {
+        int64_t read = reply->read(buffer, LIMIT);
+        dest->write(buffer, read);
+    }
 }
