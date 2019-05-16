@@ -143,6 +143,12 @@ Future<QIODevice *> HttpDownloader::downloadTo(const QUrl &url, QIODevice *dest)
             Failure(QStringLiteral("Url is not valid"), NETWORK_MODULE_CODE, NetworkErrorCode::InvalidUrl));
     }
 
+    if (!dest || !dest->isOpen() || !dest->isWritable()) {
+        qCDebug(proofNetworkMiscLog) << "Destination device is not available" << url;
+        return Future<QIODevice *>::failed(Failure(QStringLiteral("Destination device is not available"),
+                                                   NETWORK_MODULE_CODE, NetworkErrorCode::InternalError));
+    }
+
     Promise<QIODevice *> promise;
     d->restClient->get(url)
         .onSuccess([this, d, dest, promise](QNetworkReply *reply) {
