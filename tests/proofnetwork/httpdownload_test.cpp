@@ -300,3 +300,62 @@ TEST_F(HttpDownloaderTest, wrongUrlInDownloadTo)
     Failure failure = future.failureReason();
     EXPECT_EQ(failure.errorCode, NetworkErrorCode::InvalidUrl);
 }
+
+TEST_F(HttpDownloaderTest, nullDeviceDownloadTo)
+{
+    ASSERT_TRUE(serverRunner->serverIsRunning());
+
+    Future<QIODevice *> future = httpDownloaderUT->downloadTo(QUrl("http://127.0.0.1:9091/test.jpg"), nullptr);
+    QTime timer;
+    timer.start();
+
+    while (!future.isCompleted() && timer.elapsed() < TIMEOUT)
+        qApp->processEvents();
+
+    ASSERT_TRUE(future.isCompleted());
+    EXPECT_FALSE(future.isSucceeded());
+    EXPECT_TRUE(future.isFailed());
+    Failure failure = future.failureReason();
+    EXPECT_EQ(failure.errorCode, NetworkErrorCode::InternalError);
+}
+
+TEST_F(HttpDownloaderTest, notOpenedDeviceDownloadTo)
+{
+    ASSERT_TRUE(serverRunner->serverIsRunning());
+
+    QTemporaryFile output;
+
+    Future<QIODevice *> future = httpDownloaderUT->downloadTo(QUrl("http://127.0.0.1:9091/test.jpg"), &output);
+    QTime timer;
+    timer.start();
+
+    while (!future.isCompleted() && timer.elapsed() < TIMEOUT)
+        qApp->processEvents();
+
+    ASSERT_TRUE(future.isCompleted());
+    EXPECT_FALSE(future.isSucceeded());
+    EXPECT_TRUE(future.isFailed());
+    Failure failure = future.failureReason();
+    EXPECT_EQ(failure.errorCode, NetworkErrorCode::InternalError);
+}
+
+TEST_F(HttpDownloaderTest, nonWritableDeviceDownloadTo)
+{
+    ASSERT_TRUE(serverRunner->serverIsRunning());
+
+    QFile output(qApp->applicationFilePath());
+    output.open(QIODevice::ReadOnly);
+
+    Future<QIODevice *> future = httpDownloaderUT->downloadTo(QUrl("http://127.0.0.1:9091/test.jpg"), &output);
+    QTime timer;
+    timer.start();
+
+    while (!future.isCompleted() && timer.elapsed() < TIMEOUT)
+        qApp->processEvents();
+
+    ASSERT_TRUE(future.isCompleted());
+    EXPECT_FALSE(future.isSucceeded());
+    EXPECT_TRUE(future.isFailed());
+    Failure failure = future.failureReason();
+    EXPECT_EQ(failure.errorCode, NetworkErrorCode::InternalError);
+}
