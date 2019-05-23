@@ -174,14 +174,12 @@ Future<QIODevice *> HttpDownloader::downloadTo(const QUrl &url, QIODevice *dest)
                 }
                 reply->deleteLater();
             } else {
-                connect(reply, &QNetworkReply::downloadProgress, this,
-                        [d, dest, promise, reply](qint64, qint64) {
-                            if (promise.isFilled())
-                                return;
-                            d->copyData(reply, dest);
-                        },
-                        Qt::DirectConnection);
-                connect(reply, &QNetworkReply::finished, this, [d, dest, promise, reply, errorHandler]() {
+                connect(reply, &QNetworkReply::downloadProgress, reply, [d, dest, promise, reply](qint64, qint64) {
+                    if (promise.isFilled())
+                        return;
+                    d->copyData(reply, dest);
+                });
+                connect(reply, &QNetworkReply::finished, reply, [d, dest, promise, reply, errorHandler]() {
                     if (promise.isFilled())
                         return;
                     if (reply->error() == QNetworkReply::NetworkError::NoError) {
@@ -193,14 +191,14 @@ Future<QIODevice *> HttpDownloader::downloadTo(const QUrl &url, QIODevice *dest)
                     reply->deleteLater();
                 });
                 connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-                        this, [promise, reply, errorHandler](QNetworkReply::NetworkError) {
+                        reply, [promise, reply, errorHandler](QNetworkReply::NetworkError) {
                             if (promise.isFilled())
                                 return;
                             errorHandler(reply, promise);
                             reply->deleteLater();
                         });
 
-                connect(reply, &QNetworkReply::sslErrors, this, [promise, reply](const QList<QSslError> &errors) {
+                connect(reply, &QNetworkReply::sslErrors, reply, [promise, reply](const QList<QSslError> &errors) {
                     for (const QSslError &error : errors) {
                         if (error.error() != QSslError::SslError::NoError) {
                             int errorCode = BaseRestApi::clientSslErrorOffset() + static_cast<int>(error.error());
