@@ -7,7 +7,7 @@
 
 using namespace Proof;
 
-TEST(MemoryStorageNotoficationHandlerTest, registerUnregister)
+TEST(MemoryStorageNotificationHandlerTest, registerUnregister)
 {
     MemoryStorageNotificationHandler *handler = ErrorNotifier::instance()->handler<MemoryStorageNotificationHandler>();
     ASSERT_TRUE(handler);
@@ -26,7 +26,7 @@ TEST(MemoryStorageNotoficationHandlerTest, registerUnregister)
     EXPECT_TRUE(handler->messages().isEmpty());
 }
 
-TEST(MemoryStorageNotoficationHandlerTest, notify)
+TEST(MemoryStorageNotificationHandlerTest, notify)
 {
     MemoryStorageNotificationHandler *handler = ErrorNotifier::instance()->handler<MemoryStorageNotificationHandler>();
     ASSERT_TRUE(handler);

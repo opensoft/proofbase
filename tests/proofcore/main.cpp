@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 {
     Proof::CoreApplication app(argc, argv, QStringLiteral("Opensoft"), QStringLiteral("proof_tests"));
     Proof::Logs::setRulesFromString(QStringLiteral("proof.*=false"));
-    QTimer::singleShot(1, &app, &Proof::CoreApplication::postInit);
+    QTimer::singleShot(0, &app, &Proof::CoreApplication::postInit);
     qApp->processEvents();
 
     testing::InitGoogleTest(&argc, argv);
