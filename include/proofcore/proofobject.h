@@ -242,7 +242,7 @@ private:
     template <typename T>
     static bool dirtyCheck(const QSharedPointer<T> &child)
     {
-        return child->isDirty();
+        return child ? child->isDirty() : false;
     }
 
     template <typename T>
