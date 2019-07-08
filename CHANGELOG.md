@@ -6,7 +6,7 @@ ProofBase Changelog
  * HttpDownloader::downloadTo added for streaming downloads
 
 #### Bug Fixing
- * --
+ * Fixed crash for dirtyCheck if child is not exist
 
 ## 0.19.4.2
 #### Features
