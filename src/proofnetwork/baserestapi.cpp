@@ -173,11 +173,12 @@ void BaseRestApi::processErroredReply(QNetworkReply *reply, const Promise<RestAp
     if (!errorCodeIsHttp)
         errorCode = NETWORK_ERROR_OFFSET + static_cast<int>(reply->error());
     QString errorString = reply->errorString();
+    QString body = reply->readAll();
     long proofErrorCode = NetworkErrorCode::ServerError;
     unsigned int hints = errorCodeIsHttp ? Failure::DataIsHttpCodeHint : Failure::NoHint;
     qCDebug(proofNetworkMiscLog) << "Error occurred for"
                                  << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
-                                 << ": " << errorCode << errorString;
+                                 << ": " << errorCode << errorString << body;
     auto failure = Failure(errorString, NETWORK_MODULE_CODE, proofErrorCode, hints, errorCode);
     switch (reply->error()) {
     case QNetworkReply::HostNotFoundError:
