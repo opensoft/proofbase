@@ -8,6 +8,13 @@ ProofBase Changelog
 #### Bug Fixing
  * --
 
+## 0.19.9.12
+#### Features
+ * Put body of reply in logs when error occurred
+
+#### Bug Fixing
+ * --
+
 ## 0.19.8.7
 #### Features
  * HttpDownloader::downloadTo added for streaming downloads
