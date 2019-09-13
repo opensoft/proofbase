@@ -86,6 +86,8 @@ void EmailNotificationHandler::notify(const QString &message, ErrorNotifier::Sev
     case ErrorNotifier::Severity::Warning: //will never be used, added to supress warning
         severityName = QStringLiteral("Warning");
         break;
+    default:
+        break;
     }
 
     QString subject = QStringLiteral("%1 at %2").arg(severityName, qApp->applicationName());

@@ -220,6 +220,8 @@ CoreApplication::CoreApplication(CoreApplicationPrivate &dd, QCoreApplication *,
     d->execMigrations();
     d->initQca();
     d->initTranslator();
+
+    d->postInit();
     appExists = true;
 
     qCDebug(proofCoreMiscLog).noquote().nospace()

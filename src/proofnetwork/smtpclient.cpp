@@ -307,6 +307,7 @@ bool SmtpClientPrivate::sendTextMail(const QString &subject, const QString &body
         tasks::addSignalWaiter(socket, &QTcpSocket::readyRead, readyReadCallback);
         tasks::fireSignalWaiters();
     }
+    socket->deleteLater();
 
     return result;
 }
