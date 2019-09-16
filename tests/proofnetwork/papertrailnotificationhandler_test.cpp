@@ -27,7 +27,8 @@ protected:
             QThread::msleep(50);
         ASSERT_TRUE(serverRunner->serverIsRunning());
 
-        papertrailHandlerUT = new Proof::PapertrailNotificationHandler("127.0.0.1", 9091, QString("name"), QString());
+        papertrailHandlerUT = new Proof::PapertrailNotificationHandler("127.0.0.1", 9091, QString("senderName"),
+                                                                       QString("appId"));
     }
 
     void TearDown() override
@@ -53,5 +54,5 @@ TEST_F(PapertrailNotificationHandlerTest, notify)
         qApp->processEvents();
 
     ASSERT_FALSE(serverRunner->lastQueryRaw().isEmpty());
-    EXPECT_TRUE(serverRunner->lastQueryRaw().contains("INFO | TestMessage"));
+    EXPECT_TRUE(serverRunner->lastQueryRaw().contains("senderName appId INFO | TestMessage"));
 }
