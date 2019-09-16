@@ -34,7 +34,7 @@ namespace Proof {
 class PapertrailNotificationHandlerPrivate : public AbstractNotificationHandlerPrivate
 {
     Q_DECLARE_PUBLIC(PapertrailNotificationHandler)
-    QTcpSocket *papertrailClient;
+    QTcpSocket *papertrailClient = nullptr;
 
     QString host;
     quint16 port = 0;
@@ -99,8 +99,8 @@ void PapertrailNotificationHandler::notify(const QString &message, ErrorNotifier
     }
 
     QString fullMessage = QStringLiteral("%1 %2 %3 %4 | %5\r\n")
-                              .arg(QDateTime::currentDateTime().toString("yyyy-MM-ddTHH:mm:ss.zzz"), d->senderName,
-                                   appId(), severityName, message);
+                              .arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-ddTHH:mm:ss.zzz")),
+                                   d->senderName, appId(), severityName, message);
 
     d->papertrailClient->write(fullMessage.toLocal8Bit());
 }
