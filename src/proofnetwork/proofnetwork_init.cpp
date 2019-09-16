@@ -24,11 +24,13 @@
  */
 #include "proofcore/coreapplication.h"
 #include "proofcore/errornotifier.h"
+#include "proofcore/logs.h"
 #include "proofcore/proofglobal.h"
 #include "proofcore/settings.h"
 #include "proofcore/settingsgroup.h"
 
 #include "proofnetwork/emailnotificationhandler.h"
+#include "proofnetwork/papertrailnotificationhandler.h"
 #include "proofnetwork/proofnetwork_global.h"
 #include "proofnetwork/proofnetwork_types.h"
 #include "proofnetwork/proofservicerestapi.h"
@@ -60,40 +62,39 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
 
         Proof::SettingsGroup *emailNotifierGroup = notifierGroup->group(QStringLiteral("email"),
                                                                         Proof::Settings::NotFoundPolicy::AddGlobal);
-        if (emailNotifierGroup->value(QStringLiteral("enabled"), false, Proof::Settings::NotFoundPolicy::AddGlobal)
-                .toBool()) {
-            auto smtpClient = Proof::SmtpClientSP::create();
+        bool emailEnabled = emailNotifierGroup
+                                ->value(QStringLiteral("enabled"), false, Proof::Settings::NotFoundPolicy::AddGlobal)
+                                .toBool();
+        auto smtpClient = Proof::SmtpClientSP::create();
 
-            QString from = emailNotifierGroup
-                               ->value(QStringLiteral("from"), "", Proof::Settings::NotFoundPolicy::AddGlobal)
-                               .toString();
-            QString toString =
-                emailNotifierGroup->value(QStringLiteral("to"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString();
+        QString from =
+            emailNotifierGroup->value(QStringLiteral("from"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString();
+        QString toString =
+            emailNotifierGroup->value(QStringLiteral("to"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString();
 
-            smtpClient->setHost(
-                emailNotifierGroup->value(QStringLiteral("host"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString());
-            smtpClient->setPort(
-                emailNotifierGroup->value(QStringLiteral("port"), 25, Proof::Settings::NotFoundPolicy::AddGlobal).toInt());
-            QString connectionType = emailNotifierGroup
-                                         ->value(QStringLiteral("type"), QStringLiteral("starttls"),
-                                                 Proof::Settings::NotFoundPolicy::AddGlobal)
-                                         .toString()
-                                         .toLower()
-                                         .trimmed();
-            if (connectionType == QLatin1String("ssl")) {
-                smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::Ssl);
-            } else if (connectionType == QLatin1String("starttls")) {
-                smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::StartTls);
-            } else {
-                smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::Plain);
-            }
-            smtpClient->setUserName(
-                emailNotifierGroup->value(QStringLiteral("username"), "", Proof::Settings::NotFoundPolicy::AddGlobal)
-                    .toString());
-            smtpClient->setPassword(
-                emailNotifierGroup->value(QStringLiteral("password"), "", Proof::Settings::NotFoundPolicy::AddGlobal)
-                    .toString());
+        smtpClient->setHost(
+            emailNotifierGroup->value(QStringLiteral("host"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString());
+        smtpClient->setPort(
+            emailNotifierGroup->value(QStringLiteral("port"), 25, Proof::Settings::NotFoundPolicy::AddGlobal).toInt());
+        QString connectionType = emailNotifierGroup
+                                     ->value(QStringLiteral("type"), QStringLiteral("starttls"),
+                                             Proof::Settings::NotFoundPolicy::AddGlobal)
+                                     .toString()
+                                     .toLower()
+                                     .trimmed();
+        if (connectionType == QLatin1String("ssl")) {
+            smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::Ssl);
+        } else if (connectionType == QLatin1String("starttls")) {
+            smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::StartTls);
+        } else {
+            smtpClient->setConnectionType(Proof::SmtpClient::ConnectionType::Plain);
+        }
+        smtpClient->setUserName(
+            emailNotifierGroup->value(QStringLiteral("username"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString());
+        smtpClient->setPassword(
+            emailNotifierGroup->value(QStringLiteral("password"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString());
 
+        if (emailEnabled) {
             QStringList to;
             const auto splittedTo = toString.split(QStringLiteral("|"), QString::SkipEmptyParts);
             to.reserve(splittedTo.count());
@@ -104,6 +105,24 @@ PROOF_LIBRARY_INITIALIZER(libraryInit)
             }
             Proof::ErrorNotifier::instance()->registerHandler(
                 new Proof::EmailNotificationHandler(smtpClient, from, to, appId));
+        }
+
+        Proof::SettingsGroup *logGroup = proofApp->settings()->group(QStringLiteral("logs"),
+                                                                     Proof::Settings::NotFoundPolicy::Add);
+        Proof::SettingsGroup *papertrailGroup = logGroup->group(QStringLiteral("papertrail"),
+                                                                Proof::Settings::NotFoundPolicy::Add);
+        bool papertrailEnabled =
+            papertrailGroup->value(QStringLiteral("enabled"), false, Proof::Settings::NotFoundPolicy::Add).toBool();
+        QString papertrailSenderName =
+            papertrailGroup->value(QStringLiteral("sender_name"), "", Proof::Settings::NotFoundPolicy::Add).toString();
+        QString papertrailHost =
+            papertrailGroup->value(QStringLiteral("host"), "", Proof::Settings::NotFoundPolicy::AddGlobal).toString();
+        quint16 papertrailPort = static_cast<quint16>(
+            papertrailGroup->value(QStringLiteral("port"), 0, Proof::Settings::NotFoundPolicy::AddGlobal).toUInt());
+
+        if (papertrailEnabled && !papertrailSenderName.isEmpty() && !papertrailHost.isEmpty()) {
+            Proof::Logs::installPapertrailHandler(
+                new Proof::PapertrailNotificationHandler(papertrailHost, papertrailPort, papertrailSenderName, appId));
         }
     });
 }

@@ -39,6 +39,7 @@ class PROOF_CORE_EXPORT ErrorNotifier : public ProofObject
 public:
     enum class Severity
     {
+        Info,
         Warning,
         Error,
         Critical

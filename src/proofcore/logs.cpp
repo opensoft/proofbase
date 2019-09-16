@@ -26,6 +26,7 @@
 
 #include "proofseed/proofalgorithms.h"
 
+#include "proofcore/abstractnotificationhandler.h"
 #include "proofcore/coreapplication.h"
 #include "proofcore/errornotifier.h"
 
@@ -62,6 +63,8 @@ static QTimer oldLogsArchiver;
 
 static QFile *currentLogFile = nullptr;
 static QDate currentLogFileDate;
+
+static Proof::AbstractNotificationHandler *papertrailHandler = nullptr;
 
 namespace {
 class DetachedArchiver : public QRunnable
@@ -103,18 +106,24 @@ void baseHandler(QtMsgType type, const QMessageLogContext &context, const QStrin
 
     if (!Proof::CoreApplication::exists())
         return;
+
+    Proof::ErrorNotifier::Severity severity = Proof::ErrorNotifier::Severity::Warning;
+    switch (type) {
+    case QtCriticalMsg:
+    case QtFatalMsg:
+        severity = Proof::ErrorNotifier::Severity::Critical;
+        break;
+    case QtWarningMsg:
+        severity = Proof::ErrorNotifier::Severity::Warning;
+        break;
+    default:
+        severity = Proof::ErrorNotifier::Severity::Info;
+        break;
+    }
+    if (papertrailHandler)
+        papertrailHandler->notify(message, severity);
+
     if (TYPES_FOR_NOTIFIER.contains(type)) {
-        Proof::ErrorNotifier::Severity severity = Proof::ErrorNotifier::Severity::Warning;
-        switch (type) {
-        case QtCriticalMsg:
-        case QtFatalMsg:
-            severity = Proof::ErrorNotifier::Severity::Critical;
-            break;
-        case QtWarningMsg:
-        default:
-            severity = Proof::ErrorNotifier::Severity::Warning;
-            break;
-        }
         if (!Proof::algorithms::exists(NOTIFIER_EXCLUDES, [message](const auto &x) { return message.contains(x); }))
             Proof::ErrorNotifier::instance()->notify(QStringLiteral("%1: %2").arg(context.category, message), severity);
     }
@@ -260,4 +269,11 @@ void Proof::Logs::installFileHandler(const QString &fileName)
 void Proof::Logs::uninstallFileHandler()
 {
     qInstallMessageHandler(&baseHandler);
+}
+
+void Proof::Logs::installPapertrailHandler(Proof::AbstractNotificationHandler *handler)
+{
+    if (papertrailHandler)
+        papertrailHandler->deleteLater();
+    papertrailHandler = handler;
 }

@@ -3,7 +3,7 @@ ProofBase Changelog
 
 ## Not Released
 #### Features
- * --
+ * It is now possible send logs to papertrail
 
 #### Bug Fixing
  * --

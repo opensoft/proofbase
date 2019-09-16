@@ -22,30 +22,31 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef PROOF_ABSTRACTNOTIFICATIONHANDLER_H
-#define PROOF_ABSTRACTNOTIFICATIONHANDLER_H
+#ifndef PROOF_PAPERTRAILNOTIFICATIONHANDLER_H
+#define PROOF_PAPERTRAILNOTIFICATIONHANDLER_H
 
-#include "proofcore/errornotifier.h"
-#include "proofcore/proofcore_global.h"
-#include "proofcore/proofobject.h"
+#include "proofcore/abstractnotificationhandler.h"
+
+#include "proofnetwork/proofnetwork_global.h"
+#include "proofnetwork/proofnetwork_types.h"
 
 #include <QString>
+#include <QStringList>
 
 namespace Proof {
-class AbstractNotificationHandlerPrivate;
-class PROOF_CORE_EXPORT AbstractNotificationHandler : public ProofObject
+
+class PapertrailNotificationHandlerPrivate;
+class PROOF_NETWORK_EXPORT PapertrailNotificationHandler : public AbstractNotificationHandler
 {
     Q_OBJECT
-    Q_DECLARE_PRIVATE(AbstractNotificationHandler)
+    Q_DECLARE_PRIVATE(PapertrailNotificationHandler)
 public:
-    QString appId() const;
+    PapertrailNotificationHandler(const QString &host, quint16 port, const QString &senderName, const QString &appId);
+    void notify(const QString &message, ErrorNotifier::Severity severity, const QString &packId = QString()) override;
 
-    virtual void notify(const QString &message, ErrorNotifier::Severity severity, const QString &packId = QString()) = 0;
-    //All subclasses should have static QString id() method which should return unique name for this handler
-
-protected:
-    AbstractNotificationHandler(AbstractNotificationHandlerPrivate &dd, const QString &appId);
+    static QString id();
 };
+
 } // namespace Proof
 
-#endif // PROOF_ABSTRACTNOTIFICATIONHANDLER_H
+#endif // PROOF_PAPERTRAILNOTIFICATIONHANDLER_H

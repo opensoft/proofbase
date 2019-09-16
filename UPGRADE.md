@@ -10,7 +10,7 @@ Changes that one must make to applications based on Proof between versions.
  * --
 
 #### Config changes
- * --
+ * `papertrail\host`, `papertrail\port`, `papertrail\enabled` and `papertrail\sender_name` added to `logs`
 
 #### Migrations
  * --
