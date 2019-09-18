@@ -56,12 +56,19 @@ PapertrailNotificationHandler::PapertrailNotificationHandler(const QString &host
     d->port = port;
     d->senderName = senderName;
     d->papertrailClient = new QTcpSocket(this);
-    connect(d->papertrailClient, &QTcpSocket::connected, [host, port]() {
+    d->papertrailClient->setSocketOption(QAbstractSocket::SocketOption::KeepAliveOption, 1);
+
+    connect(d->papertrailClient, &QTcpSocket::connected, this, [host, port]() {
         qCDebug(proofNetworkMiscLog) << QStringLiteral("connected to papertrail %1:%2").arg(host).arg(port);
     });
-    connect(d->papertrailClient, &QTcpSocket::disconnected, [host, port]() {
-        qCDebug(proofNetworkMiscLog) << QStringLiteral("disconnected from papertrail %1:%2").arg(host).arg(port);
+    connect(d->papertrailClient, &QTcpSocket::disconnected, this, [d]() {
+        qCDebug(proofNetworkMiscLog) << QStringLiteral("disconnected from papertrail %1:%2 %3")
+                                            .arg(d->host)
+                                            .arg(d->port)
+                                            .arg(d->papertrailClient->errorString());
     });
+    connect(d->papertrailClient, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this,
+            [d]() { d->papertrailClient->close(); });
     d->papertrailClient->connectToHost(d->host, d->port);
 }
 
@@ -74,10 +81,10 @@ void PapertrailNotificationHandler::notify(const QString &message, ErrorNotifier
     switch (d->papertrailClient->state()) {
     case QTcpSocket::ClosingState:
         d->papertrailClient->close();
-        return;
+        [[fallthrough]];
     case QTcpSocket::UnconnectedState:
         d->papertrailClient->connectToHost(d->host, d->port);
-        return;
+        break;
     default:
         break;
     }
