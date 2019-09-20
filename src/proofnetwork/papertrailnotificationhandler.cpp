@@ -28,6 +28,7 @@
 
 #include <QDateTime>
 #include <QTcpSocket>
+#include <QTimer>
 
 namespace Proof {
 
@@ -39,6 +40,7 @@ class PapertrailNotificationHandlerPrivate : public AbstractNotificationHandlerP
     QString host;
     quint16 port = 0;
     QString senderName;
+    QTimer *timer = nullptr;
 
     QHash<QString, QDateTime> packTimestamps;
 };
@@ -55,21 +57,13 @@ PapertrailNotificationHandler::PapertrailNotificationHandler(const QString &host
     d->host = host;
     d->port = port;
     d->senderName = senderName;
+    d->timer = new QTimer(this);
+    d->timer->setInterval(5000);
     d->papertrailClient = new QTcpSocket(this);
     d->papertrailClient->setSocketOption(QAbstractSocket::SocketOption::KeepAliveOption, 1);
-
-    connect(d->papertrailClient, &QTcpSocket::connected, this, [host, port]() {
-        qCDebug(proofNetworkMiscLog) << QStringLiteral("connected to papertrail %1:%2").arg(host).arg(port);
-    });
-    connect(d->papertrailClient, &QTcpSocket::disconnected, this, [d]() {
-        qCDebug(proofNetworkMiscLog) << QStringLiteral("disconnected from papertrail %1:%2 %3")
-                                            .arg(d->host)
-                                            .arg(d->port)
-                                            .arg(d->papertrailClient->errorString());
-    });
-    connect(d->papertrailClient, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this,
-            [d]() { d->papertrailClient->close(); });
-    d->papertrailClient->connectToHost(d->host, d->port);
+    auto close = [d]() { d->papertrailClient->close(); };
+    connect(d->papertrailClient, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this, close);
+    connect(d->timer, &QTimer::timeout, this, close);
 }
 
 void PapertrailNotificationHandler::notify(const QString &message, ErrorNotifier::Severity severity, const QString &packId)
@@ -78,6 +72,7 @@ void PapertrailNotificationHandler::notify(const QString &message, ErrorNotifier
     if (safeCall(this, &PapertrailNotificationHandler::notify, message, severity, packId))
         return;
 
+    d->timer->start();
     switch (d->papertrailClient->state()) {
     case QTcpSocket::ClosingState:
         d->papertrailClient->close();
