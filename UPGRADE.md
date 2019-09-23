@@ -10,6 +10,19 @@ Changes that one must make to applications based on Proof between versions.
  * --
 
 #### Config changes
+ * --
+
+#### Migrations
+ * --
+
+## 0.19.9.23
+#### IT issues
+ * --
+
+#### API modifications/removals/deprecations
+ * --
+
+#### Config changes
  * `papertrail\host`, `papertrail\port`, `papertrail\enabled` and `papertrail\sender_name` added to `logs`
 
 #### Migrations

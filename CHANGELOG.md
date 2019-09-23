@@ -3,6 +3,13 @@ ProofBase Changelog
 
 ## Not Released
 #### Features
+ * --
+
+#### Bug Fixing
+ * --
+
+## 0.19.9.23
+#### Features
  * It is now possible send logs to papertrail
 
 #### Bug Fixing
