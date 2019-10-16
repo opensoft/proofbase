@@ -119,7 +119,7 @@ void AbstractAmqpReceiverPrivate::connected()
                                  queue->reset();
                                  queue->reopen();
                              } else {
-                                 qCDebug(proofNetworkAmqpLog) << "Queue Error:" << error;
+                                 qCWarning(proofNetworkAmqpLog) << "Queue Error:" << error;
                                  emit q->errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError,
                                                        QStringLiteral("Queue Error: %1").arg(error), false);
                              }

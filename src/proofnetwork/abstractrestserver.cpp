@@ -431,7 +431,7 @@ void AbstractRestServer::rest_get_System_Status(QTcpSocket *socket, const QStrin
             sendAnswer(socket, QJsonDocument(statusObj).toJson(), QStringLiteral("text/json"));
         })
         .onFailure([this, socket](const Failure &f) {
-            qCDebug(proofNetworkMiscLog) << "Health status fetch failed with " << f.message << f.data;
+            qCWarning(proofNetworkMiscLog) << "Health status fetch failed with " << f.message << f.data;
             sendInternalError(socket);
         });
 }
@@ -469,7 +469,7 @@ void AbstractRestServer::incomingConnection(qintptr socketDescriptor)
 {
     Q_D(AbstractRestServer);
 
-    qCDebug(proofNetworkMiscLog) << "Incoming connection with socket descriptor" << socketDescriptor;
+    qCDebug(proofNetworkExtraLog) << "Incoming connection with socket descriptor" << socketDescriptor;
 
     WorkerThread *worker = nullptr;
 
@@ -716,7 +716,7 @@ void AbstractRestServerPrivate::sendAnswer(QTcpSocket *socket, const QByteArray 
         qCDebug(proofNetworkMiscLog) << "Replying" << returnCode << ":" << reason << "at socket" << socket;
         worker->sendAnswer(socket, body, contentType, headers, returnCode, reason);
     } else {
-        qCDebug(proofNetworkMiscLog).noquote()
+        qCCritical(proofNetworkMiscLog).noquote()
             << "Wanted to reply" << returnCode << ":" << reason << "at socket"
             << QStringLiteral("QTcpSocket(%1)").arg(reinterpret_cast<quint64>(socket), 0, 16)
             << "but it is dead already";
@@ -784,7 +784,7 @@ void WorkerThread::handleNewConnection(qintptr socketDescriptor)
         return;
     }
     sockets[tcpSocket] = info;
-    qCDebug(proofNetworkMiscLog) << "Handling socket descriptor" << socketDescriptor << "with socket" << tcpSocket;
+    qCDebug(proofNetworkExtraLog) << "Handling socket descriptor" << socketDescriptor << "with socket" << tcpSocket;
 }
 
 void WorkerThread::deleteSocket(QTcpSocket *socket)
@@ -804,7 +804,7 @@ void WorkerThread::onReadyRead(QTcpSocket *socket)
                                  info.parser.body());
         break;
     case HttpParser::Result::Error:
-        qCWarning(proofNetworkMiscLog) << "RestServer: parse error:" << info.parser.error();
+        qCCritical(proofNetworkMiscLog) << "RestServer: parse error:" << info.parser.error();
         disconnect(info.readyReadConnection);
         sendAnswer(socket, "", QStringLiteral("text/plain; charset=utf-8"), QHash<QString, QString>(), 400,
                    QStringLiteral("Bad Request"));

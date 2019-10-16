@@ -258,8 +258,8 @@ bool SmtpClientPrivate::sendTextMail(const QString &subject, const QString &body
             socket->close();
             return true;
         } else {
-            qCDebug(proofNetworkMiscLog) << "Unknown state happened during email sending:" << static_cast<int>(state)
-                                         << ". Server reply:" << reply;
+            qCWarning(proofNetworkMiscLog) << "Unknown state happened during email sending:" << static_cast<int>(state)
+                                           << ". Server reply:" << reply;
             state = SmtpStates::Close;
             socket->close();
             return true;
@@ -270,8 +270,8 @@ bool SmtpClientPrivate::sendTextMail(const QString &subject, const QString &body
     };
 
     std::function<bool()> errorCallback = [&socket]() {
-        qCDebug(proofNetworkMiscLog) << "Error occurred during email sending:" << socket->error()
-                                     << socket->errorString();
+        qCCritical(proofNetworkMiscLog) << "Error occurred during email sending:" << socket->error()
+                                        << socket->errorString();
         socket->close();
         return true;
     };

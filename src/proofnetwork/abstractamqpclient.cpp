@@ -45,13 +45,13 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
     QObject::connect(d->rabbitClient, static_cast<void (QAmqpClient::*)(QAMQP::Error)>(&QAmqpClient::error), this,
                      [this, d](QAMQP::Error error) {
                          if (d->rabbitClient->autoReconnect()) {
-                             qCDebug(proofNetworkAmqpLog)
+                             qCWarning(proofNetworkAmqpLog)
                                  << "Client Connection Error:" << error
                                  << "Reconnection tries before error emit:" << d->autoReconnectionTries;
                              if (d->autoReconnectionTries > 0) {
                                  --d->autoReconnectionTries;
                              } else {
-                                 qCWarning(proofNetworkAmqpLog) << "RabbitMQ Client Connection Error:" << error;
+                                 qCCritical(proofNetworkAmqpLog) << "RabbitMQ Client Connection Error:" << error;
                                  emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError,
                                                     QStringLiteral("Client Error: %1").arg(error), false);
                                  d->autoReconnectionTries = AUTO_RECONNECTION_TRIES;
@@ -60,7 +60,7 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
                              d->rabbitClient->disconnectFromHost();
                              emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::InternalError,
                                                 QStringLiteral("Client Error: %1").arg(error), false);
-                             qCWarning(proofNetworkAmqpLog) << "RabbitMQ Client Connection Error:" << error;
+                             qCCritical(proofNetworkAmqpLog) << "RabbitMQ Client Connection Error:" << error;
                          }
                      });
 
@@ -68,13 +68,13 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
                      static_cast<void (QAmqpClient::*)(QAbstractSocket::SocketError)>(&QAmqpClient::socketError), this,
                      [this, d](QAbstractSocket::SocketError error) {
                          if (d->rabbitClient->autoReconnect()) {
-                             qCDebug(proofNetworkAmqpLog)
+                             qCWarning(proofNetworkAmqpLog)
                                  << "Client Connection Error:" << error
                                  << "Reconnection tries before error emit:" << d->autoReconnectionTries;
                              if (d->autoReconnectionTries > 0) {
                                  --d->autoReconnectionTries;
                              } else {
-                                 qCWarning(proofNetworkAmqpLog) << "RabbitMQ Socket Error:" << error;
+                                 qCCritical(proofNetworkAmqpLog) << "RabbitMQ Socket Error:" << error;
                                  emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable,
                                                     QStringLiteral("Can't connect to qamqp server (Socket)"), false);
                                  d->autoReconnectionTries = AUTO_RECONNECTION_TRIES;
@@ -83,7 +83,7 @@ AbstractAmqpClient::AbstractAmqpClient(AbstractAmqpClientPrivate &dd, QObject *p
                              d->rabbitClient->disconnectFromHost();
                              emit errorOccurred(NETWORK_MODULE_CODE, NetworkErrorCode::ServiceUnavailable,
                                                 QStringLiteral("Can't connect to qamqp server (Socket)"), false);
-                             qCWarning(proofNetworkAmqpLog) << "RabbitMQ Socket Connection Error:" << error;
+                             qCCritical(proofNetworkAmqpLog) << "RabbitMQ Socket Connection Error:" << error;
                          }
                      });
 

@@ -432,11 +432,12 @@ void RestClient::unsetCookie(const QString &name)
 CancelableFuture<QNetworkReply *> RestClient::get(const QString &method, const QUrlQuery &query, const QString &vendor)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
+    QUrl url = d->createUrl(method, query);
+    qCDebug(proofNetworkMiscLog) << "GET" << url.toDisplayString();
 
-    return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, vendor](QNetworkAccessManager *qnam) {
-        qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
-        QNetworkReply *reply = qnam->get(d->createNetworkRequest(d->createUrl(method, query), QByteArray(), vendor));
+    return NetworkScheduler::instance()->addRequest(d->host, [d, url, vendor](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkExtraLog) << "GET" << url.toDisplayString() << "started";
+        QNetworkReply *reply = qnam->get(d->createNetworkRequest(url, QByteArray(), vendor));
         d->handleReply(reply);
         return reply;
     });
@@ -446,11 +447,12 @@ CancelableFuture<QNetworkReply *> RestClient::post(const QString &method, const 
                                                    const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
+    QUrl url = d->createUrl(method, query);
+    qCDebug(proofNetworkMiscLog) << "POST" << url.toDisplayString();
 
-    return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, body, vendor](QNetworkAccessManager *qnam) {
-        qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
-        QNetworkReply *reply = qnam->post(d->createNetworkRequest(d->createUrl(method, query), body, vendor), body);
+    return NetworkScheduler::instance()->addRequest(d->host, [d, url, body, vendor](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkExtraLog) << "POST" << url.toDisplayString() << "started";
+        QNetworkReply *reply = qnam->post(d->createNetworkRequest(url, body, vendor), body);
         d->handleReply(reply);
         return reply;
     });
@@ -460,15 +462,16 @@ CancelableFuture<QNetworkReply *> RestClient::post(const QString &method, const 
                                                    QHttpMultiPart *multiParts)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
+    QUrl url = d->createUrl(method, query);
+    qCDebug(proofNetworkMiscLog) << "POST" << url.toDisplayString();
 
-    return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, multiParts](QNetworkAccessManager *qnam) {
-        qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
-        QNetworkRequest request = d->createNetworkRequest(d->createUrl(method, query), QByteArray(), QString());
+    return NetworkScheduler::instance()->addRequest(d->host, [d, url, multiParts](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkExtraLog) << "POST" << url.toDisplayString() << "started";
+        QNetworkRequest request = d->createNetworkRequest(url, QByteArray(), QString());
         request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
                           QStringLiteral("multipart/form-data; boundary=%1").arg(QString(multiParts->boundary())));
         QNetworkReply *reply = qnam->post(request, multiParts);
-        qCDebug(proofNetworkMiscLog) << request.header(QNetworkRequest::KnownHeaders::ContentTypeHeader).toString();
+        qCDebug(proofNetworkExtraLog) << request.header(QNetworkRequest::KnownHeaders::ContentTypeHeader).toString();
         multiParts->setParent(reply);
         d->handleReply(reply);
         return reply;
@@ -479,11 +482,12 @@ CancelableFuture<QNetworkReply *> RestClient::put(const QString &method, const Q
                                                   const QString &vendor)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
+    QUrl url = d->createUrl(method, query);
+    qCDebug(proofNetworkMiscLog) << "PUT" << url.toDisplayString();
 
-    return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, body, vendor](QNetworkAccessManager *qnam) {
-        qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
-        QNetworkReply *reply = qnam->put(d->createNetworkRequest(d->createUrl(method, query), body, vendor), body);
+    return NetworkScheduler::instance()->addRequest(d->host, [d, url, body, vendor](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkExtraLog) << "PUT" << url.toDisplayString() << "started";
+        QNetworkReply *reply = qnam->put(d->createNetworkRequest(url, body, vendor), body);
         d->handleReply(reply);
         return reply;
     });
@@ -493,14 +497,14 @@ CancelableFuture<QNetworkReply *> RestClient::patch(const QString &method, const
                                                     const QByteArray &body, const QString &vendor)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
+    QUrl url = d->createUrl(method, query);
+    qCDebug(proofNetworkMiscLog) << "PATCH" << url.toDisplayString();
 
-    return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, body, vendor](QNetworkAccessManager *qnam) {
-        qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
+    return NetworkScheduler::instance()->addRequest(d->host, [d, url, body, vendor](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkExtraLog) << "PATCH" << url.toDisplayString() << "started";
         QBuffer *bodyBuffer = new QBuffer;
         bodyBuffer->setData(body);
-        QNetworkReply *reply = qnam->sendCustomRequest(d->createNetworkRequest(d->createUrl(method, query), body, vendor),
-                                                       "PATCH", bodyBuffer);
+        QNetworkReply *reply = qnam->sendCustomRequest(d->createNetworkRequest(url, body, vendor), "PATCH", bodyBuffer);
         d->handleReply(reply);
         bodyBuffer->setParent(reply);
         return reply;
@@ -511,12 +515,12 @@ CancelableFuture<QNetworkReply *> RestClient::deleteResource(const QString &meth
                                                              const QString &vendor)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces);
+    QUrl url = d->createUrl(method, query);
+    qCDebug(proofNetworkMiscLog) << "DELETE" << url.toDisplayString();
 
-    return NetworkScheduler::instance()->addRequest(d->host, [d, method, query, vendor](QNetworkAccessManager *qnam) {
-        qCDebug(proofNetworkMiscLog) << method << query.toString(QUrl::EncodeSpaces) << "started";
-        QNetworkReply *reply = qnam->deleteResource(
-            d->createNetworkRequest(d->createUrl(method, query), QByteArray(), vendor));
+    return NetworkScheduler::instance()->addRequest(d->host, [d, url, vendor](QNetworkAccessManager *qnam) {
+        qCDebug(proofNetworkExtraLog) << "DELETE" << url.toDisplayString() << "started";
+        QNetworkReply *reply = qnam->deleteResource(d->createNetworkRequest(url, QByteArray(), vendor));
         d->handleReply(reply);
         return reply;
     });
@@ -525,9 +529,9 @@ CancelableFuture<QNetworkReply *> RestClient::deleteResource(const QString &meth
 CancelableFuture<QNetworkReply *> RestClient::get(const QUrl &url)
 {
     Q_D(RestClient);
-    qCDebug(proofNetworkMiscLog) << url;
+    qCDebug(proofNetworkMiscLog) << "GET" << url.toDisplayString();
     return NetworkScheduler::instance()->addRequest(url.host(), [d, url](QNetworkAccessManager *qnam) {
-        qCDebug(proofNetworkMiscLog) << url << "started";
+        qCDebug(proofNetworkExtraLog) << "GET" << url.toDisplayString() << "started";
         QNetworkReply *reply = qnam->get(d->createNetworkRequest(url, QByteArray(), QString()));
         d->handleReply(reply);
         return reply;
@@ -803,7 +807,7 @@ NetworkScheduler::addRequest(const QString &host, std::function<QNetworkReply *(
     qCDebug(proofNetworkExtraLog) << "Adding request for" << host << "with current usage =" << usages.value(host, 0);
     requests.emplace_back(host, [this, host, request, promise]() {
         if (promise.isFilled()) {
-            qCDebug(proofNetworkExtraLog)
+            qCWarning(proofNetworkExtraLog)
                 << "Request for" << host << "was ready to be sent, but is already canceled, skipping it";
             decreaseUsage(host);
             return;

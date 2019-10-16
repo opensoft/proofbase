@@ -66,7 +66,7 @@ Future<QByteArray> HttpDownloader::download(const QUrl &url)
     Q_D(HttpDownloader);
 
     if (!url.isValid()) {
-        qCDebug(proofNetworkMiscLog) << "Url is not valid" << url;
+        qCWarning(proofNetworkMiscLog) << "Url is not valid" << url;
         return Future<QByteArray>::failed(
             Failure(QStringLiteral("Url is not valid"), NETWORK_MODULE_CODE, NetworkErrorCode::InvalidUrl));
     }
@@ -138,20 +138,20 @@ Future<QIODevice *> HttpDownloader::downloadTo(const QUrl &url, QIODevice *dest)
     Q_D(HttpDownloader);
 
     if (!url.isValid()) {
-        qCDebug(proofNetworkMiscLog) << "Url is not valid" << url;
+        qCWarning(proofNetworkMiscLog) << "Url is not valid" << url;
         return Future<QIODevice *>::failed(
             Failure(QStringLiteral("Url is not valid"), NETWORK_MODULE_CODE, NetworkErrorCode::InvalidUrl));
     }
 
     if (!dest || !dest->isOpen() || !dest->isWritable()) {
-        qCDebug(proofNetworkMiscLog) << "Destination device is not available" << url;
+        qCCritical(proofNetworkMiscLog) << "Destination device is not available" << url;
         return Future<QIODevice *>::failed(Failure(QStringLiteral("Destination device is not available"),
                                                    NETWORK_MODULE_CODE, NetworkErrorCode::InternalError));
     }
 
     Promise<QIODevice *> promise;
     d->restClient->get(url)
-        .onSuccess([this, d, dest, promise](QNetworkReply *reply) {
+        .onSuccess([d, dest, promise](QNetworkReply *reply) {
             auto errorHandler = [](QNetworkReply *reply, const Promise<QIODevice *> &promise) {
                 int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
                 QString errorMessage = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed();
@@ -202,7 +202,7 @@ Future<QIODevice *> HttpDownloader::downloadTo(const QUrl &url, QIODevice *dest)
                     for (const QSslError &error : errors) {
                         if (error.error() != QSslError::SslError::NoError) {
                             int errorCode = BaseRestApi::clientSslErrorOffset() + static_cast<int>(error.error());
-                            qCWarning(proofNetworkMiscLog)
+                            qCCritical(proofNetworkMiscLog)
                                 << "SSL error occurred"
                                 << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                                 << ": " << errorCode << error.errorString();
