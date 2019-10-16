@@ -156,9 +156,9 @@ void BaseRestApi::processSuccessfulReply(QNetworkReply *reply, const Promise<Res
     if (message.isEmpty())
         message = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString().trimmed();
 
-    qCDebug(proofNetworkMiscLog) << "Network error occurred"
-                                 << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
-                                 << ": " << errorCode << message;
+    qCWarning(proofNetworkMiscLog) << "Network error occurred"
+                                   << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
+                                   << ": " << errorCode << message;
     unsigned hints = Failure::UserFriendlyHint;
     if (errorCode > 0)
         hints |= Failure::DataIsHttpCodeHint;
@@ -176,9 +176,9 @@ void BaseRestApi::processErroredReply(QNetworkReply *reply, const Promise<RestAp
     QString body = reply->readAll();
     long proofErrorCode = NetworkErrorCode::ServerError;
     unsigned int hints = errorCodeIsHttp ? Failure::DataIsHttpCodeHint : Failure::NoHint;
-    qCDebug(proofNetworkMiscLog) << "Error occurred for"
-                                 << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
-                                 << ": " << errorCode << errorString << body;
+    qCWarning(proofNetworkMiscLog) << "Error occurred for"
+                                   << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
+                                   << ": " << errorCode << errorString << body;
     auto failure = Failure(errorString, NETWORK_MODULE_CODE, proofErrorCode, hints, errorCode);
     switch (reply->error()) {
     case QNetworkReply::HostNotFoundError:
@@ -253,7 +253,7 @@ CancelableFuture<RestApiReply> BaseRestApiPrivate::configureReply(const Cancelab
                 for (const QSslError &error : errors) {
                     if (error.error() != QSslError::SslError::NoError) {
                         int errorCode = NETWORK_SSL_ERROR_OFFSET + static_cast<int>(error.error());
-                        qCWarning(proofNetworkMiscLog)
+                        qCCritical(proofNetworkMiscLog)
                             << "SSL error occurred"
                             << reply->request().url().toDisplayString(QUrl::FormattingOptions(QUrl::FullyDecoded))
                             << ": " << errorCode << error.errorString();
@@ -288,7 +288,7 @@ Failure BaseRestApiPrivate::buildReplyFailure(QNetworkReply *reply)
                           NETWORK_MODULE_CODE, NetworkErrorCode::Code::ServiceUnavailable, Failure::UserFriendlyHint);
 
     if (host.isLoopback() || QNetworkInterface::allAddresses().contains(host)) {
-        qCDebug(proofNetworkMiscLog) << "Host is unavailable:" << reply->url().host();
+        qCWarning(proofNetworkMiscLog) << "Host is unavailable:" << reply->url().host();
         return result;
     }
 
@@ -309,18 +309,18 @@ Failure BaseRestApiPrivate::buildReplyFailure(QNetworkReply *reply)
             result.message = QObject::tr("You don't have network connection. Please, connect your device to "
                                          "network and try again");
             result.errorCode = NetworkErrorCode::Code::NoNetworkConnection;
-            qCDebug(proofNetworkMiscLog) << "Seems like all network interfaces is down";
+            qCCritical(proofNetworkMiscLog) << "Seems like all network interfaces is down";
         }
     } else if (!pingExternalResource(PING_ADDRESS)) {
         result.message = QObject::tr("Your device seems to be in network without Internet connection. "
                                      "Please, check if Internet is accessible and try again");
         result.errorCode = NetworkErrorCode::Code::NoInternetConnection;
-        qCDebug(proofNetworkMiscLog) << "Seems like internet connection is down, couldn't ping external resource:"
-                                     << PING_ADDRESS;
+        qCCritical(proofNetworkMiscLog) << "Seems like internet connection is down, couldn't ping external resource:"
+                                        << PING_ADDRESS;
     } else if (reply->error() == QNetworkReply::HostNotFoundError) {
         result.message = QObject::tr("Host %1 not found. Please, contact IT immediately.").arg(reply->url().host());
         result.errorCode = NetworkErrorCode::Code::HostNotFound;
-        qCDebug(proofNetworkMiscLog) << "Host not found: " << reply->url().host();
+        qCWarning(proofNetworkMiscLog) << "Host not found: " << reply->url().host();
     }
     return result;
 }

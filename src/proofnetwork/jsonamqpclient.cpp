@@ -48,7 +48,7 @@ void JsonAmqpClientPrivate::amqpMessageReceived()
         qCDebug(proofNetworkAmqpLog) << "Queue message: " << messageDocument;
         handleJsonMessage(messageDocument, message.routingKey(), message.headers());
     } else {
-        qCDebug(proofNetworkAmqpLog) << "Queue message is not valid: " << message.payload();
+        qCCritical(proofNetworkAmqpLog) << "Queue message is not valid: " << message.payload();
     }
 }
 
