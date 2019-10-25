@@ -61,7 +61,7 @@ RestClientSP HttpDownloader::restClient() const
     return d->restClient;
 }
 
-Future<QByteArray> HttpDownloader::download(const QUrl &url)
+Future<QByteArray> HttpDownloader::download(const QUrl &url, int msecsForTimeout)
 {
     Q_D(HttpDownloader);
 
@@ -72,7 +72,7 @@ Future<QByteArray> HttpDownloader::download(const QUrl &url)
     }
 
     Promise<QByteArray> promise;
-    d->restClient->get(url)
+    d->restClient->get(url, msecsForTimeout)
         .onSuccess([this, promise](QNetworkReply *reply) {
             auto errorHandler = [](QNetworkReply *reply, const Promise<QByteArray> &promise) {
                 int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -133,7 +133,7 @@ Future<QByteArray> HttpDownloader::download(const QUrl &url)
     return promise.future();
 }
 
-Future<QIODevice *> HttpDownloader::downloadTo(const QUrl &url, QIODevice *dest)
+Future<QIODevice *> HttpDownloader::downloadTo(const QUrl &url, QIODevice *dest, int msecsForTimeout)
 {
     Q_D(HttpDownloader);
 
@@ -150,7 +150,7 @@ Future<QIODevice *> HttpDownloader::downloadTo(const QUrl &url, QIODevice *dest)
     }
 
     Promise<QIODevice *> promise;
-    d->restClient->get(url)
+    d->restClient->get(url, msecsForTimeout)
         .onSuccess([d, dest, promise](QNetworkReply *reply) {
             auto errorHandler = [](QNetworkReply *reply, const Promise<QIODevice *> &promise) {
                 int errorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
