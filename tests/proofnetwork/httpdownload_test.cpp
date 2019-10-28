@@ -359,3 +359,47 @@ TEST_F(HttpDownloaderTest, nonWritableDeviceDownloadTo)
     Failure failure = future.failureReason();
     EXPECT_EQ(failure.errorCode, NetworkErrorCode::InternalError);
 }
+
+TEST_F(HttpDownloaderTest, failDownloadCustomTimeout)
+{
+    ASSERT_TRUE(serverRunner->serverIsRunning());
+
+    Future<QByteArray> future = httpDownloaderUT->download(QUrl("http://127.0.0.1:9000/test.jpg"), TIMEOUT / 2);
+    QTime timer;
+    timer.start();
+
+    while (!future.isCompleted() && timer.elapsed() < TIMEOUT)
+        qApp->processEvents();
+
+    ASSERT_TRUE(future.isCompleted());
+    EXPECT_FALSE(future.isSucceeded());
+    EXPECT_TRUE(future.isFailed());
+    Failure failure = future.failureReason();
+    EXPECT_EQ(0, failure.data.toInt());
+    EXPECT_EQ(NetworkErrorCode::ServerError, failure.errorCode);
+    EXPECT_EQ("Download failed", failure.message);
+}
+
+TEST_F(HttpDownloaderTest, failDownloadToCustomTimeout)
+{
+    ASSERT_TRUE(serverRunner->serverIsRunning());
+
+    QTemporaryFile output;
+    output.open();
+
+    Future<QIODevice *> future = httpDownloaderUT->downloadTo(QUrl("http://127.0.0.1:9000/test.jpg"), &output,
+                                                              TIMEOUT / 2);
+    QTime timer;
+    timer.start();
+
+    while (!future.isCompleted() && timer.elapsed() < TIMEOUT)
+        qApp->processEvents();
+
+    ASSERT_TRUE(future.isCompleted());
+    EXPECT_FALSE(future.isSucceeded());
+    EXPECT_TRUE(future.isFailed());
+    Failure failure = future.failureReason();
+    EXPECT_EQ(0, failure.data.toInt());
+    EXPECT_EQ(NetworkErrorCode::ServerError, failure.errorCode);
+    EXPECT_EQ("Download failed", failure.message);
+}

@@ -157,9 +157,14 @@ INSTANTIATE_TEST_CASE_P(
                                        _1, QStringLiteral("/"), QUrlQuery(), QString()),
                              "", "text/plain"),
         HttpMethodsTestParam(
-            std::bind(static_cast<Proof::CancelableFuture<QNetworkReply *> (Proof::RestClient::*)(const QUrl &)>(
+            std::bind(static_cast<Proof::CancelableFuture<QNetworkReply *> (Proof::RestClient::*)(const QUrl &, int)>(
                           &Proof::RestClient::get),
-                      _1, QUrl("http://127.0.0.1:9091/")),
+                      _1, QUrl("http://127.0.0.1:9091/"), -1),
+            "", "text/plain"),
+        HttpMethodsTestParam(
+            std::bind(static_cast<Proof::CancelableFuture<QNetworkReply *> (Proof::RestClient::*)(const QUrl &, int)>(
+                          &Proof::RestClient::get),
+                      _1, QUrl("http://127.0.0.1:9091/"), 10000),
             "", "text/plain"),
         HttpMethodsTestParam(std::bind(static_cast<Proof::CancelableFuture<QNetworkReply *> (Proof::RestClient::*)(
                                            const QString &, const QUrlQuery &, const QByteArray &, const QString &)>(

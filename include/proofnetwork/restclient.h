@@ -109,7 +109,7 @@ public:
                                             const QByteArray &body = "", const QString &vendor = QString());
     CancelableFuture<QNetworkReply *> deleteResource(const QString &method, const QUrlQuery &query = QUrlQuery(),
                                                      const QString &vendor = QString());
-    CancelableFuture<QNetworkReply *> get(const QUrl &url);
+    CancelableFuture<QNetworkReply *> get(const QUrl &url, int customMsecsForTimeout = -1);
 
 signals:
     void userNameChanged(const QString &arg);

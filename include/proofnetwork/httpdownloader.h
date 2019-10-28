@@ -43,8 +43,8 @@ public:
     explicit HttpDownloader(const Proof::RestClientSP &restClient, QObject *parent = nullptr);
     explicit HttpDownloader(QObject *parent = nullptr);
     Proof::RestClientSP restClient() const;
-    Future<QByteArray> download(const QUrl &url);
-    Future<QIODevice *> downloadTo(const QUrl &url, QIODevice *dest);
+    Future<QByteArray> download(const QUrl &url, int msecsForTimeout = -1);
+    Future<QIODevice *> downloadTo(const QUrl &url, QIODevice *dest, int msecsForTimeout = -1);
 };
 } // namespace Proof
 #endif // PROOF_HTTPDOWNLOADER_H

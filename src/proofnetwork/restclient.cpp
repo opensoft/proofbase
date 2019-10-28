@@ -107,7 +107,7 @@ public:
     QNetworkRequest createNetworkRequest(const QUrl &url, const QByteArray &body, const QString &vendor);
     QByteArray generateWsseToken() const;
 
-    void handleReply(QNetworkReply *reply);
+    void handleReply(QNetworkReply *reply, int customMsecsForTimeout = -1);
     void cleanupReplyHandler(QNetworkReply *reply);
     void cleanupAll();
     QPair<QString, QString> parseHost(const QString &host);
@@ -526,14 +526,15 @@ CancelableFuture<QNetworkReply *> RestClient::deleteResource(const QString &meth
     });
 }
 
-CancelableFuture<QNetworkReply *> RestClient::get(const QUrl &url)
+CancelableFuture<QNetworkReply *> RestClient::get(const QUrl &url, int customMsecsForTimeout)
 {
     Q_D(RestClient);
     qCDebug(proofNetworkMiscLog) << "GET" << url.toDisplayString();
-    return NetworkScheduler::instance()->addRequest(url.host(), [d, url](QNetworkAccessManager *qnam) {
+    return NetworkScheduler::instance()->addRequest(url.host(), [d, url,
+                                                                 customMsecsForTimeout](QNetworkAccessManager *qnam) {
         qCDebug(proofNetworkExtraLog) << "GET" << url.toDisplayString() << "started";
         QNetworkReply *reply = qnam->get(d->createNetworkRequest(url, QByteArray(), QString()));
-        d->handleReply(reply);
+        d->handleReply(reply, customMsecsForTimeout);
         return reply;
     });
 }
@@ -666,7 +667,7 @@ QByteArray RestClientPrivate::generateWsseToken() const
         .toLatin1();
 }
 
-void RestClientPrivate::handleReply(QNetworkReply *reply)
+void RestClientPrivate::handleReply(QNetworkReply *reply, int customMsecsForTimeout)
 {
     Q_Q(RestClient);
 
@@ -684,7 +685,7 @@ void RestClientPrivate::handleReply(QNetworkReply *reply)
         timer->deleteLater();
     });
 
-    timer->start(msecsForTimeout);
+    timer->start(customMsecsForTimeout > 0 ? customMsecsForTimeout : msecsForTimeout);
 
     if (ignoreSslErrors) {
         reply->ignoreSslErrors();

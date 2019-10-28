@@ -3,7 +3,7 @@ ProofBase Changelog
 
 ## Not Released
 #### Features
- * --
+ * Added parameter timeout to methods RestClient::get, HttpDownloader::download and HttpDownloader::downloadTo
 
 #### Bug Fixing
  * --
